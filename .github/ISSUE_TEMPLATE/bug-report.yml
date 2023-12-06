@@ -1,0 +1,168 @@
+---
+# https://docs.github.com/en/communities/using-templates-to-encourage-useful-issues-and-pull-requests/configuring-issue-templates-for-your-repository
+name: CiscoConfParse Bug Report
+description: File a bug report
+title: "[Bug]: "
+labels: ["bug"]
+assignees:
+- octocat
+
+body:
+- type: markdown
+  attributes:
+    value: |
+      Please use this form to report a CiscoConfParse bug.
+
+      - Follow our guidance on <a href="https://meta.stackoverflow.com/q/260648/667301">How to Ask Good Questions</a>.
+      - Please include sufficient details and context.
+      - Describe the expected behavior that should have happened but didn't.
+      - If you find multiple bugs, please submit them in separate issues.
+      - CiscoConfParse is maintained by volunteers. Please be courteous and patient.
+
+      *Issues that do not include all the information requested in this form are subject to closure*.
+
+- type: input
+  id: contact
+  attributes:
+    label: Contact Details
+    description: How can we get in touch with you if we need more info?
+    placeholder: me@gmail.com
+  validations:
+    required: false
+
+- type: textarea
+  id: what-happened
+  attributes:
+    label: What happened?
+    description: What did you see?  What did you expect?
+    placeholder: What did you see?  What did you expect?
+  validations:
+    required: true
+
+- type: input
+  id: ciscoconfparse-version
+  attributes:
+    label: CiscoConfParse Version
+    description: What ciscoconfparse2 version had the problem?
+    placeholder: Version x.y.z (e.g. Version 1.6.13)
+  validations:
+    required: true
+
+- type: dropdown
+  id: operating-system
+  attributes:
+    label: What Operating System are you using?
+    multiple: true
+    options:
+    - Microsoft Windows
+    - MacOS
+    - Linux - Debian, Ubuntu, CentOS, RHEL or others
+    - OpenBSD, FreeBSD, NetBSD
+    - Other (please specify)
+  validations:
+    required: true
+
+- type: dropdown
+  id: python-version
+  attributes:
+    label: What Python version(s) have this problem?
+    multiple: true
+    options:
+    - Python 3.10
+    - Python 3.9
+    - Python 3.8
+    - Python 3.7
+    - Python 3.6
+    - Python 3.5
+    - Python 3.x
+    - Python 2.7
+    - Python 2.x
+    - Other (please specify)
+  validations:
+    required: true
+
+- type: textarea
+  id: reproduce-example
+  validations:
+    required: true
+  attributes:
+    label: Show us how to reproduce the problem.  Please tell us if the problem is specific to certain inputs or situations.
+    description: Include a minimal reproducible example that demonstrates the bug
+    render: python
+    placeholder: |
+      import sys
+      from ciscoconfparse2 import CiscoConfParse
+
+      def parse_a_config():
+          config = """
+      hostname Router01
+      !
+      interface FastEthernet 0/4
+       switchport
+       switchport mode access
+      !
+      ! Add any other relevant configuration...
+      !
+      """
+          parse = CiscoConfParse(config.splitlines(), syntax='ios')
+          return parse
+
+      parser = parse_a_config()
+
+
+- type: textarea
+  id: python-tracebacks
+  attributes:
+    label: Python tracebacks
+    description: Please include all tracebacks.  If no traceback, please say so in the textarea box.
+    placeholder: |
+      Traceback (most recent call last):
+        File "/home/mpenning/fixme/ciscoconfparse2/ciscoconfparse2/ccp_util.py", line 445, in _get_ipv4
+          IPv4Network(val, strict=False)
+        File "/opt/python37/lib/python3.7/ipaddress.py", line 1528, in __init__
+          addr = self._ip_int_from_string(args[0])
+        File "/opt/python37/lib/python3.7/ipaddress.py", line 1140, in _ip_int_from_string
+          raise AddressValueError("%s in %r" % (exc, ip_str)) from None
+      ipaddress.AddressValueError: Only decimal digits permitted in '::ffff:192' in '::ffff:192.0.2.101'
+
+      During handling of the above exception, another exception occurred:
+
+      Traceback (most recent call last):
+        File "/home/mpenning/fixme/ciscoconfparse2/ciscoconfparse2/ccp_util.py", line 528, in ip_factory
+          obj = _get_ipv4(val=val, stdlib=stdlib, debug=debug)
+        File "/home/mpenning/fixme/ciscoconfparse2/ciscoconfparse2/ccp_util.py", line 460, in _get_ipv4
+          raise ipaddress.AddressValueError(str(ee))
+      ipaddress.AddressValueError: Only decimal digits permitted in '::ffff:192' in '::ffff:192.0.2.101'
+
+      During handling of the above exception, another exception occurred:
+
+      Traceback (most recent call last):
+        File "<stdin>", line 1, in <module>
+        File "/home/mpenning/fixme/ciscoconfparse2/ciscoconfparse2/ccp_util.py", line 532, in ip_factory
+          raise ipaddress.AddressValueError(error_str)
+      ipaddress.AddressValueError: Cannot parse '::ffff:192.0.2.101' as ipv4
+    render: shell
+  validations:
+    required: true
+
+- type: textarea
+  id: logs
+  attributes:
+    label: Relevant log output
+    description: Please copy and paste any relevant log output.
+    placeholder: |
+      # In /var/log/messages...
+      2022-02-19T14:41:16.492894-06:00  mySweetBread_Daemon.py started listening on 192.0.2.21 port tcp/9190
+      2022-02-19T14:43:44.690444-06:00  mySweetBread_Daemon.py went boom!
+    render: shell
+  validations:
+    required: false
+
+- type: checkboxes
+  id: terms
+  attributes:
+    label: Code of Conduct
+    description: By submitting this issue, you agree to follow our [Code of Conduct](https://github.com/mpenning/ciscoconfparse2/blob/main/CONTRIBUTING.md) as found in [`CONTRIBUTING.md`](https://github.com/mpenning/ciscoconfparse2/blob/main/CONTRIBUTING.md)
+    options:
+    - label: I agree to follow this project's [Code of Conduct](https://github.com/mpenning/ciscoconfparse2/blob/main/CONTRIBUTING.md)
+      required: true

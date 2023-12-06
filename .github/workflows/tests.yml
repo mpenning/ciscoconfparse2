@@ -1,0 +1,70 @@
+---
+# Useful walk-throughs...
+#     https://www.jeffgeerling.com/blog/2020/travis-cis-new-pricing-plan-threw-wrench-my-open-source-works
+#     https://blog.dennisokeeffe.com/blog/2021-08-08-pytest-with-github-actions
+# Thanks to Pallets/flask for a useful test.yaml template...
+#     https://github.com/pallets/flask/blob/main/.github/workflows/tests.yaml
+#
+
+name: Tests
+on:
+  push:
+    branches:
+      - main
+      - '*.x'
+    paths-ignore:
+      - 'docs/**'
+      - '*.md'
+      - '*.rst'
+  pull_request:
+    branches:
+      - main
+      - '*.x'
+    paths-ignore:
+      - 'docs/**'
+      - '*.md'
+      - '*.rst'
+jobs:
+  pytest:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {name: Linux, python: '3.11', os: ubuntu-latest, tox: py311}
+          - {name: Windows, python: '3.11', os: windows-latest, tox: py311}
+          - {name: Mac, python: '3.11', os: macos-latest, tox: py311}
+          - {name: '3.12', python: '3.12', os: ubuntu-latest, tox: py312}
+          - {name: '3.11', python: '3.11', os: ubuntu-latest, tox: py311}
+          - {name: '3.10', python: '3.10', os: ubuntu-latest, tox: py310}
+          - {name: '3.9', python: '3.9', os: ubuntu-latest, tox: py39}
+          - {name: '3.8', python: '3.8', os: ubuntu-latest, tox: py38}
+          - {name: 'PyPy', python: 'pypy-3.10', os: ubuntu-latest, tox: pypy310}
+          - {name: 'Minimum Versions', python: '3.11', os: ubuntu-latest, tox: py311}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Display Python version
+        run: python -c "import sys; print(sys.version)"
+      - name: Install dependencies
+        run: |
+             true ###############################################################
+             true # install pip, pytest, and python packages
+             true #     asterisk globbing is fragile, so don't use asterisk path
+             true #     globs.  Just call out individual files, below.
+             true ###############################################################
+             python -m pip install --upgrade pip
+             pip install -U pytest
+             pip install -Ur './requirements/requirements.txt'
+             pip install -Ur './requirements/requirements-dev.txt'
+      - name: Run pytest
+        run: |
+             true ###############################################################
+             true # use pytest dot path because it's portable across
+             true #     windows and unix
+             true ###############################################################
+             cd tests && pytest .
+

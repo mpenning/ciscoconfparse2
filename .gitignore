@@ -1,0 +1,10 @@
+*.pyc
+MANIFEST
+dist
+build
+*.orig
+tags
+.tox
+.undodir
+
+*go.sum

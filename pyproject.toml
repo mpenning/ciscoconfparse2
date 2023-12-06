@@ -1,0 +1,94 @@
+# pyproject.toml format -> See PEP 621
+
+[build-system]
+# See -> PEP 517
+requires = ["poetry>=1.5.1", "poetry-core>=1.6.1", "wheel>=0.38.4", "packaging>=23.0"]
+build-backend = "poetry.core.masonry.api"
+requires-python = ">=3.8.0"
+
+##############################################################################
+#
+# IMPORTANT:
+# pyproject.toml has several different formats (such as a [project] section);
+# however, pip will NOT install unless I base pyproject.toml on the
+# [tool.poetry] section below.
+#
+# Maybe it's my fault, but I have not had success trying to migrate to
+# a [project] section with pip installs.  I have stopped trying because
+# the problem is too complicated to continue throwing cycles at making a
+# [project] section work with 'pip install ciscoconfparse'.
+#
+##############################################################################
+#[project]
+
+[tool.poetry]
+name = "ciscoconfparse2"
+version = "0.1.0"
+description = "Parse, Audit, Query, Build, and Modify Cisco IOS-style and JunOS-style configs"
+license = "GPL-3.0-only"
+authors = [
+    # Poetry only accepts a string here (no braces)
+    "Mike Pennington <mike@pennington.net>",
+]
+maintainers = [
+    # Poetry only accepts a string here (no braces)
+    "Mike Pennington <mike@pennington.net>",
+]
+readme = "README.md"
+packages = [
+    # Syntax -> https://python-poetry.org/docs/pyproject/#packages
+    { include = "ciscoconfparse/*" },
+    { include = "tests/*" },
+]
+# See -> https://python-poetry.org/docs/pyproject/#include-and-exclude
+include = [
+    #"configs/",
+    #"tests/",
+    #"dev_tools/",
+    #"CHANGES.md",
+    #"CONTRIBUTING.md",
+    #"LICENSE",
+    #"Makefile",
+    #"requirements.txt",
+    #"requirements-dev.txt",
+    #"README_git_workflow.md"
+]
+exclude = [
+    "coverage.json"
+]
+keywords = ["Parse", "audit", "query", "modify", "Cisco IOS", "Cisco", "NXOS", "ASA", "Juniper"]
+classifiers=[
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Plugins",
+    "Intended Audience :: Developers",
+    "Intended Audience :: System Administrators",
+    "Intended Audience :: Information Technology",
+    "Intended Audience :: Telecommunications Industry",
+    "License :: OSI Approved :: GNU General Public License (GPL)",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Topic :: Communications",
+    "Topic :: Internet",
+    "Topic :: System :: Networking",
+    "Topic :: System :: Networking :: Monitoring",
+]
+
+# Do NOT remove this... requirements.txt is not sufficient for dependencies
+[tool.poetry.dependencies]
+python = ">=3.8,<4.0.0"
+attrs = "23.1.0"
+passlib = "^1.7.4"
+dnspython = "^2.4.2"
+loguru = "0.7.2"
+toml = ">=0.10.2"
+hier_config = ">=2.2.2"
+deprecated = ">=1.2.14"
+
+[tool.poetry.urls]
+source = "https://github.com/mpenning/ciscoconfparse2"
+homepage = "http://www.pennington.net/py/ciscoconfparse2/"
+repository = "https://github.com/mpenning/ciscoconfparse2"
+documentation = "http://www.pennington.net/py/ciscoconfparse2/"
+
