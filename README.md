@@ -40,7 +40,7 @@ In this case, the parent is a line containing `interface` and
 the child is a line containing the word `shutdown`.
 
 ```python
-from ciscoconfparse import CiscoConfParse
+from ciscoconfparse2 import CiscoConfParse
 
 parse = CiscoConfParse('exampleswitch.conf', syntax='ios')
 
@@ -51,7 +51,7 @@ for intf_obj in parse.find_parent_objects('^interface', '^\s+shutdown'):
 The next example will find the IP address assigned to interfaces.
 
 ```python
-from ciscoconfparse import CiscoConfParse
+from ciscoconfparse2 import CiscoConfParse
 
 parse = CiscoConfParse('exampleswitch.conf', syntax='ios')
 
@@ -70,201 +70,11 @@ for ccp_obj in parse.find_objects('^interface'):
 
 ## Cisco IOS Factory Usage
 
-CiscoConfParse has a special feature that abstracts common IOS / NXOS / ASA / IOSXR fields; at this time, it is only supported on those configuration types. You will see factory parsing in CiscoConfParse code as parsing the configuration with `factory=True`.  A fraction of these pre-parsed Cisco IOS fields follows; some variables are not used below, but simply called out for quick reference.
-
-```python
-from ciscoconfparse import IPv4Obj, IPv6Obj
-from ciscoconfparse import CiscoConfParse
-
-##############################################################################
-# Parse an example Cisco IOS HSRP configuration from:
-#     tests/fixtures/configs/sample_08.ios
-#
-# !
-# interface FastEthernet0/0
-#  ip address 172.16.2.1 255.255.255.0
-#  ipv6 dhcp server IPV6_2FL_NORTH_LAN
-#  ipv6 address fd01:ab00::/64 eui-64
-#  ipv6 address fe80::1 link-local
-#  ipv6 enable
-#  ipv6 ospf 11 area 0
-#  standby 110 ip 172.16.2.254
-#  standby 110 ipv6 autoconfig
-#  standby 110 priority 150
-#  standby 110 preempt delay minimum 15
-#  standby 110 track Dialer1 75
-#  standby 110 track FastEthernet 0/1
-#  standby 110 track FastEthernet1/0 30
-#  standby 111 ip 172.16.2.253
-#  standby 111 priority 150
-#  standby 111 preempt delay minimum 15
-#  standby 111 track Dialer1 50
-#
-##############################################################################
-parse = CiscoConfParse('tests/fixtures/configs/sample_08.ios', syntax='ios', factory=True)
-for ccp_obj in parse.find_objects('^interface'):
-
-    # Skip if there are no HSRPInterfaceGroup() instances...
-    if len(ccp_obj.hsrp_interfaces) == 0:
-        continue
-
-    # Interface name, such as 'FastEthernet0/0'
-    intf_name = ccp_obj.name
-
-    # Interface description
-    intf_description = ccp_obj.description
-
-    # IPv4Obj
-    intf_v4obj = ccp_obj.ipv4_addr_object
-
-    # IPv4 address object: ipaddress.IPv4Address()
-    intf_v4addr = ccp_obj.ipv4_addr_object.ip
-
-    # IPv4 netmask object: ipaddress.IPv4Address()
-    intf_v4masklength = ccp_obj.ipv4_addr_object.masklength
-
-    # set() of IPv4 secondary address/prefixlen strings
-    intf_v4secondary_networks = ccp_obj.ip_secondary_networks
-
-    # set() of IPv4 secondary address strings
-    intf_v4secondary_addresses = ccp_obj.ip_secondary_addresses
-
-    # List of HSRP IPv4 addrs from the ciscoconfpasre/models_cisco.py HSRPInterfaceGroup()
-    intf_hsrp_addresses = [hsrp_grp.ip for hsrp_grp in ccp_obj.hsrp_interfaces]
-
-    # A bool for using HSRP bia mac-address...
-    intf_hsrp_usebia = any([ii.use_bia for ii in ccp_obj.hsrp_interfaces])
-
-    ##########################################################################
-    # Print a simple interface summary
-    ##########################################################################
-    print("----")
-    print(f"Interface {ccp_obj.interface_object.name}: {intf_v4addr}/{intf_v4masklength}")
-    print(f"  Interface {intf_name} description: {intf_description}")
-
-    ##########################################################################
-    # Print HSRP Group interface tracking information
-    ##########################################################################
-    print("")
-    print(f"  HSRP tracking for {set([ii.interface_name for ii in ccp_obj.hsrp_interfaces])}")
-    for hsrp_intf_group in ccp_obj.hsrp_interfaces:
-        group = hsrp_intf_group.hsrp_group
-        # hsrp_intf_group.interface_tracking is a list of dictionaries
-        if len(hsrp_intf_group.interface_tracking) > 0:
-            print(f"  --- HSRP Group {group} ---")
-            for track_intf in hsrp_intf_group.interface_tracking:
-                print(f"    --- Tracking {track_intf.interface} ---")
-                print(f"    Tracking interface: {track_intf.interface}")
-                print(f"    Tracking decrement: {track_intf.decrement}")
-                print(f"    Tracking weighting: {track_intf.weighting}")
-
-
-    ##########################################################################
-    # Break out inidividual interface name components
-    #   Example: 'Serial3/4/5.6:7 multipoint'
-    ##########################################################################
-    # The base ciscoconfparse/ccp_util.py CiscoInterface() instance
-    intf_cisco_interface = ccp_obj.interface_object
-    # The ciscoconfparse/ccp_util.py CiscoInterface() name, 'Serial3/4/5.6:7 multipoint'
-    intf_name = ccp_obj.interface_object.name
-    # The ciscoconfparse/ccp_util.py CiscoInterface() prefix, 'Serial'
-    intf_prefix = ccp_obj.interface_object.prefix
-    # The ciscoconfparse/ccp_util.py CiscoInterface() digit separator, '/'
-    digit_separator = ccp_obj.interface_object.digit_separator or ""
-    # The ciscoconfparse/ccp_util.py CiscoInterface() slot, 3
-    intf_slot = ccp_obj.interface_object.slot or ""
-    # The ciscoconfparse/ccp_util.py CiscoInterface() card, 4
-    intf_card = ccp_obj.interface_object.card or ""
-    # The ciscoconfparse/ccp_util.py CiscoInterface() card, 5
-    intf_port = ccp_obj.interface_object.port
-    # The ciscoconfparse/ccp_util.py CiscoInterface() subinterface, 6
-    intf_subinterface = ccp_obj.interface_object.subinterface or ""
-    # The ciscoconfparse/ccp_util.py CiscoInterface() channel, 7
-    intf_channel = ccp_obj.interface_object.channel or ""
-    # The ciscoconfparse/ccp_util.py CiscoInterface() interface_class, 'multipoint'
-    intf_class = ccp_obj.interface_object.interface_class or ""
-
-    ##########################################################################
-    # Extract all IPv4Obj() with re_match_iter_typed()
-    ##########################################################################
-    _default = None
-    for _obj in ccp_obj.children:
-        # Get a dict() from re_match_iter_typed() by caling it with 'groupdict'
-        intf_dict = _obj.re_match_iter_typed(
-            # Add a regex match-group called 'v4addr'
-            r"ip\s+address\s+(?P<v4addr>\S.+?\d)\s*(?P<secondary>secondary)*$",
-            # Cast the v4addr regex match group as an IPv4Obj() type
-            groupdict={"v4addr": IPv4Obj, "secondary": str},
-            # Default to None if there is no regex match
-            default=_default,
-        )
-        intf_ipv4obj = intf_dict["v4addr"]
-
-    ##########################################################################
-    # Extract all IPv6Obj() with re_match_iter_typed()
-    ##########################################################################
-    _default = None
-    for _obj in ccp_obj.children:
-        # Get a dict() from re_match_iter_typed() by caling it with 'groupdict'
-        intf_dict = _obj.re_match_iter_typed(
-            # Add regex match-groups called 'v6addr' and an optional 'ipv6type'
-            r"ipv6\s+address\s+(?P<v6addr>\S.+?\d)\s*(?P<v6type>eui.64|link.local)*$",
-            # Cast the v6addr regex match group as an IPv6Obj() type
-            groupdict={"v6addr": IPv6Obj, "v6type": str},
-            # Default to None if there is no regex match
-            default=_default,
-        )
-        intf_ipv6obj = intf_dict["v6addr"]
-        intf_ipv6type = intf_dict["v6type"]
-        # Skip this object if it has no IPv6 address
-        if intf_ipv6obj is _default:
-            continue
-```
-
-When that is run, you will see information similar to this...
-
-```
-----
-Interface FastEthernet0/0: 172.16.2.1/24
-  Interface FastEthernet0/0 description: [IPv4 and IPv6 desktop / laptop hosts on 2nd-floor North LAN]
-
-  HSRP Group tracking for {'FastEthernet0/0'}
-  --- HSRP Group 110 ---
-    --- Tracking Dialer1 ---
-    Tracking interface: Dialer1
-    Tracking decrement: 75
-    Tracking weighting: None
-    --- Tracking FastEthernet 0/1 ---
-    Tracking interface: FastEthernet 0/1
-    Tracking decrement: 10
-    Tracking weighting: None
-    --- Tracking FastEthernet1/0 ---
-    Tracking interface: FastEthernet1/0
-    Tracking decrement: 30
-    Tracking weighting: None
-  --- HSRP Group 111 ---
-    --- Tracking Dialer1 ---
-    Tracking interface: Dialer1
-    Tracking decrement: 50
-    Tracking weighting: None
-GRP {'addr': <IPv6Obj fd01:ab00::/64>}
-RESULT <IOSIntfLine # 231 'FastEthernet0/0' primary_ipv4: '172.16.2.1/24'> <IPv6Obj fd01:ab00::/64>
-```
-
-
-## Are there private copies of CiscoConfParse()?
-
-Yes.  [Cisco Systems][27] maintains their own copy of `CiscoConfParse()`. The terms of the GPLv3
-license allow this as long as they don't distribute their modified private copy in
-binary form.  Also refer to this [GPLv3 License primer / GPLv3 101][45].  Officially, [modified
-copies of CiscoConfParse source-code must also be licensed as GPLv3][45].
-
-Dear [Cisco Systems][27]: please consider porting your improvements back into
-the [`github ciscoconfparse2 repo`](https://github.com/mpenning/ciscoconfparse2).
+CiscoConfParse has a special feature that abstracts common IOS / NXOS / ASA / IOSXR fields; at this time, it is only supported on those configuration types. You will see factory parsing in CiscoConfParse code as parsing the configuration with `factory=True`.
 
 ## Are you releasing licensing besides GPLv3?
 
-[I will not](https://github.com/mpenning/ciscoconfparse/issues/270#issuecomment-1774035592); however, you can take the solution Cisco does above as long as you comply with the GPLv3 terms.  If it's truly a problem for your company, there are commercial solutions available (to include purchasing the project, or hiring me).
+I will not. however, if it's truly a problem for your company, there are commercial solutions available (to include purchasing the project, or hiring me).
 
 ## What if we don\'t use Cisco IOS?
 
@@ -290,11 +100,7 @@ CiscoConfParse also handles anything that has a Cisco IOS style of configuration
 
 ## Docs
 
-- Blogs
-  - Kirk Byers published [a ciscoconfparse blog piece](https://pynet.twb-tech.com/blog/parsing-configurations-w-ciscoconfparse.html)
-  - Henry Ölsner published [a ciscoconfparse blog piece](https://codingnetworker.com/2016/06/parse-cisco-ios-configuration-ciscoconfparse/)
 - The latest copy of the docs are [archived on the web][15]
-- There is also a [CiscoConfParse Tutorial][16]
 
 ## Installation and Downloads
 
@@ -352,7 +158,7 @@ network engineering toolbox; others regard it as a form of artwork.
 - We are manually disabling some [SonarCloud](https://sonarcloud.io/) alerts with:
   - `#pragma warning disable S1313`
   - `#pragma warning restore S1313`
-  - Where `S1313` is a False-positive that [SonarCloud](https://sonarcloud.io) flags in [CiscoConfParse](https://github.com/mpenning/ciscoconfparse2/).
+  - Where `S1313` is a False-positive that [SonarCloud](https://sonarcloud.io) flags
   - Those `#pragma warning` lines should be carefully-fenced to ensure that we don't disable a [SonarCloud](https://sonarcloud.io/) alert that is useful.
 
 ### Semantic Versioning and Conventional Commits
