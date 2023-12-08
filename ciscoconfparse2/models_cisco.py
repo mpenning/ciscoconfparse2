@@ -72,7 +72,7 @@ class TrackingInterface(BaseCfgLine):
     @logger.catch(reraise=True)
     def __init__(self, group, interface, decrement, weighting=None):
         """Implement a TrackingInterface() object for Cisco IOS HSRP, GLBP and VRRP"""
-        super().__init__()
+        super(TrackingInterface, self).__init__(group, interface, decrement, weighting=weighting)
 
         self._parent = self.parent
         self._group = int(group)
@@ -185,7 +185,7 @@ class HSRPInterfaceGroup(BaseCfgLine):
     @logger.catch(reraise=True)
     def __init__(self, group, parent):
         """A HSRP Interface Group object"""
-        super().__init__()
+        super(HSRPInterfaceGroup, self).__init__(group, parent)
         self.feature = "hsrp"
         self._group = int(group)
         if isinstance(parent, BaseCfgLine):
@@ -2729,7 +2729,7 @@ class IOSIntfGlobal(IOSCfgLine):
     # This method is on IOSIntGlobal()
     @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        super(IOSIntfGlobal).__init__(*args, **kwargs)
         self.feature = "interface global"
 
     @logger.catch(reraise=True)
@@ -2903,7 +2903,7 @@ class IOSAccessLine(IOSCfgLine):
 class BaseIOSRouteLine(IOSCfgLine):
     @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        super(BaseIOSRouteLine, self).__init__(*args, **kwargs)
 
     @logger.catch(reraise=True)
     def __repr__(self):
