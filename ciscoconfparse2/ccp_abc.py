@@ -453,8 +453,7 @@ class BaseCfgLine(object):
         #
         # Sometimes brace escaping is not required... we need better fencing
         # around safe_escape_curly_braces()
-        if False:
-            newtext = self.safe_escape_curly_braces(newtext)
+        newtext = self.safe_escape_curly_braces(newtext)
 
         # Remove all double-spacing, except for the indent spaces...
         self.line_id = self.calculate_line_id()
@@ -1356,7 +1355,7 @@ class BaseCfgLine(object):
         self.text = text_after_replace
 
 
-        if text_before_replace != text_after_replace:
+        if self.confobj and text_before_replace != text_after_replace:
             # Substitute the modified object back into
             # the UserList...
             self.confobj[idx] = self

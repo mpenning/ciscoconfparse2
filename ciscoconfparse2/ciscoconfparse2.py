@@ -822,7 +822,6 @@ class ConfigList(UserList):
     # This method is on ConfigList()
     @logger.catch(reraise=True)
     def __add__(self, other):
-        raise NotImplementedError()
         if isinstance(other, ConfigList):
             return self.__class__(self.data + other._list)
         elif isinstance(other, type(self.data)):
@@ -832,7 +831,6 @@ class ConfigList(UserList):
     # This method is on ConfigList()
     @logger.catch(reraise=True)
     def __radd__(self, other):
-        raise NotImplementedError()
         if isinstance(other, ConfigList):
             return self.__class__(other.data + self.data)
         elif isinstance(other, type(self.data)):
@@ -842,7 +840,6 @@ class ConfigList(UserList):
     # This method is on ConfigList()
     @logger.catch(reraise=True)
     def __iadd__(self, other):
-        raise NotImplementedError()
         if isinstance(other, ConfigList):
             self.data += other.data
         elif isinstance(other, type(self.data)):
@@ -859,7 +856,6 @@ class ConfigList(UserList):
     # This method is on ConfigList()
     @logger.catch(reraise=True)
     def __mul__(self, val):
-        raise NotImplementedError()
         return self.__class__(self.data * val)
 
     __rmul__ = __mul__
@@ -867,7 +863,6 @@ class ConfigList(UserList):
     # This method is on ConfigList()
     @logger.catch(reraise=True)
     def __imul__(self, val):
-        raise NotImplementedError()
         self.data *= val
         return self
 
@@ -1340,13 +1335,13 @@ class ConfigList(UserList):
         if isinstance(val, str):
             if self.factory:
                 obj = config_line_factory(
-                    text=val,
+                    line=val,
                     syntax=self.syntax,
                 )
 
             elif self.factory is False:
                 obj = CFGLINE[self.syntax](
-                    text=val,
+                    line=val,
                 )
 
             else:
@@ -3728,7 +3723,7 @@ class CiscoPassword(object):
         return dp
 
 
-#@logger.catch(reraise=True)
+@logger.catch(reraise=True)
 def config_line_factory(all_lines=None, line=None, comment_delimiters=None, syntax="ios", debug=0):
     """A factory method to assign a custom BaseCfgLine() subclass based on `all_lines`, `line`, `comment_delimiters`, and `syntax` parameters."""
     # Complicted & Buggy

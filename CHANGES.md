@@ -4,6 +4,12 @@
 - Summary:
     - Insert something here
 
+## Version: 0.1.7
+
+- Released: 2023-12-11
+- Summary:
+    - Fix SonarCloud bugs
+
 ## Version: 0.1.6
 
 - Released: 2023-12-11
