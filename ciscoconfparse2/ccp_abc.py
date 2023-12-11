@@ -17,6 +17,7 @@ r""" ccp_abc.py - Parse, Query, Build, and Modify IOS-style configurations
 
 from typing import Any, Union
 import warnings
+import math
 import re
 
 from loguru import logger
@@ -37,7 +38,7 @@ class BaseCfgLine(object):
     all_text: Any = None
     all_lines: Any = None
     line: str = DEFAULT_TEXT
-    comment_delimiter: str = "!"
+    comment_delimiters: list = None
     _uncfgtext_to_be_deprecated: str = ""
     _text: str = DEFAULT_TEXT
     linenum: int = -1
@@ -58,7 +59,7 @@ class BaseCfgLine(object):
     _diff_side: str = ""  # diff_side: 'before', 'after' or ''
 
     @logger.catch(reraise=True)
-    def __init__(self, all_lines=None, line=DEFAULT_TEXT, comment_delimiter="!", **kwargs):
+    def __init__(self, all_lines=None, line=DEFAULT_TEXT, comment_delimiters=None, **kwargs):
         """Accept an IOS line number and initialize family relationship attributes"""
 
         # Hack to accept old parameter names instead of finding all the places
@@ -71,7 +72,7 @@ class BaseCfgLine(object):
             # The text kwarg is now called line
             line = kwargs.get("text")
 
-        self.comment_delimiter = comment_delimiter
+        self.comment_delimiters = comment_delimiters
         self._uncfgtext_to_be_deprecated = ""
         self._text = line
         self._children = []
@@ -176,7 +177,7 @@ class BaseCfgLine(object):
         if isinstance(self._text, str):
             if len(self._text.lstrip()) > 0:
                 first_char = self._text.lstrip().split()[0]
-                if first_char in self.comment_delimiter:
+                if first_char in self.comment_delimiters:
                     return True
         return False
 
@@ -685,20 +686,17 @@ class BaseCfgLine(object):
     # On BaseCfgLine()
     @junos_unsupported
     def delete(self, recurse=True):
-        """Delete this object.  By default, if a parent object is deleted, the child objects are also deleted; this happens because ``recurse`` defaults True."""
+        """Delete this object, including from references in lists of child objects.  By default, if a parent object is deleted, the child objects are also deleted; this happens because ``recurse`` defaults True."""
+
         if self.confobj.debug >= 1:
-            logger.info("{}.delete(recurse={}) was called.".format(self, recurse))
+            logger.info(f"{self}.delete(recurse={recurse}) was called.")
 
         # Build a set of all IOSCfgLine() object instances to be deleted...
         delete_these = {self}
 
         if recurse is True:
             if self.confobj.debug >= 1:
-                logger.debug(
-                    "Executing <IOSCfgLine line #{}>.delete(recurse=True)".format(
-                        self.linenum
-                    )
-                )
+                logger.debug(f"Executing <IOSCfgLine line #{self.linenum}>.delete(recurse=True)")
 
             # NOTE - 1.5.30 changed this from iterating over self.children
             #        to self.all_children
@@ -711,9 +709,7 @@ class BaseCfgLine(object):
             for obj in sorted(delete_these, reverse=True):
                 linenum = obj.linenum
                 if self.confobj.debug >= 1:
-                    logger.debug(
-                        "    Deleting <IOSCfgLine(line # {})>.".format(linenum)
-                    )
+                    logger.debug(f"    Deleting <IOSCfgLine(line # {linenum})>.")
                 # If there has not been a commit between the last search
                 # and delete, the line-number could be wrong...
                 try:
@@ -726,13 +722,11 @@ class BaseCfgLine(object):
 
         else:
             if self.confobj.debug >= 1:
-                logger.debug(
-                    "Executing <IOSCfgLine line #{}>.delete(recurse=False)".format(
-                        self.linenum
-                    )
-                )
-            ## Consistency check to refuse deletion of the wrong object...
-            ##    only delete if the line numbers are consistent
+                logger.debug(f"Executing <IOSCfgLine line #{self.linenum}>.delete(recurse=False)")
+            ###################################################################
+            # Consistency check to refuse deletion of the wrong object...
+            #    only delete if the line numbers are consistent
+            ###################################################################
             linenum = self.linenum
             if self.confobj.data[linenum].text != self.text:
                 error = f"Object mis-match in BaseCfgLine().delete() of {self}"
@@ -740,8 +734,17 @@ class BaseCfgLine(object):
                 raise NotImplementedError(error)
 
             if self.confobj.debug >= 1:
-                logger.debug("    Deleting <IOSCfgLine(line # {})>.".format(linenum))
+                logger.debug(f"    Deleting <IOSCfgLine(line # {linenum})>.")
             del self.confobj.data[linenum]
+
+        #######################################################################
+        # IMPORTANT: delete this object from it's parents' list of direct
+        # children
+        #######################################################################
+        parentobj = self.parent
+        for cobj in parentobj.children:
+            if cobj is self:
+                parentobj.children.remove(cobj)
 
         if self.confobj and self.confobj.auto_commit:
             self.confobj.ccp_ref.atomic()
@@ -749,66 +752,67 @@ class BaseCfgLine(object):
             self.confobj.reassign_linenums()
         return True
 
-    # On BaseCfgLine()
-    @junos_unsupported
-    def delete_children_matching(self, linespec):
-        """Delete any child :class:`~models_cisco.IOSCfgLine` objects which
-        match ``linespec``.
-        Parameters
-        ----------
-        linespec : str
-            A string or python regular expression, which should be matched.
-        Returns
-        -------
-        list
-            A list of :class:`~models_cisco.IOSCfgLine` objects which were deleted.
-        Examples
-        --------
-        This example illustrates how you can use
-        :func:`~ccp_abc.delete_children_matching` to delete any description
-        on an interface.
-        .. code-block:: python
-           :emphasize-lines: 16
-           >>> from ciscoconfparse2 import CiscoConfParse
-           >>> config = [
-           ...     '!',
-           ...     'interface Serial1/0',
-           ...     ' description Some lame description',
-           ...     ' ip address 1.1.1.1 255.255.255.252',
-           ...     '!',
-           ...     'interface Serial1/1',
-           ...     ' description Another lame description',
-           ...     ' ip address 1.1.1.5 255.255.255.252',
-           ...     '!',
-           ...     ]
-           >>> parse = CiscoConfParse(config)
-           >>>
-           >>> for obj in parse.find_objects(r'^interface'):
-           ...     obj.delete_children_matching(r'description')
-           >>>
-           >>> for line in parse.ioscfg:
-           ...     print(line)
-           ...
-           !
-           interface Serial1/0
-            ip address 1.1.1.1 255.255.255.252
-           !
-           interface Serial1/1
-            ip address 1.1.1.5 255.255.255.252
-           !
-           >>>
-        """
-        # if / else in a list comprehension... ref ---> https://stackoverflow.com/a/9442777/667301
-        retval = [
-            (obj.delete() if obj.re_search(linespec) else obj) for obj in self.children
-        ]
+    if False:
+        # On BaseCfgLine()
+        @junos_unsupported
+        def delete_children_matching(self, linespec):
+            """Delete any child :class:`~models_cisco.IOSCfgLine` objects which
+            match ``linespec``.
+            Parameters
+            ----------
+            linespec : str
+                A string or python regular expression, which should be matched.
+            Returns
+            -------
+            list
+                A list of :class:`~models_cisco.IOSCfgLine` objects which were deleted.
+            Examples
+            --------
+            This example illustrates how you can use
+            :func:`~ccp_abc.delete_children_matching` to delete any description
+            on an interface.
+            .. code-block:: python
+            :emphasize-lines: 16
+            >>> from ciscoconfparse2 import CiscoConfParse
+            >>> config = [
+            ...     '!',
+            ...     'interface Serial1/0',
+            ...     ' description Some lame description',
+            ...     ' ip address 1.1.1.1 255.255.255.252',
+            ...     '!',
+            ...     'interface Serial1/1',
+            ...     ' description Another lame description',
+            ...     ' ip address 1.1.1.5 255.255.255.252',
+            ...     '!',
+            ...     ]
+            >>> parse = CiscoConfParse(config)
+            >>>
+            >>> for obj in parse.find_objects(r'^interface'):
+            ...     obj.delete_children_matching(r'description')
+            >>>
+            >>> for line in parse.ioscfg:
+            ...     print(line)
+            ...
+            !
+            interface Serial1/0
+                ip address 1.1.1.1 255.255.255.252
+            !
+            interface Serial1/1
+                ip address 1.1.1.5 255.255.255.252
+            !
+            >>>
+            """
+            # if / else in a list comprehension... ref ---> https://stackoverflow.com/a/9442777/667301
+            retval = [
+                (obj.delete() if obj.re_search(linespec) else obj) for obj in self.children
+            ]
 
-        if self.confobj and self.confobj.auto_commit:
-            self.confobj.ccp_ref.atomic()
-        else:
-            self.confobj.reassign_linenums()
+            if self.confobj and self.confobj.auto_commit:
+                self.confobj.ccp_ref.atomic()
+            else:
+                self.confobj.reassign_linenums()
 
-        return retval
+            return retval
 
     # On BaseCfgLine()
     def has_child_with(self, linespec, all_children=False):
@@ -886,9 +890,8 @@ class BaseCfgLine(object):
     # On BaseCfgLine()
     @junos_unsupported
     @logger.catch(reraise=True)
-    def append_to_family(self, insertstr, indent=-1, auto_indent_width=1, auto_indent=False):
-        """
-        Append an :class:`~models_cisco.IOSCfgLine` object with ``insertstr``
+    def append_to_family(self, insertstr, indent=-1, auto_indent=False):
+        """Append an :class:`~models_cisco.IOSCfgLine` object with ``insertstr``
         as a child at the top of the current configuration family.
 
         ``insertstr`` is inserted at the top of the family to ensure there are no
@@ -903,29 +906,22 @@ class BaseCfgLine(object):
 
         Call :func:`~ciscoconfparse2.CiscoConfParse.commit` if inserting something other
         than a text configuration string.
-
         Parameters
         ----------
         insertstr : str
             A string which contains the text configuration to be apppended.
         indent : int
             The amount of indentation to use for the child line; by default, the number of left spaces provided with ``insertstr`` are respected.  However, you can manually set the indent level when ``indent``>0.  This option will be ignored, if ``auto_indent`` is True.
-        auto_indent_width : int
-            Amount of whitespace to automatically indent
         auto_indent : bool
-            Automatically indent the child to ``auto_indent_width``
-
+            Automatically indent the child to :py:attr:`~ciscoconfparse2.CiscoConfParse.auto_indent_width`
         Returns
         -------
         str
             The text matched by the regular expression group; if there is no match, None is returned.
-
         Examples
         --------
-
         This example illustrates how you can use :func:`~ccp_abc.append_to_family` to add a
         ``carrier-delay`` to each interface.
-
         .. code-block:: python
            :emphasize-lines: 14
            >>> from ciscoconfparse2 import CiscoConfParse
@@ -961,6 +957,7 @@ class BaseCfgLine(object):
         """
         # Get the value of auto_commit from the ConfigList()
         auto_commit = bool(self.confobj.auto_commit)
+        auto_indent_width = self.confobj.ccp_ref.auto_indent_width
 
         if auto_indent is True and indent > 0:
             error = "indent and auto_indent are not supported together."
@@ -976,13 +973,16 @@ class BaseCfgLine(object):
         insertstr_parent_indent = self.get_indent()
 
         # Build the string to insert with proper indentation...
-        if auto_indent:
-            insertstr = (" " * (insertstr_parent_indent + auto_indent_width)) + insertstr.lstrip()
-        elif indent > 0:
+        if indent > 0:
             insertstr = (" " * indent) + insertstr.lstrip()
+        elif bool(auto_indent) is True:
+            insertstr = (auto_indent_width * insertstr_parent_indent) + insertstr.lstrip()
         else:
             # do not modify insertstr indent, or indentstr leading spaces
             pass
+
+        # Get the resulting indent of the insertstr
+        insertstr_indent = len(insertstr) - len(insertstr.lstrip())
 
         # BaseCfgLine.append_to_family(), insert a single line after this
         #  object...
@@ -993,19 +993,75 @@ class BaseCfgLine(object):
         else:
             newobj_parent = self
 
-        if isinstance(newobj_parent, BaseCfgLine):
+        if isinstance(self, BaseCfgLine):
             try:
-                num_newobj_children = len(newobj_parent.all_children)
-                if num_newobj_children > 0:
+                if len(self.all_children) == 0 and len(self.children) == 0:
+                    ###########################################################
+                    # If all changes have been committed, insert the first
+                    # child here
+                    ###########################################################
+
                     # Use newobj_parent.linenum instead of
                     # self.confobj.index(foo), which is rather fragile with
                     # this UserList...
-                    _idx = newobj_parent.all_children[-1].linenum + 1
-
+                    _idx = self.linenum + len(self.children) + 1
                     retval = self.confobj.insert(_idx, newobj)
+
+                    if self.classify_family_indent(insertstr) == 0:
+                        pass
+                    elif self.classify_family_indent(insertstr) == 1:
+                        self.children.append(newobj)
+                    elif self.classify_family_indent(insertstr) > 1:
+                        raise NotImplementedError()
+
                     if auto_commit is True:
                         self.confobj.ccp_ref.atomic()
                     return retval
+
+                elif len(self.all_children) > 0 and len(self.children) == 0:
+
+                    _idx = self.linenum + 1
+                    retval = self.confobj.insert(_idx, newobj)
+                    self.children.append(newobj)
+                    if auto_commit is True:
+                        self.confobj.ccp_ref.atomic()
+                    return retval
+
+                elif len(self.all_children) > 0 and len(self.children) > 0:
+
+                    direct_child_indent = self.classify_family_indent(self.children[-1].text)
+                    insertstr_family_indent = self.classify_family_indent(insertstr)
+                    if insertstr_family_indent == 0:
+                        _idx = self.linenum + len(self.children)
+
+                    elif insertstr_family_indent > self.classify_family_indent(self.text):
+                        # Do the children have children?
+                        if len(self.children[-1].children) > 0:
+                            _idx = self.linenum + len(self.all_children) + 1
+                        else:
+                            _idx = self.linenum + len(self.children) + 1
+
+                    elif insertstr_family_indent < self.classify_family_indent(self.text):
+                        # inserstr is indented less than this object
+                        raise NotImplementedError()
+
+                    else:
+                        # something unexpected happened
+                        raise NotImplementedError()
+
+                    classify_family_indent = self.classify_family_indent(insertstr)
+                    if classify_family_indent == 1:
+                        self.children.append(newobj)
+                    elif classify_family_indent > 1:
+                        raise NotImplementedError("Cannot append more than one child level")
+                    retval = self.confobj.insert(_idx, newobj)
+
+                    if auto_commit is True:
+                        self.confobj.ccp_ref.atomic()
+
+                    return retval
+
+
                 else:
                     ###########################################################
                     # If all changes have been committed, insert the first
@@ -1015,12 +1071,16 @@ class BaseCfgLine(object):
                     # Use newobj_parent.linenum instead of
                     # self.confobj.index(foo), which is rather fragile with
                     # this UserList...
-                    _idx = newobj_parent.linenum + 1
+                    _idx = self.linenum + 1
 
-                    retval = self.confobj.insert(_idx, newobj)
+                    if True:
+                        retval = self.confobj.insert(_idx, newobj)
+                    retval = self.children.append(newobj)
+
                     if auto_commit is True:
                         self.confobj.ccp_ref.atomic()
                     return retval
+
             except BaseException as eee:
                 raise eee
         elif newobj_parent is not None:
@@ -1032,6 +1092,51 @@ class BaseCfgLine(object):
             error = f"Cannot find parent for {newobj} under this instance: {self}"
             logger.error(error)
             raise ValueError(error)
+
+    # On BaseCfgLine()
+    @logger.catch(reraise=True)
+    def classify_family_indent(self, insertstr=None):
+        """Look at the indent level of insertstr and return an integer for the auto_indent_width of insertstr relative to this object and auto_indent_width.
+        - If insertstr is indented at the same level, return 0.
+        - If insertstr is indented more, return a positive integer for how many auto_indent_width indents.
+        - If insertstr is indented less, return a negative integer for how many auto_indent_width indents.
+        - If insertstr is not indented on an integer multiple of auto_indent_width, raise NotImplementedError.
+        """
+        if not isinstance(insertstr, str):
+            error = f"Received `insertstr` {type(insertstr)}, but expected a string"
+            logger.critical(error)
+            raise InvalidParameters(error)
+
+        auto_indent_width = self.confobj.ccp_ref.auto_indent_width
+        if not isinstance(auto_indent_width, int):
+            error = f"CiscoConfParse().auto_indent_width must be an integer, but found {type(auto_indent_width)}"
+            logger.critical(error)
+            raise NotImplementedError(error)
+
+        # Raise an error if the indent is not an even multiple of
+        # auto_indent_width
+        indent_width = len(insertstr) - len(insertstr.lstrip())
+        indent_modulo = indent_width % auto_indent_width
+        # Match on up to three decimal places...
+        if not math.isclose(indent_modulo, 0.000, rel_tol=0, abs_tol=1e-3):
+            error = f"`insertstr` is not an even multiple of `CiscoConfParse().auto_indent_width={auto_indent_width}`"
+            logger.critical(error)
+            raise NotImplementedError(error)
+
+        if self.get_indent() == indent_width:
+            return 0
+        elif self.get_indent() < indent_width:
+            this_val = indent_width / self.confobj.ccp_ref.auto_indent_width
+            self_val = self.get_indent() / self.confobj.ccp_ref.auto_indent_width
+            return this_val - self_val
+        elif self.get_indent() > indent_width:
+            this_val = indent_width / self.confobj.ccp_ref.auto_indent_width
+            self_val = self.get_indent() / self.confobj.ccp_ref.auto_indent_width
+            return this_val - self_val
+        else:
+            error = "unexpected condition"
+            logger.critical(error)
+            raise NotImplementedError(error)
 
     # On BaseCfgLine()
     @junos_unsupported
@@ -1108,11 +1213,9 @@ class BaseCfgLine(object):
     @logger.catch(reraise=True)
     def get_typed_dict(self, regex=None, type_dict=None, default=None, debug=False):
         """Return a typed dict if `regex` is an re.Match() instance and `type_dict` is a `dict` of types.  If a key in `type_dict` does not match, `default` is returned for that key.
-
         Examples
         --------
         These examples demonstrate how ``get_typed_dict()`` works.
-
         .. code-block:: python
            >>> _uut_regex = r"^(?P<my_digit>[\d+])(?P<no_digit>[^\d+])"
            >>> _type_dict = {"my_digit", int, "no_digit": str}
@@ -1124,7 +1227,6 @@ class BaseCfgLine(object):
            >>> get_typed_dict(re.search(_uut_regex, ""), type_dict=_type_dict, default=_default)
            {'my_digit': '_no_match', 'no_digit': '_no_match'}
            >>>
-
         """
         retval = {}
         if debug is True:
@@ -1164,12 +1266,10 @@ class BaseCfgLine(object):
             A string or python regular expression, which should replace the text matched by ``regex``.
         ignore_rgx : str
             A string or python regular expression; the replacement is skipped if :class:`~models_cisco.IOSCfgLine` text matches ``ignore_rgx``.  ``ignore_rgx`` defaults to None, which means no lines matching ``regex`` are skipped.
-
         Returns
         -------
         str
             The new text after replacement
-
         Examples
         --------
         This example illustrates how you can use

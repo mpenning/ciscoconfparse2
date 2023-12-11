@@ -249,7 +249,7 @@ _, ACTIVE_LOGURU_HANDLERS = initialize_ciscoconfparse()
 
 
 @logger.catch(reraise=True)
-def parse_line_braces(line_txt=None, comment_delimiter=None) -> tuple:
+def parse_line_braces(line_txt=None, comment_delimiters=None) -> tuple:
     """Internal helper-method for brace-delimited configs (typically JunOS, syntax='junos')."""
     # Removed config parameter assertions in 1.7.2...
 
@@ -257,10 +257,10 @@ def parse_line_braces(line_txt=None, comment_delimiter=None) -> tuple:
 
     enforce_valid_types(line_txt, (str,), "line_txt parameter must be a string.")
     enforce_valid_types(
-        comment_delimiter, (str,), "comment_delimiter parameter must be a string."
+        comment_delimiters, (list,), "comment_delimiters parameter must be a list."
     )
-    if len(comment_delimiter) > 1:
-        raise ValueError("len(comment_delimiter) must be one.")
+    if len(comment_delimiters) > 1:
+        raise ValueError("len(comment_delimiters) must be one.")
 
     child_indent = 0
     this_line_indent = 0
@@ -275,7 +275,7 @@ def parse_line_braces(line_txt=None, comment_delimiter=None) -> tuple:
     brace_re = re.compile(junos_re_str, re.VERBOSE)
     comment_re = re.compile(
         r"^\s*(?P<delimiter>[{0}]+)(?P<comment>[^{0}]*)$".format(
-            re.escape(comment_delimiter)
+            re.escape(comment_delimiters[0])
         )
     )
 
@@ -381,7 +381,7 @@ def parse_line_braces(line_txt=None, comment_delimiter=None) -> tuple:
 # This method was on ConfigList()
 @logger.catch(reraise=True)
 def cfgobj_from_text(
-    text_list, txt, idx, syntax=None, comment_delimiter=None, factory=None
+    text_list, txt, idx, syntax=None, comment_delimiters=None, factory=None
 ):
     """Build cfgobj from configuration text syntax, and factory inputs."""
 
@@ -395,8 +395,8 @@ def cfgobj_from_text(
         logger.error(error)
         raise InvalidParameters(error)
 
-    if not isinstance(comment_delimiter, str):
-        error = f"cfgobj_from_text(comment_delimiter=`{comment_delimiter}`) must be a string"
+    if not isinstance(comment_delimiters, list):
+        error = f"cfgobj_from_text(comment_delimiters=`{comment_delimiters}`) must be a list of string comment chars"
         logger.error(error)
         raise InvalidParameters(error)
 
@@ -410,7 +410,7 @@ def cfgobj_from_text(
         obj = CFGLINE[syntax](
             all_lines=text_list,
             line=txt,
-            comment_delimiter=comment_delimiter,
+            comment_delimiters=comment_delimiters,
         )
         if isinstance(obj, BaseCfgLine):
             obj.linenum = idx
@@ -424,7 +424,7 @@ def cfgobj_from_text(
         obj = config_line_factory(
             all_lines=text_list,
             line=txt,
-            comment_delimiter=comment_delimiter,
+            comment_delimiters=comment_delimiters,
             syntax=syntax,
         )
         if isinstance(obj, BaseCfgLine):
@@ -515,8 +515,11 @@ def assign_parent_to_closing_braces(input_list=None, keep_blank_lines=False):
 # This method was copied from the same method in git commit below...
 # https://raw.githubusercontent.com/mpenning/ciscoconfparse/bb3f77436023873da344377d3c839387f5131e7f/ciscoconfparse/ciscoconfparse2.py
 @logger.catch(reraise=True)
-def convert_junos_to_ios(input_list=None, stop_width=4, comment_delimiter="!", debug=0):
+def convert_junos_to_ios(input_list=None, stop_width=4, comment_delimiters=None, debug=0):
     """Accept `input_list` containing a list of junos-brace-formatted-string config lines.  This method strips off semicolons / braces from the string lines in `input_list` and returns the lines in a new list where all lines are explicitly indented as IOS would (as if IOS understood braces)."""
+
+    if comment_delimiters is None:
+        comment_delimiters = []
 
     if not isinstance(input_list, list):
         error = "convert_junos_to_ios() `input_list` must be a non-empty python list"
@@ -528,8 +531,8 @@ def convert_junos_to_ios(input_list=None, stop_width=4, comment_delimiter="!", d
         logger.error(error)
         raise InvalidParameters(error)
 
-    if not isinstance(comment_delimiter, str):
-        error = "convert_junos_to_ios() `comment_delimiter` must be a string"
+    if not isinstance(comment_delimiter, list):
+        error = "convert_junos_to_ios() `comment_delimiters` must be a list"
         logger.error(error)
         raise InvalidParameters(error)
 
@@ -554,7 +557,7 @@ def convert_junos_to_ios(input_list=None, stop_width=4, comment_delimiter="!", d
         if debug > 0:
             logger.debug(f"Parse line {idx + 1}:'{tmp.strip()}'")
         (this_line_indent, child_indent, line) = parse_line_braces(
-            tmp.strip(), comment_delimiter=comment_delimiter
+            tmp.strip(), comment_delimiters=[comment_delimiter]
         )
         lines.append((" " * STOP_WIDTH * (offset + this_line_indent)) + line.strip())
         offset += child_indent
@@ -565,7 +568,7 @@ def convert_junos_to_ios(input_list=None, stop_width=4, comment_delimiter="!", d
 class ConfigList(UserList):
     """A custom list to hold :class:`~ccp_abc.BaseCfgLine` objects.  Most users will never need to use this class directly."""
     initlist: Union[list, tuple] = None
-    comment_delimiter: str = None
+    comment_delimiters: list = None
     debug: int = None
     factory: bool = None
     ignore_blank_lines: bool = None
@@ -581,7 +584,7 @@ class ConfigList(UserList):
     def __init__(
         self,
         initlist=None,
-        comment_delimiter="!",
+        comment_delimiters=None,
         debug=0,
         factory=False,
         ignore_blank_lines=True,
@@ -596,8 +599,8 @@ class ConfigList(UserList):
         ----------
         initlist : list
             A list of parsed :class:`~models_cisco.IOSCfgLine` objects
-        comment_delimiter : str
-            A comment delimiter.  This should only be changed when parsing non-Cisco IOS configurations, which do not use a !  as the comment delimiter.  ``comment`` defaults to '!'
+        comment_delimiters : list
+            A list of string comment delimiters.  This should only be changed when parsing non-Cisco configurations.  ``comment_delimiters`` defaults to ['!'] for Cisco configurations.
         debug : int
             ``debug`` defaults to 0, and should be kept that way unless you're working on a very tricky config parsing problem.  Debug output is not particularly friendly
         ignore_blank_lines : bool
@@ -632,13 +635,13 @@ class ConfigList(UserList):
                     obj = CFGLINE[syntax](
                         all_lines=[],
                         line=ii,
-                        comment_delimiter=comment_delimiter,
+                        comment_delimiters=comment_delimiters,
                     )
                 else:
                     obj = config_line_factory(
                         all_lines=[],
                         line=ii,
-                        comment_delimiter=comment_delimiter,
+                        comment_delimiters=comment_delimiters,
                         syntax=syntax,
                     )
                 initobjs.append(obj)
@@ -678,7 +681,7 @@ class ConfigList(UserList):
         ccp_value = ccp_ref_kwarg_val or ciscoconfparse_kwarg_val
 
         self.initlist = initlist
-        self.comment_delimiter = comment_delimiter
+        self.comment_delimiters = comment_delimiters
         self.factory = factory
         self.ignore_blank_lines = ignore_blank_lines
         self.syntax = syntax
@@ -697,12 +700,12 @@ class ConfigList(UserList):
         # as of python 3.9, getattr() below is slightly faster than
         #     isinstance(initlist, Sequence)
         if False:
-            self.data = self.bootstrap_obj_init_ng(initlist, debug=debug)
+            self.data = self.bootstrap(initlist, debug=debug)
 
         if True:
             # Removed this portion of __init__() in 1.7.16...
             if getattr(initlist, "__iter__", False) is not False:
-                self.data = self.bootstrap_obj_init_ng(initlist)
+                self.data = self.bootstrap(initlist)
 
             else:
                 self.data = []
@@ -724,9 +727,9 @@ class ConfigList(UserList):
     # This method is on ConfigList()
     @logger.catch(reraise=True)
     def __repr__(self):
-        return """<ConfigList, syntax='{}', comment='{}', conf={}>""".format(
+        return """<ConfigList, syntax='{}', comment_delimiters={}, conf={}>""".format(
             self.syntax,
-            self.comment_delimiter,
+            self.comment_delimiters,
             self.data,
         )
 
@@ -786,7 +789,7 @@ class ConfigList(UserList):
     @logger.catch(reraise=True)
     def __delitem__(self, ii):
         del self.data[ii]
-        self.data = self.bootstrap_obj_init_ng(self.ioscfg, debug=self.debug)
+        self.data = self.bootstrap(self.text, debug=self.debug)
 
     # This method is on ConfigList()
     @logger.catch(reraise=True)
@@ -946,17 +949,18 @@ class ConfigList(UserList):
             obj = CFGLINE[self.syntax](
                 all_lines=self.as_text,
                 line=val,
-                comment_delimiter=self.comment_delimiter,
+                comment_delimiters=self.comment_delimiters,
             )
         else:
             obj = config_line_factory(
                 all_lines=self.as_text,
                 line=val,
-                comment_delimiter=self.comment_delimiter,
+                comment_delimiters=self.comment_delimiters,
                 syntax=self.syntax,
             )
 
-        self.data.append(obj)
+        #self.data.append(obj)
+        self.data.insert(len(self.data), obj)
 
         if bool(self.auto_commit):
             # The config is not safe unless this is called after the append
@@ -990,7 +994,7 @@ class ConfigList(UserList):
 
         if False:
             # Rebuild the family relationships
-            self.data = self.bootstrap_obj_init_ng(self.as_text, debug=self.debug)
+            self.data = self.bootstrap(self.as_text, debug=self.debug)
 
         if bool(self.auto_commit):
             # The config is not safe unless this is called after the append
@@ -1054,7 +1058,7 @@ class ConfigList(UserList):
         else:
             self.data.extend(other)
 
-        self.data = self.bootstrap_obj_init_ng(self.as_text, debug=self.debug)
+        self.data = self.bootstrap(self.as_text, debug=self.debug)
 
         if bool(self.auto_commit):
             # The config is not safe unless this is called after the append
@@ -1136,14 +1140,14 @@ class ConfigList(UserList):
             new_obj = CFGLINE[self.syntax](
                 all_lines=self.data,
                 line=new_val,
-                comment_delimiter=self.comment_delimiter,
+                comment_delimiters=[self.comment_delimiter],
             )
 
         elif self.factory is True:
             new_obj = config_line_factory(
                 all_lines=self.data,
                 line=new_val,
-                comment_delimiter=self.comment_delimiter,
+                comment_delimiters=[self.comment_delimiter],
                 syntax=self.syntax,
             )
 
@@ -1164,8 +1168,7 @@ class ConfigList(UserList):
 
         if atomic:
             # Reparse the whole config as a text list
-            #self._bootstrap_from_text()
-            self.data = self.bootstrap_obj_init_ng(self.ioscfg)
+            self.data = self.bootstrap(self.as_text)
 
         else:
             ## Just renumber lines...
@@ -1261,14 +1264,14 @@ class ConfigList(UserList):
             new_obj = CFGLINE[self.syntax](
                 all_lines=self.data,
                 line=new_val,
-                comment_delimiter=self.comment_delimiter,
+                comment_delimiters=[self.comment_delimiter],
             )
 
         elif self.factory is True:
             new_obj = config_line_factory(
                 all_lines=self.data,
                 line=new_val,
-                comment_delimiter=self.comment_delimiter,
+                comment_delimiters=[self.comment_delimiter],
                 syntax=self.syntax,
             )
 
@@ -1288,8 +1291,7 @@ class ConfigList(UserList):
 
         if atomic is True:
             # Reparse the whole config as a text list
-            #self._bootstrap_from_text()
-            self.data = self.bootstrap_obj_init_ng(self.ioscfg)
+            self.data = self.bootstrap(self.as_text)
         else:
             # Just renumber lines...
             self.reassign_linenums()
@@ -1308,6 +1310,8 @@ class ConfigList(UserList):
 
         # Get the configuration line text if val is a BaseCfgLine() instance
         if isinstance(val, BaseCfgLine):
+            # only work with plain text to ensure that all objects are the
+            # correct object type, below
             val = val.text
 
         # Coerce a string into the appropriate object
@@ -1315,14 +1319,14 @@ class ConfigList(UserList):
             if self.factory:
                 obj = config_line_factory(
                     text=val,
-                    comment_delimiter=self.comment_delimiter,
+                    comment_delimiters=self.comment_delimiters,
                     syntax=self.syntax,
                 )
 
             elif self.factory is False:
                 obj = CFGLINE[self.syntax](
                     text=val,
-                    comment_delimiter=self.comment_delimiter,
+                    comment_delimiters=self.comment_delimiters,
                 )
 
             else:
@@ -1337,7 +1341,8 @@ class ConfigList(UserList):
         # Insert the object at index ii
         self.data.insert(ii, obj)
 
-        self.data = self.bootstrap_obj_init_ng(self.as_text, debug=self.debug)
+        if False:
+            self.data = self.bootstrap(self.as_text, debug=self.debug)
 
         if bool(self.auto_commit):
             # The config is not safe unless this is called after the append
@@ -1557,7 +1562,7 @@ class ConfigList(UserList):
 
     # This method is on ConfigList()
     @logger.catch(reraise=True)
-    def bootstrap_obj_init_ng(self, text_list=None, debug=0):
+    def bootstrap(self, text_list=None, debug=0):
         """
         Accept a text list, and format into a list of *CfgLine() objects.
 
@@ -1565,11 +1570,15 @@ class ConfigList(UserList):
 
         This method returns a list of *CfgLine() objects.
         """
+        if text_list is None:
+            text_list = self.ccp_ref.text
+
         if not isinstance(text_list, Sequence):
             raise ValueError
 
         if self.debug >= 1:
-            logger.info("    ConfigList().bootstrap_obj_init_ng() was called.")
+            logger.info("    ConfigList().bootstrap() was called.")
+
 
         retval = []
         idx = None
@@ -1582,7 +1591,7 @@ class ConfigList(UserList):
         parents_cache = {}
         for idx, txt in enumerate(text_list):
             if self.debug >= 1:
-                logger.debug("    bootstrap_obj_init_ng() adding text cmd: '%s' at idx %s" % (txt, idx,))
+                logger.debug("    bootstrap() adding text cmd: '%s' at idx %s" % (txt, idx,))
             if not isinstance(txt, str):
                 raise ValueError
 
@@ -1592,7 +1601,7 @@ class ConfigList(UserList):
                 txt=txt,
                 idx=idx,
                 syntax=syntax,
-                comment_delimiter=self.comment_delimiter,
+                comment_delimiters=self.comment_delimiters,
                 factory=self.factory,
             )
             obj.confobj = self
@@ -1804,37 +1813,40 @@ class ConfigList(UserList):
         return retval
 
 
-@attrs.define(repr=False)
+#@attrs.define(repr=False)
 class CiscoConfParse(object):
     """Parse Cisco IOS configurations and answer queries about the configs."""
-    config: Union[str, list] = ""
-    finished_config_parse: bool = False
-    debug: int = 0
+    config: Union[str, list] = None
     syntax: str = "ios"
-    comment_delimiter: str = "!"
-    factory: bool = False
-    ignore_blank_lines: bool = False
     encoding: str = locale.getpreferredencoding()
-    read_only: bool = False
+    loguru: bool = True
+    comment_delimiters: list = []
+    auto_indent_width: int = -1
+    linesplit_rgx: str = r"\r*\n+"
+    ignore_blank_lines: bool = False
     auto_commit: bool = None
+    factory: bool = False
+    debug: int = 0
 
     # Attributes
     config_objs: Any = None
+    finished_config_parse: bool = False
 
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
     def __init__(
         self,
-        config="",
-        comment="!",
-        debug=0,
-        factory=False,
-        linesplit_rgx=r"\r*\n+",
-        ignore_blank_lines=False,
+        config=None,
         syntax="ios",
         encoding=locale.getpreferredencoding(),
-        read_only=False,
+        loguru=True,
+        comment_delimiters=None,
+        auto_indent_width=-1,
+        linesplit_rgx=r"\r*\n+",
+        ignore_blank_lines=False,
         auto_commit=True,
+        factory=False,
+        debug=0,
     ):
         """
         Initialize CiscoConfParse.
@@ -1843,22 +1855,24 @@ class CiscoConfParse(object):
         ----------
         config : list or str
             A list of configuration statements, or a configuration file path to be parsed
-        comment : str
-            A comment delimiter.  This should only be changed when parsing non-Cisco IOS configurations, which do not use a !  as the comment delimiter.  ``comment`` defaults to '!'.  This value can hold multiple characters in case the config uses multiple characters for comment delimiters; however, the comment delimiters are always assumed to be one character wide
-        debug : int
-            ``debug`` defaults to 0, and should be kept that way unless you're working on a very tricky config parsing problem.  Debug range goes from 0 (no debugging) to 5 (max debugging).  Debug output is not particularly friendly.
-        factory : bool
-            ``factory`` defaults to False; if set ``True``, it enables a beta-quality configuration line classifier.
-        linesplit_rgx : str
-            ``linesplit_rgx`` is used when parsing configuration files to find where new configuration lines are.  It is best to leave this as the default, unless you're working on a system that uses unusual line terminations (for instance something besides Unix, OSX, or Windows)
-        ignore_blank_lines : bool
-            ``ignore_blank_lines`` defaults to False; when this is set True, ciscoconfparse2 ignores blank configuration lines.  You might want to set ``ignore_blank_lines`` to False if you intentionally use blank lines in your configuration, or you are parsing configurations which naturally have blank lines (such as Cisco Nexus configurations).
         syntax : str
             A string holding the configuration type.  Default: 'ios'.  Must be one of: 'ios', 'nxos', 'iosxr', 'asa', 'junos'.  Use 'junos' for any brace-delimited network configuration (including F5, Palo Alto, etc...).
         encoding : str
             A string holding the coding type.  Default is `locale.getpreferredencoding()`
-        read_only : bool
-            A bool indicating whether CiscoConfParse should execute read-only.
+        loguru : bool
+            A bool indicating whether CiscoConfParse should execute with loguru enabled (default: True)
+        comment_delimiters : list
+            A list of string comment delimiters.  This should only be changed when parsing non-Cisco configurations, which do not use a '!' as the comment delimiter.  ``comment`` defaults to '!'.  This value can hold multiple characters in case the config uses multiple characters for comment delimiters; however, the comment delimiters are always assumed to be one character wide
+        auto_indent_width : int
+            ``auto_indent_width`` defaults to -1, and should be kept that way unless you're working on a very tricky config parsing problem.
+        debug : int
+            ``debug`` defaults to 0, and should be kept that way unless you're working on a very tricky config parsing problem.  Debug range goes from 0 (no debugging) to 5 (max debugging).  Debug output is not particularly friendly.
+        factory : bool
+            ``factory`` defaults to False; if set ``True``, it enables a beta-quality configuration classifier.
+        linesplit_rgx : str
+            ``linesplit_rgx`` is used when parsing configuration files to find where new configuration lines are.  It is best to leave this as the default, unless you're working on a system that uses unusual line terminations (for instance something besides Unix, OSX, or Windows)
+        ignore_blank_lines : bool
+            ``ignore_blank_lines`` defaults to False; when this is set True, ciscoconfparse2 ignores blank configuration lines.  You might want to set ``ignore_blank_lines`` to False if you intentionally use blank lines in your configuration, or you are parsing configurations which naturally have blank lines (such as Cisco Nexus configurations).
         auto_commit : bool
             A bool indicating whether CiscoConfParse should auto-commit config changes when possible; the default is ``True``, however, parsing very large configs may be faster with ``auto_commit=False``.
 
@@ -1904,8 +1918,32 @@ class CiscoConfParse(object):
             Returns a dictionary of valid arguments for `open()` (these change based on the running python version).
         syntax : str
             A string holding the configuration type.  Default: 'ios'.  Must be one of: 'ios', 'nxos', 'iosxr', 'asa', 'junos'.  Use 'junos' for any brace-delimited network configuration (including F5, Palo Alto, etc...).
-
         """
+        if syntax not in ALL_VALID_SYNTAX:
+            error = f"{syntax} is not a valid syntax."
+            logger.error(error)
+            raise InvalidParameters(error)
+
+        if comment_delimiters is None:
+            comment_delimiters = self.get_comment_delimiters(syntax=syntax)
+        elif isinstance(comment_delimiters, list):
+            for comment_delimiter in comment_delimiters:
+                if not isinstance(comment_delimiter, str):
+                    error = f"`{comment_delimiter}` is not a valid string comment_delimiter"
+                    logger.critical(error)
+                    raise InvalidParameters(error)
+                elif not len(comment_delimiter) == 1:
+                    error = f"`{comment_delimiter}` must be a single string character."
+                    logger.critical(error)
+                    raise InvalidParameters(error)
+        elif not isinstance(comment_delimiters, list):
+            error = "'comment_delimiters' must be a list of string comment delimiters"
+            logger.critical(error)
+            raise InvalidParameters(error)
+
+        if int(auto_indent_width) <= 0:
+            auto_indent_width = int(self.get_auto_indent_from_syntax(syntax=syntax))
+
         ######################################################################
         # Log an error if parsing with `ignore_blank_lines=True` and
         #     `factory=False`
@@ -1918,11 +1956,11 @@ class CiscoConfParse(object):
         ######################################################################
         # Reconfigure loguru if read_only is True
         ######################################################################
-        if read_only is True:
-            active_loguru_handlers = configure_loguru(read_only=read_only, active_handlers=globals()["ACTIVE_LOGURU_HANDLERS"], debug=debug)
+        if loguru is False:
+            active_loguru_handlers = configure_loguru(read_only=loguru, active_handlers=globals()["ACTIVE_LOGURU_HANDLERS"], debug=debug)
             globals()["ACTIVE_LOGURU_HANDLERS"] = active_loguru_handlers
             if debug > 0:
-                logger.warning(f"Disabled loguru enqueue because read_only={read_only}")
+                logger.warning(f"Disabled loguru enqueue because loguru={loguru}")
 
         if not (isinstance(syntax, str) and (syntax in ALL_VALID_SYNTAX)):
             error = f"'{syntax}' is an unknown syntax"
@@ -1931,16 +1969,24 @@ class CiscoConfParse(object):
 
         # all IOSCfgLine object instances...
         self.finished_config_parse = False
-        self.debug = debug
+
         self.syntax = syntax
-        self.comment_delimiter = comment
-        self.factory = factory
-        self.ignore_blank_lines = ignore_blank_lines
         self.encoding = encoding or ENCODING
-        self.read_only = read_only
+        self.loguru = bool(loguru)
+        self.comment_delimiters = comment_delimiters
+        self.auto_indent_width = int(auto_indent_width)
+        self.debug = int(debug)
+        self.factory = bool(factory)
+        self.linesplit_rgx = linesplit_rgx
+        self.ignore_blank_lines = ignore_blank_lines
         self.auto_commit = auto_commit
 
         self.config_objs = None
+
+
+        # Convert an None config into an empty list
+        if config is None:
+            config = []
 
         if len(config) > 0:
             try:
@@ -1989,7 +2035,7 @@ class CiscoConfParse(object):
 
         self.config_objs = ConfigList(
             initlist=config_lines,
-            comment_delimiter=comment,
+            comment_delimiters=comment_delimiters,
             debug=debug,
             factory=factory,
             ignore_blank_lines=ignore_blank_lines,
@@ -2027,7 +2073,7 @@ class CiscoConfParse(object):
         # Explicitly handle all brace-parsing factory syntax here...
         ######################################################################
         if syntax == "junos":
-            config_lines = convert_junos_to_ios(tmp_lines, comment_delimiter="#")
+            config_lines = convert_junos_to_ios(tmp_lines, comment_delimiters=["#"])
         elif syntax in ALL_VALID_SYNTAX:
             config_lines = tmp_lines
         else:
@@ -2039,6 +2085,70 @@ class CiscoConfParse(object):
 
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
+    def get_comment_delimiters(self, syntax=None):
+        """Return a list of comment delimiters for the 'syntax' string in question"""
+        if not isinstance(syntax, str):
+            error = "The 'syntax' parameter must be a string"
+            logger.error(error)
+            raise InvalidParameters(error)
+
+        if syntax not in ALL_VALID_SYNTAX:
+            error = f"syntax='{syntax}' is not yet supported"
+            logger.error(error)
+            raise InvalidParameters(error)
+
+        comment_delimiters = []
+        if syntax == "ios":
+            comment_delimiters = ['!']
+        elif syntax == "asa":
+            comment_delimiters = ['!']
+        elif syntax == "iosxr":
+            comment_delimiters = ['!']
+        elif syntax == "nxos":
+            comment_delimiters = ['!']
+        elif syntax == "junos":
+            comment_delimiters = ['#']
+        else:
+            error = "Unexpected condition in get_comment_delimiters()"
+            logger.critical(error)
+            raise NotImplementedError(error)
+
+        return comment_delimiters
+
+    # This method is on CiscoConfParse()
+    @logger.catch(reraise=True)
+    def get_auto_indent_from_syntax(self, syntax=None):
+        """Return an auto indent for the 'syntax' string in question"""
+        if not isinstance(syntax, str):
+            error = "The 'syntax' parameter must be a string"
+            logger.error(error)
+            raise InvalidParameters(error)
+
+        if syntax not in ALL_VALID_SYNTAX:
+            error = f"syntax='{syntax}' is not yet supported"
+            logger.error(error)
+            raise InvalidParameters(error)
+
+        indent_width = -1
+        if syntax == "ios":
+            indent_width = 1
+        elif syntax == "asa":
+            indent_width = 1
+        elif syntax == "iosxr":
+            indent_width = 1
+        elif syntax == "nxos":
+            indent_width = 2
+        elif syntax == "junos":
+            indent_width = 4
+        else:
+            error = "Unexpected condition in get_auto_indent_from_syntax()"
+            logger.critical(error)
+            raise NotImplementedError(error)
+
+        return int(indent_width)
+
+    # This method is on CiscoConfParse()
+    @logger.catch(reraise=True)
     def __repr__(self):
         """Return a string that represents this CiscoConfParse object instance.  The number of lines embedded in the string is calculated from the length of the config_objs attribute."""
         if self.config_objs is None:
@@ -2046,11 +2156,11 @@ class CiscoConfParse(object):
         elif isinstance(self.config_objs, Sequence):
             num_lines = len(self.config_objs)
         return (
-            "<CiscoConfParse: %s lines / syntax: %s / comment delimiter: '%s' / factory: %s / ignore_blank_lines: %s / encoding: '%s' / auto_commit: %s>"
+            "<CiscoConfParse: %s lines / syntax: %s / comment delimiters: %s / factory: %s / ignore_blank_lines: %s / encoding: '%s' / auto_commit: %s>"
             % (
                 num_lines,
                 self.syntax,
-                self.comment_delimiter,
+                self.comment_delimiters,
                 self.factory,
                 self.ignore_blank_lines,
                 self.encoding,
@@ -2172,23 +2282,24 @@ class CiscoConfParse(object):
     @logger.catch(reraise=True)
     def text(self):
         """Return a list containing all text configuration statements; it is an alias for ``CiscoConfParse().ioscfg``."""
-        return self.ioscfg
-
-    # This method is on CiscoConfParse()
-    @property
-    @logger.catch(reraise=True)
-    def ioscfg(self):
-        """Return a list containing all text configuration statements."""
-        # I keep ioscfg to emulate legacy ciscoconfparse2 behavior
-        #
-        # FYI: map / methodcaller is not significantly faster than a list
-        #     comprehension, below...
-        # See https://stackoverflow.com/a/51519942/667301
-        # from operator import methodcaller
-        # get_text_attr = methodcaller('text')
-        # return list(map(get_text_attr, self.config_objs))
-        #
         return [ii.text for ii in self.config_objs]
+
+    if False:
+        # This method is on CiscoConfParse()
+        @property
+        @logger.catch(reraise=True)
+        def ioscfg(self):
+            """Return a list containing all text configuration statements."""
+            # I keep ioscfg to emulate legacy ciscoconfparse2 behavior
+            #
+            # FYI: map / methodcaller is not significantly faster than a list
+            #     comprehension, below...
+            # See https://stackoverflow.com/a/51519942/667301
+            # from operator import methodcaller
+            # get_text_attr = methodcaller('text')
+            # return list(map(get_text_attr, self.config_objs))
+            #
+            return [ii.text for ii in self.config_objs]
 
     # This method is on CiscoConfParse()
     @property
@@ -2216,8 +2327,7 @@ class CiscoConfParse(object):
         --------
         :func:`~ciscoconfparse2.CiscoConfParse.commit`.
         """
-        # self.config_objs._bootstrap_from_text()
-        self.config_objs.data = self.config_objs.bootstrap_obj_init_ng(self.ioscfg, debug=self.debug)
+        self.config_objs.data = self.config_objs.bootstrap(debug=self.debug)
         self.config_objs.commit_checkpoint = self.config_objs.get_checkpoint()
 
     # This method is on CiscoConfParse()
@@ -2233,7 +2343,7 @@ class CiscoConfParse(object):
         --------
         :func:`~ciscoconfparse2.CiscoConfParse.atomic`.
         """
-        self.atomic()  # atomic() calls self.config_objs.bootstrap_obj_init_ng
+        self.atomic()  # atomic() calls self.config_objs.bootstrap
 
 
     # This method is on CiscoConfParse()
@@ -3315,7 +3425,7 @@ debug={debug},
         ``\\r\\n`` in Windows)."""
         try:
             with open(filepath, "w", encoding=self.encoding) as newconf:
-                for line in self.ioscfg:
+                for line in self.as_text:
                     newconf.write(line + "\n")
             return True
         except BaseException as ee:
@@ -3628,8 +3738,8 @@ class CiscoPassword(object):
 
 
 @logger.catch(reraise=True)
-def config_line_factory(all_lines=None, line=None, comment_delimiter="!", syntax="ios", debug=0):
-    """A factory method to assign a custom BaseCfgLine() subclass based on `all_lines`, `line`, `comment_delimiter`, and `syntax` parameters."""
+def config_line_factory(all_lines=None, line=None, comment_delimiters=None, syntax="ios", debug=0):
+    """A factory method to assign a custom BaseCfgLine() subclass based on `all_lines`, `line`, `comment_delimiters`, and `syntax` parameters."""
     # Complicted & Buggy
     # classes = [j for (i,j) in globals().iteritems() if isinstance(j, TypeType) and issubclass(j, BaseCfgLine)]
     if not isinstance(all_lines, list):
@@ -3642,8 +3752,8 @@ def config_line_factory(all_lines=None, line=None, comment_delimiter="!", syntax
         logger.error(error)
         raise InvalidParameters(error)
 
-    if not isinstance(comment_delimiter, str):
-        error = f"config_line_factory(comment_delimiter=`{comment_delimiter}`) must be a string, but we got {type(comment_delimiter)}"
+    if not isinstance(comment_delimiters, list):
+        error = f"config_line_factory(comment_delimiters=`{comment_delimiters}`) must be a list of chars, but we got {type(comment_delimiters)}"
         logger.error(error)
         raise InvalidParameters(error)
 
@@ -3692,19 +3802,19 @@ def config_line_factory(all_lines=None, line=None, comment_delimiter="!", syntax
             if cls.is_object_for(all_lines=all_lines, line=line):
                 basecfgline_subclass = cls(
                     all_lines=all_lines, line=line,
-                    comment_delimiter=comment_delimiter,
+                    comment_delimiters=comment_delimiters,
                 )  # instance of the proper subclass
                 return basecfgline_subclass
     except ValueError:
-        error = f"ciscoconfparse2.py config_line_factory(all_lines={all_lines}, line=`{line}`, comment_delimiter=`{comment_delimiter}`, syntax=`{syntax}`) could not find a subclass of BaseCfgLine()"
+        error = f"ciscoconfparse2.py config_line_factory(all_lines={all_lines}, line=`{line}`, comment_delimiters=[`{comment_delimiter}`], syntax=`{syntax}`) could not find a subclass of BaseCfgLine()"
         logger.error(error)
         raise ValueError(error)
     except Exception as eee:
-        error = f"ciscoconfparse2.py config_line_factory(all_lines={all_lines}, line=`{line}`, comment_delimiter=`{comment_delimiter}`, syntax=`{syntax}`): {eee}"
+        error = f"ciscoconfparse2.py config_line_factory(all_lines={all_lines}, line=`{line}`, comment_delimiters=[`{comment_delimiter}`], syntax=`{syntax}`): {eee}"
 
     if debug > 0:
         logger.debug("config_line_factory() is returning a default of IOSCfgLine()")
-    return IOSCfgLine(all_lines=all_lines, line=line, comment_delimiter=comment_delimiter)
+    return IOSCfgLine(all_lines=all_lines, line=line, comment_delimiters=comment_delimiters)
 
 
 def parse_global_options():
