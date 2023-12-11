@@ -4,6 +4,12 @@
 - Summary:
     - Insert something here
 
+## Version: 0.1.5
+
+- Released: 2023-12-11
+- Summary:
+    - Add test suite to git repo
+
 ## Version: 0.1.4
 
 - Released: 2023-12-11
