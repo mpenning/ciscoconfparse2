@@ -66,7 +66,7 @@ class ASACfgLine(BaseCfgLine):
 
     Args:
         - line (str): A string containing a text copy of the ASA configuration line.  :class:`~ciscoconfparse2.CiscoConfParse` will automatically identify the parent and children (if any) when it parses the configuration.
-        - comment_delimiter (str): A string which is considered a comment for the configuration format.  Since this is for Cisco ASA-style configurations, it defaults to ``!``.
+        - comment_delimiters (list): A list of strings which are considered a comment for the configuration format.  Since this is for Cisco ASA-style configurations, it defaults to ``!``.
 
     Attributes:
         - text     (str): A string containing the parsed ASA configuration statement
@@ -95,10 +95,14 @@ class ASACfgLine(BaseCfgLine):
 
     @logger.catch(reraise=True)
     def __eq__(self, other):
+        if other is None:
+            return False
         return self.get_unique_identifier() == other.get_unique_identifier()
 
     @logger.catch(reraise=True)
     def __ne__(self, other):
+        if other is None:
+            return True
         return self.get_unique_identifier() != other.get_unique_identifier()
 
     @logger.catch(reraise=True)

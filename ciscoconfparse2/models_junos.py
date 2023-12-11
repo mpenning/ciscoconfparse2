@@ -62,8 +62,8 @@ class JunosCfgLine(BaseCfgLine):
     ----------
     line : str
         A string containing a text copy of the Junos configuration line.  :class:`~ciscoconfparse2.CiscoConfParse` will automatically identify the parent and children (if any) when it parses the configuration.
-     comment_delimiter : str
-         A string which is considered a comment for the configuration format.  Since this is for Cisco Junos-style configurations, it defaults to ``!``.
+     comment_delimiters : list
+         A list of strings which are considered a comment for the configuration format.  Since this is for Cisco Junos-style configurations, it defaults to ``!``.
 
     Attributes
     ----------

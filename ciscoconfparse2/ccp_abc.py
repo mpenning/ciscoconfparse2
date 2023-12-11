@@ -15,6 +15,7 @@ r""" ccp_abc.py - Parse, Query, Build, and Modify IOS-style configurations
      mike [~at~] pennington [/dot\] net
 """
 
+from collections.abc import Sequence
 from typing import Any, Union
 import warnings
 import math
@@ -32,13 +33,12 @@ DEFAULT_TEXT = "__undefined__"
 # -------------  Config Line ABC
 #
 
-@attrs.define(repr=False)
+@attrs.define(repr=False, kw_only=True)
 class BaseCfgLine(object):
     """Base configuration object for all configuration line instances; in most cases, the configuration line will be a subclass of this object."""
     all_text: Any = None
     all_lines: Any = None
     line: str = DEFAULT_TEXT
-    comment_delimiters: list = None
     _uncfgtext_to_be_deprecated: str = ""
     _text: str = DEFAULT_TEXT
     linenum: int = -1
@@ -59,7 +59,7 @@ class BaseCfgLine(object):
     _diff_side: str = ""  # diff_side: 'before', 'after' or ''
 
     @logger.catch(reraise=True)
-    def __init__(self, all_lines=None, line=DEFAULT_TEXT, comment_delimiters=None, **kwargs):
+    def __init__(self, all_lines=None, line=DEFAULT_TEXT, **kwargs):
         """Accept an IOS line number and initialize family relationship attributes"""
 
         # Hack to accept old parameter names instead of finding all the places
@@ -72,6 +72,11 @@ class BaseCfgLine(object):
             # The text kwarg is now called line
             line = kwargs.get("text")
 
+        if isinstance(kwargs.get("comment_delimiters", None), list):
+            error = "BaseCfgLine() does not accept a comment_delimiters parameter"
+            logger.critical(error)
+            raise InvalidParameters(error)
+
 
         self._uncfgtext_to_be_deprecated = ""
         self._text = line
@@ -81,16 +86,6 @@ class BaseCfgLine(object):
         self.child_indent = 0
         self.confobj = None  # Reference to the list object which owns it
         self.blank_line_keep = False  # CiscoConfParse() uses blank_line_keep
-
-        #######################################################################
-        # comment_delimiters must come after all other attrs above to ensure
-        # that comment_delimiters errors raise correctly
-        #######################################################################
-        if not isinstance(comment_delimiters, list):
-            error = "BaseCfgLine(comment_delimiters=None) must not be None"
-            logger.critical(error)
-            raise InvalidParameters(error)
-        self.comment_delimiters = comment_delimiters
 
         self.all_text = all_lines
         self.all_lines = all_lines
@@ -115,14 +110,19 @@ class BaseCfgLine(object):
     @logger.catch(reraise=True)
     def __repr__(self):
         try:
+            this_linenum = self.linenum
+        except BaseException:
+            this_linenum = None
+
+        try:
             parent_linenum = self.parent.linenum
-        except AttributeError:
-            parent_linenum = self.linenum
+        except BaseException:
+            parent_linenum = this_linenum
 
         if not self.is_child:
-            return f"<{self.classname} # {self.linenum} '{self.text}'>"
+            return f"<{self.classname} # {this_linenum} '{self.text}'>"
         else:
-            return f"<{self.classname} # {self.linenum} '{self.text}' (parent is # {parent_linenum})>"
+            return f"<{self.classname} # {this_linenum} '{self.text}' (parent is # {parent_linenum})>"
 
     if False:
         # On BaseCfgLine()
@@ -143,6 +143,9 @@ class BaseCfgLine(object):
     # On BaseCfgLine()
     @logger.catch(reraise=True)
     def __eq__(self, val):
+        if not getattr(val, 'get_unique_identifier', False):
+            return False
+
         try:
             #   try / except is much faster than isinstance();
             #   I added hash_arg() inline below for speed... whenever I change
@@ -172,7 +175,9 @@ class BaseCfgLine(object):
     @logger.catch(reraise=True)
     def get_unique_identifier(self):
         """Build a unique number for the BaseCfgLine object"""
-        return hash(self.linenum) * hash(self._text)
+        linenum = getattr(self, 'linenum', None)
+        _text = getattr(self, 'text', DEFAULT_TEXT)
+        return hash(linenum) * hash(_text)
 
     # On BaseCfgLine()
     @logger.catch(reraise=True)
@@ -184,10 +189,16 @@ class BaseCfgLine(object):
     @logger.catch(reraise=True)
     def is_comment(self):
         """Return True if the line is a comment"""
+        if not isinstance(self.confobj, Sequence):
+            # Comments are only valid in a real configuration list; otherwise
+            # there is no syntax hint to determine whether the line is a
+            # comment... just return None in this case...
+            return None
+
         if isinstance(self._text, str):
             if len(self._text.lstrip()) > 0:
                 first_char = self._text.lstrip().split()[0]
-                if first_char in self.comment_delimiters:
+                if first_char in self.confobj.comment_delimiters:
                     return True
         return False
 
@@ -195,17 +206,19 @@ class BaseCfgLine(object):
     @property
     @logger.catch(reraise=True)
     def text(self):
-        return self._text
+        _text = getattr(self, '_text', DEFAULT_TEXT)
+        return _text
 
     # On BaseCfgLine()
     @text.setter
     @logger.catch(reraise=True)
     def text(self, val):
+        is_comment = getattr(self, 'is_comment', None)
         if isinstance(val, str):
             self._text = val
             self.line_id = self.calculate_line_id()
 
-            if self.is_comment is True:
+            if is_comment is True:
                 # VERY IMPORTANT: due to old behavior, comment parents MUST be self
                 #
                 self.parent = self
@@ -965,6 +978,9 @@ class BaseCfgLine(object):
            !
            >>>
         """
+        if isinstance(insertstr, BaseCfgLine):
+            insertstr = insertstr.text
+
         # Get the value of auto_commit from the ConfigList()
         auto_commit = bool(self.confobj.auto_commit)
         auto_indent_width = self.confobj.ccp_ref.auto_indent_width
@@ -986,7 +1002,7 @@ class BaseCfgLine(object):
         if indent > 0:
             insertstr = (" " * indent) + insertstr.lstrip()
         elif bool(auto_indent) is True:
-            insertstr = (auto_indent_width * insertstr_parent_indent) + insertstr.lstrip()
+            insertstr = " " * (auto_indent_width * insertstr_parent_indent + 1) + insertstr.lstrip()
         else:
             # do not modify insertstr indent, or indentstr leading spaces
             pass
@@ -1015,6 +1031,7 @@ class BaseCfgLine(object):
                     # self.confobj.index(foo), which is rather fragile with
                     # this UserList...
                     _idx = self.linenum + len(self.children) + 1
+                    print("  ->PEAR", newobj)
                     retval = self.confobj.insert(_idx, newobj)
 
                     if self.classify_family_indent(insertstr) == 0:
@@ -1030,6 +1047,7 @@ class BaseCfgLine(object):
 
                 elif len(self.all_children) > 0 and len(self.children) == 0:
 
+                    print("  ->CHAIR", newobj)
                     _idx = self.linenum + 1
                     retval = self.confobj.insert(_idx, newobj)
                     insertstr_family_indent = self.classify_family_indent(insertstr)
@@ -1047,8 +1065,9 @@ class BaseCfgLine(object):
                     insertstr_family_indent = self.classify_family_indent(insertstr)
                     if insertstr_family_indent == 0:
                         #######################################################
-                        # Insert a sibling
+                        # Append a sibling for the children
                         #######################################################
+                        print("  ->FAIR", newobj)
                         _idx = self.linenum + len(self.children)
 
                     elif insertstr_family_indent > self.classify_family_indent(self.text):
@@ -1056,8 +1075,10 @@ class BaseCfgLine(object):
                         # Insert a child... do the children have children?
                         #######################################################
                         if len(self.children[-1].children) > 0:
+                            print("  ->ERR", newobj)
                             _idx = self.linenum + len(self.all_children) + 1
                         else:
+                            print("  ->TEAR", newobj)
                             _idx = self.linenum + len(self.children) + 1
 
                     elif insertstr_family_indent < self.classify_family_indent(self.text):
@@ -1090,6 +1111,7 @@ class BaseCfgLine(object):
                     # Use newobj_parent.linenum instead of
                     # self.confobj.index(foo), which is rather fragile with
                     # this UserList...
+                    print("  ->ZAIR", newobj)
                     _idx = self.linenum + 1
 
                     if True:
@@ -1323,10 +1345,22 @@ class BaseCfgLine(object):
             logger.critical(error)
             raise NotImplementedError(error)
 
+        idx = None
+        if isinstance(self.confobj, Sequence):
+            # Find the index of this object...
+            idx = self.confobj.data.index(self)
+
         text_before_replace = self._text
 
         text_after_replace = re.sub(regex, replacergx, self._text)
         self.text = text_after_replace
+
+
+        if text_before_replace != text_after_replace:
+            # Substitute the modified object back into
+            # the UserList...
+            self.confobj[idx] = self
+
 
         # Only auto_commit if there was a text change
         if text_before_replace != text_after_replace:
@@ -1748,7 +1782,8 @@ class BaseCfgLine(object):
     # On BaseCfgLine()
     @property
     def is_child(self):
-        return not bool(self.parent == self)
+        parent = getattr(self, 'parent', None)
+        return not bool(parent == self)
 
     # On BaseCfgLine()
     @property

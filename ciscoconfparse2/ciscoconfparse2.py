@@ -221,6 +221,38 @@ def initialize_globals():
 
 
 @logger.catch(reraise=True)
+def get_comment_delimiters(syntax=None):
+    """Return a list of comment delimiters for the 'syntax' string in question"""
+    if not isinstance(syntax, str):
+        error = "The 'syntax' parameter must be a string"
+        logger.error(error)
+        raise InvalidParameters(error)
+
+    if syntax not in ALL_VALID_SYNTAX:
+        error = f"syntax='{syntax}' is not yet supported"
+        logger.error(error)
+        raise InvalidParameters(error)
+
+    comment_delimiters = []
+    if syntax == "ios":
+        comment_delimiters = ['!']
+    elif syntax == "asa":
+        comment_delimiters = ['!']
+    elif syntax == "iosxr":
+        comment_delimiters = ['!']
+    elif syntax == "nxos":
+        comment_delimiters = ['!']
+    elif syntax == "junos":
+        comment_delimiters = ['#']
+    else:
+        error = "Unexpected condition in get_comment_delimiters()"
+        logger.critical(error)
+        raise NotImplementedError(error)
+
+    return comment_delimiters
+
+
+@logger.catch(reraise=True)
 def initialize_ciscoconfparse(read_only=False, debug=0):
     """Initialize ciscoconfparse2 global variables and configure logging."""
     globals_dict = initialize_globals()
@@ -410,7 +442,6 @@ def cfgobj_from_text(
         obj = CFGLINE[syntax](
             all_lines=text_list,
             line=txt,
-            comment_delimiters=comment_delimiters,
         )
         if isinstance(obj, BaseCfgLine):
             obj.linenum = idx
@@ -424,7 +455,6 @@ def cfgobj_from_text(
         obj = config_line_factory(
             all_lines=text_list,
             line=txt,
-            comment_delimiters=comment_delimiters,
             syntax=syntax,
         )
         if isinstance(obj, BaseCfgLine):
@@ -531,7 +561,7 @@ def convert_junos_to_ios(input_list=None, stop_width=4, comment_delimiters=None,
         logger.error(error)
         raise InvalidParameters(error)
 
-    if not isinstance(comment_delimiter, list):
+    if not isinstance(comment_delimiters, list):
         error = "convert_junos_to_ios() `comment_delimiters` must be a list"
         logger.error(error)
         raise InvalidParameters(error)
@@ -543,8 +573,8 @@ def convert_junos_to_ios(input_list=None, stop_width=4, comment_delimiters=None,
 
     # Note to self, I made this regex fairly junos-specific...
     input_condition_01 = isinstance(input_list, list) and len(input_list) > 0
-    input_condition_02 = "{" not in set(comment_delimiter)
-    input_condition_03 = "}" not in set(comment_delimiter)
+    input_condition_02 = "{" not in set(comment_delimiters)
+    input_condition_03 = "}" not in set(comment_delimiters)
     if not (input_condition_01 and input_condition_02 and input_condition_03):
         error = "convert_junos_to_ios() input conditions failed"
         logger.error(error)
@@ -557,7 +587,7 @@ def convert_junos_to_ios(input_list=None, stop_width=4, comment_delimiters=None,
         if debug > 0:
             logger.debug(f"Parse line {idx + 1}:'{tmp.strip()}'")
         (this_line_indent, child_indent, line) = parse_line_braces(
-            tmp.strip(), comment_delimiters=[comment_delimiter]
+            tmp.strip(), comment_delimiters=[comment_delimiters[0]]
         )
         lines.append((" " * STOP_WIDTH * (offset + this_line_indent)) + line.strip())
         offset += child_indent
@@ -635,13 +665,11 @@ class ConfigList(UserList):
                     obj = CFGLINE[syntax](
                         all_lines=[],
                         line=ii,
-                        comment_delimiters=comment_delimiters,
                     )
                 else:
                     obj = config_line_factory(
                         all_lines=[],
                         line=ii,
-                        comment_delimiters=comment_delimiters,
                         syntax=syntax,
                     )
                 initobjs.append(obj)
@@ -949,13 +977,11 @@ class ConfigList(UserList):
             obj = CFGLINE[self.syntax](
                 all_lines=self.as_text,
                 line=val,
-                comment_delimiters=self.comment_delimiters,
             )
         else:
             obj = config_line_factory(
                 all_lines=self.as_text,
                 line=val,
-                comment_delimiters=self.comment_delimiters,
                 syntax=self.syntax,
             )
 
@@ -1140,14 +1166,12 @@ class ConfigList(UserList):
             new_obj = CFGLINE[self.syntax](
                 all_lines=self.data,
                 line=new_val,
-                comment_delimiters=[self.comment_delimiter],
             )
 
         elif self.factory is True:
             new_obj = config_line_factory(
                 all_lines=self.data,
                 line=new_val,
-                comment_delimiters=[self.comment_delimiter],
                 syntax=self.syntax,
             )
 
@@ -1264,14 +1288,12 @@ class ConfigList(UserList):
             new_obj = CFGLINE[self.syntax](
                 all_lines=self.data,
                 line=new_val,
-                comment_delimiters=[self.comment_delimiter],
             )
 
         elif self.factory is True:
             new_obj = config_line_factory(
                 all_lines=self.data,
                 line=new_val,
-                comment_delimiters=[self.comment_delimiter],
                 syntax=self.syntax,
             )
 
@@ -1319,14 +1341,12 @@ class ConfigList(UserList):
             if self.factory:
                 obj = config_line_factory(
                     text=val,
-                    comment_delimiters=self.comment_delimiters,
                     syntax=self.syntax,
                 )
 
             elif self.factory is False:
                 obj = CFGLINE[self.syntax](
                     text=val,
-                    comment_delimiters=self.comment_delimiters,
                 )
 
             else:
@@ -1904,8 +1924,8 @@ class CiscoConfParse(object):
 
         Attributes
         ----------
-        comment_delimiter : str
-            A string containing the comment-delimiter.  Default: "!"
+        comment_delimiters : list
+            A list of strings containing the comment-delimiters.  Default: ["!"]
         config_objs : :class:`~ciscoconfparse2.ConfigList`
             A custom list, which contains all parsed :class:`~models_cisco.IOSCfgLine` instances.
         debug : int
@@ -1925,11 +1945,11 @@ class CiscoConfParse(object):
             raise InvalidParameters(error)
 
         if comment_delimiters is None:
-            comment_delimiters = self.get_comment_delimiters(syntax=syntax)
+            comment_delimiters = get_comment_delimiters(syntax=syntax)
         elif isinstance(comment_delimiters, list):
             for comment_delimiter in comment_delimiters:
                 if not isinstance(comment_delimiter, str):
-                    error = f"`{comment_delimiter}` is not a valid string comment_delimiter"
+                    error = f"`{comment_delimiter}` is not a valid string comment_delimiters"
                     logger.critical(error)
                     raise InvalidParameters(error)
                 elif not len(comment_delimiter) == 1:
@@ -2083,37 +2103,6 @@ class CiscoConfParse(object):
 
         return config_lines
 
-    # This method is on CiscoConfParse()
-    @logger.catch(reraise=True)
-    def get_comment_delimiters(self, syntax=None):
-        """Return a list of comment delimiters for the 'syntax' string in question"""
-        if not isinstance(syntax, str):
-            error = "The 'syntax' parameter must be a string"
-            logger.error(error)
-            raise InvalidParameters(error)
-
-        if syntax not in ALL_VALID_SYNTAX:
-            error = f"syntax='{syntax}' is not yet supported"
-            logger.error(error)
-            raise InvalidParameters(error)
-
-        comment_delimiters = []
-        if syntax == "ios":
-            comment_delimiters = ['!']
-        elif syntax == "asa":
-            comment_delimiters = ['!']
-        elif syntax == "iosxr":
-            comment_delimiters = ['!']
-        elif syntax == "nxos":
-            comment_delimiters = ['!']
-        elif syntax == "junos":
-            comment_delimiters = ['#']
-        else:
-            error = "Unexpected condition in get_comment_delimiters()"
-            logger.critical(error)
-            raise NotImplementedError(error)
-
-        return comment_delimiters
 
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
@@ -3515,6 +3504,7 @@ debug={debug},
 
 @attrs.define(repr=False)
 class Diff(object):
+    host: str = None
 
     @logger.catch(reraise=True)
     def __init__(self, hostname=None, old_config=None, new_config=None, syntax='ios'):
@@ -3596,6 +3586,7 @@ class Diff(object):
             _ = yaml.load(open('./options_ios.yml'), Loader=yaml.SafeLoader)
         except FileNotFoundError:
             pass
+
         # For now, we use {} instead of `options_ios.yml`
         self.host = hier_config.Host('example_hostname', 'ios', {})
 
@@ -3737,11 +3728,20 @@ class CiscoPassword(object):
         return dp
 
 
-@logger.catch(reraise=True)
+#@logger.catch(reraise=True)
 def config_line_factory(all_lines=None, line=None, comment_delimiters=None, syntax="ios", debug=0):
     """A factory method to assign a custom BaseCfgLine() subclass based on `all_lines`, `line`, `comment_delimiters`, and `syntax` parameters."""
     # Complicted & Buggy
     # classes = [j for (i,j) in globals().iteritems() if isinstance(j, TypeType) and issubclass(j, BaseCfgLine)]
+    if comment_delimiters is None:
+        # Rewrite comment_delimiters based on the syntax...
+        if syntax in ALL_VALID_SYNTAX:
+            comment_delimiters = get_comment_delimiters(syntax=syntax)
+        else:
+            error = f"Invalid syntax: {syntax}"
+            logger.critical(error)
+            raise NotImplementedError(error)
+
     if not isinstance(all_lines, list):
         error = f"config_line_factory(all_lines=`{all_lines}`) must be a list, but we got {type(all_lines)}"
         logger.error(error)
@@ -3796,25 +3796,26 @@ def config_line_factory(all_lines=None, line=None, comment_delimiters=None, synt
     # matches `.is_object_for(text)`.
     ##########################################################################
     try:
-        for cls in factory_classes:
+        for _cls in factory_classes:
             if debug > 0:
-                logger.debug(f"Consider config_line_factory() CLASS {cls}")
-            if cls.is_object_for(all_lines=all_lines, line=line):
-                basecfgline_subclass = cls(
+                logger.debug(f"Consider config_line_factory() CLASS {_cls}")
+            if _cls.is_object_for(all_lines=all_lines, line=line):
+                basecfgline_subclass = _cls(
                     all_lines=all_lines, line=line,
-                    comment_delimiters=comment_delimiters,
+                    #comment_delimiters=comment_delimiters,
                 )  # instance of the proper subclass
                 return basecfgline_subclass
     except ValueError:
-        error = f"ciscoconfparse2.py config_line_factory(all_lines={all_lines}, line=`{line}`, comment_delimiters=[`{comment_delimiter}`], syntax=`{syntax}`) could not find a subclass of BaseCfgLine()"
+        error = f"ciscoconfparse2.py config_line_factory(all_lines={all_lines}, line=`{line}`, comment_delimiters=[`{comment_delimiters}`], syntax=`{syntax}`) could not find a subclass of BaseCfgLine()"
         logger.error(error)
         raise ValueError(error)
     except Exception as eee:
-        error = f"ciscoconfparse2.py config_line_factory(all_lines={all_lines}, line=`{line}`, comment_delimiters=[`{comment_delimiter}`], syntax=`{syntax}`): {eee}"
+        error = f"ciscoconfparse2.py config_line_factory(all_lines={all_lines}, line=`{line}`, comment_delimiters=[`{comment_delimiters}`], syntax=`{syntax}`): {eee}"
 
     if debug > 0:
         logger.debug("config_line_factory() is returning a default of IOSCfgLine()")
-    return IOSCfgLine(all_lines=all_lines, line=line, comment_delimiters=comment_delimiters)
+    #return IOSCfgLine(all_lines=all_lines, line=line, comment_delimiters=comment_delimiters)
+    return IOSCfgLine(all_lines=all_lines, line=line,)
 
 
 def parse_global_options():

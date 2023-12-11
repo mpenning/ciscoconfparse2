@@ -544,10 +544,14 @@ class IOSCfgLine(BaseCfgLine):
 
     @logger.catch(reraise=True)
     def __eq__(self, other):
+        if other is None:
+            return False
         return self.get_unique_identifier() == other.get_unique_identifier()
 
     @logger.catch(reraise=True)
     def __ne__(self, other):
+        if other is None:
+            return True
         return self.get_unique_identifier() != other.get_unique_identifier()
 
     @logger.catch(reraise=True)
