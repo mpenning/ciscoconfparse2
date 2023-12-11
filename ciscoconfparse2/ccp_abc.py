@@ -215,7 +215,7 @@ class BaseCfgLine(object):
     def text(self, val):
         is_comment = getattr(self, 'is_comment', None)
         if isinstance(val, str):
-            self._text = val
+            self._text = self.safe_escape_curly_braces(val)
             self.line_id = self.calculate_line_id()
 
             if is_comment is True:
@@ -447,21 +447,6 @@ class BaseCfgLine(object):
             "diff_id_list": self.diff_id_list,
         }
         return retval
-
-        # escape braces since single braces could be misunderstood as
-        # f-string or string.format() delimiters...
-        #
-        # Sometimes brace escaping is not required... we need better fencing
-        # around safe_escape_curly_braces()
-        newtext = self.safe_escape_curly_braces(newtext)
-
-        # Remove all double-spacing, except for the indent spaces...
-        self.line_id = self.calculate_line_id()
-
-        if self.is_comment is True:
-            # VERY IMPORTANT: due to old behavior, comment parents MUST be self
-            #
-            self.parent = self
 
     # On BaseCfgLine()
     @logger.catch(reraise=True)

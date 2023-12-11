@@ -4,6 +4,12 @@
 - Summary:
     - Insert something here
 
+## Version: 0.1.8
+
+- Released: 2023-12-11
+- Summary:
+    - Fix missed code deletion
+
 ## Version: 0.1.7
 
 - Released: 2023-12-11
