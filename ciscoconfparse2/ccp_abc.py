@@ -72,7 +72,7 @@ class BaseCfgLine(object):
             # The text kwarg is now called line
             line = kwargs.get("text")
 
-        self.comment_delimiters = comment_delimiters
+
         self._uncfgtext_to_be_deprecated = ""
         self._text = line
         self._children = []
@@ -81,6 +81,16 @@ class BaseCfgLine(object):
         self.child_indent = 0
         self.confobj = None  # Reference to the list object which owns it
         self.blank_line_keep = False  # CiscoConfParse() uses blank_line_keep
+
+        #######################################################################
+        # comment_delimiters must come after all other attrs above to ensure
+        # that comment_delimiters errors raise correctly
+        #######################################################################
+        if not isinstance(comment_delimiters, list):
+            error = "BaseCfgLine(comment_delimiters=None) must not be None"
+            logger.critical(error)
+            raise InvalidParameters(error)
+        self.comment_delimiters = comment_delimiters
 
         self.all_text = all_lines
         self.all_lines = all_lines
@@ -1022,20 +1032,29 @@ class BaseCfgLine(object):
 
                     _idx = self.linenum + 1
                     retval = self.confobj.insert(_idx, newobj)
+                    insertstr_family_indent = self.classify_family_indent(insertstr)
                     self.children.append(newobj)
                     if auto_commit is True:
                         self.confobj.ccp_ref.atomic()
                     return retval
 
                 elif len(self.all_children) > 0 and len(self.children) > 0:
+                    ###########################################################
+                    # Potentially append another child to the family
+                    ###########################################################
 
                     direct_child_indent = self.classify_family_indent(self.children[-1].text)
                     insertstr_family_indent = self.classify_family_indent(insertstr)
                     if insertstr_family_indent == 0:
+                        #######################################################
+                        # Insert a sibling
+                        #######################################################
                         _idx = self.linenum + len(self.children)
 
                     elif insertstr_family_indent > self.classify_family_indent(self.text):
-                        # Do the children have children?
+                        #######################################################
+                        # Insert a child... do the children have children?
+                        #######################################################
                         if len(self.children[-1].children) > 0:
                             _idx = self.linenum + len(self.all_children) + 1
                         else:
