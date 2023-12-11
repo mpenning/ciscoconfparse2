@@ -1015,7 +1015,6 @@ class BaseCfgLine(object):
                     # self.confobj.index(foo), which is rather fragile with
                     # this UserList...
                     _idx = self.linenum + len(self.children) + 1
-                    print("  ->PEAR", newobj)
                     retval = self.confobj.insert(_idx, newobj)
 
                     if self.classify_family_indent(insertstr) == 0:
@@ -1031,7 +1030,6 @@ class BaseCfgLine(object):
 
                 elif len(self.all_children) > 0 and len(self.children) == 0:
 
-                    print("  ->CHAIR", newobj)
                     _idx = self.linenum + 1
                     retval = self.confobj.insert(_idx, newobj)
                     insertstr_family_indent = self.classify_family_indent(insertstr)
@@ -1051,7 +1049,6 @@ class BaseCfgLine(object):
                         #######################################################
                         # Append a sibling for the children
                         #######################################################
-                        print("  ->FAIR", newobj)
                         _idx = self.linenum + len(self.children)
 
                     elif insertstr_family_indent > self.classify_family_indent(self.text):
@@ -1059,10 +1056,8 @@ class BaseCfgLine(object):
                         # Insert a child... do the children have children?
                         #######################################################
                         if len(self.children[-1].children) > 0:
-                            print("  ->ERR", newobj)
                             _idx = self.linenum + len(self.all_children) + 1
                         else:
-                            print("  ->TEAR", newobj)
                             _idx = self.linenum + len(self.children) + 1
 
                     elif insertstr_family_indent < self.classify_family_indent(self.text):
@@ -1095,7 +1090,6 @@ class BaseCfgLine(object):
                     # Use newobj_parent.linenum instead of
                     # self.confobj.index(foo), which is rather fragile with
                     # this UserList...
-                    print("  ->ZAIR", newobj)
                     _idx = self.linenum + 1
 
                     if True:

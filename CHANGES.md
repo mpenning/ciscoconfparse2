@@ -4,6 +4,12 @@
 - Summary:
     - Insert something here
 
+## Version: 0.1.9
+
+- Released: 2023-12-11
+- Summary:
+    - Remove debugging print() statements
+
 ## Version: 0.1.8
 
 - Released: 2023-12-11
