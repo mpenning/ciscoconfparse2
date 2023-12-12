@@ -2412,62 +2412,66 @@ debug={debug},
 
         Examples
         --------
-        >>> from operator import attrgetter
-        >>> from ciscoconfparse2 import CiscoConfParse
-        >>> config = [
-        ...     'ltm pool FOO {',
-        ...     '  members {',
-        ...     '    k8s-05.localdomain:8443 {',
-        ...     '      address 192.0.2.5',
-        ...     '      session monitor-enabled',
-        ...     '      state up',
-        ...     '    }',
-        ...     '    k8s-06.localdomain:8443 {',
-        ...     '      address 192.0.2.6',
-        ...     '      session monitor-enabled',
-        ...     '      state down',
-        ...     '    }',
-        ...     '  }',
-        ...     '}',
-        ...     'ltm pool BAR {',
-        ...     '  members {',
-        ...     '    k8s-07.localdomain:8443 {',
-        ...     '      address 192.0.2.7',
-        ...     '      session monitor-enabled',
-        ...     '      state down',
-        ...     '    }',
-        ...     '  }',
-        ...     '}',
-        ...     ]
-        >>> parse = CiscoConfParse(config=config, syntax='junos', comment='#')
-        >>>
-        >>> branchspec = (r'ltm\spool', r'members', r'\S+?:\d+', r'state\sup')
-        >>> branches = parse.find_object_branches(branchspec=branchspec)
-        >>>
-        >>> # We found three branches
-        >>> len(branches)
-        3
-        >>> # Each branch must match the length of branchspec
-        >>> len(branches[0])
-        4
-        >>> # Print out one object 'branch'
-        >>> branches[0]
-        [<IOSCfgLine # 0 'ltm pool FOO'>, <IOSCfgLine # 1 '    members' (parent is # 0)>, <IOSCfgLine # 2 '        k8s-05.localdomain:8443' (parent is # 1)>, <IOSCfgLine # 5 '            state up' (parent is # 2)>]
-        >>>
-        >>> # Get the a list of text lines for this branch...
-        >>> [ii.text for ii in branches[0]]
-        ['ltm pool FOO', '    members', '        k8s-05.localdomain:8443', '            state up']
-        >>>
-        >>> # Get the config text of the root object of the branch...
-        >>> branches[0][0].text
-        'ltm pool FOO'
-        >>>
-        >>> # Note: `None` in branches[1][-1] because of no regex match
-        >>> branches[1]
-        [<IOSCfgLine # 0 'ltm pool FOO'>, <IOSCfgLine # 1 '    members' (parent is # 0)>, <IOSCfgLine # 6 '        k8s-06.localdomain:8443' (parent is # 1)>, None]
-        >>>
-        >>> branches[2]
-        [<IOSCfgLine # 10 'ltm pool BAR'>, <IOSCfgLine # 11 '    members' (parent is # 10)>, <IOSCfgLine # 12 '        k8s-07.localdomain:8443' (parent is # 11)>, None]
+
+        .. code-block:: python
+           :emphasize-lines: 30,31
+
+           >>> from operator import attrgetter
+           >>> from ciscoconfparse2 import CiscoConfParse
+           >>> config = [
+           ...     'ltm pool FOO {',
+           ...     '  members {',
+           ...     '    k8s-05.localdomain:8443 {',
+           ...     '      address 192.0.2.5',
+           ...     '      session monitor-enabled',
+           ...     '      state up',
+           ...     '    }',
+           ...     '    k8s-06.localdomain:8443 {',
+           ...     '      address 192.0.2.6',
+           ...     '      session monitor-enabled',
+           ...     '      state down',
+           ...     '    }',
+           ...     '  }',
+           ...     '}',
+           ...     'ltm pool BAR {',
+           ...     '  members {',
+           ...     '    k8s-07.localdomain:8443 {',
+           ...     '      address 192.0.2.7',
+           ...     '      session monitor-enabled',
+           ...     '      state down',
+           ...     '    }',
+           ...     '  }',
+           ...     '}',
+           ...     ]
+           >>> parse = CiscoConfParse(config=config, syntax='junos', comment='#')
+           >>>
+           >>> branchspec = (r'ltm\spool', r'members', r'\S+?:\d+', r'state\sup')
+           >>> branches = parse.find_object_branches(branchspec=branchspec)
+           >>>
+           >>> # We found three branches
+           >>> len(branches)
+           3
+           >>> # Each branch must match the length of branchspec
+           >>> len(branches[0])
+           4
+           >>> # Print out one object 'branch'
+           >>> branches[0]
+           [<IOSCfgLine # 0 'ltm pool FOO'>, <IOSCfgLine # 1 '    members' (parent is # 0)>, <IOSCfgLine # 2 '        k8s-05.localdomain:8443' (parent is # 1)>, <IOSCfgLine # 5 '            state up' (parent is # 2)>]
+           >>>
+           >>> # Get the a list of text lines for this branch...
+           >>> [ii.text for ii in branches[0]]
+           ['ltm pool FOO', '    members', '        k8s-05.localdomain:8443', '            state up']
+           >>>
+           >>> # Get the config text of the root object of the branch...
+           >>> branches[0][0].text
+           'ltm pool FOO'
+           >>>
+           >>> # Note: `None` in branches[1][-1] because of no regex match
+           >>> branches[1]
+           [<IOSCfgLine # 0 'ltm pool FOO'>, <IOSCfgLine # 1 '    members' (parent is # 0)>, <IOSCfgLine # 6 '        k8s-06.localdomain:8443' (parent is # 1)>, None]
+           >>>
+           >>> branches[2]
+           [<IOSCfgLine # 10 'ltm pool BAR'>, <IOSCfgLine # 11 '    members' (parent is # 10)>, <IOSCfgLine # 12 '        k8s-07.localdomain:8443' (parent is # 11)>, None]
         """
 
         if self.config_objs.search_safe is False:
@@ -2708,7 +2712,7 @@ debug={debug},
         find all ports that are members of access vlan 300 in following
         config...
 
-        .. code-block:: hexdump
+        .. parsed-literal::
 
            !
            interface FastEthernet0/1
@@ -2738,7 +2742,7 @@ debug={debug},
         vlan 300`.
 
         .. code-block:: python
-           :emphasize-lines: 20
+           :emphasize-lines: 19,20
 
            >>> from ciscoconfparse2 import CiscoConfParse
            >>> config = ['!',
@@ -2852,7 +2856,7 @@ debug={debug},
         --------
         This example finds all ports that are autonegotiating in the following config...
 
-        .. code::
+        .. parsed-literal::
 
            !
            interface FastEthernet0/1
@@ -2872,13 +2876,13 @@ debug={debug},
 
         The following interfaces should be returned:
 
-        .. code::
+        .. parsed-literal::
 
            interface FastEthernet0/1
            interface FastEthernet0/2
 
-        We do this by quering `find_parent_objects_wo_child()`; we set our
-        parent as `^interface` and set the child as `speed\s\d+` (a
+        We do this by quering ``find_parent_objects_wo_child()``; we set our
+        parent as ``^interface`` and set the child as ``speed\s\d+`` (a
         regular-expression which matches the word 'speed' followed by
         an integer).
 
@@ -2979,7 +2983,7 @@ debug={debug},
         This example finds the object for "ge-0/0/0" under "interfaces" in the
         following config...
 
-        .. code::
+        .. parsed-literal::
 
             interfaces
                 ge-0/0/0
@@ -3003,7 +3007,7 @@ debug={debug},
 
         The following object should be returned:
 
-        .. code::
+        .. parsed-literal::
 
             <IOSCfgLine # 7 '    ge-0/0/1' (parent is # 0)>
 

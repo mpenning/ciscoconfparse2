@@ -146,7 +146,7 @@ network engineering toolbox; others regard it as a form of artwork.
 - [Python 3](https://python.org/)
 - [attrs](https://github.com/python-attrs/attrs)
 - [passlib](https://github.com/glic3rinu/passlib)
-- [toml](https://github.com/uiri/toml)
+- [tomlkit](https://github.com/sdispater/tomlkit)
 - [dnspython](https://github.com/rthalley/dnspython)
 - [hier_config](https://github.com/netdevops/hier_config)
 - [loguru](https://github.com/Delgan/loguru)
