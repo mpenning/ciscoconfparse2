@@ -4,6 +4,13 @@
 - Summary:
     - Insert something here
 
+## Version: 0.1.10
+
+- Released: 2023-12-11
+- Summary:
+    - Add `reverse` keyword
+    - Add [tomlkit](https://github.com/sdispater/tomlkit) version 0.12.3
+
 ## Version: 0.1.9
 
 - Released: 2023-12-11
