@@ -4,6 +4,12 @@
 - Summary:
     - Insert something here
 
+## Version: 0.1.11
+
+- Released: 2023-12-11
+- Summary:
+    - Migrate `pyproject.toml` to [tomlkit](https://github.com/sdispater/tomlkit) version 0.12.3
+
 ## Version: 0.1.10
 
 - Released: 2023-12-11

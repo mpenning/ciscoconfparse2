@@ -2708,61 +2708,61 @@ debug={debug},
         find all ports that are members of access vlan 300 in following
         config...
 
-        .. code-block::
+        .. code-block:: hexdump
 
-        !
-        interface FastEthernet0/1
-            switchport access vlan 532
-            spanning-tree vlan 532 cost 3
-        !
-        interface FastEthernet0/2
-            switchport access vlan 300
-            spanning-tree portfast
-        !
-        interface FastEthernet0/3
-            duplex full
-            speed 100
-            switchport access vlan 300
-            spanning-tree portfast
-        !
+           !
+           interface FastEthernet0/1
+               switchport access vlan 532
+               spanning-tree vlan 532 cost 3
+           !
+           interface FastEthernet0/2
+               switchport access vlan 300
+               spanning-tree portfast
+           !
+           interface FastEthernet0/3
+               duplex full
+               speed 100
+               switchport access vlan 300
+               spanning-tree portfast
+           !
 
         The following interfaces should be returned:
 
         .. code::
 
-        interface FastEthernet0/2
-        interface FastEthernet0/3
+           interface FastEthernet0/2
+           interface FastEthernet0/3
 
         We do this by quering `find_objects_w_child()`; we set our
         parent as `^interface` and set the child as `switchport access
         vlan 300`.
 
         .. code-block:: python
-        :emphasize-lines: 20
+           :emphasize-lines: 20
 
-        >>> from ciscoconfparse2 import CiscoConfParse
-        >>> config = ['!',
-        ...           'interface FastEthernet0/1',
-        ...           ' switchport access vlan 532',
-        ...           ' spanning-tree vlan 532 cost 3',
-        ...           '!',
-        ...           'interface FastEthernet0/2',
-        ...           ' switchport access vlan 300',
-        ...           ' spanning-tree portfast',
-        ...           '!',
-        ...           'interface FastEthernet0/3',
-        ...           ' duplex full',
-        ...           ' speed 100',
-        ...           ' switchport access vlan 300',
-        ...           ' spanning-tree portfast',
-        ...           '!',
-        ...     ]
-        >>> p = CiscoConfParse(config=config)
-        >>> p.find_parent_objects('^interface',
-        ...     'switchport access vlan 300')
-        ...
-        [<IOSCfgLine # 5 'interface FastEthernet0/2'>, <IOSCfgLine # 9 'interface FastEthernet0/3'>]
-        >>>
+           >>> from ciscoconfparse2 import CiscoConfParse
+           >>> config = ['!',
+           ...           'interface FastEthernet0/1',
+           ...           ' switchport access vlan 532',
+           ...           ' spanning-tree vlan 532 cost 3',
+           ...           '!',
+           ...           'interface FastEthernet0/2',
+           ...           ' switchport access vlan 300',
+           ...           ' spanning-tree portfast',
+           ...           '!',
+           ...           'interface FastEthernet0/3',
+           ...           ' duplex full',
+           ...           ' speed 100',
+           ...           ' switchport access vlan 300',
+           ...           ' spanning-tree portfast',
+           ...           '!',
+           ...     ]
+           >>> p = CiscoConfParse(config=config)
+           >>> p.find_parent_objects('^interface',
+           ...     'switchport access vlan 300')
+           ...
+           [<IOSCfgLine # 5 'interface FastEthernet0/2'>, <IOSCfgLine # 9 'interface FastEthernet0/3'>]
+           >>>
         """
         if self.config_objs.search_safe is False:
             error = "The configuration has changed since the last commit; a config search is not safe."
