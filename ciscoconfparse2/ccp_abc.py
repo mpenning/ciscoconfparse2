@@ -913,6 +913,7 @@ class BaseCfgLine(object):
 
         Call :func:`~ciscoconfparse2.CiscoConfParse.commit` if inserting something other
         than a text configuration string.
+
         Parameters
         ----------
         insertstr : str
@@ -921,16 +922,20 @@ class BaseCfgLine(object):
             The amount of indentation to use for the child line; by default, the number of left spaces provided with ``insertstr`` are respected.  However, you can manually set the indent level when ``indent``>0.  This option will be ignored, if ``auto_indent`` is True.
         auto_indent : bool
             Automatically indent the child to :py:attr:`~ciscoconfparse2.CiscoConfParse.auto_indent_width`
+
         Returns
         -------
         str
             The text matched by the regular expression group; if there is no match, None is returned.
+
         Examples
         --------
         This example illustrates how you can use :func:`~ccp_abc.append_to_family` to add a
         ``carrier-delay`` to each interface.
+
         .. code-block:: python
            :emphasize-lines: 14
+
            >>> from ciscoconfparse2 import CiscoConfParse
            >>> config = [
            ...     '!',

@@ -4,6 +4,13 @@
 - Summary:
     - Insert something here
 
+## Version: 0.1.13
+
+- Released: 2023-12-12
+- Summary:
+    - Documentation updates
+    - Update `escape_chars`
+
 ## Version: 0.1.12
 
 - Released: 2023-12-11
