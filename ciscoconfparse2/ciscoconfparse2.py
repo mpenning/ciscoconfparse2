@@ -2629,22 +2629,23 @@ debug={debug},
         --------
         This example illustrates the use of :func:`~ciscoconfparse2.CiscoConfParse.find_objects`
 
-        >>> from ciscoconfparse2 import CiscoConfParse
-        >>> config = [
-        ...     '!',
-        ...     'interface Serial1/0',
-        ...     ' ip address 1.1.1.1 255.255.255.252',
-        ...     '!',
-        ...     'interface Serial1/1',
-        ...     ' ip address 1.1.1.5 255.255.255.252',
-        ...     '!',
-        ...     ]
-        >>> parse = CiscoConfParse(config=config)
-        >>>
-        >>> parse.find_objects(r'^interface')
-        [<IOSCfgLine # 1 'interface Serial1/0'>, <IOSCfgLine # 4 'interface Serial1/1'>]
-        >>>
+        .. code-block:: python
 
+           >>> from ciscoconfparse2 import CiscoConfParse
+           >>> config = [
+           ...     '!',
+           ...     'interface Serial1/0',
+           ...     ' ip address 1.1.1.1 255.255.255.252',
+           ...     '!',
+           ...     'interface Serial1/1',
+           ...     ' ip address 1.1.1.5 255.255.255.252',
+           ...     '!',
+           ...     ]
+           >>> parse = CiscoConfParse(config=config)
+           >>>
+           >>> parse.find_objects(r'^interface')
+           [<IOSCfgLine # 1 'interface Serial1/0'>, <IOSCfgLine # 4 'interface Serial1/1'>]
+           >>>
         """
         if escape_chars is True:
             ###################################################################
@@ -2773,6 +2774,13 @@ debug={debug},
             logger.critical(error)
             raise NotImplementedError(error)
 
+        if escape_chars is True:
+            ###################################################################
+            # Escape regex to avoid embedded parenthesis problems
+            ###################################################################
+            parentspec = re.escape(parentspec)
+            childspec = re.escape(childspec)
+
         if isinstance(parentspec, BaseCfgLine):
             parentspec = parentspec.text
         elif isinstance(parentspec, str):
@@ -2811,13 +2819,6 @@ debug={debug},
         if ignore_ws:
             parentspec = build_space_tolerant_regex(parentspec)
             childspec = build_space_tolerant_regex(childspec)
-
-        if escape_chars is True:
-            ###################################################################
-            # Escape regex to avoid embedded parenthesis problems
-            ###################################################################
-            parentspec = re.escape(parentspec)
-            childspec = re.escape(childspec)
 
         # Set escape_chars False to avoid double-escaping characters
         return list(
@@ -2916,6 +2917,13 @@ debug={debug},
             logger.critical(error)
             raise NotImplementedError(error)
 
+        if escape_chars is True:
+            ###################################################################
+            # Escape regex to avoid embedded parenthesis problems
+            ###################################################################
+            parentspec = re.escape(parentspec)
+            childspec = re.escape(childspec)
+
         if isinstance(parentspec, BaseCfgLine):
             parentspec = parentspec.text
         elif isinstance(parentspec, (list, tuple)):
@@ -2932,12 +2940,6 @@ debug={debug},
             parentspec = build_space_tolerant_regex(parentspec)
             childspec = build_space_tolerant_regex(childspec)
 
-        if escape_chars is True:
-            ###################################################################
-            # Escape regex to avoid embedded parenthesis problems
-            ###################################################################
-            parentspec = re.escape(parentspec)
-            childspec = re.escape(childspec)
 
         # Set escape_chars False to avoid double-escaping chars
         return [
@@ -3050,6 +3052,13 @@ debug={debug},
             logger.critical(error)
             raise NotImplementedError(error)
 
+        if escape_chars is True:
+            ###################################################################
+            # Escape regex to avoid embedded parenthesis problems
+            ###################################################################
+            parentspec = re.escape(parentspec)
+            childspec = re.escape(childspec)
+
         if isinstance(parentspec, BaseCfgLine):
             parentspec = parentspec.text
         elif isinstance(parentspec, str):
@@ -3060,7 +3069,7 @@ debug={debug},
                 _tmp = self.find_object_branches(
                     parentspec,
                     ignore_ws=ignore_ws,
-                    escape_chars=escape_chars
+                    escape_chars=False,
                 )
                 for _obj_branch in _tmp:
                     # add the child of that object branch to the result set
@@ -3092,13 +3101,6 @@ debug={debug},
         if ignore_ws:
             parentspec = build_space_tolerant_regex(parentspec)
             childspec = build_space_tolerant_regex(childspec)
-
-        if escape_chars is True:
-            ######################################################################
-            # Escape regex to avoid embedded parenthesis problems
-            ######################################################################
-            parentspec = re.escape(parentspec)
-            childspec = re.escape(childspec)
 
         retval = set()
         # Set escape_chars False to avoid double-escaping characters
