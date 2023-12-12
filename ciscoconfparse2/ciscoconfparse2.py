@@ -27,6 +27,7 @@ import inspect
 import pathlib
 import locale
 import time
+import yaml
 import copy
 import sys
 import re
@@ -37,8 +38,7 @@ from deprecated import deprecated
 from loguru import logger
 import attrs
 import hier_config
-import yaml
-import toml
+import tomlkit
 
 from ciscoconfparse2.models_cisco import IOSRouteLine
 from ciscoconfparse2.models_cisco import IOSIntfLine
@@ -158,7 +158,8 @@ def get_version_number():
         # Retrieve the version number from pyproject.toml...
         toml_values = {}
         with open(pyproject_toml_path, encoding=ENCODING) as fh:
-            toml_values = toml.loads(fh.read())
+            #toml_values = toml.loads(fh.read())
+            toml_values = tomlkit.load(fh)
             version = toml_values["tool"]["poetry"].get("version", -1.0)
 
         if not isinstance(version, str):
@@ -1071,6 +1072,10 @@ class ConfigList(UserList):
     def sort(self, _unknown_arg, *args, **kwds):
         self.data.sort(*args, **kwds)
 
+        if bool(self.auto_commit):
+            # The config is not safe unless this is called after the append
+            self.ccp_ref.atomic()
+
     # This method is on ConfigList()
     @logger.catch(reraise=True)
     def extend(self, other):
@@ -1362,27 +1367,6 @@ class ConfigList(UserList):
         if bool(self.auto_commit):
             # The config is not safe unless this is called after the append
             self.ccp_ref.atomic()
-
-
-    # This method is on ConfigList()
-    @logger.catch(reraise=True)
-    def config_hierarchy(self):
-        """Walk this configuration and return the following tuple
-        at each parent 'level': (list_of_parent_sibling_objs, list_of_nonparent_sibling_objs)
-
-        """
-        parent_siblings = []
-        nonparent_siblings = []
-
-        for obj in self.ccp_ref.find_objects(r"^\S+"):
-            if obj.is_comment:
-                continue
-            elif len(obj.children) == 0:
-                nonparent_siblings.append(obj)
-            else:
-                parent_siblings.append(obj)
-
-        return parent_siblings, nonparent_siblings
 
     # This method is on ConfigList()
     @logger.catch(reraise=True)
@@ -2391,6 +2375,7 @@ debug={debug},
         empty_branches=False,
         ignore_ws=False,
         escape_chars=False,
+        reverse=False,
         debug=0,
     ):
         r"""Iterate over a tuple of regular expressions in `branchspec` and return matching objects in a list of lists (consider it similar to a table of matching config objects). `branchspec` expects to start at some ancestor and walk through the nested object hierarchy (with no limit on depth).
@@ -2609,11 +2594,15 @@ debug={debug},
                 retval.append(branch)
         else:
             retval = branches
+
+        if reverse:
+            retval.reverse()
+
         return retval
 
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
-    def find_objects(self, linespec, exactmatch=False, ignore_ws=False, reverse=False):
+    def find_objects(self, linespec, exactmatch=False, ignore_ws=False, escape_chars=False, reverse=False):
         """Find all :class:`~models_cisco.IOSCfgLine` objects whose text matches ``linespec`` and return the :class:`~models_cisco.IOSCfgLine` objects in a python list.
 
         Parameters
@@ -2653,6 +2642,12 @@ debug={debug},
         >>>
 
         """
+        if escape_chars is True:
+            ###################################################################
+            # Escape regex to avoid embedded parenthesis problems
+            ###################################################################
+            linespec = re.escape(linespec)
+
         if self.config_objs.search_safe is False:
             error = "The configuration has changed since the last commit; a config search is not safe."
             logger.critical(error)
@@ -2673,160 +2668,6 @@ debug={debug},
 
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
-    def find_parent_objects_orig(
-        self,
-        parentspec,
-        childspec=None,
-        ignore_ws=False,
-        recurse=True,
-        escape_chars=False,
-    ):
-        """
-        Return a list of parent :class:`~models_cisco.IOSCfgLine` objects,
-        which matched the ``parentspec`` and whose children match ``childspec``.
-        Only the parent :class:`~models_cisco.IOSCfgLine` objects will be
-        returned.
-
-        Parameters
-        ----------
-        parentspec : str or list
-            Text regular expression for the :class:`~models_cisco.IOSCfgLine` object to be matched; this must match the parent's line
-        childspec : str
-            Text regular expression for the line to be matched; this must match the child's line
-        ignore_ws : bool
-            boolean that controls whether whitespace is ignored
-        recurse : bool
-            Set True if you want to search all children (children, grand children, great grand children, etc...)
-        escape_chars : bool
-            Set True if you want to escape characters before searching
-
-        Returns
-        -------
-        list
-            A list of matching parent :class:`~models_cisco.IOSCfgLine` objects
-
-        Examples
-        --------
-        This example uses :func:`~ciscoconfparse2.find_parent_objects()` to
-        find all ports that are members of access vlan 300 in following
-        config...
-
-        .. code::
-
-        !
-        interface FastEthernet0/1
-            switchport access vlan 532
-            spanning-tree vlan 532 cost 3
-        !
-        interface FastEthernet0/2
-            switchport access vlan 300
-            spanning-tree portfast
-        !
-        interface FastEthernet0/3
-            duplex full
-            speed 100
-            switchport access vlan 300
-            spanning-tree portfast
-        !
-
-        The following interfaces should be returned:
-
-        .. code::
-
-        interface FastEthernet0/2
-        interface FastEthernet0/3
-
-        We do this by quering `find_objects_w_child()`; we set our
-        parent as `^interface` and set the child as `switchport access
-        vlan 300`.
-
-        .. code-block:: python
-        :emphasize-lines: 20
-
-        >>> from ciscoconfparse2 import CiscoConfParse
-        >>> config = ['!',
-        ...           'interface FastEthernet0/1',
-        ...           ' switchport access vlan 532',
-        ...           ' spanning-tree vlan 532 cost 3',
-        ...           '!',
-        ...           'interface FastEthernet0/2',
-        ...           ' switchport access vlan 300',
-        ...           ' spanning-tree portfast',
-        ...           '!',
-        ...           'interface FastEthernet0/3',
-        ...           ' duplex full',
-        ...           ' speed 100',
-        ...           ' switchport access vlan 300',
-        ...           ' spanning-tree portfast',
-        ...           '!',
-        ...     ]
-        >>> p = CiscoConfParse(config=config)
-        >>> p.find_parent_objects('^interface',
-        ...     'switchport access vlan 300')
-        ...
-        [<IOSCfgLine # 5 'interface FastEthernet0/2'>, <IOSCfgLine # 9 'interface FastEthernet0/3'>]
-        >>>
-        """
-        if isinstance(parentspec, BaseCfgLine):
-            parentspec = parentspec.text
-        elif isinstance(parentspec, str):
-            pass
-        elif isinstance(parentspec, (list, tuple)):
-            if len(parentspec) > 1:
-                _results = set()
-                for _idx, _ in enumerate(parentspec[0:-1]):
-                    _parentspec = parentspec[_idx]
-                    _childspec = parentspec[_idx + 1]
-                    _values = self.find_parent_objects(
-                        _parentspec,
-                        _childspec,
-                        ignore_ws=ignore_ws,
-                        recurse=recurse,
-                        escape_chars=escape_chars
-                    )
-                    if len(_values) == 0:
-                        ######################################################
-                        # If any _childspec fails to match, we will hit this
-                        # condition when that failure happens.
-                        ######################################################
-                        return []
-                    else:
-                        # Add the parent of this set of values
-                        _ = [_results.add(ii) for ii in _values]
-                # Sort the de-duplicated results
-                return sorted(_results)
-            else:
-                error = f"`parentspec` {type(parentspec)} must be longer than one element."
-                logger.error(error)
-                raise InvalidParameters(error)
-        else:
-            error = f"Received unexpected `parentspec` {type(parentspec)}"
-            logger.error(error)
-            raise InvalidParameters(error)
-
-        if isinstance(childspec, BaseCfgLine):
-            parentspec = childspec.text
-
-        if ignore_ws:
-            parentspec = build_space_tolerant_regex(parentspec)
-            childspec = build_space_tolerant_regex(childspec)
-
-        if escape_chars is True:
-            ###################################################################
-            # Escape regex to avoid embedded parenthesis problems
-            ###################################################################
-            parentspec = re.escape(parentspec)
-            childspec = re.escape(childspec)
-
-        return list(
-            filter(
-                lambda x: x.re_search_children(childspec, recurse=recurse),
-                self.find_objects(parentspec),
-            ),
-        )
-
-    # This method is on CiscoConfParse()
-    @logger.catch(reraise=True)
     def find_parent_objects(
         self,
         parentspec,
@@ -2834,9 +2675,9 @@ debug={debug},
         ignore_ws=False,
         recurse=True,
         escape_chars=False,
+        reverse=False,
     ):
-        """
-        Return a list of parent :class:`~models_cisco.IOSCfgLine` objects,
+        """Return a list of parent :class:`~models_cisco.IOSCfgLine` objects,
         which matched the ``parentspec`` and whose children match ``childspec``.
         Only the parent :class:`~models_cisco.IOSCfgLine` objects will be
         returned.
@@ -2853,6 +2694,8 @@ debug={debug},
             Set True if you want to search all children (children, grand children, great grand children, etc...).  This is considered True if parentspec is a list or tuple.
         escape_chars : bool
             Set True if you want to escape characters before searching
+        reverse : bool
+            Set True if you want to reverse the order of the results
 
         Returns
         -------
@@ -2865,7 +2708,7 @@ debug={debug},
         find all ports that are members of access vlan 300 in following
         config...
 
-        .. code::
+        .. code-block::
 
         !
         interface FastEthernet0/1
@@ -2972,16 +2815,17 @@ debug={debug},
             parentspec = re.escape(parentspec)
             childspec = re.escape(childspec)
 
+        # Set escape_chars False to avoid double-escaping characters
         return list(
             filter(
                 lambda x: x.re_search_children(childspec, recurse=recurse),
-                self.find_objects(parentspec),
+                self.find_objects(parentspec, ignore_ws=ignore_ws, escape_chars=False, reverse=reverse),
             ),
         )
 
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
-    def find_parent_objects_wo_child(self, parentspec, childspec, ignore_ws=False, recurse=False, escape_chars=False):
+    def find_parent_objects_wo_child(self, parentspec, childspec, ignore_ws=False, recurse=False, escape_chars=False, reverse=False):
         r"""Return a list of parent :class:`~models_cisco.IOSCfgLine` objects, which matched the ``parentspec`` and whose children did not match ``childspec``.  Only the parent :class:`~models_cisco.IOSCfgLine` objects will be returned.  For simplicity, this method only finds oldest_ancestors without immediate children that match.
 
         Parameters
@@ -2996,6 +2840,8 @@ debug={debug},
             boolean that controls whether to recurse through children of children
         escape_chars : bool
             boolean that controls whether to escape characters before searching
+        reverse : bool
+            Set True if you want to reverse the order of the results
 
         Returns
         -------
@@ -3089,9 +2935,10 @@ debug={debug},
             parentspec = re.escape(parentspec)
             childspec = re.escape(childspec)
 
+        # Set escape_chars False to avoid double-escaping chars
         return [
             obj
-            for obj in self.find_objects(parentspec)
+            for obj in self.find_objects(parentspec, ignore_ws=ignore_ws, escape_chars=False, reverse=reverse)
             if not obj.re_search_children(childspec, recurse=recurse)
         ]
 
@@ -3103,7 +2950,8 @@ debug={debug},
             childspec=None,
             ignore_ws=False,
             recurse=True,
-            escape_chars=False
+            escape_chars=False,
+            reverse=False,
     ):
         r"""Parse through the children of all parents matching parentspec,
         and return a list of child objects, which matched the childspec.
@@ -3118,6 +2966,8 @@ debug={debug},
             boolean that controls whether whitespace is ignored
         escape_chars : bool
             boolean that controls whether characters are escaped before searching
+        reverse : bool
+            Set True if you want to reverse the order of the results
 
         Returns
         -------
@@ -3247,7 +3097,8 @@ debug={debug},
             childspec = re.escape(childspec)
 
         retval = set()
-        parents = self.find_objects(parentspec)
+        # Set escape_chars False to avoid double-escaping characters
+        parents = self.find_objects(parentspec, ignore_ws=ignore_ws, escape_chars=False, reverse=reverse)
         if recurse is False:
             for parent in parents:
                 ##############################################################
