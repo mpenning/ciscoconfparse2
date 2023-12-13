@@ -4,8 +4,6 @@
 
 [![SonarCloud][51]][52] [![SonarCloud Maintainability Rating][53]][54] [![SonarCloud Lines of Code][55]][56] [![SonarCloud Bugs][59]][60] [![SonarCloud Code Smells][57]][58] [![SonarCloud Tech Debt][61]][62]
 
-[![Snyk Package Health][37]][38]
-
 
 ## Introduction: What is ciscoconfparse?
 

@@ -635,7 +635,7 @@ def testParse_f5_as_ios_02(parse_f02_ios_01):
         # Be sure to strip off any double-spacing before comparing to obj.text
         tmp = correct_result[dict_idx]
         indent = len(tmp.rstrip()) - len(tmp.strip())
-        assert indent == obj.get_indent()
+        assert indent == obj.indent
         assert correct_result[dict_idx] == obj.text
 
         assert correct_result_linenum_dict[dict_idx]['linenum'] == obj.linenum + 1

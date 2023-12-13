@@ -1604,7 +1604,7 @@ class ConfigList(UserList):
             while candidate_parent_idx >= 0:
                 candidate_parent = retval[candidate_parent_idx]
                 if (
-                    candidate_parent.get_indent() < indent
+                    candidate_parent.indent < indent
                 ) and candidate_parent.is_config_line:
                     # We found the parent
                     parent = candidate_parent
@@ -1667,7 +1667,7 @@ class ConfigList(UserList):
                 factory=self.factory,
             )
             obj.confobj = self
-            indent = obj.get_indent()
+            indent = obj.indent
             is_config_line = obj.is_config_line
 
             # list out macro parent line numbers...
@@ -1767,7 +1767,7 @@ class ConfigList(UserList):
                 ),
             )
 
-        if childobj.is_comment and (_list[idx - 1].get_indent() > indent):
+        if childobj.is_comment and (_list[idx - 1].indent > indent):
             # I *really* hate making this exception, but legacy
             #   ciscoconfparse2 never marked a comment as a child
             #   when the line immediately above it was indented more
@@ -2224,11 +2224,12 @@ class CiscoConfParse(object):
         elif isinstance(self.config_objs, Sequence):
             num_lines = len(self.config_objs)
         return (
-            "<CiscoConfParse: %s lines / syntax: %s / comment delimiters: %s / factory: %s / ignore_blank_lines: %s / encoding: '%s' / auto_commit: %s>"
+            "<CiscoConfParse: %s lines / syntax: %s / comment delimiters: %s / auto_indent_width: %s / factory: %s / ignore_blank_lines: %s / encoding: '%s' / auto_commit: %s>"
             % (
                 num_lines,
                 self.syntax,
                 self.comment_delimiters,
+                self.auto_indent_width,
                 self.factory,
                 self.ignore_blank_lines,
                 self.encoding,
@@ -2879,9 +2880,7 @@ debug={debug},
            ...           '!',
            ...     ]
            >>> p = CiscoConfParse(config=config)
-           >>> p.find_parent_objects('^interface',
-           ...     'switchport access vlan 300')
-           ...
+           >>> p.find_parent_objects(['interface', 'vlan 300'])
            [<IOSCfgLine # 5 'interface FastEthernet0/2'>, <IOSCfgLine # 9 'interface FastEthernet0/3'>]
            >>>
         """
@@ -3156,8 +3155,7 @@ debug={debug},
            ...           '                address 172.16.15.5/22',
            ...     ]
            >>> p = CiscoConfParse(config=config)
-           >>> p.find_child_objects('^\s*interfaces',
-           ... r'\s+ge-0/0/1')
+           >>> p.find_child_objects(['interface', r'ge-0/0/1'])
            [<IOSCfgLine # 7 '    ge-0/0/1' (parent is # 0)>]
            >>>
         """

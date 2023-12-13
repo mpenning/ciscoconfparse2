@@ -45,7 +45,6 @@ class BaseCfgLine(object):
     parent: Any = None
     child_indent: int = 0
     _children: list = []
-    indent: int = 0  # assign indent in the self.text setter method
     confobj: Any = None  # Reference to the list object which owns it
     blank_line_keep: bool = False  # CiscoConfParse() uses blank_line_keep
 
@@ -180,8 +179,9 @@ class BaseCfgLine(object):
         return hash(linenum) * hash(_text)
 
     # On BaseCfgLine()
+    @property
     @logger.catch(reraise=True)
-    def get_indent(self):
+    def indent(self):
         return len(self._text) - len(self.text.lstrip())
 
     # On BaseCfgLine()
@@ -307,7 +307,7 @@ class BaseCfgLine(object):
         Do NOT cache this value.  It must be recalculated when self._text
         changes.
         """
-        indent = self.get_indent()
+        indent = self.indent
 
         # Do NOT make changes to _line_id.  This hash() value built from
         #     _line_id is the glue that holds `ciscoconfparse2.HDiff()`
@@ -440,7 +440,7 @@ class BaseCfgLine(object):
             "linenum": self.diff_linenum,
             "diff_side": self.diff_side,
             "diff_word": self.diff_word,
-            "indent": self.get_indent(),
+            "indent": self.indent,
             "parents": [ii.text for ii in self.all_parents],
             "text": self.text,
             "diff_id_list": self.diff_id_list,
@@ -609,7 +609,7 @@ class BaseCfgLine(object):
         ## Add the child, unless we already know it
         if not (childobj in self.children):
             self.children.append(childobj)
-            self.child_indent = childobj.get_indent()
+            self.child_indent = childobj.indent
             return True
         else:
             return False
@@ -673,10 +673,10 @@ class BaseCfgLine(object):
         # condition the first in this if-else logic...
         elif tmp[0].lower() == "no":
             assert len(tmp) > 1  # join() below only makes sense if len(tmp)>1
-            return self.get_indent() * " " + " ".join(tmp[1:])
+            return self.indent * " " + " ".join(tmp[1:])
 
         else:
-            return self.get_indent() * " " + "no " + self.text.lstrip()
+            return self.indent * " " + "no " + self.text.lstrip()
 
     @uncfgtext.setter
     def uncfgtext(self, value=""):
@@ -979,7 +979,7 @@ class BaseCfgLine(object):
             raise NotImplementedError(error)
 
         # This object is the parent
-        insertstr_parent_indent = self.get_indent()
+        insertstr_parent_indent = self.indent
 
         # Build the string to insert with proper indentation...
         if indent > 0:
@@ -1172,15 +1172,15 @@ class BaseCfgLine(object):
             logger.critical(error)
             raise NotImplementedError(error)
 
-        if self.get_indent() == indent_width:
+        if self.indent == indent_width:
             return 0
-        elif self.get_indent() < indent_width:
+        elif self.indent < indent_width:
             this_val = indent_width / self.confobj.ccp_ref.auto_indent_width
-            self_val = self.get_indent() / self.confobj.ccp_ref.auto_indent_width
+            self_val = self.indent / self.confobj.ccp_ref.auto_indent_width
             return int(this_val - self_val)
-        elif self.get_indent() > indent_width:
+        elif self.indent > indent_width:
             this_val = indent_width / self.confobj.ccp_ref.auto_indent_width
-            self_val = self.get_indent() / self.confobj.ccp_ref.auto_indent_width
+            self_val = self.indent / self.confobj.ccp_ref.auto_indent_width
             return int(this_val - self_val)
         else:
             error = "unexpected condition"
@@ -1204,8 +1204,8 @@ class BaseCfgLine(object):
         #########################################################################
         # build a list of candidate parent indents
         #########################################################################
-        obj_indent_list = sorted([obj.get_indent() for obj in self.all_children])
-        obj_indent_list.insert(0, self.get_indent())
+        obj_indent_list = sorted([obj.indent for obj in self.all_children])
+        obj_indent_list.insert(0, self.indent)
         obj_indent_list.reverse()
 
         #########################################################################
@@ -1897,8 +1897,8 @@ class BaseCfgLine(object):
     # On BaseCfgLine()
     @property
     def siblings(self):
-        indent = self.get_indent()
-        return [obj for obj in self.parent.children if (obj.get_indent() == indent)]
+        indent = self.indent
+        return [obj for obj in self.parent.children if (obj.indent == indent)]
 
     # On BaseCfgLine()
     @classmethod

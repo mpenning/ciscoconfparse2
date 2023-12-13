@@ -4,6 +4,13 @@
 - Summary:
     - Insert something here
 
+## Version: 0.2.2
+
+- Released: 2023-12-13
+- Summary:
+    - Convert the `BaseCfgLine().get_indent()` method to a `BaseCfgLine().indent` property
+    - Documentation updates
+
 ## Version: 0.2.1
 
 - Released: 2023-12-13
