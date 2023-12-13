@@ -15,8 +15,8 @@ r""" ccp_abc.py - Parse, Query, Build, and Modify IOS-style configurations
      mike [~at~] pennington [/dot\] net
 """
 
+from typing import Any, Union, List, Tuple, Type
 from collections.abc import Sequence
-from typing import Any, Union
 import warnings
 import math
 import re
@@ -75,7 +75,6 @@ class BaseCfgLine(object):
             error = "BaseCfgLine() does not accept a comment_delimiters parameter"
             logger.critical(error)
             raise InvalidParameters(error)
-
 
         self._uncfgtext_to_be_deprecated = ""
         self._text = line
@@ -137,6 +136,14 @@ class BaseCfgLine(object):
     # On BaseCfgLine()
     @logger.catch(reraise=True)
     def __hash__(self):
+        """
+        :return: A unique identifier for this object
+        :rtype: int
+
+        .. note::
+
+           Also see :py:meth:`BaseCfgLine.get_unique_identifier`.
+        """
         return self.get_unique_identifier()
 
     # On BaseCfgLine()
@@ -173,7 +180,10 @@ class BaseCfgLine(object):
     # On BaseCfgLine()
     @logger.catch(reraise=True)
     def get_unique_identifier(self):
-        """Build a unique number for the BaseCfgLine object"""
+        """
+        :return: A unique number for the BaseCfgLine object
+        :rtype: int
+        """
         linenum = getattr(self, 'linenum', None)
         _text = getattr(self, 'text', DEFAULT_TEXT)
         return hash(linenum) * hash(_text)
@@ -182,6 +192,10 @@ class BaseCfgLine(object):
     @property
     @logger.catch(reraise=True)
     def indent(self):
+        """
+        :return: Padding of the number of left spaces of the ``text`` property
+        :rtype: int
+        """
         return len(self._text) - len(self.text.lstrip())
 
     # On BaseCfgLine()
@@ -499,18 +513,24 @@ class BaseCfgLine(object):
 
     # On BaseCfgLine()
     @property
-    def family_endpoint(self):
+    def family_endpoint(self) -> int:
+        """
+        :return: The line number of the last child (or grandchild, etc)
+        :rtype: int
+        """
         assert isinstance(self.all_children, list)
         if self.all_children == []:
-            # CHANGED on 2022-04-01... PREVIOUS_VALUE="return 0"
-            # CHANGED on 2022-04-01... NEW_VALUE="self.linenum"
             return self.linenum
         else:
             return self.all_children[-1].linenum
 
     # On BaseCfgLine()
     @property
-    def verbose(self):
+    def verbose(self) -> str:
+        """
+        :return: A string representation of this object
+        :rtype: str
+        """
         if self.has_children:
             return (
                 "<%s # %s '%s' (child_indent: %s / len(children): %s / family_endpoint: %s)>"
@@ -533,22 +553,30 @@ class BaseCfgLine(object):
 
     # On BaseCfgLine()
     @property
-    def all_parents(self):
+    def all_parents(self) -> List:
+        """
+        :return: A sequence of all parent objects, not including this object
+        :rtype: List[BaseCfgLine]
+        """
         if self.confobj is not None and self.confobj.search_safe is False:
             error = "The configuration has changed since the last commit; a config search is not safe."
             logger.critical(error)
             raise NotImplementedError(error)
 
         retval = set()
-        me = self
-        while me.parent != me:
-            retval.add(me.parent)
-            me = me.parent
+        this = self
+        while this.parent != this:
+            retval.add(this.parent)
+            this = this.parent
         return sorted(retval)
 
     # On BaseCfgLine()
     @property
-    def all_children(self):
+    def all_children(self) -> List:
+        """
+        :return: A sequence of all child objects, not including this object
+        :rtype: List[BaseCfgLine]
+        """
         retval = set()
         if self.has_children:
             for child in self.children:
@@ -558,21 +586,31 @@ class BaseCfgLine(object):
 
     # On BaseCfgLine()
     @property
-    def classname(self):
+    def classname(self) -> str:
+        """
+        :return: The class name of this object
+        :rtype: str
+        """
         return self.__class__.__name__
 
     # On BaseCfgLine()
     @property
-    def has_children(self):
+    def has_children(self) -> bool:
+        """
+        :return: Whether this object has children
+        :rtype: bool
+        """
         if len(self.children) > 0:
             return True
         return False
 
     # On BaseCfgLine()
     @property
-    def is_config_line(self):
+    def is_config_line(self) -> bool:
         """Return a boolean for whether this is a config statement; returns False
-        if this object is a blank line, or a comment.
+
+        :return: Whether this object is a config line, blank line, or a comment.
+        :rtype: bool
         """
         if len(self.text.lstrip()) > 0 and not self.is_comment:
             return True
@@ -590,13 +628,20 @@ class BaseCfgLine(object):
 
     # On BaseCfgLine()
     @junos_unsupported
-    def add_parent(self, parentobj):
-        """Add a reference to parentobj, on this object
+    def add_parent(self, parentobj: Any=None) -> bool:
         """
-        ## In a perfect world, I would check parentobj's type
-        ##     with isinstance(), but I'm not ready to take the perf hit
-        self.parent = parentobj
-        return True
+        Assign ``parentobj`` as the parent of this object.
+
+        :return: True
+        :rtype: bool
+        """
+        if parentobj is None:
+            raise NotImplementedError()
+        elif not isinstance(parentobj, BaseCfgLine):
+            raise NotImplementedError()
+        else:
+            self.parent = parentobj
+            return True
 
     # On BaseCfgLine()
     @junos_unsupported
@@ -831,7 +876,17 @@ class BaseCfgLine(object):
             return retval
 
     # On BaseCfgLine()
-    def has_child_with(self, linespec, all_children=False):
+    @logger.catch(reraise=True)
+    def has_child_with(self, linespec: str, all_children: bool=False):
+        """
+        :param linespec: The string to search for
+        :type linespec: str
+        :param all_children: Whether to search all children (recursively)
+        :type all_children: bool
+        :type linespec: str
+        :return: Whether ``linespec`` exists in any of children
+        :rtype: bool
+        """
         assert isinstance(all_children, bool)
         # Old, crusty broken... fixed in 1.6.30...
         # return bool(filter(methodcaller("re_search", linespec), self.children))
@@ -846,7 +901,8 @@ class BaseCfgLine(object):
 
     # On BaseCfgLine()
     @junos_unsupported
-    def insert_before(self, insertstr=None):
+    @logger.catch(reraise=True)
+    def insert_before(self, insertstr: str=None):
         """Usage: confobj.insert_before('! insert text before this confobj')
         """
         # Fail if insertstr is not the correct object type...
@@ -871,6 +927,7 @@ class BaseCfgLine(object):
 
     # On BaseCfgLine()
     @junos_unsupported
+    @logger.catch(reraise=True)
     def insert_after(self, insertstr=None):
         """Usage: confobj.insert_after('! insert text after this confobj')
         """
@@ -903,7 +960,7 @@ class BaseCfgLine(object):
 
     # On BaseCfgLine()
     @logger.catch(reraise=True)
-    def append_to_family(self, insertstr, indent=-1, auto_indent=False):
+    def append_to_family(self, insertstr: str, indent: int=-1, auto_indent: bool=False) -> None:
         """Append an :py:class:`~models_cisco.IOSCfgLine` object with ``insertstr``
         as a child at the top of the current configuration family.
 
@@ -916,14 +973,8 @@ class BaseCfgLine(object):
         :type indent: int
         :param auto_indent: Automatically indent the child to :py:attr:`~ciscoconfparse2.CiscoConfParse.auto_indent_width`
         :type auto_indent: bool
-        :return: The text matched by the regular expression group; if there is no match, None is returned.
-        :rtype: str
-
-        .. note::
-
-           If modifying results from an iterative configuration search such as
-           :py:meth:`~ciscoconfparse2.CiscoConfParse.find_objects`, ensure that you reverse
-           results before modifying the configuration.
+        :return: None
+        :rtype: None
 
         This example illustrates how you can use :py:func:`append_to_family` to add a
         ``carrier-delay`` to each interface.
@@ -997,10 +1048,7 @@ class BaseCfgLine(object):
         #  object...
         this_obj = type(self)
         newobj = this_obj(line=insertstr)
-        if False:
-            newobj_parent = self.find_parent_for(insertstr)
-        else:
-            newobj_parent = self
+        newobj_parent = self
 
         if isinstance(self, BaseCfgLine):
             try:
@@ -1016,7 +1064,7 @@ class BaseCfgLine(object):
                     ###########################################################
                     last_parent_linenums = {}
                     for obj in self.confobj.data:
-                        if not self in obj.lineage:
+                        if self not in obj.lineage:
                             continue
                         obj_indent = self.classify_family_indent(obj.text)
                         if isinstance(last_parent_linenums.get(obj_indent, None), int):
@@ -1143,13 +1191,16 @@ class BaseCfgLine(object):
 
     # On BaseCfgLine()
     @logger.catch(reraise=True)
-    def classify_family_indent(self, insertstr=None):
+    def classify_family_indent(self, insertstr: str=None) -> int:
         """Look at the indent level of insertstr and return an integer for the auto_indent_width of insertstr relative to this object and auto_indent_width.
 
         - If insertstr is indented at the same level, return 0.
-        - If insertstr is indented more, return a positive integer for how many auto_indent_width indents.
-        - If insertstr is indented less, return a negative integer for how many auto_indent_width indents.
-        - If insertstr is not indented on an integer multiple of auto_indent_width, raise NotImplementedError.
+        - If insertstr is indented more, return a positive integer for how many ``auto_indent_width`` indents.
+        - If insertstr is indented less, return a negative integer for how many ``auto_indent_width`` indents.
+        - If insertstr is not indented on an integer multiple of ``auto_indent_width``, raise NotImplementedError.
+
+        :return: An integer for the ``auto_indent_width`` of ``insertstr`` relative to this object and ``auto_indent_width``.
+        :rtype: int
         """
         if not isinstance(insertstr, str):
             error = f"Received `insertstr` {type(insertstr)}, but expected a string"
@@ -1188,98 +1239,103 @@ class BaseCfgLine(object):
             raise NotImplementedError(error)
 
     # On BaseCfgLine()
-    @junos_unsupported
     @logger.catch(reraise=True)
-    def find_parent_for(self, val):
-        """Search all children of this object and return the most appropriate parent object for the indent associated with ``val``"""
-        if isinstance(val, str):
-            pass
-        elif isinstance(val, BaseCfgLine):
-            pass
+    def rstrip(self, chars: str=None) -> str:
+        """Implement rstrip() on the BaseCfgLine().text
+
+        .. note::
+
+           The original ``text`` in this object will be unmodified.
+
+        :return: The stripped ``text``
+        :rtype: str
+        """
+        if chars is None:
+            return self._text.rstrip()
         else:
-            error = f"val must be a str or instance of BaseCfgLine(); however, BaseCfgLine().find_parent_for() got {type(val)}"
-            logger.critical(error)
-            raise NotImplementedError(error)
-
-        #########################################################################
-        # build a list of candidate parent indents
-        #########################################################################
-        obj_indent_list = sorted([obj.indent for obj in self.all_children])
-        obj_indent_list.insert(0, self.indent)
-        obj_indent_list.reverse()
-
-        #########################################################################
-        # build a list of candidate parent indents
-        #########################################################################
-        obj_list = sorted(self.all_children)
-        obj_list.insert(0, self)
-        obj_list.reverse()
-
-        try:
-            val_indent = len(val) - len(val.lstrip())
-            if isinstance(val_indent, int):
-                for _idx, candidate_indent in enumerate(obj_indent_list):
-                    if candidate_indent < val_indent:
-                        return obj_list[_idx]
-                error = f"Could not find indent for {val}"
-                logger.critical(error)
-                raise NotImplementedError(error)
-            else:
-                error = f"Could not find indent for {val}"
-                logger.critical(error)
-                raise TypeError(error)
-        except BaseException as eee:
-            error = f"Failure in BaseCfgLine().get_parent_for({val}): {eee}"
-            logger.critical(error)
-            raise eee
-
-        error = f"Unexpected condition in BaseCfgLine().find_parent_for({val})"
-        logger.critical(error)
-        raise NotImplementedError(error)
+            return self._text.rstrip(chars=chars)
 
     # On BaseCfgLine()
     @logger.catch(reraise=True)
-    def rstrip(self):
-        """Implement rstrip() on the BaseCfgLine().text; manually call CiscoConfParse().commit() after the rstrip()"""
-        self._text = self._text.rstrip()
-        return self._text
+    def lstrip(self, chars: str=None) -> str:
+        """Implement lstrip() on the BaseCfgLine().text
+
+        .. note::
+
+           The original ``text`` in this object will be unmodified.
+
+        :return: The stripped ``text``
+        :rtype: str
+        """
+        if chars is None:
+            return self._text.lstrip()
+        else:
+            return self._text.lstrip(chars=chars)
 
     # On BaseCfgLine()
     @logger.catch(reraise=True)
-    def lstrip(self):
-        """Implement lstrip() on the BaseCfgLine().text; manually call CiscoConfParse().commit() after the lstrip()"""
-        self._text = self._text.lstrip()
-        return self._text
+    def strip(self, chars: str=None) -> str:
+        """Implement strip() on the BaseCfgLine().text
+
+        .. note::
+
+           The original ``text`` in this object will be unmodified.
+
+        :return: The stripped ``text``
+        :rtype: str
+        """
+        if chars is None:
+            return self._text.strip()
+        else:
+            return self._text.strip(chars=chars)
 
     # On BaseCfgLine()
     @logger.catch(reraise=True)
-    def strip(self):
-        """Implement strip() on the BaseCfgLine().text; manually call CiscoConfParse().commit() after the strip()"""
-        self._text = self._text.strip()
-        return self._text
+    def split(self, sep: str=None, maxsplit: int=-1) -> List[str]:
+        """
+        Split ``text`` in-place
+
+        .. note::
+
+           The original ``text`` in this object will be unmodified.
+
+        :param sep: Split text on the ``sep`` characters (by default, any whitespace)
+        :type sep: str
+        :param maxsplit: Maximum number of splits, default is -1 (no limit)
+        :type maxsplit: int
+        :return: A sequence of strings
+        :rtype: List[str]
+        """
+        if sep is None:
+            return self._text.split(maxsplit=maxsplit)
+        else:
+            return self._text.split(sep=sep, maxsplit=maxsplit)
 
     # On BaseCfgLine()
     @logger.catch(reraise=True)
-    def get_typed_dict(self, regex=None, type_dict=None, default=None, debug=False):
-        """Return a typed dict if `regex` is an re.Match() instance and `type_dict` is a `dict` of types.  If a key in `type_dict` does not match, `default` is returned for that key.
-        Examples
-        --------
-        These examples demonstrate how ``get_typed_dict()`` works.
+    def get_regex_typed_dict(self, regex: re.Match=None, type_dict: dict=None, default: str=None, debug: bool=False) -> dict:
+        """
+        :return: Return a typed dict if ``regex`` is an re.Match() instance (with named match groups) and `type_dict` is a `dict` of types.  If a key in `type_dict` does not match, `default` is returned for that key.
+        :rtype: dict
+
+        These examples demonstrate how ``get_regex_typed_dict()`` works.
+
         .. code-block:: python
+
            >>> _uut_regex = r"^(?P<my_digit>[\d+])(?P<no_digit>[^\d+])"
            >>> _type_dict = {"my_digit", int, "no_digit": str}
            >>> _default = "_no_match"
-           >>> get_typed_dict(re.search(_uut_regex, "1a"), type_dict=_type_dict, default=_default)
+           >>> get_regex_typed_dict(re.search(_uut_regex, "1a"), type_dict=_type_dict, default=_default)
            {'my_digit': 1, 'no_digit': 'a'}
-           >>> get_typed_dict(re.search(_uut_regex, "a1"), type_dict=_type_dict, default=_default)
+           >>> get_regex_typed_dict(re.search(_uut_regex, "a1"), type_dict=_type_dict, default=_default)
            {'my_digit': '_no_match', 'no_digit': '_no_match'}
-           >>> get_typed_dict(re.search(_uut_regex, ""), type_dict=_type_dict, default=_default)
+           >>> get_regex_typed_dict(re.search(_uut_regex, ""), type_dict=_type_dict, default=_default)
            {'my_digit': '_no_match', 'no_digit': '_no_match'}
            >>>
         """
         retval = {}
         if debug is True:
-            logger.info(f"{self}.get_typed_dict(`regex`={regex}, `type_dict`={type_dict}, `default`='{default}', debug={debug}) was called")
+            logger.info(f"{self}.get_regex_typed_dict(`regex`={regex}, `type_dict`={type_dict}, `default`='{default}', debug={debug}) was called")
 
         # If the `regex` is a string, compile so we can access match group info
         if isinstance(regex, str):
@@ -1593,52 +1649,42 @@ class BaseCfgLine(object):
     @logger.catch(reraise=True)
     def re_match_iter_typed(
         self,
-        regex,
-        group=1,
-        result_type=str,
-        default="",
-        untyped_default=False,
-        groupdict=None,
-        recurse=True,
-        debug=False,
-    ):
+        regex: Union[str, re.Pattern],
+        group: int=1,
+        result_type: type=str,
+        default: Any="",
+        untyped_default: bool=False,
+        groupdict: dict=None,
+        recurse: bool=True,
+        debug: bool=False,
+    ) -> Any:
         r"""Use ``regex`` to search the children of
         :class:`~models_cisco.IOSCfgLine` text and return the contents of
         the regular expression group, at the integer ``group`` index, cast as
         ``result_type``; if there is no match, ``default`` is returned.
 
-        Parameters
-        ----------
-
-        regex : str
-            A string or python compiled regular expression, which should be matched.  This regular expression should contain parenthesis, which bound a match group.
-        group : int
-            An integer which specifies the desired regex group to be returned.  ``group`` defaults to 1; this is only used if ``groupdict`` is None.
-        result_type : type
-            A type (typically one of: ``str``, ``int``, ``float``, or :class:`~ccp_util.IPv4Obj`).  All returned values are cast as ``result_type``, which defaults to ``str``.  This is only used if ``groupdict`` is None.
-        default : any
-            The default value to be returned, if there is no match.
-        recurse : bool
-            Set True if you want to search all children (children, grand children, great grand children, etc...)
-        untyped_default : bool
-            Set True if you don't want the default value to be typed; this is only used if ``groupdict`` is None.
-        groupdict : dict
-            Set to a dict of types if you want to match on regex group names; ``groupdict`` overrides the ``group``, ``result_type`` and ``untyped_default`` arguments.
-        debug : bool
-            Set True if you want to debug ``re_match_iter_typed()`` activity
-
-        Returns
-        -------
-
-        ``result_type``
-            The text matched by the regular expression group; if there is no match, ``default`` is returned.  All values are cast as ``result_type``, unless `untyped_default` is True.
+        :param regex: A string or python compiled regular expression, which should be matched.  This regular expression should contain parenthesis, which are bound to a match group.
+        :type regex: Union[str, re.Pattern]
+        :param group: Specify the desired regex group to be returned.  ``group`` defaults to 1; this is only used if ``groupdict`` is None.
+        :type group: int
+        :param result_type: A type (typically one of: ``str``, ``int``, ``float``, or :class:`~ccp_util.IPv4Obj`).  Unless ``groupdict`` is specified, all returned values are cast as ``result_type``, which defaults to ``str``.
+        :type result_type: Type
+        :param default: The default value to be returned, if there is no match.
+        :type default: Any
+        :param recurse: Set True if you want to search all children (children, grand children, great grand children, etc...), default to True.
+        :type recurse: bool
+        :param untyped_default: Set True if you don't want the default value to be typed; this is only used if ``groupdict`` is None.
+        :type untyped_default: bool
+        :param groupdict: Set to a dict of types if you want to match on regex group names; ``groupdict`` overrides the ``group``, ``result_type`` and ``untyped_default`` arguments.
+        :type groupdict: dict
+        :param debug: Set True if you want to debug ``re_match_iter_typed()`` activity
+        :type debug: bool
+        :return: The text matched by the regular expression group; if there is no match, ``default`` is returned.  All values are cast as ``result_type``, unless `untyped_default` is True.
+        :rtype: Any
 
         .. note::
 
            This loops through the children (in order) and returns when the regex hits its first match.
-
-        Examples
-        --------
 
         This example illustrates how you can use
         :func:`~models_cisco.IOSCfgLine.re_match_iter_typed` to build an
@@ -1725,7 +1771,7 @@ class BaseCfgLine(object):
             # Return the result if the parent line matches the regex...
             mm = re.search(regex, self.text)
             if isinstance(mm, re.Match):
-                return self.get_typed_dict(
+                return self.get_regex_typed_dict(
                     regex=mm,
                     type_dict=groupdict,
                     default=default,
@@ -1735,13 +1781,13 @@ class BaseCfgLine(object):
             if recurse is False:
                 for cobj in self.children:
                     mm = re.search(regex, cobj.text)
-                    return self.get_typed_dict(
+                    return self.get_regex_typed_dict(
                         regex=mm,
                         type_dict=groupdict,
                         default=default,
                         debug=debug,
                     )
-                return self.get_typed_dict(
+                return self.get_regex_typed_dict(
                     regex=mm,
                     type_dict=groupdict,
                     default=default,
@@ -1751,13 +1797,13 @@ class BaseCfgLine(object):
                 for cobj in self.all_children:
                     mm = re.search(regex, cobj.text)
                     if isinstance(mm, re.Match):
-                        return self.get_typed_dict(
+                        return self.get_regex_typed_dict(
                             regex=mm,
                             type_dict=groupdict,
                             default=default,
                             debug=debug,
                         )
-                return self.get_typed_dict(
+                return self.get_regex_typed_dict(
                     regex=mm,
                     type_dict=groupdict,
                     default=default,
@@ -1780,7 +1826,7 @@ class BaseCfgLine(object):
 
     # On BaseCfgLine()
     @property
-    def ioscfg(self):
+    def family_text(self):
         """Return a list with this the text of this object, and
         with all children in the direct line.
         """

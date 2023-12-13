@@ -4,6 +4,13 @@
 - Summary:
     - Insert something here
 
+## Version: 0.2.3
+
+- Released: 2023-12-13
+- Summary:
+    - Modify `BaseCfgLine().strip()`, `BaseCfgLine().lstrip()`, and `BaseCfgLine().rstrip()`
+    - Documentation updates
+
 ## Version: 0.2.2
 
 - Released: 2023-12-13
