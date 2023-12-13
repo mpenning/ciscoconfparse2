@@ -4,6 +4,13 @@
 - Summary:
     - Insert something here
 
+## Version: 0.2.0
+
+- Released: 2023-12-13
+- Summary:
+    - Fix some `BaseCfgLine().append_to_family()` cases
+    - Documentation updates
+
 ## Version: 0.1.13
 
 - Released: 2023-12-12

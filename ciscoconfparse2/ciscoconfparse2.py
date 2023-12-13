@@ -20,9 +20,9 @@ If you need to contact the author, you can do so by emailing:
 mike [~at~] pennington [.dot.] net
 """
 
+from typing import Any, Union, List, Tuple
 from collections.abc import Sequence
 from collections import UserList
-from typing import Any, Union
 import inspect
 import pathlib
 import locale
@@ -282,9 +282,16 @@ _, ACTIVE_LOGURU_HANDLERS = initialize_ciscoconfparse()
 
 
 @logger.catch(reraise=True)
-def parse_line_braces(line_txt=None, comment_delimiters=None) -> tuple:
-    """Internal helper-method for brace-delimited configs (typically JunOS, syntax='junos')."""
-    # Removed config parameter assertions in 1.7.2...
+def parse_line_braces(line_txt: str=None, comment_delimiters: list=None) -> Tuple[Union[int, str]]:
+    """Internal helper-method for brace-delimited configs (typically JunOS, syntax='junos').
+
+    :param line_txt: Brace-delimited configuration line to be parsed
+    :type line_txt: str
+    :param comment_delimiters: Sequence of string comment-delimiters
+    :type comment_delimiters: list[str]
+    :return: A sequence of indents and commands
+    :rtype: Tuple[Union[int, str]]
+    """
 
     retval = ()
 
@@ -414,9 +421,27 @@ def parse_line_braces(line_txt=None, comment_delimiters=None) -> tuple:
 # This method was on ConfigList()
 @logger.catch(reraise=True)
 def cfgobj_from_text(
-    text_list, txt, idx, syntax=None, comment_delimiters=None, factory=None
-):
-    """Build cfgobj from configuration text syntax, and factory inputs."""
+    text_list: list[str], txt: str, idx: int, syntax: str=None, comment_delimiters: list[str]=None, factory: bool=None
+) -> BaseCfgLine:
+    """Build a configuration object from configuration text, syntax, and factory inputs.
+
+    :param text_list: The input list of text configuration strings
+    :type text_list: list[str]
+    :param txt: The specific configuration string to evaluate
+    :type txt: str
+    :param txt: The specific configuration string to evaluate
+    :type txt: str
+    :param idx: Line-number to assign to the configuration object
+    :type idx: int
+    :param syntax: A valid configuration syntax
+    :type syntax: str
+    :param comment_delimiters: A sequence of string comment-delimiters
+    :type comment_delimiters: list[str]
+    :param factory: Controls whether to read the configuration lines as a factory input
+    :type factory: bool
+    :return: A configuration object appropriate for the configuration
+    :rtype: BaseCfgLine
+    """
 
     if not isinstance(txt, str):
         error = f"cfgobj_from_text(txt=`{txt}`) must be a string"
@@ -476,12 +501,20 @@ def cfgobj_from_text(
 
 
 @logger.catch(reraise=True)
-def build_space_tolerant_regex(linespec):
-    r"""SEMI-PRIVATE: Accept a string, and return a string with all spaces replaced with '\s+'."""
+def build_space_tolerant_regex(linespec: str, encoding: str="utf-8") -> str:
+    r"""Accept a string, and return a regex-like string with all spaces replaced with '\s+'.
+
+    :param linespec: Input to be regex-escaped
+    :type linespec: str
+    :param encoding: Encoding of the ``linespec``
+    :type encoding: str
+    :return: The ``linespec`` with all spaces escaped as ``\s+``
+    :rtype: str
+    """
     # Define backslash with manual Unicode...
     backslash = "\x5c"
     # escaped_space = "\\s+" (not a raw string)
-    escaped_space = (backslash + backslash + "s+").translate("utf-8")
+    escaped_space = (backslash + backslash + "s+").translate(encoding)
 
     enforce_valid_types(linespec, (str,), "linespec parameter must be a string.")
     if isinstance(linespec, str):
@@ -498,24 +531,34 @@ def build_space_tolerant_regex(linespec):
 
 
 @logger.catch(reraise=True)
-def assign_parent_to_closing_braces(input_list=None, keep_blank_lines=False):
-    """Accept a list of brace-delimited BaseCfgLine() objects; these objects should not already have a parent assigned.  Walk the list of BaseCfgLine() objects and assign the 'parent' attribute BaseCfgLine() objects to the closing config braces.  Return the list of objects (with the assigned 'parent' attributes).
+def assign_parent_to_closing_braces(input_list: list[BaseCfgLine]=None) -> list[BaseCfgLine]:
+    """Accept a list of brace-delimited BaseCfgLine() objects; these objects
+    should not already have a parent assigned to closing brace lines.  Walk
+    the list of BaseCfgLine() objects and assign the 'parent' attribute to
+    BaseCfgLine() objects for the closing config braces.  Return the list of
+    objects (with the assigned 'parent' attributes).
 
-    Closing Brace Assignment Example
-    --------------------------------
+    :param input_list: A sequence of :py:class:`BaseCfgLine` objects (no parents assigned to closing braces).
+    :type input_list: list[BaseCfgLine]
+    :return: A sequence of BaseCfgLine with parents assigned to closing braces.
+    :rtype: list[BaseCfgLine]
 
-    line number 1
-    line number 2 {
-        line number 3 {
-            line number 4
-            line number 5 {
-                line number 6
-                line number 7
-                line number 8
-            }            # Assign this closing-brace's parent as line 5
-        }                # Assign this closing-brace's parent as line 3
-    }                    # Assign this closing-brace's parent as line 2
-    line number 11
+    Closing brace assignment example:
+
+    .. parsed-literal::
+
+       line number 1
+       line number 2 {
+           line number 3 {
+               line number 4
+               line number 5 {
+                   line number 6
+                   line number 7
+                   line number 8
+               }            # Assign this closing-brace's parent as line 5
+           }                # Assign this closing-brace's parent as line 3
+       }                    # Assign this closing-brace's parent as line 2
+       line number 11
     """
     if input_list is None:
         raise ValueError("Cannot modify.  The input_list is None")
@@ -523,12 +566,17 @@ def assign_parent_to_closing_braces(input_list=None, keep_blank_lines=False):
     input_condition = isinstance(input_list, Sequence)
     if input_condition is True and len(input_list) > 0:
         opening_brace_objs = []
+        # Modify obj.parent, below...
         for obj in input_list:
+            # All obj in input_list has obj.parent is modified in-place...
             if isinstance(obj, BaseCfgLine) and isinstance(obj.text, str):
-                # These rstrip() are one of two fixes, intended to catch user error such as
-                # the problems that the submitter of Github issue #251 had.
-                # CiscoConfParse() could not read his configuration because he submitted
-                # a multi-line string...
+                # Assign obj.parent for closing braces.  Lines in braces will
+                # have parents assigned elsewhere.
+                #
+                # These rstrip() are one of two fixes, intended to catch user
+                # error such as the problems that the submitter of Github issue
+                # #251 had. CiscoConfParse() could not read his configuration
+                # because he submitted a multi-line string...
                 #
                 # This check will explicitly catch some problems like that...
                 if len(obj.text.rstrip()) >= 1 and obj.text.rstrip()[-1] == "{":
@@ -546,8 +594,24 @@ def assign_parent_to_closing_braces(input_list=None, keep_blank_lines=False):
 # This method was copied from the same method in git commit below...
 # https://raw.githubusercontent.com/mpenning/ciscoconfparse/bb3f77436023873da344377d3c839387f5131e7f/ciscoconfparse/ciscoconfparse2.py
 @logger.catch(reraise=True)
-def convert_junos_to_ios(input_list=None, stop_width=4, comment_delimiters=None, debug=0):
-    """Accept `input_list` containing a list of junos-brace-formatted-string config lines.  This method strips off semicolons / braces from the string lines in `input_list` and returns the lines in a new list where all lines are explicitly indented as IOS would (as if IOS understood braces)."""
+def convert_junos_to_ios(input_list: list[str]=None, stop_width: int=4, comment_delimiters: list[str]=None, debug: int=0) -> list[str]:
+    """Accept `input_list` containing a list of junos-brace-formatted-string
+    config lines.  This method strips off semicolons / braces from the string
+    lines in `input_list` and returns the lines in a new list where all lines
+    are explicitly indented as IOS would (as if IOS understood braces).
+
+    :param input_list: A sequence of brace-delimited configuration strings.
+    :type input_list: list[str]
+    :param stop_width: Integer representing the leading-spaces to indent
+                       levels of output child strings.
+    :type stop_width: int
+    :param comment_delimiters: Sequence of string comment-delimiters
+    :type comment_delimiters: list[str]
+    :param debug: Debug level for this method
+    :type debug: int
+    :return: Indented configuration strings
+    :rtype: list[str]
+    """
 
     if comment_delimiters is None:
         comment_delimiters = []
@@ -598,8 +662,8 @@ def convert_junos_to_ios(input_list=None, stop_width=4, comment_delimiters=None,
 @attrs.define(repr=False)
 class ConfigList(UserList):
     """A custom list to hold :class:`~ccp_abc.BaseCfgLine` objects.  Most users will never need to use this class directly."""
-    initlist: Union[list, tuple] = None
-    comment_delimiters: list = None
+    initlist: Union[list[str], tuple[str]] = None
+    comment_delimiters: list[str] = None
     debug: int = None
     factory: bool = None
     ignore_blank_lines: bool = None
@@ -616,35 +680,36 @@ class ConfigList(UserList):
         self,
         initlist=None,
         comment_delimiters=None,
-        debug=0,
         factory=False,
-        ignore_blank_lines=True,
+        ignore_blank_lines=False,
         # syntax="__undefined__",
         syntax="ios",
-        auto_commit=False,
+        auto_commit=True,
+        debug=0,
         **kwargs
     ):
         """Initialize the class.
 
-        Parameters
-        ----------
-        initlist : list
-            A list of parsed :class:`~models_cisco.IOSCfgLine` objects
-        comment_delimiters : list
-            A list of string comment delimiters.  This should only be changed when parsing non-Cisco configurations.  ``comment_delimiters`` defaults to ['!'] for Cisco configurations.
-        debug : int
-            ``debug`` defaults to 0, and should be kept that way unless you're working on a very tricky config parsing problem.  Debug output is not particularly friendly
-        ignore_blank_lines : bool
-            ``ignore_blank_lines`` defaults to True; when this is set True, ciscoconfparse2 ignores blank configuration lines.  You might want to set ``ignore_blank_lines`` to False if you intentionally use blank lines in your configuration (ref: Github Issue #3).
-        syntax : str
-            Use a valid syntax string for the syntax of this config list.
-        auto_commit : bool
-            Set True if you want configuration changes to auto-commit; default is False.  ``auto_commit`` cannot handle all changes automatically.
-
-        Returns
-        -------
-        An instance of an :class:`~ciscoconfparse2.ConfigList` object.
-
+        :param initlist: A sequence of text configuration statements
+        :type initlist: Union[list[str], tuple[str]]
+        :param comment_delimiters: Sequence of string comment-delimiters; only change this
+                                   when parsing non-Cisco configurations.
+        :type comment_delimiters: list[str]
+        :param factory: Controls whether to read the configuration lines as a factory input
+        :type factory: bool
+        :param ignore_blank_lines: Controls whether blank configuration
+                                   lines should be ignored, default to
+                                   False.
+        :type ignore_blank_lines: bool
+        :param syntax: A valid configuration syntax, default to 'ios'.
+        :type syntax: str
+        :param auto_commit: Controls whether configuration changes are
+                            automatically committed.
+        :type auto_commit: bool
+        :param debug: Debug level of this object.
+        :type debug: int
+        :return: A :py:class:`ConfigList` instance.
+        :rtype: :py:class:`ConfigList`
         """
 
         # Use this with UserList() instead of super()
@@ -1116,7 +1181,6 @@ class ConfigList(UserList):
         >>> parse = CiscoConfParse(config=["a a", "b b", "c c", "b b"])
         >>> # Insert 'g' before any occurance of 'b'
         >>> retval = parse.insert_before("b b", "X X")
-        >>> parse.commit()
         >>> parse.ioscfg
         ... ["a a", "X X", "b b", "c c", "X X", "b b"]
         >>>
@@ -1230,7 +1294,6 @@ class ConfigList(UserList):
         >>> parse = CiscoConfParse(config=["a a", "b b", "c c", "b b"])
         >>> # Insert 'g' before any occurance of 'b'
         >>> retval = parse.config_objs.insert_after("b b", "X X")
-        >>> parse.commit()
         >>> parse.ioscfg
         ... ["a a", "b b", "X X", "c c", "b b", "X X"]
         >>>
@@ -1821,7 +1884,7 @@ class CiscoConfParse(object):
     loguru: bool = True
     comment_delimiters: list = []
     auto_indent_width: int = -1
-    linesplit_rgx: str = r"\r*\n+"
+    linesplit_rgx: str = r"\r*\n"
     ignore_blank_lines: bool = False
     auto_commit: bool = None
     factory: bool = False
@@ -1841,7 +1904,7 @@ class CiscoConfParse(object):
         loguru=True,
         comment_delimiters=None,
         auto_indent_width=-1,
-        linesplit_rgx=r"\r*\n+",
+        linesplit_rgx=r"\r*\n",
         ignore_blank_lines=False,
         auto_commit=True,
         factory=False,
@@ -1850,74 +1913,93 @@ class CiscoConfParse(object):
         """
         Initialize CiscoConfParse.
 
-        Parameters
-        ----------
-        config : list or str
-            A list of configuration statements, or a configuration file path to be parsed
-        syntax : str
-            A string holding the configuration type.  Default: 'ios'.  Must be one of: 'ios', 'nxos', 'iosxr', 'asa', 'junos'.  Use 'junos' for any brace-delimited network configuration (including F5, Palo Alto, etc...).
-        encoding : str
-            A string holding the coding type.  Default is `locale.getpreferredencoding()`
-        loguru : bool
-            A bool indicating whether CiscoConfParse should execute with loguru enabled (default: True)
-        comment_delimiters : list
-            A list of string comment delimiters.  This should only be changed when parsing non-Cisco configurations, which do not use a '!' as the comment delimiter.  ``comment`` defaults to '!'.  This value can hold multiple characters in case the config uses multiple characters for comment delimiters; however, the comment delimiters are always assumed to be one character wide
-        auto_indent_width : int
-            ``auto_indent_width`` defaults to -1, and should be kept that way unless you're working on a very tricky config parsing problem.
-        debug : int
-            ``debug`` defaults to 0, and should be kept that way unless you're working on a very tricky config parsing problem.  Debug range goes from 0 (no debugging) to 5 (max debugging).  Debug output is not particularly friendly.
-        factory : bool
-            ``factory`` defaults to False; if set ``True``, it enables a beta-quality configuration classifier.
-        linesplit_rgx : str
-            ``linesplit_rgx`` is used when parsing configuration files to find where new configuration lines are.  It is best to leave this as the default, unless you're working on a system that uses unusual line terminations (for instance something besides Unix, OSX, or Windows)
-        ignore_blank_lines : bool
-            ``ignore_blank_lines`` defaults to False; when this is set True, ciscoconfparse2 ignores blank configuration lines.  You might want to set ``ignore_blank_lines`` to False if you intentionally use blank lines in your configuration, or you are parsing configurations which naturally have blank lines (such as Cisco Nexus configurations).
-        auto_commit : bool
-            A bool indicating whether CiscoConfParse should auto-commit config changes when possible; the default is ``True``, however, parsing very large configs may be faster with ``auto_commit=False``.
+        :param config: A list of configuration lines or the filepath to the configuration.
+        :type config: Union[str, list[str], tuple[str]]
+        :param syntax: The configuration type, default to 'ios'; it must be one of: 'ios', 'nxos', 'iosxr', 'asa', 'junos'.  Use 'junos' for any brace-delimited network configuration (including F5, Palo Alto, etc...).
+        :type syntax: str
+        :param encoding: The configuration encoding, default to ``locale.getpreferredencoding()``.
+        :type encoding: str
+        :param loguru: Control whether CiscoConfParse should enable ``loguru``, default to True.
+        :type loguru: bool
+        :param comment_delimiters: String comment delimiters.  This should only be changed when parsing non-Cisco configurations, which do not use a '!' as the comment delimiter.  ``comment`` defaults to '!'.  This value can hold multiple characters in case the config uses multiple characters for comment delimiters.
+        :type comment_delimiters: list[str]
+        :param auto_indent_width: Defaults to -1, and should be kept that way unless you're working on a very tricky config parsing problem.
+        :type auto_indent_width: int
+        :param linesplit_rgx: Used when parsing configuration files to find
+                              where new configuration lines are; it is best
+                              to leave this as the default, unless you're
+                              working on a system that uses unusual line
+                              terminations (for instance something besides
+                              Unix, OSX, or Windows).
+        :type linesplit_rgx: str
+        :param ignore_blank_lines: Defaults to False; when this is set True,
+                                   ciscoconfparse2 ignores blank configuration
+                                   lines.
+        :type ignore_blank_lines: bool
+        :param auto_commit: Control whether CiscoConfParse should auto-commit config changes when possible, default to True.
+                            However, parsing very large configs may be faster with ``auto_commit=False``.
+        :type auto_commit: bool
+        :param factory: Control whether CiscoConfParse should enable the
+                        beta-quality configuration parameter parser,
+                        default to False.
+        :type factory: bool
+        :param debug: Control CiscoConfParse debug output, default is 0.
+        :type debug: int
+        :return: A CiscoConfParse object
+        :rtype: :py:class:`~ciscoconfparse2.CiscoConfParse`
 
+        .. note::
 
-        Returns
-        -------
-        :class:`~ciscoconfparse2.CiscoConfParse`
+           ``comment_delimiters`` always assumes the delimiter is one character wide.
 
-        Examples
-        --------
+        .. note::
+
+           ``ignore_blank_lines`` changes the original ciscoconfparse default value.
+
         This example illustrates how to parse a simple Cisco IOS configuration
         with :class:`~ciscoconfparse2.CiscoConfParse` into a variable called
         ``parse``.  This example also illustrates what the ``config_objs``
         and ``ioscfg`` attributes contain.
 
-        >>> from ciscoconfparse2 import CiscoConfParse
-        >>> config = [
-        ...     'logging trap debugging',
-        ...     'logging 172.28.26.15',
-        ...     ]
-        >>> parse = CiscoConfParse(config=config)
-        >>> parse
-        <CiscoConfParse: 2 lines / syntax: ios / comment delimiter: '!' / factory: False>
-        >>> parse.config_objs
-        <ConfigList, comment='!', conf=[<IOSCfgLine # 0 'logging trap debugging'>, <IOSCfgLine # 1 'logging 172.28.26.15'>]>
-        >>> parse.ioscfg
-        ['logging trap debugging', 'logging 172.28.26.15']
-        >>>
+        .. code-block:: python
+           :emphasize-lines: 6
 
-        Attributes
-        ----------
-        comment_delimiters : list
-            A list of strings containing the comment-delimiters.  Default: ["!"]
-        config_objs : :class:`~ciscoconfparse2.ConfigList`
-            A custom list, which contains all parsed :class:`~models_cisco.IOSCfgLine` instances.
-        debug : int
-            An int to enable verbose config parsing debugs. Default 0.
-        ioscfg : list
-            A list of text configuration strings
-        objs
-            An alias for `config_objs`
-        openargs : dict
-            Returns a dictionary of valid arguments for `open()` (these change based on the running python version).
-        syntax : str
-            A string holding the configuration type.  Default: 'ios'.  Must be one of: 'ios', 'nxos', 'iosxr', 'asa', 'junos'.  Use 'junos' for any brace-delimited network configuration (including F5, Palo Alto, etc...).
+           >>> from ciscoconfparse2 import CiscoConfParse
+           >>> config = [
+           ...     'logging trap debugging',
+           ...     'logging 172.28.26.15',
+           ...     ]
+           >>> parse = CiscoConfParse(config=config)
+           >>> parse
+           <CiscoConfParse: 2 lines / syntax: ios / comment delimiter: '!' / factory: False>
+           >>> parse.config_objs
+           <ConfigList, comment='!', conf=[<IOSCfgLine # 0 'logging trap debugging'>, <IOSCfgLine # 1 'logging 172.28.26.15'>]>
+           >>> parse.text
+           ['logging trap debugging', 'logging 172.28.26.15']
+           >>>
+
         """
+
+        if False:
+            """
+            Attributes
+            ----------
+
+            comment_delimiters : list
+                A list of strings containing the comment-delimiters.  Default: ["!"]
+            config_objs : :class:`~ciscoconfparse2.ConfigList`
+                A custom list, which contains all parsed :class:`~models_cisco.IOSCfgLine` instances.
+            debug : int
+                An int to enable verbose config parsing debugs. Default 0.
+            ioscfg : list
+                A list of text configuration strings
+            objs
+                An alias for `config_objs`
+            openargs : dict
+                Returns a dictionary of valid arguments for `open()` (these change based on the running python version).
+            syntax : str
+                A string holding the configuration type.  Default: 'ios'.  Must be one of: 'ios', 'nxos', 'iosxr', 'asa', 'junos'.  Use 'junos' for any brace-delimited network configuration (including F5, Palo Alto, etc...).
+            """
         if syntax not in ALL_VALID_SYNTAX:
             error = f"{syntax} is not a valid syntax."
             logger.error(error)
@@ -2055,8 +2137,16 @@ class CiscoConfParse(object):
 
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
-    def handle_ccp_brace_syntax(self, tmp_lines=None, syntax=None):
-        """Deal with brace-delimited syntax issues, such as conditionally discarding junos closing brace-lines."""
+    def handle_ccp_brace_syntax(self, tmp_lines: list=None, syntax: str=None) -> list:
+        """Deal with brace-delimited syntax issues, such as conditionally discarding junos closing brace-lines.
+
+        :param tmp_lines: Brace-delimited text configuration lines
+        :type tmp_lines: list[str]
+        :param syntax: Syntax of the configuration lines
+        :type syntax: str
+        :return: Configuration lines without braces
+        :rtype: list[str]
+        """
 
         if syntax not in ALL_VALID_SYNTAX:
             error = f"{syntax} parser factory is not yet enabled; use factory=False"
@@ -2085,8 +2175,14 @@ class CiscoConfParse(object):
 
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
-    def get_auto_indent_from_syntax(self, syntax=None):
-        """Return an auto indent for the 'syntax' string in question"""
+    def get_auto_indent_from_syntax(self, syntax: str=None) -> int:
+        """Return an auto indent for the 'syntax' string in question
+
+        :param syntax: Syntax of the configuration lines
+        :type syntax: str
+        :return: Number of spaces for each indent level
+        :rtype: int
+        """
         if not isinstance(syntax, str):
             error = "The 'syntax' parameter must be a string"
             logger.error(error)
@@ -2117,8 +2213,12 @@ class CiscoConfParse(object):
 
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
-    def __repr__(self):
-        """Return a string that represents this CiscoConfParse object instance.  The number of lines embedded in the string is calculated from the length of the config_objs attribute."""
+    def __repr__(self) -> str:
+        """Return a string that represents this CiscoConfParse object instance.  The number of lines embedded in the string is calculated from the length of the config_objs attribute.
+
+        :return: A representation of this object.
+        :rtype: str
+        """
         if self.config_objs is None:
             num_lines = 0
         elif isinstance(self.config_objs, Sequence):
@@ -2138,8 +2238,16 @@ class CiscoConfParse(object):
 
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
-    def read_config_file(self, filepath=None, linesplit_rgx=r"\r*\n+"):
-        """Read the config lines from the filepath.  Return the list of text configuration commands or raise an error."""
+    def read_config_file(self, filepath: str=None, linesplit_rgx: str=r"\r*\n") -> list:
+        """Read the config lines from the filepath.  Return the list of text configuration commands or raise an error.
+
+        :param filepath: Filepath to be read
+        :type filepath: str
+        :param linesplit_rgx: Regex to use for line splits
+        :type filepath: str
+        :return: The output configuration
+        :rtype: list[str]
+        """
 
         if self.finished_config_parse is not False:
             raise RequirementFailure()
@@ -2209,8 +2317,15 @@ class CiscoConfParse(object):
 
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
-    def check_ccp_input_good(self, config=None, logger=None, linesplit_rgx=r"\r*\n+"):
-        """The config parameter is a sequence of text config commands.  Return True or False based on whether the config can be parsed."""
+    def check_ccp_input_good(self, config=None, logger=None) -> bool:
+        """
+        :param config: Sequence of commands
+        :type config: Union[list[str], tuple[str]]
+        :param logger: loguru.logger() reference
+        :type logger: loguru._logger.Logger
+        :return: Whether the config can be parsed
+        :rtype: bool
+        """
 
         if self.finished_config_parse is not False:
             raise RequirementFailure()
@@ -2228,14 +2343,20 @@ class CiscoConfParse(object):
         else:
             return False
 
-    #########################################################################
-    # This method is on CiscoConfParse()
-    #      do NOT wrap this method in logger.catch() - github issue #249
-    #########################################################################
     @property
     @logger.catch(reraise=True)
-    def openargs(self):
-        """Fix Py3.5 deprecation of universal newlines - Ref Github #114; also see https://softwareengineering.stackexchange.com/q/298677/23144."""
+    def openargs(self) -> dict:
+        """
+        Fix Py3.5 deprecation of universal newlines
+
+        .. note::
+
+           Ref original ciscoconfparse Github issue #114; also see
+           https://softwareengineering.stackexchange.com/q/298677/23144.
+
+        :return: The proper encoding parameters
+        :rtype: dict[str]
+        """
         if sys.version_info >= (
             3,
             6,
@@ -2248,32 +2369,26 @@ class CiscoConfParse(object):
     # This method is on CiscoConfParse()
     @property
     @logger.catch(reraise=True)
-    def text(self):
-        """Return a list containing all text configuration statements; it is an alias for ``CiscoConfParse().ioscfg``."""
-        return [ii.text for ii in self.config_objs]
+    def text(self) -> list:
+        """
+        :return: All text configuration statements
+        :rtype: list[str]
 
-    if False:
-        # This method is on CiscoConfParse()
-        @property
-        @logger.catch(reraise=True)
-        def ioscfg(self):
-            """Return a list containing all text configuration statements."""
-            # I keep ioscfg to emulate legacy ciscoconfparse2 behavior
-            #
-            # FYI: map / methodcaller is not significantly faster than a list
-            #     comprehension, below...
-            # See https://stackoverflow.com/a/51519942/667301
-            # from operator import methodcaller
-            # get_text_attr = methodcaller('text')
-            # return list(map(get_text_attr, self.config_objs))
-            #
-            return [ii.text for ii in self.config_objs]
+        .. warning::
+
+           The original ciscoconfparse ``ioscfg`` property has been renamed to ``text``.
+        """
+        return [ii.text for ii in self.config_objs]
 
     # This method is on CiscoConfParse()
     @property
     @logger.catch(reraise=True)
-    def objs(self):
-        """CiscoConfParse().objs is an alias for the CiscoConfParse().config_objs property; it returns a ConfigList() of config-line objects."""
+    def objs(self) -> list:
+        """CiscoConfParse().objs is an alias for the CiscoConfParse().config_objs property.
+
+        :returns: All configuration objects.
+        :rtype: list[ConfigList]
+        """
         if self.config_objs is None:
             error = (
                 "config_objs is set to None.  config_objs should be a ConfigList() of configuration-line objects"
@@ -2284,59 +2399,86 @@ class CiscoConfParse(object):
 
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
-    def atomic(self):
+    def atomic(self) -> None:
         """Use :func:`~ciscoconfparse2.CiscoConfParse.atomic` to manually fix up ``config_objs`` relationships after modifying a parsed configuration.  This method is slow; try to batch calls to :func:`~ciscoconfparse2.CiscoConfParse.atomic()` if possible.
 
-        Warnings
-        --------
-        If you modify a configuration after parsing it with :class:`~ciscoconfparse2.CiscoConfParse`, you *must* call :func:`~ciscoconfparse2.CiscoConfParse.commit` or :func:`~ciscoconfparse2.CiscoConfParse.atomic` before searching the configuration again with methods such as :func:`~ciscoconfparse2.CiscoConfParse.find_objects`.  Failure to call :func:`~ciscoconfparse2.CiscoConfParse.commit` or :func:`~ciscoconfparse2.CiscoConfParse.atomic` on config modifications could lead to unexpected search results.
+        :return: None
+        :rtype: None
 
-        See Also
-        --------
-        :func:`~ciscoconfparse2.CiscoConfParse.commit`.
+        .. warning::
+
+           If you modify a configuration after parsing it with
+           :py:class:`~ciscoconfparse2.CiscoConfParse`, you *must* call
+           :py:meth:`~ciscoconfparse2.CiscoConfParse.commit` or
+           :py:meth:`~ciscoconfparse2.CiscoConfParse.atomic` before searching the
+           configuration again with methods such as :py:meth:`~ciscoconfparse2.CiscoConfParse.find_objects`.
+           Failure to call :py:meth:`~ciscoconfparse2.CiscoConfParse.commit` or
+           :py:meth:`~ciscoconfparse2.CiscoConfParse.atomic` on config modifications
+           could lead to unexpected search results.
+
+        .. note::
+
+           Also see :py:meth:`~ciscoconfparse2.CiscoConfParse.commit`.
         """
         self.config_objs.data = self.config_objs.bootstrap(debug=self.debug)
         self.config_objs.commit_checkpoint = self.config_objs.get_checkpoint()
 
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
-    def commit(self):
+    def commit(self) -> None:
         """Alias for calling the :func:`~ciscoconfparse2.CiscoConfParse.atomic` method.  This method is slow; try to batch calls to :func:`~ciscoconfparse2.CiscoConfParse.commit()` if possible.
 
-        Warnings
-        --------
-        If you modify a configuration after parsing it with :class:`~ciscoconfparse2.CiscoConfParse`, you *must* call :func:`~ciscoconfparse2.CiscoConfParse.commit` or :func:`~ciscoconfparse2.CiscoConfParse.atomic` before searching the configuration again with methods such as :func:`~ciscoconfparse2.CiscoConfParse.find_objects`.  Failure to call :func:`~ciscoconfparse2.CiscoConfParse.commit` or :func:`~ciscoconfparse2.CiscoConfParse.atomic` on config modifications could lead to unexpected search results.
+        :return: None
+        :rtype: None
 
-        See Also
-        --------
-        :func:`~ciscoconfparse2.CiscoConfParse.atomic`.
+        .. warning::
+
+           If you modify a configuration after parsing it with :class:`~ciscoconfparse2.CiscoConfParse`,
+           you *must* call :py:meth:`~ciscoconfparse2.CiscoConfParse.commit` or
+           :py:meth:`~ciscoconfparse2.CiscoConfParse.atomic` before searching the configuration
+           again with methods such as :func:`~ciscoconfparse2.CiscoConfParse.find_objects`.  Failure
+           to call :py:meth:`~ciscoconfparse2.CiscoConfParse.commit` or
+           :py:meth:`~ciscoconfparse2.CiscoConfParse.atomic` on config modifications could
+           lead to unexpected search results.
+
+        .. note::
+
+           Also see :py:meth:`~ciscoconfparse2.CiscoConfParse.atomic`.
         """
         self.atomic()  # atomic() calls self.config_objs.bootstrap
-
 
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
     def _find_child_object_branches(
         self,
-        parent_obj,
-        childspec,
-        regex_flags,
-        allow_none=True,
-        debug=0,
-    ):
+        parent_obj: BaseCfgLine,
+        childspec: str,
+        regex_flags: str,
+        debug: int=0,
+    ) -> list:
+        """
+        :param parent_obj: The parent object to be searched
+        :type parent_obj: BaseCfgLine
+        :param childspec: Regex string to match against child objects
+        :type childspec: str
+        :param regex_flags: Regex flags to apply to the aforementioned match
+        :type regex_flags: str
+        :param debug: Debug level of the operation
+        :type debug: int
+        :return: Children matching ``childspec``
+        :rtype: list[BaseCfgLine]
+        """
         # I'm not using parent_obj.re_search_children() because
         # re_search_children() doesn't return None for no match...
 
         # As of version 1.6.16, allow_none must always be True...
-        if allow_none is not True:
-            raise ValueError("allow_none parameter must always be True.")
+        allow_none = True
 
         if debug > 1:
             msg = f"""Calling _find_child_object_branches(
 parent_obj={parent_obj},
 childspec='{childspec}',
 regex_flags='{regex_flags}',
-allow_none={allow_none},
 debug={debug},
 )"""
             logger.info(msg)
@@ -2370,7 +2512,6 @@ debug={debug},
         self,
         branchspec=(),
         regex_flags=0,
-        allow_none=True,
         regex_groups=False,
         empty_branches=False,
         ignore_ws=False,
@@ -2386,32 +2527,23 @@ debug={debug},
 
         Return a list of lists (of object 'branches') which are nested to the same depth required in `branchspec`.  However, unlike most other CiscoConfParse() methods, return an explicit `None` if there is no object match.  Returning `None` allows a single search over configs that may not be uniformly nested in every branch.
 
-        Deprecation notice for the allow_none parameter
-        -----------------------------------------------
+        .. warning::
 
-        allow_none is deprecated and no longer a configuration option, as of version 1.6.16.
-        Going forward, allow_none will always be considered True.
+           The ``allow_none`` from original ciscoconfparse is removed and no longer a configuration option; it will always be regarded as True.
 
-        Parameters
-        ----------
-        branchspec : tuple
-            A tuple of python regular expressions to be matched.
-        regex_flags :
-            Chained regular expression flags, such as `re.IGNORECASE|re.MULTILINE`
-        regex_groups : bool (default False)
-            If True, return a tuple of re.Match groups instead of the matching configuration objects.
-        empty_branches : bool (default False)
-            If True, return a list of None statements if there is no match; before version 1.9.49, this defaulted True.
-        debug : int
-            Set debug > 0 for debug messages
+        :param branchspec: Regular expressions to be matched.
+        :type branchspec: Union[tuple[str], list[str]]
+        :param regex_flags: Chained regular expression flags, such as `re.IGNORECASE|re.MULTILINE`
+        :type regex_flags: str
+        :param regex_groups: Return a tuple of re.Match groups instead of the matching configuration objects, default is False.
+        :type regex_groups: bool
+        :param empty_branches: If True, return a list of None statements if there is no match; before version 1.9.49, this defaulted True.
+        :type empty_branches: bool
+        :param debug: Set > 0 for debug messages
+        :type debug: int
+        :return: A list of lists of matching :class:`~ciscoconfparse2.IOSCfgLine` objects
+        :rtype: list[list[BaseCfgLine]]
 
-        Returns
-        -------
-        list
-            A list of lists of matching :class:`~ciscoconfparse2.IOSCfgLine` objects
-
-        Examples
-        --------
 
         .. code-block:: python
            :emphasize-lines: 30,31
@@ -2473,18 +2605,12 @@ debug={debug},
            >>> branches[2]
            [<IOSCfgLine # 10 'ltm pool BAR'>, <IOSCfgLine # 11 '    members' (parent is # 10)>, <IOSCfgLine # 12 '        k8s-07.localdomain:8443' (parent is # 11)>, None]
         """
+        allow_none = True
 
         if self.config_objs.search_safe is False:
             error = "The configuration has changed since the last commit; a config search is not safe."
             logger.critical(error)
             raise NotImplementedError(error)
-
-        # As of verion 1.6.16, allow_none is always True.  See the Deprecation
-        # notice above...
-        if allow_none is not True:
-            warning = "The allow_none parameter is deprecated as of version 1.6.16.  Going forward, allow_none is always True."
-            logger.warning(warning)
-            allow_none = True
 
         if isinstance(branchspec, list):
             branchspec = tuple(branchspec)
@@ -2510,7 +2636,6 @@ debug={debug},
                     parent_obj=None,
                     childspec=childspec,
                     regex_flags=regex_flags,
-                    allow_none=True,
                     debug=debug,
                 )
                 # Start growing branches from the segments we received...
@@ -2526,7 +2651,6 @@ debug={debug},
                             parent_obj=branch[-1],
                             childspec=childspec,
                             regex_flags=regex_flags,
-                            allow_none=True,
                             debug=debug,
                         )
 
@@ -2607,26 +2731,21 @@ debug={debug},
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
     def find_objects(self, linespec, exactmatch=False, ignore_ws=False, escape_chars=False, reverse=False):
-        """Find all :class:`~models_cisco.IOSCfgLine` objects whose text matches ``linespec`` and return the :class:`~models_cisco.IOSCfgLine` objects in a python list.
+        """Find all :class:`~models_cisco.IOSCfgLine` objects whose text matches ``linespec`` and return the
+        :class:`~models_cisco.IOSCfgLine` objects in a python list.
 
-        Parameters
-        ----------
-        linespec : str
-            A string or python regular expression, which should be matched
-        exactmatch : bool
-            Defaults to False.  When set True, this option requires ``linespec`` match the whole configuration line, instead of a portion of the configuration line.
-        ignore_ws : bool
-            boolean that controls whether whitespace is ignored.  Default is False.
-        reverse : bool
-            boolean that controls whether the order of the results is reversed.  Default is False.
+        :param linespec: A string or python regular expression, which should be matched
+        :type linespec: str
+        :param exactmatch: When set True, this option requires ``linespec`` match the whole configuration line, instead of a
+                           portion of the configuration line, default to False.
+        :type exactmatch: str
+        :param ignore_ws: Controls whether whitespace is ignored, default to False.
+        :type ignore_ws: bool
+        :param reverse: Controls whether the order of the results is reversed, default to False.
+        :type reverse: bool
+        :return: Matching :class:`~ciscoconfparse2.IOSCfgLine` objects.
+        :rtype: list[BaseCfgLine]
 
-        Returns
-        -------
-        list
-            A list of matching :class:`~ciscoconfparse2.IOSCfgLine` objects
-
-        Examples
-        --------
         This example illustrates the use of :func:`~ciscoconfparse2.CiscoConfParse.find_objects`
 
         .. code-block:: python
@@ -2664,7 +2783,7 @@ debug={debug},
             )
 
         if ignore_ws:
-            linespec = build_space_tolerant_regex(linespec)
+            linespec = build_space_tolerant_regex(linespec, encoding=self.encoding)
 
         retval = self._find_line_OBJ(linespec, exactmatch)
         if bool(reverse):
@@ -2687,29 +2806,26 @@ debug={debug},
         Only the parent :class:`~models_cisco.IOSCfgLine` objects will be
         returned.
 
-        Parameters
-        ----------
-        parentspec : str, list or tuple
-            Text regular expression for the :class:`~models_cisco.IOSCfgLine` object to be matched; this must match the parent's line
-        childspec : str
-            Text regular expression for the line to be matched; this must match the child's line
-        ignore_ws : bool
-            boolean that controls whether whitespace is ignored
-        recurse : bool
-            Set True if you want to search all children (children, grand children, great grand children, etc...).  This is considered True if parentspec is a list or tuple.
-        escape_chars : bool
-            Set True if you want to escape characters before searching
-        reverse : bool
-            Set True if you want to reverse the order of the results
+        :param parentspec: Text regular expression for the :class:`~models_cisco.IOSCfgLine` object to be matched; this must match the parent's line
+        :type parentspec: Union[str, list[str], tuple[str]]
+        :param childspec: Text regular expression for the child's configuration line
+        :type childspec: str
+        :param ignore_ws: boolean that controls whether whitespace is ignored
+        :type ignore_ws: bool
+        :param recurse: Set True if you want to search all children (children, grand children, great grand children, etc...).  This is considered True if parentspec is a list or tuple.
+        :type recurse: bool
+        :param escape_chars: Set True if you want to escape characters before searching
+        :type escape_chars: bool
+        :param reverse: Set True if you want to reverse the order of the results
+        :type reverse: bool
+        :return: A list of matching parent :py:class:`~models_cisco.IOSCfgLine` objects
+        :rtype: list[BaseCfgLine]
 
-        Returns
-        -------
-        list
-            A list of matching parent :class:`~models_cisco.IOSCfgLine` objects
+        .. warning::
 
-        Examples
-        --------
-        This example uses :func:`~ciscoconfparse2.find_parent_objects()` to
+           Do not set ``childspec`` if searching with a tuple of strings or list of strings.
+
+        This example uses :py:meth:`~ciscoconfparse2.find_parent_objects()` to
         find all ports that are members of access vlan 300 in following
         config...
 
@@ -2733,7 +2849,7 @@ debug={debug},
 
         The following interfaces should be returned:
 
-        .. code::
+        .. parsed-literal::
 
            interface FastEthernet0/2
            interface FastEthernet0/3
@@ -2817,8 +2933,8 @@ debug={debug},
             parentspec = childspec.text
 
         if ignore_ws:
-            parentspec = build_space_tolerant_regex(parentspec)
-            childspec = build_space_tolerant_regex(childspec)
+            parentspec = build_space_tolerant_regex(parentspec, encoding=self.encoding)
+            childspec = build_space_tolerant_regex(childspec, encoding=self.encoding)
 
         # Set escape_chars False to avoid double-escaping characters
         return list(
@@ -2937,8 +3053,8 @@ debug={debug},
             parentspec = childspec.text
 
         if ignore_ws is True:
-            parentspec = build_space_tolerant_regex(parentspec)
-            childspec = build_space_tolerant_regex(childspec)
+            parentspec = build_space_tolerant_regex(parentspec, encoding=self.encoding)
+            childspec = build_space_tolerant_regex(childspec, encoding=self.encoding)
 
 
         # Set escape_chars False to avoid double-escaping chars
@@ -2962,26 +3078,25 @@ debug={debug},
         r"""Parse through the children of all parents matching parentspec,
         and return a list of child objects, which matched the childspec.
 
-        Parameters
-        ----------
-        parentspec : str or list
-            Text regular expression for the line to be matched; this must match the parent's line
-        childspec : str
-            Text regular expression for the line to be matched; this must match the child's line
-        ignore_ws : bool
-            boolean that controls whether whitespace is ignored
-        escape_chars : bool
-            boolean that controls whether characters are escaped before searching
-        reverse : bool
-            Set True if you want to reverse the order of the results
+        :param parentspec: Text regular expression for the parent's configuration line.  A list is preferred.
+        :type parentspec: Union[str, list[str], tuple[str]]
+        :param childspec: Text regular expression for the child's configuration line.
+        :type parentspec: str
+        :param ignore_ws: Ignore whitespace, default to False
+        :type ignore_ws: bool
+        :param recurse: Control whether to recurse in the config, default to True.
+        :type recurse: bool
+        :param escape_chars: Controls whether characters are escaped before searching, default to False.
+        :type escape_chars: bool
+        :param reverse: Controls whether results are reversed; set True if modifying the configuration with these results.
+        :type reverse: bool
+        :return: Matching child objects
+        :rtype: list[BaseCfgLine]
 
-        Returns
-        -------
-        list
-            A list of matching child objects
+        .. warning::
 
-        Examples
-        --------
+           Do not set ``childspec`` if searching with a tuple of strings or list of strings.
+
         This example finds the object for "ge-0/0/0" under "interfaces" in the
         following config...
 
@@ -3045,7 +3160,6 @@ debug={debug},
            ... r'\s+ge-0/0/1')
            [<IOSCfgLine # 7 '    ge-0/0/1' (parent is # 0)>]
            >>>
-
         """
         if self.config_objs.search_safe is False:
             error = "The configuration has changed since the last commit; a config search is not safe."
@@ -3099,8 +3213,8 @@ debug={debug},
             parentspec = childspec.text
 
         if ignore_ws:
-            parentspec = build_space_tolerant_regex(parentspec)
-            childspec = build_space_tolerant_regex(childspec)
+            parentspec = build_space_tolerant_regex(parentspec, encoding=self.encoding)
+            childspec = build_space_tolerant_regex(childspec, encoding=self.encoding)
 
         retval = set()
         # Set escape_chars False to avoid double-escaping characters

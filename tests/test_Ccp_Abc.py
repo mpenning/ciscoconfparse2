@@ -963,3 +963,98 @@ policy-map SHAPE_HEIR
     # Check that base assumption is True... we are checking the right parent
     assert obj.text == "interface GigabitEthernet 1/1"
     assert uut_result["vlan"] == 911
+
+
+def testVal_last_family_linenum_01():
+    """Test the last_family_linenum attribute"""
+    parse = CiscoConfParse(["first"])
+    assert parse.config_objs[0].last_family_linenum == 0
+
+
+def testVal_last_family_linenum_02():
+    """Test the last_family_linenum attribute after appending one brother element"""
+    parse = CiscoConfParse(["first"])
+    parse.config_objs.append("second")
+    assert parse.config_objs[1].last_family_linenum == 1
+
+def testVal_last_family_linenum_03():
+    """Test the last_family_linenum attribute after appending a nephew element"""
+    parse = CiscoConfParse(["first"])
+    parse.config_objs.append("second")
+    parse.config_objs.append(" second-child")
+    assert parse.config_objs[0].last_family_linenum == 2
+
+def testVal_last_family_linenum_04():
+    """Test the last_family_linenum attribute after appending a lot of family"""
+    parse = CiscoConfParse(["first"])
+    parse.config_objs.append("second")
+    parse.config_objs.append(" second-child")
+    parse.config_objs.append("  second-child-child")
+    parse.config_objs[1].append_to_family("third")
+    assert parse.config_objs[1].last_family_linenum == 4
+
+def testVal_append_to_family_01():
+    """Test that default syntax of CiscoConfParse is IOS and it correctly appends an IOSCfgLine()"""
+    parse = CiscoConfParse()
+    parse.config_objs.append("first")
+
+    assert isinstance(parse.config_objs[0], IOSCfgLine)
+
+def testVal_append_to_family_02():
+    """Test basic parent-append operations at the same indent-level and ensure that order is preserved."""
+    parse = CiscoConfParse()
+    parse.config_objs.append("first")
+    obj = parse.find_objects("first")[0]
+    obj.append_to_family("second")
+    obj.append_to_family("third")
+
+    assert parse.config_objs[0].text == "first"
+    assert parse.config_objs[1].text == "second"
+    assert parse.config_objs[2].text == "third"
+
+def testVal_append_to_family_03():
+    """Test parent-append operations and ensure that order is preserved, and children are assigned."""
+    parse = CiscoConfParse(syntax="ios")
+    parse.config_objs.append("first")
+    obj = parse.find_objects("first")[0]
+    obj.append_to_family("second")
+    # Append a child out-of-order, but still a child of first
+    obj.append_to_family(" first-child")
+
+    assert isinstance(parse.config_objs[0], IOSCfgLine)
+    assert parse.config_objs[0].text == "first"
+    assert parse.config_objs[0].parent == parse.config_objs[0]
+
+    assert isinstance(parse.config_objs[1], IOSCfgLine)
+    assert parse.config_objs[1].text == " first-child"
+    assert parse.config_objs[1].parent == parse.config_objs[0]
+
+    assert isinstance(parse.config_objs[2], IOSCfgLine)
+    assert parse.config_objs[2].text == "second"
+    assert parse.config_objs[2].parent == parse.config_objs[2]
+
+
+def testVal_append_to_family_04():
+    """Test parent-append operations and ensure that order is preserved, and children are assigned / preserved."""
+    parse = CiscoConfParse()
+    parse.config_objs.append("first")
+    obj01 = parse.find_objects("first")[0]
+    obj01.append_to_family(" first-child")
+    obj01.append_to_family(" second-child")
+
+    obj02 = parse.find_child_objects(["first", " first-child"])[0]
+    obj02.append_to_family("  first-child-child")
+
+    assert parse.config_objs[0].text == "first"
+    assert parse.config_objs[1].text == " first-child"
+    assert parse.config_objs[2].text == "  first-child-child"
+    assert parse.config_objs[3].text == " second-child"
+
+def testVal_append_to_family_04():
+    """Test parent-append operations and ensure that a NotImplementedError() is raised if a direct grandchild is appended with append_to_family()."""
+    parse = CiscoConfParse()
+    parse.config_objs.append("first")
+    obj01 = parse.find_objects("first")[0]
+    obj01.append_to_family(" first-child")
+    with pytest.raises(NotImplementedError):
+        obj01.append_to_family("  first-child-child")
