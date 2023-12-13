@@ -4,6 +4,12 @@
 - Summary:
     - Insert something here
 
+## Version: 0.2.1
+
+- Released: 2023-12-13
+- Summary:
+    - Fix Python3.8 test failure for `list[str]`, which is not supported until Python3.9
+
 ## Version: 0.2.0
 
 - Released: 2023-12-13
