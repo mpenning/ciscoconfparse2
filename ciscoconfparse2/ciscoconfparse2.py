@@ -1767,7 +1767,7 @@ class ConfigList(UserList):
                 ),
             )
 
-        if childobj.is_comment and (_List[idx - 1].get_indent() > indent):
+        if childobj.is_comment and (_list[idx - 1].get_indent() > indent):
             # I *really* hate making this exception, but legacy
             #   ciscoconfparse2 never marked a comment as a child
             #   when the line immediately above it was indented more
