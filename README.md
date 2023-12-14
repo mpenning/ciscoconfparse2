@@ -35,7 +35,7 @@ Here's why, it:
 ### Simple Example
 
 The following code will parse a configuration stored in
-`exampleswitch.conf` and select interfaces that are shutdown.
+`tests/fixtures/configs/sample_02.ios` and select interfaces that are shutdown.
 
 In this case, the parent is a line containing `interface` and
 the child is a line containing the word `shutdown`.
@@ -69,7 +69,9 @@ Shutdown: VLAN1
 
 ### Complex Example
 
-The next example will find the IP address assigned to interfaces and whether they are shutdown.
+The following code will parse a configuration stored in
+`tests/fixtures/configs/sample_08.ios` and will find the
+IP address / switchport parameters assigned to interfaces.
 
 ```python
 from ciscoconfparse2 import CiscoConfParse
