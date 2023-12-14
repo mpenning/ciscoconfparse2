@@ -4,6 +4,20 @@
 - Summary:
     - Insert something here
 
+## Version: 0.2.5
+
+- Released: 2023-12-14
+- Summary:
+    - Overhaul `ConfigList().commit()` operations to make them faster on very large configurations
+    - Documentation updates
+
+## Version: 0.2.4
+
+- Released: 2023-12-13
+- Summary:
+    - Remove `BaseCfgLine().uncfgtext` and `CiscoConfParse()._objects_to_uncfg()`
+    - Documentation updates
+
 ## Version: 0.2.3
 
 - Released: 2023-12-13

@@ -1,13 +1,140 @@
-# ciscoconfparse
+# ciscoconfparse2
 
 [![git commits][41]][42] [![Version][2]][3] [![Downloads][6]][7] [![License][8]][9]
 
 [![SonarCloud][51]][52] [![SonarCloud Maintainability Rating][53]][54] [![SonarCloud Lines of Code][55]][56] [![SonarCloud Bugs][59]][60] [![SonarCloud Code Smells][57]][58] [![SonarCloud Tech Debt][61]][62]
 
 
-## Introduction: What is ciscoconfparse?
+## Introduction: What is ciscoconfparse2?
 
-Short answer: ciscoconfparse is a [Python][10] library
+### Summary
+
+[ciscoconfparse2][17] is the next generation of [ciscoconfparse][64], which
+has been the primary development package from 2007 until 2023.
+
+In late 2023, I started a rewrite because [ciscoconfparse][64] is too large 
+and has some defaults that I wish it didn't have.  I froze
+[ciscoconfparse][64] PYPI releases at [version 1.9.41][65]; there will be no
+more [ciscoconfparse][64] PYPI releases.
+
+What do you do?  Upgrade to [ciscoconfparse2][17]!
+
+Here's why, it:
+
+- Streamlines the API towards a simpler user interface.
+- Removes legacy and flawed methods from the original (this could be a breaking change for old scripts).
+- Adds string methods to `BaseCfgLine()` objects
+- Defaults `ignore_blank_lines=False` (this could be a breaking change for old scripts).
+- Is better at handling multiple-child-level configurations (such as IOS XR and JunOS)
+- Can search for parents and children using an *arbitrary list of ancestors*
+- Adds the concept of change commits; this is a config-modification safety feature that [ciscoconfparse][64] lacks
+- Adds an `auto_commit` keyword, which defaults True
+- Documents much more of the API
+- Intentionally requires a different import statement to minimize confusion between the original and [ciscoconfparse2][17]
+
+### Simple Example
+
+The following code will parse a configuration stored in
+`exampleswitch.conf` and select interfaces that are shutdown.
+
+In this case, the parent is a line containing `interface` and
+the child is a line containing the word `shutdown`.
+
+```python
+from ciscoconfparse2 import CiscoConfParse
+
+parse = CiscoConfParse('tests/fixtures/configs/sample_02.ios', syntax='ios')
+
+for intf_obj in parse.find_parent_objects(['interface', 'shutdown']):
+    intf_name = " ".join(intf_obj.split()[1:])
+    print(f"Shutdown: {intf_name}")
+```
+
+That will print:
+
+```none
+$ python example.py
+Shutdown: FastEthernet0/7
+Shutdown: FastEthernet0/8
+Shutdown: FastEthernet0/9
+Shutdown: FastEthernet0/11
+Shutdown: FastEthernet0/13
+Shutdown: FastEthernet0/15
+Shutdown: FastEthernet0/17
+Shutdown: FastEthernet0/19
+Shutdown: FastEthernet0/20
+Shutdown: FastEthernet0/22
+Shutdown: VLAN1
+```
+
+### Complex Example
+
+The next example will find the IP address assigned to interfaces and whether they are shutdown.
+
+```python
+from ciscoconfparse2 import CiscoConfParse
+from ciscoconfparse2 import IPv4Obj
+
+def intf_csv(intf_obj: str) -> str:
+    """
+    :return: CSV for each interface object.
+    :rtype: str
+    """
+    intf_name = " ".join(intf_obj.split()[1:])    # Use a string split() method from the BaseCfgLine()
+    admin_status = intf_obj.re_match_iter_typed("^\s+(shutdown)", default="not_shutdown", result_type=str)
+    # Search children of all interfaces for a regex match and return
+    # the value matched in regex match group 1.  If there is no match,
+    # return a default value: 0.0.0.1/32
+    addr_netmask = intf_obj.re_match_iter_typed(
+        r"^\s+ip\saddress\s(\d+\.\d+\.\d+\.\d+\s\S+)", result_type=IPv4Obj,
+        group=1, default=IPv4Obj("0.0.0.1/32"))
+    # Find the description and replace all commas in it
+    description = intf_obj.re_match_iter_typed("description\s+(\S.*)").replace(",", "_")
+
+    switchport_status = intf_obj.re_match_iter_typed("(switchport)", default="not_switched")
+
+    # Return a csv based on whether this is a switchport
+    if switchport_status == "not_switched":
+        return f"{intf_name},{admin_status},{addr_netmask.as_cidr_addr},{switchport_status},,,{description}"
+
+    else:
+        # Only calculate switchport values if this is a switchport
+        trunk_access = intf_obj.re_match_iter_typed("switchport mode (trunk)", default="access", result_type=str)
+        access_vlan = intf_obj.re_match_iter_typed("switchport access vlan (\d+)", default=1, result_type=int)
+
+        return f"{intf_name},{admin_status},,{switchport_status},{trunk_access},{access_vlan},{description}"
+
+parse = CiscoConfParse('tests/fixtures/configs/sample_08.ios', syntax='ios')
+
+# Find interface BaseCfgLine() instances...
+for intf_obj in parse.find_objects('^interface'):
+    print(intf_csv(intf_obj))
+```
+
+That will print:
+
+```none
+$ python example.py
+Loopback0,not_shutdown,172.16.0.1/32,not_switched,,,SEE http://www.cymru.com/Documents/secure-ios-template.html
+Null0,not_shutdown,0.0.0.1/32,not_switched,,,
+ATM0/0,not_shutdown,0.0.0.1/32,not_switched,,,
+ATM0/0.32 point-to-point,not_shutdown,0.0.0.1/32,not_switched,,,
+FastEthernet0/0,not_shutdown,172.16.2.1/24,not_switched,,,[IPv4 and IPv6 desktop / laptop hosts on 2nd-floor North LAN]
+FastEthernet0/1,not_shutdown,172.16.3.1/30,not_switched,,,[IPv4 and IPv6 OSPF Transit via West side of building]
+FastEthernet1/0,not_shutdown,172.16.4.1/30,not_switched,,,[IPv4 and IPv6 OSPF Transit via North side of building]
+FastEtheret1/1,not_shutdown,,switchport,access,12,[switchport to the comptroller cube]
+FastEtheret1/2,not_shutdown,,switchport,access,12,[switchport to the IDF media converter]
+Virtual-Template1,not_shutdown,0.0.0.1/32,not_switched,,,
+Dialer1,not_shutdown,0.0.0.1/32,not_switched,,,[IPv4 and IPv6 OSPF Transit via WAN Dialer: NAT_ CBWFQ interface]
+```
+
+### Cisco IOS Factory Usage
+
+CiscoConfParse has a special feature that abstracts common IOS / NXOS / ASA / IOS XR fields; at this time, it is only supported on those configuration types. You will see factory parsing in CiscoConfParse code as parsing the configuration with `factory=True`.
+
+## Why
+
+[ciscoconfparse2][17] is a [Python][10] library
 that helps you quickly answer questions like these about your
 Cisco configurations:
 
@@ -29,56 +156,11 @@ complex queries about these relationships.
 
 [![Cisco IOS config: Parent / child][11]][11]
 
-## Generic Usage
-
-The following code will parse a configuration stored in
-`exampleswitch.conf` and select interfaces that are shutdown.
-
-In this case, the parent is a line containing `interface` and
-the child is a line containing the word `shutdown`.
-
-```python
-from ciscoconfparse2 import CiscoConfParse
-
-parse = CiscoConfParse('exampleswitch.conf', syntax='ios')
-
-for intf_obj in parse.find_parent_objects('^interface', '^\s+shutdown'):
-    print("Shutdown: " + intf_obj.text)
-```
-
-The next example will find the IP address assigned to interfaces.
-
-```python
-from ciscoconfparse2 import CiscoConfParse
-
-parse = CiscoConfParse('exampleswitch.conf', syntax='ios')
-
-for ccp_obj in parse.find_objects('^interface'):
-
-    intf_name = ccp_obj.re_match_typed('^interface\s+(\S.+?)$')
-
-    # Search children of all interfaces for a regex match and return
-    # the value matched in regex match group 1.  If there is no match,
-    # return a default value: ''
-    intf_ip_addr = ccp_obj.re_match_iter_typed(
-        r'ip\saddress\s(\d+\.\d+\.\d+\.\d+)\s', result_type=str,
-        group=1, default='')
-    print(f"{intf_name}: {intf_ip_addr}")
-```
-
-## Cisco IOS Factory Usage
-
-CiscoConfParse has a special feature that abstracts common IOS / NXOS / ASA / IOSXR fields; at this time, it is only supported on those configuration types. You will see factory parsing in CiscoConfParse code as parsing the configuration with `factory=True`.
-
-## Are you releasing licensing besides GPLv3?
-
-I will not. however, if it's truly a problem for your company, there are commercial solutions available (to include purchasing the project, or hiring me).
-
 ## What if we don\'t use Cisco IOS?
 
 Don\'t let that stop you.
 
-As of original CiscoConfParse 1.2.4, you can parse [brace-delimited configurations][13] into a Cisco IOS style (see [Github Issue \#17][14]), which means that CiscoConfParse can parse these configurations:
+You can parse [brace-delimited configurations][13] into a Cisco IOS style (see [original ciscoconfparse Github Issue \#17][14]), which means that CiscoConfParse can parse these configurations:
 
 - Juniper Networks Junos
 - Palo Alto Networks Firewall configurations
@@ -129,6 +211,10 @@ network engineering toolbox; others regard it as a form of artwork.
 - [Cisco\'s Guide to hardening IOS devices][31]
 - [Center for Internet Security Benchmarks][32] (An email address, cookies, and javascript are required)
 
+## Are you releasing licensing besides GPLv3?
+
+I will not. however, if it's truly a problem for your company, there are commercial solutions available (to include purchasing the project, or hiring me).
+
 ## Bug Tracker and Support
 
 - Please report any suggestions, bug reports, or annoyances with a [github bug report][24].
@@ -146,7 +232,7 @@ network engineering toolbox; others regard it as a form of artwork.
 - [passlib](https://github.com/glic3rinu/passlib)
 - [tomlkit](https://github.com/sdispater/tomlkit)
 - [dnspython](https://github.com/rthalley/dnspython)
-- [hier_config](https://github.com/netdevops/hier_config)
+- [`hier_config`](https://github.com/netdevops/hier_config)
 - [loguru](https://github.com/Delgan/loguru)
 - [deprecated](https://github.com/tantale/deprecated)
 
@@ -191,7 +277,7 @@ $ pytest --cov-report=term-missing --cov=ciscoconfparse2 ./
 ```
 
 
-## Editing the Package
+### Editing the Package
 
 This uses the example of editing the package on a git branch called `develop`...
 
@@ -209,7 +295,7 @@ This uses the example of editing the package on a git branch called `develop`...
 -   `git push origin main`
 -   `make pypi`
 
-## Sphinx Documentation
+### Sphinx Documentation
 
 Building the ciscoconfparse2 documentation tarball comes down to this one wierd trick:
 
@@ -228,7 +314,7 @@ The word \"Cisco\" is a registered trademark of [Cisco Systems][27].
 
 ## Author
 
-[ciscoconfparse2][3] was written by [David Michael Pennington][25] (mike \[\~at\~\] pennington \[.dot.\] net).
+[ciscoconfparse2][3] was written by [David Michael Pennington][25].
 
 
 
@@ -294,3 +380,5 @@ The word \"Cisco\" is a registered trademark of [Cisco Systems][27].
   [61]: https://sonarcloud.io/api/project_badges/measure?project=mpenning_ciscoconfparse2&metric=sqale_index
   [62]: https://sonarcloud.io/summary/new_code?id=mpenning_ciscoconfparse2
   [63]: https://docs.pytest.org/en/
+  [64]: https://github.com/mpenning/ciscoconfparse
+  [65]: https://pypi.org/project/ciscoconfparse/1.9.41/

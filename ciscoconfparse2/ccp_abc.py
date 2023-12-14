@@ -39,7 +39,6 @@ class BaseCfgLine(object):
     all_text: Any = None
     all_lines: Any = None
     line: str = DEFAULT_TEXT
-    _uncfgtext_to_be_deprecated: str = ""
     _text: str = DEFAULT_TEXT
     linenum: int = -1
     parent: Any = None
@@ -76,7 +75,6 @@ class BaseCfgLine(object):
             logger.critical(error)
             raise InvalidParameters(error)
 
-        self._uncfgtext_to_be_deprecated = ""
         self._text = line
         self._children = []
         self.linenum = -1
@@ -263,6 +261,18 @@ class BaseCfgLine(object):
             error = f"{type(arg)} cannot be assigned to BaseCfgLine().children"
             logger.critical(error)
             raise NotImplementedError(error)
+
+    # On BaseCfgLine()
+    @logger.catch(reraise=True)
+    def reset(self):
+        # For subclass APIs such as models_cisco, models_nxos, etc...
+        raise NotImplementedError
+
+    # On BaseCfgLine()
+    @logger.catch(reraise=True)
+    def build_reset_string(self):
+        # For subclass APIs such as models_cisco, models_nxos, etc...
+        raise NotImplementedError
 
     # On BaseCfgLine()
     @property
@@ -617,16 +627,6 @@ class BaseCfgLine(object):
         return False
 
     # On BaseCfgLine()
-    def _list_reassign_linenums(self):
-        # Call this when I want to reparse everything
-        #     (which is very slow)
-        # NOTE - 1.5.30 removed this method (which was only called
-        #     by confobj.delete()) in favor of a simpler approach
-        #     in confobj.delete()
-        #
-        raise NotImplementedError()
-
-    # On BaseCfgLine()
     @junos_unsupported
     def add_parent(self, parentobj: Any=None) -> bool:
         """
@@ -658,82 +658,6 @@ class BaseCfgLine(object):
             return True
         else:
             return False
-
-    # On BaseCfgLine()
-    @junos_unsupported
-    def add_uncfgtext(self, unconftext=None):
-        """
-        add_uncfgtext() is deprecated and will be removed.
-
-        .. code-block:: python
-           :emphasize-lines: 16
-
-           >>> # assume parse.find_objects() returned a value in obj below
-           >>> obj.text
-           ' no ip proxy-arp'
-           >>> obj.uncfgtext
-           ''
-           >>> obj.add_uncfgtext(" no ip proxy-arp")
-        """
-        assert isinstance(unconftext, str)
-        assert isinstance(self.text, str) and self.text != DEFAULT_TEXT
-
-        # adding a deprecation warning in version 1.7.0...
-        deprecation_warn_str = "add_uncfgtext() is deprecated and will be removed."
-        warnings.warn(deprecation_warn_str, DeprecationWarning)
-        ## remove any preceeding "no " from Cisco IOS commands...
-        conftext = re.sub(r"^(\s*)(no\s+)(\S.*)?$", "\3", unconftext)
-        myindent = self.parent.child_indent
-
-        # write access to self.uncfgtext is not supported
-        self._uncfgtext_to_be_deprecated = myindent * " " + "no " + conftext
-
-    @property
-    def uncfgtext(self):
-        """Return a 'best-effort' Cisco IOS-style config to remove this
-        configuration object.
-
-        This `uncfgtext` string should not be considered correct
-        in all Cisco IOS command unconfigure cases.
-        """
-        assert isinstance(self.text, str) and self.text != DEFAULT_TEXT
-
-        tmp = [ii.strip() for ii in self.text.split()]
-
-        # _uncfgtext_to_be_deprecated is normally set in add_uncfgtext()...
-        # deprecation warnings for _uncfgtext_to_be_deprecated were
-        # introduced in version 1.7.0...
-        if self._uncfgtext_to_be_deprecated != "":
-            # Officially, _uncfgtext_to_be_deprecated is not supported.
-            # This if-case is here for someone who may have set
-            # self.uncfgtext in older ciscoconfparse2 versions.
-            #
-            # After uncfgtext.setter (below) is removed, we can rip out
-            # this portion of the if-else logic...
-            deprecation_warn_str = "add_uncfgtext() is deprecated and will be removed."
-            warnings.warn(deprecation_warn_str, DeprecationWarning)
-            return self._uncfgtext_to_be_deprecated
-
-        # Once _uncfgtext_to_be_deprecated is removed, we can make this
-        # condition the first in this if-else logic...
-        elif tmp[0].lower() == "no":
-            assert len(tmp) > 1  # join() below only makes sense if len(tmp)>1
-            return self.indent * " " + " ".join(tmp[1:])
-
-        else:
-            return self.indent * " " + "no " + self.text.lstrip()
-
-    @uncfgtext.setter
-    def uncfgtext(self, value=""):
-        # Officially, _uncfgtext_to_be_deprecated is not supported. This
-        # setter is here for someone who may have set self.uncfgtext in older
-        # ciscoconfparse2 versions.
-        #
-        # This uncfgtext setter was added in version 1.7.0...
-        deprecation_warn_str = "setting uncfgtext is deprecated and will be removed."
-        warnings.warn(deprecation_warn_str, DeprecationWarning)
-
-        self._uncfgtext_to_be_deprecated = value
 
     # On BaseCfgLine()
     @junos_unsupported
@@ -804,76 +728,6 @@ class BaseCfgLine(object):
         else:
             self.confobj.reassign_linenums()
         return True
-
-    if False:
-        # On BaseCfgLine()
-        @junos_unsupported
-        def delete_children_matching(self, linespec):
-            """Delete any child :class:`~models_cisco.IOSCfgLine` objects which
-            match ``linespec``.
-
-            Parameters
-            ----------
-
-            linespec : str
-                A string or python regular expression, which should be matched.
-
-            Returns
-            -------
-
-            list
-                A list of :class:`~models_cisco.IOSCfgLine` objects which were deleted.
-
-            Examples
-            --------
-
-            This example illustrates how you can use
-            :func:`~ccp_abc.delete_children_matching` to delete any description
-            on an interface.
-
-            .. code-block:: python
-               :emphasize-lines: 16
-
-               >>> from ciscoconfparse2 import CiscoConfParse
-               >>> config = [
-               ...     '!',
-               ...     'interface Serial1/0',
-               ...     ' description Some lame description',
-               ...     ' ip address 1.1.1.1 255.255.255.252',
-               ...     '!',
-               ...     'interface Serial1/1',
-               ...     ' description Another lame description',
-               ...     ' ip address 1.1.1.5 255.255.255.252',
-               ...     '!',
-               ...     ]
-               >>> parse = CiscoConfParse(config)
-               >>>
-               >>> for obj in parse.find_objects(r'^interface'):
-               ...     obj.delete_children_matching(r'description')
-               >>>
-               >>> for line in parse.ioscfg:
-               ...     print(line)
-               ...
-               !
-               interface Serial1/0
-                   ip address 1.1.1.1 255.255.255.252
-               !
-               interface Serial1/1
-                   ip address 1.1.1.5 255.255.255.252
-               !
-               >>>
-            """
-            # if / else in a list comprehension... ref ---> https://stackoverflow.com/a/9442777/667301
-            retval = [
-                (obj.delete() if obj.re_search(linespec) else obj) for obj in self.children
-            ]
-
-            if self.confobj and self.confobj.auto_commit:
-                self.confobj.ccp_ref.atomic()
-            else:
-                self.confobj.reassign_linenums()
-
-            return retval
 
     # On BaseCfgLine()
     @logger.catch(reraise=True)
@@ -1566,36 +1420,35 @@ class BaseCfgLine(object):
             return [cobj for cobj in self.all_children if cobj.re_search(regex)]
 
     # On BaseCfgLine()
+    @logger.catch(reraise=True)
     def re_match_typed(
-        self, regex, group=1, untyped_default=False, result_type=str, default=""
-    ):
+        self,
+        regex: Union[str, re.Pattern],
+        group: int=1,
+        result_type: type=str,
+        default: Any="",
+        untyped_default: bool=False,
+        groupdict: dict=None,
+    ) -> Any:
         r"""Use ``regex`` to search the :class:`~models_cisco.IOSCfgLine` text
         and return the contents of the regular expression group, at the
         integer ``group`` index, cast as ``result_type``; if there is no match,
         ``default`` is returned.
 
-        Parameters
-        ----------
-
-        regex : str
-            A string or python regular expression, which should be matched.  This regular expression should contain parenthesis, which bound a match group.
-        group : int
-            An integer which specifies the desired regex group to be returned.  ``group`` defaults to 1.
-        result_type : type
-            A type (typically one of: ``str``, ``int``, ``float``, or ``IPv4Obj``).  All returned values are cast as ``result_type``, which defaults to ``str``.
-        default : any
-            The default value to be returned, if there is no match.
-        untyped_default : bool
-            Set True if you don't want the default value to be typed
-
-        Returns
-        -------
-
-        ``result_type``
-            The text matched by the regular expression group; if there is no match, ``default`` is returned.  All values are cast as ``result_type``, unless `untyped_default` is True.
-
-        Examples
-        --------
+        :param regex: A string or python compiled regular expression, which should be matched.  This regular expression should contain parenthesis, which are bound to a match group.
+        :type regex: Union[str, re.Pattern]
+        :param group: Specify the desired regex group to be returned.  ``group`` defaults to 1; this is only used if ``groupdict`` is None.
+        :type group: int
+        :param result_type: A type (typically one of: ``str``, ``int``, ``float``, or :class:`~ccp_util.IPv4Obj`).  Unless ``groupdict`` is specified, all returned values are cast as ``result_type``, which defaults to ``str``.
+        :type result_type: Type
+        :param default: The default value to be returned, if there is no match.
+        :type default: Any
+        :param untyped_default: Set True if you don't want the default value to be typed; this is only used if ``groupdict`` is None.
+        :type untyped_default: bool
+        :param groupdict: Set to a dict of types if you want to match on regex group names; ``groupdict`` overrides the ``group``, ``result_type`` and ``untyped_default`` arguments.
+        :type groupdict: dict
+        :return: The text matched by the regular expression group; if there is no match, ``default`` is returned.  All values are cast as ``result_type``, unless `untyped_default` is True.
+        :rtype: Any
 
         This example illustrates how you can use
         :func:`~models_cisco.IOSCfgLine.re_match_typed` to build an
@@ -1811,18 +1664,8 @@ class BaseCfgLine(object):
                 )
         else:
             error = f"`groupdict` must be None or a `dict`, but we got {type(groupdict)}."
-            logger.error(error)
+            logger.critical(error)
             raise ValueError(error)
-
-    # On BaseCfgLine()
-    def reset(self):
-        # For subclass APIs
-        raise NotImplementedError
-
-    # On BaseCfgLine()
-    def build_reset_string(self):
-        # For subclass APIs
-        raise NotImplementedError
 
     # On BaseCfgLine()
     @property

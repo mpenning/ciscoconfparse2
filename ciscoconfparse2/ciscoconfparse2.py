@@ -72,6 +72,7 @@ from ciscoconfparse2.ccp_util import fix_repeated_words
 from ciscoconfparse2.ccp_util import enforce_valid_types
 from ciscoconfparse2.ccp_util import junos_unsupported
 from ciscoconfparse2.ccp_util import configure_loguru
+from ciscoconfparse2.ccp_util import memoized
 
 from ciscoconfparse2.errors import ConfigListItemDoesNotExist
 from ciscoconfparse2.errors import RequirementFailure
@@ -672,6 +673,7 @@ class ConfigList(UserList):
 
     ccp_ref: Any = None
     dna: str = "ConfigList"
+    current_checkpoint: int = 0
     commit_checkpoint: int = 0
     CiscoConfParse: Any = None
 
@@ -784,6 +786,13 @@ class ConfigList(UserList):
 
         self.ccp_ref = ccp_value
         self.dna = "ConfigList"
+        # current_checkpoint is the checkpoint value after a change
+        # operation
+        self.current_checkpoint = 0
+        # commit_checkpoint is the checkpoint value after a commit
+        # commit operations must compare current_checkpoint to the
+        # commit checkpoint value and copy them when a commit
+        # operation happens
         self.commit_checkpoint = 0
         self.CiscoConfParse = (
             ccp_value  # FIXME - CiscoConfParse attribute should go away soon
@@ -817,6 +826,7 @@ class ConfigList(UserList):
             self._RE_OBJSVC = re.compile(r"^\s*object-group\s+service\s+(\S+)")
             self._RE_OBJACL = re.compile(r"^\s*access-list\s+(\S+)")
             self._network_cache = {}
+
 
     # This method is on ConfigList()
     @logger.catch(reraise=True)
@@ -985,21 +995,11 @@ class ConfigList(UserList):
             return ccp_method
 
     # This method is on ConfigList()
-    @property
-    @logger.catch(reraise=True)
-    def search_safe(self):
-        """This is a seatbelt to ensure that configuration searches are safe; searches are not safe if the ConfigList() has changed without a commit.  As such, this method checks the current version of ConfigList().checkpoint and compares it to the last known ConfigList().commit_checkpoint.  If they are the same, return True.  ConfigList().commit_checkpoint should only written by CiscoConfParse().atomic()"""
-        return self.get_checkpoint() == self.commit_checkpoint
-
-    # This method is on ConfigList()
-    @logger.catch(reraise=True)
-    def commit(self):
-        self.ccp_ref.commit()
-
-    # This method is on ConfigList()
-    @logger.catch(reraise=True)
     def get_checkpoint(self):
-        """Return an integer representing a unique version of this ConfigList() and its contents."""
+        """Return an integer representing a unique version of this ConfigList() and its contents.
+
+        This should be a classmethod to ensure that the results are cachable via memoization.
+        """
         total = 0
         for idx, obj in enumerate(self.data):
             if isinstance(obj, BaseCfgLine):
@@ -1010,6 +1010,36 @@ class ConfigList(UserList):
                 error.critical(error)
                 raise NotImplementedError(error)
         return total
+
+    # This method is on ConfigList()
+    @property
+    @logger.catch(reraise=True)
+    def search_safe(self):
+        """This is a seatbelt to ensure that configuration searches are safe; searches are not safe if the ConfigList() has changed without a commit.  As such, this method checks the current version of ConfigList().checkpoint and compares it to the last known ConfigList().commit_checkpoint.  If they are the same, return True.  ConfigList().commit_checkpoint should only written by CiscoConfParse().atomic()"""
+        return self.current_checkpoint == self.commit_checkpoint
+
+    # This method is on ConfigList()
+    @logger.catch(reraise=True)
+    def commit(self) -> bool:
+        """
+        :return: The result of the ConfigList() commit operation
+        :rtype: bool
+        """
+
+        try:
+            # bootstrap the ConfigList() for any commit operation
+            self.data = self.bootstrap(debug=self.debug)
+
+            # copy the current_checkpoint to the commit checkpoint
+            self.commit_checkpoint = self.current_checkpoint
+
+            return True
+        except BaseException as eee:
+            error = f"Could not finish commit: {eee}"
+            logger.critical(error)
+            raise eee
+
+
 
     # This method is on ConfigList()
     @property
@@ -1057,6 +1087,10 @@ class ConfigList(UserList):
     @logger.catch(reraise=True)
     def pop(self, ii=-1):
         retval = self.data.pop(ii)
+
+        # modify the current_checkpoint because this is
+        # a change to the ConfigList()
+        self.current_checkpoint = self.get_checkpoint()
 
         if bool(self.auto_commit):
             # The config is not safe unless this is called after the append
@@ -1423,6 +1457,10 @@ class ConfigList(UserList):
 
         # Insert the object at index ii
         self.data.insert(ii, obj)
+
+        # modify the current_checkpoint because this is
+        # a change to the ConfigList()
+        self.current_checkpoint = self.get_checkpoint()
 
         if False:
             self.data = self.bootstrap(self.as_text, debug=self.debug)
@@ -2401,7 +2439,7 @@ class CiscoConfParse(object):
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
     def atomic(self) -> None:
-        """Use :func:`~ciscoconfparse2.CiscoConfParse.atomic` to manually fix up ``config_objs`` relationships after modifying a parsed configuration.  This method is slow; try to batch calls to :func:`~ciscoconfparse2.CiscoConfParse.atomic()` if possible.
+        """Alias for calling the :func:`~ciscoconfparse2.CiscoConfParse.commit` method.  This method is slow; try to batch calls to :func:`~ciscoconfparse2.CiscoConfParse.commit()` if possible.
 
         :return: None
         :rtype: None
@@ -2421,13 +2459,12 @@ class CiscoConfParse(object):
 
            Also see :py:meth:`~ciscoconfparse2.CiscoConfParse.commit`.
         """
-        self.config_objs.data = self.config_objs.bootstrap(debug=self.debug)
-        self.config_objs.commit_checkpoint = self.config_objs.get_checkpoint()
+        self.commit()  # atomic() calls self.config_objs.bootstrap
 
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
     def commit(self) -> None:
-        """Alias for calling the :func:`~ciscoconfparse2.CiscoConfParse.atomic` method.  This method is slow; try to batch calls to :func:`~ciscoconfparse2.CiscoConfParse.commit()` if possible.
+        """Use :py:func:`~ciscoconfparse2.CiscoConfParse.commit` to manually fix up ``config_objs`` relationships after modifying a parsed configuration.  This method is slow; try to batch calls to :func:`~ciscoconfparse2.CiscoConfParse.commit()` if possible.
 
         :return: None
         :rtype: None
@@ -2446,7 +2483,9 @@ class CiscoConfParse(object):
 
            Also see :py:meth:`~ciscoconfparse2.CiscoConfParse.atomic`.
         """
-        self.atomic()  # atomic() calls self.config_objs.bootstrap
+
+        # perform a commit on the ConfigList()
+        self.config_objs.commit()
 
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
@@ -3450,20 +3489,21 @@ debug={debug},
             retval.add(obj)
         return sorted(retval)
 
-    # This method is on CiscoConfParse()
-    @logger.catch(reraise=True)
-    def _objects_to_uncfg(self, objectlist, unconflist):
-        # Used by req_cfgspec_excl_diff()
-        retval = []
-        unconfdict = {}
-        for unconf in unconflist:
-            unconfdict[unconf] = "DEFINED"
-        for obj in self._unique_OBJ(objectlist):
-            if unconfdict.get(obj, None) == "DEFINED":
-                retval.append(obj.uncfgtext)
-            else:
-                retval.append(obj.text)
-        return retval
+    if False:
+        # This method is on CiscoConfParse()
+        @logger.catch(reraise=True)
+        def _objects_to_uncfg(self, objectlist, unconflist):
+            # Used by req_cfgspec_excl_diff()
+            retval = []
+            unconfdict = {}
+            for unconf in unconflist:
+                unconfdict[unconf] = "DEFINED"
+            for obj in self._unique_OBJ(objectlist):
+                if unconfdict.get(obj, None) == "DEFINED":
+                    retval.append(obj.uncfgtext)
+                else:
+                    retval.append(obj.text)
+            return retval
 
 
 @attrs.define(repr=False)

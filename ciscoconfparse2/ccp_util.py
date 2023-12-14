@@ -33,9 +33,11 @@
 #pragma warning disable S5852
 #pragma warning disable S6395
 
+from collections.abc import Hashable
 from operator import attrgetter
 from typing import Any, Union
 from functools import wraps
+import functools
 import subprocess
 import locale
 import socket
@@ -135,6 +137,35 @@ _RGX_IPV4ADDR_WITH_MASK = re.compile(
     re.VERBOSE,
 )
 ####################### End IPv4 #############################
+
+class memoized(object):
+    '''Decorator. Caches a function's return value each time it is called.
+    If called later with the same arguments, the cached value is returned
+    (not reevaluated).
+    '''
+    def __init__(self, func):
+        self.func = func
+        self.cache = {}
+
+    def __call__(self, *args):
+        if not isinstance(args, Hashable):
+            # uncacheable. a list, for instance.
+            # better to not cache than blow up.
+            return self.func(*args)
+        if args in self.cache:
+            return self.cache[args]
+        else:
+            value = self.func(*args)
+            self.cache[args] = value
+            return value
+
+    def __repr__(self):
+        '''Return the function's docstring.'''
+        return self.func.__doc__
+
+    def __get__(self, obj, objtype):
+        '''Support instance methods.'''
+        return functools.partial(self.__call__, obj)
 
 
 @attrs.define(repr=False)
@@ -892,58 +923,54 @@ class IPv4Obj(object):
 
         This object emulates the behavior of ipaddr.IPv4Network (in Python2) where host-bits were retained in the IPv4Network() object.  :class:`ipaddress.IPv4Network` in Python3 does not retain host-bits; the desire to retain host-bits in both Python2 and Python3 ip network objects was the genesis of this API.
 
-        Parameters
-        ----------
-        v4input : str or int
-            A string (or integer) containing an IPv4 address, and optionally a netmask or masklength.  Integers are also accepted and the masklength of the integer is assumed to be 32-bits.  The following address/netmask formats are supported: "10.1.1.1/24", "10.1.1.1 255.255.255.0", "10.1.1.1/255.255.255.0"
-        strict: bool
-            When `strict` is True, the value of `v4input` must not have host-bits set.  The default value is False.
+        :param v4input: A string (or integer) containing an IPv4 address, and optionally a netmask or masklength.  Integers are also accepted and the masklength of the integer is assumed to be 32-bits.  The following address/netmask formats are supported: "10.1.1.1/24", "10.1.1.1 255.255.255.0", "10.1.1.1/255.255.255.0"
+        :type v4input: Union[str,int]
+        :param strict: When `strict` is True, the value of `v4input` must not have host-bits set.  The default value is False.
+        :type strict: bool
 
+        .. code-block:: python
 
-        Examples
-        --------
-
-        >>> from ciscoconfparse2.ccp_util import IPv4Obj
-        >>> ## Parse from an integer...
-        >>> net = IPv4Obj(2886729984)
-        >>> net
-        <IPv4Obj 172.16.1.0/32>
-        >>> net.prefixlen = 24
-        >>> net
-        <IPv4Obj 172.16.1.0/24>
-        >>> ## Parse from an string...
-        >>> net = IPv4Obj('172.16.1.0/24')
-        >>> net
-        <IPv4Obj 172.16.1.0/24>
-        >>> net.ip
-        IPv4Address('172.16.1.0')
-        >>> net.ip + 1
-        IPv4Address('172.16.1.1')
-        >>> str(net.ip+1)
-        '172.16.1.1'
-        >>> net.network
-        IPv4Network('172.16.1.0/24')
-        >>> net.network_object
-        IPv4Network('172.16.1.0/24')
-        >>> str(net.network_object)
-        '172.16.1.0/24'
-        >>> net.prefixlen
-        24
-        >>> net.network_object.iterhosts()
-        <generator object iterhosts at 0x7f00bfcce730>
-        >>>
-        >>> # Example of finding the longest-match IPv4 route for an addr...
-        >>> prefix_list = ['0.0.0.0/0', '4.0.0.0/8', '2.0.0.0/7', '4.0.0.0/16', '2.0.0.0/32']
-        >>> rt_table = sorted([IPv4Obj(ii) for ii in prefix_list], reverse=True)
-        >>> addr = IPv4Obj('4.0.1.1')
-        >>> for route in rt_table:
-        ...     if addr in route:
-        ...         break
-        ...
-        >>> # The longest match is contained in route
-        >>> route
-        <IPv4Obj 4.0.0.0/16>
-        >>>
+           >>> from ciscoconfparse2.ccp_util import IPv4Obj
+           >>> ## Parse from an integer...
+           >>> net = IPv4Obj(2886729984)
+           >>> net
+           <IPv4Obj 172.16.1.0/32>
+           >>> net.prefixlen = 24
+           >>> net
+           <IPv4Obj 172.16.1.0/24>
+           >>> ## Parse from an string...
+           >>> net = IPv4Obj('172.16.1.0/24')
+           >>> net
+           <IPv4Obj 172.16.1.0/24>
+           >>> net.ip
+           IPv4Address('172.16.1.0')
+           >>> net.ip + 1
+           IPv4Address('172.16.1.1')
+           >>> str(net.ip+1)
+           '172.16.1.1'
+           >>> net.network
+           IPv4Network('172.16.1.0/24')
+           >>> net.network_object
+           IPv4Network('172.16.1.0/24')
+           >>> str(net.network_object)
+           '172.16.1.0/24'
+           >>> net.prefixlen
+           24
+           >>> net.network_object.iterhosts()
+           <generator object iterhosts at 0x7f00bfcce730>
+           >>>
+           >>> # Example of finding the longest-match IPv4 route for an addr...
+           >>> prefix_list = ['0.0.0.0/0', '4.0.0.0/8', '2.0.0.0/7', '4.0.0.0/16', '2.0.0.0/32']
+           >>> rt_table = sorted([IPv4Obj(ii) for ii in prefix_list], reverse=True)
+           >>> addr = IPv4Obj('4.0.1.1')
+           >>> for route in rt_table:
+           ...     if addr in route:
+           ...         break
+           ...
+           >>> # The longest match is contained in route
+           >>> route
+           <IPv4Obj 4.0.0.0/16>
+           >>>
 
 
         Attributes
@@ -1686,7 +1713,7 @@ class IPv4Obj(object):
 @attrs.define(repr=False)
 class IPv6Obj(object):
     dna: str = "IPv6Obj"
-    v6addr_prefixlen: Union[str, int] = None
+    v6input: Union[str, int] = None
     strict: bool = False
     debug: int = 0
 
@@ -1698,31 +1725,28 @@ class IPv6Obj(object):
     __setstate__: Any = None
 
     # This method is on IPv6Obj().  @logger.catch() breaks the __init__() method.
-    def __init__(self, v6addr_prefixlen=None, strict=False, debug=0):
+    def __init__(self, v6input=None, strict=False, debug=0):
         """An object to represent IPv6 addresses and IPv6 networks.
 
         When :class:`~ccp_util.IPv6Obj` objects are compared or sorted, network numbers are sorted lower to higher.  If network numbers are the same, shorter masks are lower than longer masks. After comparing mask length, numerically higher IP addresses are greater than numerically lower IP addresses.  Comparisons between :class:`~ccp_util.IPv6Obj` instances was chosen so it's easy to find the longest-match for a given prefix.
 
         This object emulates the behavior of ipaddr.IPv6Network() (in Python2) where host-bits were retained in the IPv6Network() object.  :class:`ipaddress.IPv6Network` in Python3 does not retain host-bits; the desire to retain host-bits in both Python2 and Python3 ip network objects was the genesis of this API.
 
-        Parameters
-        ----------
-        v6addr_prefixlen : str or int
-            A string containing an IPv6 address, and optionally a netmask or masklength.  Integers are also accepted; the mask is assumed to be 128 bits if an integer is provided. The following address/netmask formats are supported: "2001::dead:beef", "2001::dead:beef/64",
-        strict : bool
-            When `strict` is True, the value of `v6addr_prefixlen` must not have host-bits set.  The default value is False.
+        :param v6input: A string (or integer) containing an IPv6 address, and optionally a netmask or masklength.  Integers are also accepted and the masklength of the integer is assumed to be 128-bits.  The following address/netmask formats are supported: "2001::dead:beef", "2001::dead:beef/64",
+        :type v6input: Union[str,int]
+        :param strict: When `strict` is True, the value of `v4input` must not have host-bits set.  The default value is False.
+        :type strict: bool
 
-        Examples
-        --------
+        .. code-block:: python
 
-        >>> from ciscoconfparse2.ccp_util import IPv6Obj
-        >>> net = IPv6Obj(42540488161975842760550356429036175087)
-        >>> net
-        <IPv6Obj 2001::dead:beef/64>
-        >>> net = IPv6Obj("2001::dead:beef/64")
-        >>> net
-        <IPv6Obj 2001::dead:beef/64>
-        >>>
+           >>> from ciscoconfparse2.ccp_util import IPv6Obj
+           >>> net = IPv6Obj(42540488161975842760550356429036175087)
+           >>> net
+           <IPv6Obj 2001::dead:beef/64>
+           >>> net = IPv6Obj("2001::dead:beef/64")
+           >>> net
+           <IPv6Obj 2001::dead:beef/64>
+           >>>
 
         Attributes
         ----------
@@ -1759,29 +1783,28 @@ class IPv6Obj(object):
             An integer representing the number of hosts contained in the network
 
         """
-
         if isinstance(debug, int):
             if debug > 0:
-                logger.info(f"IPv6Obj(v6addr_prefixlen='{v6addr_prefixlen}', strict={strict}, debug={debug}) was called")
+                logger.info(f"IPv6Obj(v6input='{v6input}', strict={strict}, debug={debug}) was called")
         else:
             error = f"IPv6Obj() debug must be an int, but `debug`=`{debug}` was called."
             logger.critical(error)
             raise ValueError(error)
 
-        if v6addr_prefixlen is not None:
+        if v6input is not None:
             try:
-                if isinstance(v6addr_prefixlen, (str, int, IPv6Obj)) is False:
+                if isinstance(v6input, (str, int, IPv6Obj)) is False:
                     raise ValueError()
             except ValueError as eee:
-                error = f"Could not parse '{v6addr_prefixlen}' (type: {type(v6addr_prefixlen)}) into an IPv6 Address. {eee}"
+                error = f"Could not parse '{v6input}' (type: {type(v6input)}) into an IPv6 Address. {eee}"
                 logger.error(error)
                 raise AddressValueError(error)
             except BaseException as eee:
-                error = f"Could not parse '{v6addr_prefixlen}' (type: {type(v6addr_prefixlen)}) into an IPv6 Address. {eee}"
+                error = f"Could not parse '{v6input}' (type: {type(v6input)}) into an IPv6 Address. {eee}"
                 logger.error(error)
                 raise AddressValueError(error)
 
-        self.v6addr_prefixlen = v6addr_prefixlen
+        self.v6input = v6input
         self.dna = "IPv6Obj"
         self.ip_object = None
         self.network_object = None
@@ -1791,21 +1814,21 @@ class IPv6Obj(object):
         self.empty = False
         self.__setstate__ = None
 
-        if v6addr_prefixlen is None:
+        if v6input is None:
             self.empty = True
-        elif isinstance(v6addr_prefixlen, str):
-            if len(v6addr_prefixlen) > IPV6_MAXSTR_LEN:
+        elif isinstance(v6input, str):
+            if len(v6input) > IPV6_MAXSTR_LEN:
                 raise RequirementFailure()
 
-            tmp = re.split(r"\s+", v6addr_prefixlen.strip())
+            tmp = re.split(r"\s+", v6input.strip())
             if len(tmp) == 2:
-                v6addr_prefixlen = "/".join(tmp)
+                v6input = "/".join(tmp)
             elif len(tmp) == 1:
-                v6addr_prefixlen = tmp[0]
+                v6input = tmp[0]
             else:
-                raise NotImplementedError(v6addr_prefixlen.strip())
+                raise NotImplementedError(v6input.strip())
 
-            v6_str_rgx = _RGX_IPV6ADDR.search(v6addr_prefixlen.strip())
+            v6_str_rgx = _RGX_IPV6ADDR.search(v6input.strip())
             # Example 'v6_groupdict'
             #     v6_groupdict = {'addr': '2b00:cd80:14:10::1', 'opt1': None, 'opt2': None, 'opt3': None, 'opt4': None, 'opt5': '2b00:cd80:14:10::1', 'opt6': None, 'opt7': None, 'opt8': None, 'opt9': None, 'opt10': None, 'masklen': '64'}
             v6_groupdict = v6_str_rgx.groupdict()
@@ -1828,18 +1851,18 @@ class IPv6Obj(object):
                 netstr = _ipv6 + "/128"
             self.network_object = IPv6Network(netstr, strict=False)
 
-        elif isinstance(v6addr_prefixlen, int):
-            if not (0 <= v6addr_prefixlen <= IPV6_MAXINT):
+        elif isinstance(v6input, int):
+            if not (0 <= v6input <= IPV6_MAXINT):
                 raise RequirementFailure()
-            self.ip_object = IPv6Address(v6addr_prefixlen)
-            self.network_object = IPv6Network(v6addr_prefixlen, strict=False)
+            self.ip_object = IPv6Address(v6input)
+            self.network_object = IPv6Network(v6input, strict=False)
 
-        elif isinstance(v6addr_prefixlen, IPv6Obj):
-            self.ip_object = IPv6Address(v6addr_prefixlen.ip)
-            self.network_object = IPv6Network(v6addr_prefixlen.as_cidr_net, strict=False)
+        elif isinstance(v6input, IPv6Obj):
+            self.ip_object = IPv6Address(v6input.ip)
+            self.network_object = IPv6Network(v6input.as_cidr_net, strict=False)
 
         else:
-            raise AddressValueError(f"Could not parse '{v6addr_prefixlen}' {type(v6addr_prefixlen)} into an IPv6 Address")
+            raise AddressValueError(f"Could not parse '{v6input}' {type(v6input)} into an IPv6 Address")
 
     # On IPv6Obj()
     def __repr__(self):

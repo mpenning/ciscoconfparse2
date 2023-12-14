@@ -68,6 +68,8 @@ ipv6 dhcp pool IPV6_2FL_NORTH_LAN
    dns-server fd01:abff::0001:0001
    lease 2
 !
+vlan 12
+ name Comptroller_cubicle
 !
 no ip bootp server
 ip domain name foo.com
@@ -324,6 +326,18 @@ interface FastEthernet1/0
  no ipv6 redirects
  no ipv6 unreachables
  ipv6 dhcp server 2001:db8:aaaa:0012::0001::
+!
+interface FastEtheret1/1
+ description [switchport to the comptroller cube]
+ switchport access vlan 12
+ switchport nonnegotiate
+!
+interface FastEtheret1/2
+ description [switchport to the IDF media converter]
+ speed 100
+ duplex full
+ switchport access vlan 12
+ switchport nonnegotiate
 !
 interface Virtual-Template1
  no ip address
