@@ -959,9 +959,9 @@ class BaseIOSIntfLine(IOSCfgLine):
 
     # This method is on BaseIOSIntfLine()
     @logger.catch(reraise=True)
-    def reset(self, atomic=True):
+    def reset(self, commit=True):
         # Insert build_reset_string() before this line...
-        self.insert_before(self.build_reset_string(), atomic=atomic)
+        self.insert_before(self.build_reset_string(), commit=commit)
 
     # This method is on BaseIOSIntfLine()
     @logger.catch(reraise=True)
@@ -2850,9 +2850,9 @@ class IOSAccessLine(IOSCfgLine):
         return retval
 
     @logger.catch(reraise=True)
-    def reset(self, atomic=True):
+    def reset(self, commit=True):
         # Insert build_reset_string() before this line...
-        self.insert_before(self.build_reset_string(), atomic=atomic)
+        self.insert_before(self.build_reset_string(), commit=commit)
 
     @logger.catch(reraise=True)
     def build_reset_string(self):

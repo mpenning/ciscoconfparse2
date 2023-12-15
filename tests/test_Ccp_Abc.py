@@ -3,6 +3,7 @@
 from loguru import logger
 import pytest
 from ciscoconfparse2.ciscoconfparse2 import CiscoConfParse
+from ciscoconfparse2.errors import ConfigListItemDoesNotExist
 from ciscoconfparse2.errors import DynamicAddressException
 from ciscoconfparse2.ccp_util import IPv4Obj, CiscoRange, CiscoIOSInterface
 from ciscoconfparse2.ccp_abc import BaseCfgLine
@@ -88,23 +89,6 @@ def testVal_BaseCfgLine_index_01():
     obj01.linenum = 1
     assert obj01.linenum == 1
     assert obj01.index == obj01.linenum
-
-
-def testVal_BaseCfgLine_calculate_line_id_01():
-    """Test BaseCfgLine().calculate_line_id() is an integer.  calculate_line_id() returns a different number for each unique object and it cannot be easily predicted"""
-    obj01 = BaseCfgLine(all_lines=None, line="hostname Foo")
-    obj01.linenum = 1
-    assert isinstance(obj01.calculate_line_id(), int)
-
-
-def testVal_BaseCfgLine_diff_id_list_01():
-    """Test BaseCfgLine().diff_id_list() is a list.  diff_id_list() returns a different contents for each unique object and it cannot be easily predicted"""
-    obj01 = BaseCfgLine(all_lines=None, line="hostname Foo")
-    obj01.linenum = 1
-    assert len(obj01.diff_id_list) == 1
-    assert isinstance(obj01.diff_id_list, list)
-    assert isinstance(obj01.diff_id_list[0], int)
-
 
 def testVal_BaseCfgLine_safe_escape_curly_braces_01():
     """Test BaseCfgLine().safe_escape_curly_braces()"""
@@ -201,6 +185,72 @@ def testVal_BaseCfgLine_has_child_with_03():
     obj = parse.find_objects('interface')[0]
     uut = obj.has_child_with('proxy-arp', all_children=True)
     assert uut is True
+
+def testVal_BaseCfgLine_CiscoIOS_delete_w_auto_commit_wo_reverse_01():
+    """Ensure that we get an error when deleting multiple Cisco IOS configuration objects without reversing"""
+    config = [
+        "!",
+        "hostname Example",
+        "!",
+        "interface GigabitEthernet1/0",
+        " ip address 192.0.2.1 255.255.255.252",
+        "!",
+        "interface GigabitEthernet1/1",
+        " ip address 192.0.2.5 255.255.255.252",
+        "!",
+        "interface GigabitEthernet1/2",
+        " ip address 192.0.2.9 255.255.255.252",
+        "!",
+        "interface GigabitEthernet1/3",
+        " ip address 192.0.2.11 255.255.255.252",
+        "!",
+        "end",
+    ]
+
+    parse = CiscoConfParse(config, auto_commit=True)
+    # Ensure that the object exists...
+    assert len(parse.find_objects(r"GigabitEthernet1/1")) == 1
+    # Ensure that the object exists...
+    assert len(parse.find_objects(r"GigabitEthernet1/2")) == 1
+    with pytest.raises(ConfigListItemDoesNotExist):
+        for obj in parse.find_objects(r"GigabitEthernet1/1|GigabitEthernet1/2", reverse=False):
+            obj.delete()
+
+def testVal_BaseCfgLine_CiscoIOS_delete_w_auto_commit_w_reverse_01():
+    """Ensure that we can delete multiple Cisco IOS configuration objects"""
+    config = [
+        "!",
+        "hostname Example",
+        "!",
+        "interface GigabitEthernet1/0",
+        " ip address 192.0.2.1 255.255.255.252",
+        "!",
+        "interface GigabitEthernet1/1",
+        " ip address 192.0.2.5 255.255.255.252",
+        "!",
+        "interface GigabitEthernet1/2",
+        " ip address 192.0.2.9 255.255.255.252",
+        "!",
+        "interface GigabitEthernet1/3",
+        " ip address 192.0.2.11 255.255.255.252",
+        "!",
+        "end",
+    ]
+
+    parse = CiscoConfParse(config, auto_commit=True)
+    # Ensure that the object exists...
+    assert len(parse.find_objects(r"GigabitEthernet1/1")) == 1
+    # Ensure that the object exists...
+    assert len(parse.find_objects(r"GigabitEthernet1/2")) == 1
+
+    # Execute the delete operation...
+    for obj in parse.find_objects(r"GigabitEthernet1/1|GigabitEthernet1/2", reverse=True):
+        obj.delete()
+
+    # Ensure that the object was deleted...
+    assert len(parse.find_objects(r"GigabitEthernet1/1")) == 0
+    # Ensure that the object was deleted...
+    assert len(parse.find_objects(r"GigabitEthernet1/2")) == 0
 
 
 def testVal_BaseCfgLine_insert_before_01():
@@ -299,7 +349,7 @@ def testVal_BaseCfgLine_append_to_family_01():
     )
     obj = parse.find_objects('interface')[0]
     obj.append_to_family(' description This or that')
-    assert parse.text == [
+    assert parse.get_text() == [
         'interface Ethernet0/0',
         ' ip address 192.0.2.1 255.255.255.0',
         '  no ip proxy-arp',

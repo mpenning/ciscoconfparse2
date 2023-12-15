@@ -4,6 +4,17 @@
 - Summary:
     - Insert something here
 
+## Version: 0.3.0
+
+- Released: 2023-12-15
+- Summary:
+    - Rename `atomic()` to `commit()` in all places
+    - Remove `recurse` keyword from `BaseCfgLine().delete()`
+    - Remove unnecessary keywords from several methods
+    - Delete several unused methods
+    - Remove Python3.8 from `tox.ini` as part of type-hinting support (due to missing `...` in Python3.8 `tuple` type-hint)
+    - Documentation updates
+
 ## Version: 0.2.5
 
 - Released: 2023-12-14

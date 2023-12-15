@@ -20,25 +20,24 @@ If you need to contact the author, you can do so by emailing:
 mike [~at~] pennington [.dot.] net
 """
 
-from typing import Any, Union, List, Tuple
+from typing import Any, Callable, Union, List, Tuple, Dict
 from collections.abc import Sequence
 from collections import UserList
 import inspect
 import pathlib
 import locale
 import time
-import yaml
 import copy
 import sys
 import re
 import os
-
 
 from deprecated import deprecated
 from loguru import logger
 import attrs
 import hier_config
 import tomlkit
+import yaml    # import for pyyaml
 
 from ciscoconfparse2.models_cisco import IOSRouteLine
 from ciscoconfparse2.models_cisco import IOSIntfLine
@@ -72,7 +71,6 @@ from ciscoconfparse2.ccp_util import fix_repeated_words
 from ciscoconfparse2.ccp_util import enforce_valid_types
 from ciscoconfparse2.ccp_util import junos_unsupported
 from ciscoconfparse2.ccp_util import configure_loguru
-from ciscoconfparse2.ccp_util import memoized
 
 from ciscoconfparse2.errors import ConfigListItemDoesNotExist
 from ciscoconfparse2.errors import RequirementFailure
@@ -564,13 +562,13 @@ def assign_parent_to_closing_braces(input_list: List[BaseCfgLine]=None) -> List[
     if input_list is None:
         raise ValueError("Cannot modify.  The input_list is None")
 
-    input_condition = isinstance(input_list, Sequence)
-    if input_condition is True and len(input_list) > 0:
+    sequence_condition = isinstance(input_list, Sequence)
+    if sequence_condition is True and len(input_list) > 0:
         opening_brace_objs = []
         # Modify obj.parent, below...
         for obj in input_list:
             # All obj in input_list has obj.parent is modified in-place...
-            if isinstance(obj, BaseCfgLine) and isinstance(obj.text, str):
+            if isinstance(obj, BaseCfgLine) and isinstance(obj._text, str):
                 # Assign obj.parent for closing braces.  Lines in braces will
                 # have parents assigned elsewhere.
                 #
@@ -580,10 +578,10 @@ def assign_parent_to_closing_braces(input_list: List[BaseCfgLine]=None) -> List[
                 # because he submitted a multi-line string...
                 #
                 # This check will explicitly catch some problems like that...
-                if len(obj.text.rstrip()) >= 1 and obj.text.rstrip()[-1] == "{":
+                if len(obj._text.rstrip()) >= 1 and obj._text.rstrip()[-1] == "{":
                     opening_brace_objs.append(obj)
 
-                elif len(obj.text.strip()) >= 1 and obj.text.strip()[0] == "}":
+                elif len(obj._text.strip()) >= 1 and obj._text.strip()[0] == "}":
                     if len(opening_brace_objs) >= 1:
                         obj.parent = opening_brace_objs.pop()
                     else:
@@ -663,13 +661,13 @@ def convert_junos_to_ios(input_list: List[str]=None, stop_width: int=4, comment_
 @attrs.define(repr=False)
 class ConfigList(UserList):
     """A custom list to hold :class:`~ccp_abc.BaseCfgLine` objects.  Most users will never need to use this class directly."""
-    initlist: Union[List[str], Tuple[str]] = None
+    initlist: Union[List[str],tuple[str, ...]] = None
     comment_delimiters: List[str] = None
-    debug: int = None
     factory: bool = None
     ignore_blank_lines: bool = None
     syntax: str = None
     auto_commit: bool = False
+    debug: int = None
 
     ccp_ref: Any = None
     dna: str = "ConfigList"
@@ -680,20 +678,20 @@ class ConfigList(UserList):
     @logger.catch(reraise=True)
     def __init__(
         self,
-        initlist=None,
-        comment_delimiters=None,
-        factory=False,
-        ignore_blank_lines=False,
+        initlist: Union[List[str],tuple[str, ...]]=None,
+        comment_delimiters: List[str]=None,
+        factory: bool=False,
+        ignore_blank_lines: bool=False,
         # syntax="__undefined__",
-        syntax="ios",
-        auto_commit=True,
-        debug=0,
+        syntax: str="ios",
+        auto_commit: bool=True,
+        debug: int=0,
         **kwargs
     ):
         """Initialize the class.
 
         :param initlist: A sequence of text configuration statements
-        :type initlist: Union[List[str], Tuple[str]]
+        :type initlist: Union[List[str],tuple[str, ...]]
         :param comment_delimiters: Sequence of string comment-delimiters; only change this
                                    when parsing non-Cisco configurations.
         :type comment_delimiters: List[str]
@@ -798,20 +796,12 @@ class ConfigList(UserList):
             ccp_value  # FIXME - CiscoConfParse attribute should go away soon
         )
 
-        # Support input configuration as either a list or a generator instance
-        #
-        # as of python 3.9, getattr() below is slightly faster than
-        #     isinstance(initlist, Sequence)
-        if False:
+        # Removed this portion of __init__() in 1.7.16...
+        if getattr(initlist, "__iter__", False) is not False:
             self.data = self.bootstrap(initlist, debug=debug)
 
-        if True:
-            # Removed this portion of __init__() in 1.7.16...
-            if getattr(initlist, "__iter__", False) is not False:
-                self.data = self.bootstrap(initlist)
-
-            else:
-                self.data = []
+        else:
+            self.data = []
 
         if self.debug > 0:
             message = f"Create ConfigList() with {len(self.data)} elements"
@@ -830,7 +820,7 @@ class ConfigList(UserList):
 
     # This method is on ConfigList()
     @logger.catch(reraise=True)
-    def __repr__(self):
+    def __repr__(self) -> str:
         return """<ConfigList, syntax='{}', comment_delimiters={}, conf={}>""".format(
             self.syntax,
             self.comment_delimiters,
@@ -843,42 +833,42 @@ class ConfigList(UserList):
 
     # This method is on ConfigList()
     @logger.catch(reraise=True)
-    def __lt__(self, other):
+    def __lt__(self, other) -> bool:
         return self.data < self.__cast(other)
 
     # This method is on ConfigList()
     @logger.catch(reraise=True)
-    def __le__(self, other):
+    def __le__(self, other) -> bool:
         return self.data < self.__cast(other)
 
     # This method is on ConfigList()
     @logger.catch(reraise=True)
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         return self.data == self.__cast(other)
 
     # This method is on ConfigList()
     @logger.catch(reraise=True)
-    def __gt__(self, other):
+    def __gt__(self, other) -> bool:
         return self.data > self.__cast(other)
 
     # This method is on ConfigList()
     @logger.catch(reraise=True)
-    def __ge__(self, other):
+    def __ge__(self, other) -> bool:
         return self.data >= self.__cast(other)
 
     # This method is on ConfigList()
     @logger.catch(reraise=True)
-    def __cast(self, other):
-        return other._list if isinstance(other, ConfigList) else other
+    def __cast(self, other) -> List[BaseCfgLine]:
+        return other.data if isinstance(other, ConfigList) else other
 
     # This method is on ConfigList()
     @logger.catch(reraise=True)
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.data)
 
     # This method is on ConfigList()
     @logger.catch(reraise=True)
-    def __getitem__(self, ii):
+    def __getitem__(self, ii) -> BaseCfgLine:
         if isinstance(ii, slice):
             return self.__class__(self.data[ii])
         else:
@@ -886,18 +876,18 @@ class ConfigList(UserList):
 
     # This method is on ConfigList()
     @logger.catch(reraise=True)
-    def __setitem__(self, ii, val):
+    def __setitem__(self, ii, val) -> None:
         self.data[ii] = val
 
     # This method is on ConfigList()
     @logger.catch(reraise=True)
-    def __delitem__(self, ii):
+    def __delitem__(self, ii) -> None:
         del self.data[ii]
         self.data = self.bootstrap(self.text, debug=self.debug)
 
     # This method is on ConfigList()
     @logger.catch(reraise=True)
-    def __add__(self, other):
+    def __add__(self, other) -> List[BaseCfgLine]:
         if isinstance(other, ConfigList):
             return self.__class__(self.data + other._list)
         elif isinstance(other, type(self.data)):
@@ -906,7 +896,7 @@ class ConfigList(UserList):
 
     # This method is on ConfigList()
     @logger.catch(reraise=True)
-    def __radd__(self, other):
+    def __radd__(self, other) -> List[BaseCfgLine]:
         if isinstance(other, ConfigList):
             return self.__class__(other.data + self.data)
         elif isinstance(other, type(self.data)):
@@ -915,7 +905,7 @@ class ConfigList(UserList):
 
     # This method is on ConfigList()
     @logger.catch(reraise=True)
-    def __iadd__(self, other):
+    def __iadd__(self, other) -> List[BaseCfgLine]:
         if isinstance(other, ConfigList):
             self.data += other.data
         elif isinstance(other, type(self.data)):
@@ -925,26 +915,13 @@ class ConfigList(UserList):
 
         if bool(self.auto_commit):
             # The config is not safe unless this is called after the append
-            self.ccp_ref.atomic()
+            self.ccp_ref.commit()
 
         return self
 
     # This method is on ConfigList()
     @logger.catch(reraise=True)
-    def __mul__(self, val):
-        return self.__class__(self.data * val)
-
-    __rmul__ = __mul__
-
-    # This method is on ConfigList()
-    @logger.catch(reraise=True)
-    def __imul__(self, val):
-        self.data *= val
-        return self
-
-    # This method is on ConfigList()
-    @logger.catch(reraise=True)
-    def __copy__(self):
+    def __copy__(self) -> List[BaseCfgLine]:
         inst = self.__class__.__new__(self.__class__)
         inst.__dict__.update(self.__dict__)
         # Create a copy and avoid triggering descriptors
@@ -953,12 +930,12 @@ class ConfigList(UserList):
 
     # This method is on ConfigList()
     @logger.catch(reraise=True)
-    def __str__(self):
+    def __str__(self) -> str:
         return self.__repr__()
 
     # This method is on ConfigList()
     @logger.catch(reraise=True)
-    def __enter__(self):
+    def __enter__(self) -> BaseCfgLine:
         # Add support for with statements...
         # FIXME: *with* statements dont work
         yield from self.data
@@ -967,11 +944,11 @@ class ConfigList(UserList):
     @logger.catch(reraise=True)
     def __exit__(self, *args, **kwargs):
         # FIXME: *with* statements dont work
-        self.data[0].confobj.CiscoConfParse.atomic()
+        self.data[0].confobj.CiscoConfParse.commit()
 
     # This method is on ConfigList()
     @logger.catch(reraise=True)
-    def __getattribute__(self, arg):
+    def __getattribute__(self, arg) -> Any:
         """Call arg on ConfigList() object, and if that fails, call arg from the ccp_ref attribute"""
         # Try a method call on ASAConfigList()
 
@@ -1014,8 +991,17 @@ class ConfigList(UserList):
     # This method is on ConfigList()
     @property
     @logger.catch(reraise=True)
-    def search_safe(self):
-        """This is a seatbelt to ensure that configuration searches are safe; searches are not safe if the ConfigList() has changed without a commit.  As such, this method checks the current version of ConfigList().checkpoint and compares it to the last known ConfigList().commit_checkpoint.  If they are the same, return True.  ConfigList().commit_checkpoint should only written by CiscoConfParse().atomic()"""
+    def search_safe(self) -> bool:
+        """This is a seatbelt to ensure that configuration searches are safe;
+        searches are not safe if the ConfigList() has changed without a commit.
+        As such, this method checks the current version of
+        ``ConfigList().current_checkpoint`` and compares it to the last known
+        ``ConfigList().commit_checkpoint``.  If they are the same, return True.
+        ``ConfigList().commit_checkpoint`` should only written by
+        ``CiscoConfParse().commit()``
+
+        :rtype: bool
+        """
         return self.current_checkpoint == self.commit_checkpoint
 
     # This method is on ConfigList()
@@ -1030,9 +1016,6 @@ class ConfigList(UserList):
             # bootstrap the ConfigList() for any commit operation
             self.data = self.bootstrap(debug=self.debug)
 
-            # copy the current_checkpoint to the commit checkpoint
-            self.commit_checkpoint = self.current_checkpoint
-
             return True
         except BaseException as eee:
             error = f"Could not finish commit: {eee}"
@@ -1044,8 +1027,11 @@ class ConfigList(UserList):
     # This method is on ConfigList()
     @property
     @logger.catch(reraise=True)
-    def as_text(self):
-        """Return the configuration as a list of text lines"""
+    def as_text(self) -> List[str]:
+        """
+        :return: Configuration as a list of text lines
+        :rtype: List[str]
+        """
         retval = list()
         for ii in self.data:
             if isinstance(ii, BaseCfgLine):
@@ -1060,19 +1046,25 @@ class ConfigList(UserList):
 
     # This method is on ConfigList()
     @logger.catch(reraise=True)
-    def append(self, val):
+    def append(self, value: str) -> None:
+        """Append the BaseCfgLine() for ``value`` to the end of the ConfigList
+
+        :param value: The value to append
+        :type value: str
+        :rtype: None
+        """
         if self.debug >= 1:
-            logger.debug("    ConfigList().append(val={}) was called.".format(val))
+            logger.debug("    ConfigList().append(val={}) was called.".format(value))
 
         if bool(self.factory) is False:
             obj = CFGLINE[self.syntax](
                 all_lines=self.as_text,
-                line=val,
+                line=value,
             )
         else:
             obj = config_line_factory(
                 all_lines=self.as_text,
-                line=val,
+                line=value,
                 syntax=self.syntax,
             )
 
@@ -1081,31 +1073,48 @@ class ConfigList(UserList):
 
         if bool(self.auto_commit):
             # The config is not safe unless this is called after the append
-            self.ccp_ref.atomic()
+            self.ccp_ref.commit()
 
     # This method is on ConfigList()
     @logger.catch(reraise=True)
-    def pop(self, ii=-1):
-        retval = self.data.pop(ii)
+    def pop(self, index: int=-1) -> BaseCfgLine:
+        """
+        Remove and return item at ``index`` (default last).
 
-        # modify the current_checkpoint because this is
-        # a change to the ConfigList()
-        self.current_checkpoint = self.get_checkpoint()
+        Raises IndexError if list is empty or index is out of range.
+
+        :param index: ConfigList index to pop
+        :type index: int
+        :return: The pop'd value
+        :rtype: BaseCfgLine
+        """
+        retval = self.data.pop(index)
 
         if bool(self.auto_commit):
             # The config is not safe unless this is called after the append
-            self.ccp_ref.atomic()
+            self.ccp_ref.commit()
 
         return retval
 
     # This method is on ConfigList()
     @logger.catch(reraise=True)
-    def remove(self, val):
+    def remove(self, value: BaseCfgLine) -> None:
+        """
+        Remove first occurrence of ``value``.
 
-        if isinstance(val, str):
-            idx = self.as_text.index(val)
+        Raises :py:class:`ConfigListItemDoesNotExist` if the value is not present.
+
+        :param value: Value to remove from the ConfigList()
+        :type value: BaseCfgLine
+        :rtype: None
+        """
+
+        if isinstance(value, BaseCfgLine):
+            idx = self.data.index(value)
         else:
-            idx = self.data.index(val)
+            error = f"value must be an instance of BaseCfgLine(), but we got {type(value)}"
+            logger.critical(error)
+            raise InvalidParameters(error)
 
         # Remove all child objects...
         for obj in self.data[idx].all_children:
@@ -1113,111 +1122,165 @@ class ConfigList(UserList):
         # Remove the parent...
         self.data.pop(idx)
 
-        if False:
-            # Rebuild the family relationships
-            self.data = self.bootstrap(self.as_text, debug=self.debug)
-
         if bool(self.auto_commit):
             # The config is not safe unless this is called after the append
-            self.ccp_ref.atomic()
+            self.ccp_ref.commit()
 
     # This method is on ConfigList()
     @logger.catch(reraise=True)
-    def clear(self):
+    def clear(self) -> None:
+        """
+        Remove all items from ConfigList.
+
+        :rtype: None
+        """
         self.data.clear()
 
+        self.data = self.bootstrap(self.as_text)
+
         if bool(self.auto_commit):
             # The config is not safe unless this is called after the append
-            self.ccp_ref.atomic()
+            self.ccp_ref.commit()
 
     # This method is on ConfigList()
     @logger.catch(reraise=True)
-    def copy(self):
+    def copy(self) -> List[BaseCfgLine]:
+        """
+        :return: A copy of this ConfigList()
+        :rtype: List[BaseCfgLine]
+        """
         return self.__class__(self)
 
     # This method is on ConfigList()
     @logger.catch(reraise=True)
-    def count(self, val):
-        return self.data.count(val)
+    def count(self, value: BaseCfgLine) -> int:
+        """
+        :param value: value
+        :type value: BaseCfgLine
+        :return: The number of instances of ``value``
+        :rtype: int
+        """
+        return self.data.count(value)
 
     # This method is on ConfigList()
     @logger.catch(reraise=True)
-    def index(self, val, *args):
+    def index(self, value: BaseCfgLine, *args) -> int:
+        """
+        :param value: The item to index
+        :type value: BaseCfgLine
+        :return: the index of ``value``
+        :rtype: int
+        """
 
         #######################################################################
         # first search by text and linenum if val is a BaseCfgLine() instance
         #######################################################################
-        if isinstance(val, BaseCfgLine):
+        if isinstance(value, BaseCfgLine):
             for idx, obj in enumerate(self.data):
 
-                if obj.get_unique_identifier() == val.get_unique_identifier():
+                if obj.get_unique_identifier() == value.get_unique_identifier():
                     return idx
 
-        error = f"{val} is not in this ConfigList()"
+        else:
+            ###################################################################
+            # Searching by something like a string is too ambiguous... there
+            # can be too many string overlaps on multiple lines; only
+            # BaseCfgLine() instances are unique enough to search on.
+            ###################################################################
+            error = f"ConfigList().index() only supports instances of BaseCfgLine(), but got {type(value)}."
+            logger.critical(error)
+            raise InvalidParameters(error)
+
+        error = f"{value} is not in this ConfigList()"
         logger.error(error)
         raise ConfigListItemDoesNotExist(error)
 
     # This method is on ConfigList()
     @logger.catch(reraise=True)
-    def reverse(self):
+    def reverse(self) -> None:
+        """
+        Reverse the ConfigList() in-place.
+
+        :rtype: None
+        """
         self.data.reverse()
 
-        if bool(self.auto_commit):
-            # The config is not safe unless this is called after the append
-            self.ccp_ref.atomic()
-
-    # This method is on ConfigList()
-    @logger.catch(reraise=True)
-    def sort(self, _unknown_arg, *args, **kwds):
-        self.data.sort(*args, **kwds)
+        self.data = self.bootstrap(self.as_text)
 
         if bool(self.auto_commit):
             # The config is not safe unless this is called after the append
-            self.ccp_ref.atomic()
+            self.ccp_ref.commit()
 
     # This method is on ConfigList()
     @logger.catch(reraise=True)
-    def extend(self, other):
+    def sort(self, cmp: Callable=None, key: Callable=None, reverse: bool=False) -> None:
+        """
+        :param cmp: Specifies a custom comparison function of two arguments
+                    (list items) which should return a negative, zero or
+                    positive number depending on whether the first argument
+                    is considered smaller than, equal to, or larger than the
+                    second argument.
+        :type cmp: Callable
+        :param key: Specifies a function of one argument that is used to
+                    extract a comparison key from each list element.
+        :type key: Callable
+        :param reverse: If True, then the list elements are sorted as if each
+                        comparison were reversed.
+        :type reverse: bool
+        :rtype: None
+        """
+        self.data.sort(cmp=cmp, key=key, reverse=reverse)
+
+        self.data = self.bootstrap(self.as_text)
+
+        if bool(self.auto_commit):
+            # The config is not safe unless this is called after the append
+            self.ccp_ref.commit()
+
+    # This method is on ConfigList()
+    @logger.catch(reraise=True)
+    def extend(self, other: Union[List[BaseCfgLine],tuple[BaseCfgLine, ...]]) -> None:
+        """
+        Extend the ConfigList with ``other``.
+
+        :rtype: None
+        """
         if isinstance(other, ConfigList):
-            self.data.extend(other._list)
-        else:
+            self.data.extend(other.data)
+        elif isinstance(other, (list,tuple)):
             self.data.extend(other)
+        else:
+            error = f"'other' must be a ConfigList, list or tuple, but we got {type(other)}"
+            logger.critical(error)
+            raise InvalidParameters(error)
 
         self.data = self.bootstrap(self.as_text, debug=self.debug)
 
         if bool(self.auto_commit):
             # The config is not safe unless this is called after the append
-            self.ccp_ref.atomic()
+            self.ccp_ref.commit()
 
     # This method is on ConfigList()
     @logger.catch(reraise=True)
-    def insert_before(self, exist_val=None, new_val=None, atomic=False):
+    def insert_before(self, exist_val=None, new_val=None) -> List[str]:
         """
         Insert new_val before all occurances of exist_val.
 
-        Parameters
-        ----------
-        exist_val : str
-            An existing text value.  This may match multiple configuration entries.
-        new_val : str
-            A new value to be inserted in the configuration.
-        atomic : bool
-            A boolean that controls whether the config is reparsed after the insertion (default False)
+        :param exist_val: An existing text value.  This may match multiple configuration entries.
+        :type exist_val: str
+        :param new_val: A new value to be inserted in the configuration.
+        :type new_val: str
+        :return: An ios-style configuration list (indented by stop_width for each configuration level).
+        :rtype: List[str]
 
-        Returns
-        -------
-        list
-            An ios-style configuration list (indented by stop_width for each configuration level).
+        .. code-block:: python
 
-        Examples
-        --------
-
-        >>> parse = CiscoConfParse(config=["a a", "b b", "c c", "b b"])
-        >>> # Insert 'g' before any occurance of 'b'
-        >>> retval = parse.insert_before("b b", "X X")
-        >>> parse.ioscfg
-        ... ["a a", "X X", "b b", "c c", "X X", "b b"]
-        >>>
+           >>> parse = CiscoConfParse(config=["a a", "b b", "c c", "b b"])
+           >>> # Insert 'g' before any occurance of 'b'
+           >>> retval = parse.insert_before("b b", "X X")
+           >>> parse.get_text()
+           ... ["a a", "X X", "b b", "c c", "X X", "b b"]
+           >>>
         """
 
         calling_fn_index = 1
@@ -1288,49 +1351,31 @@ class ConfigList(UserList):
             # insert at idx - 0 implements 'insert_before()'...
             self.data.insert(idx, new_obj)
 
-        if atomic:
-            # Reparse the whole config as a text list
-            self.data = self.bootstrap(self.as_text)
-
-        else:
-            ## Just renumber lines...
-            self.reassign_linenums()
-
         if bool(self.auto_commit):
             # The config is not safe unless this is called after the append
-            self.ccp_ref.atomic()
+            self.ccp_ref.commit()
 
     # This method is on ConfigList()
     @logger.catch(reraise=True)
-    def insert_after(self, exist_val=None, new_val=None, atomic=False, new_val_indent=-1):
+    def insert_after(self, exist_val=None, new_val=None) -> List[str]:
         """
         Insert new_val after all occurances of exist_val.
 
-        Parameters
-        ----------
-        exist_val : str
-            An existing configuration string value (used as the insertion reference point)
-        new_val : str
-            A new value to be inserted in the configuration.
-        atomic : bool
-            A boolean that controls whether the config is reparsed after the insertion (default False)
-        new_val_indent : int
-            The indent for new_val
+        :param exist_val: An existing text value.  This may match multiple configuration entries.
+        :type exist_val: str
+        :param new_val: A new value to be inserted in the configuration.
+        :type new_val: str
+        :return: An ios-style configuration list (indented by stop_width for each configuration level).
+        :rtype: List[str]
 
-        Returns
-        -------
-        list
-            An ios-style configuration list (indented by stop_width for each configuration level).
+        .. code-block:: python
 
-        Examples
-        --------
-
-        >>> parse = CiscoConfParse(config=["a a", "b b", "c c", "b b"])
-        >>> # Insert 'g' before any occurance of 'b'
-        >>> retval = parse.config_objs.insert_after("b b", "X X")
-        >>> parse.ioscfg
-        ... ["a a", "b b", "X X", "c c", "b b", "X X"]
-        >>>
+           >>> parse = CiscoConfParse(config=["a a", "b b", "c c", "b b"])
+           >>> # Insert 'g' before any occurance of 'b'
+           >>> retval = parse.config_objs.insert_after("b b", "X X")
+           >>> parse.get_text()
+           ... ["a a", "b b", "X X", "c c", "b b", "X X"]
+           >>>
         """
 
         #        inserted_object = False
@@ -1408,77 +1453,72 @@ class ConfigList(UserList):
         for idx in sorted(all_idx, reverse=True):
             self.data.insert(idx + 1, new_obj)
 
-        if atomic is True:
-            # Reparse the whole config as a text list
-            self.data = self.bootstrap(self.as_text)
-        else:
-            # Just renumber lines...
-            self.reassign_linenums()
-
         if bool(self.auto_commit):
             # The config is not safe unless this is called after the append
-            self.ccp_ref.atomic()
+            self.ccp_ref.commit()
 
     # This method is on ConfigList()
     @logger.catch(reraise=True)
-    def insert(self, ii, val):
-        if not isinstance(ii, int):
-            error = f"The ConfigList() index must be an integer, but ConfigList().insert() got {type(ii)}"
+    def insert(self, index: int, value: Union[BaseCfgLine,str]) -> None:
+        """
+        :param index: Index to insert ``value`` at
+        :type index: int
+        :param value: Object to be inserted in the ConfigList()
+        :type value: Union[BaseCfgLine,str]
+        :rtype: None
+        """
+        if not isinstance(index, int):
+            error = f"The ConfigList() index must be an integer, but ConfigList().insert() got {type(index)}"
             logger.critical(error)
             raise ValueError(error)
 
-        # Get the configuration line text if val is a BaseCfgLine() instance
-        if isinstance(val, BaseCfgLine):
+        # Get the configuration line text if value is a BaseCfgLine() instance
+        if isinstance(value, BaseCfgLine):
             # only work with plain text to ensure that all objects are the
             # correct object type, below
-            val = val.text
+            value = value.text
 
         # Coerce a string into the appropriate object
-        if isinstance(val, str):
+        if isinstance(value, str):
             if self.factory:
                 obj = config_line_factory(
-                    line=val,
+                    line=value,
                     syntax=self.syntax,
                 )
 
             elif self.factory is False:
                 obj = CFGLINE[self.syntax](
-                    line=val,
+                    line=value,
                 )
 
             else:
-                error = f'''insert() cannot insert {type(val)} "{val}" with factory={self.factory}'''
+                error = f'''insert() cannot insert {type(value)} "{value}" with factory={self.factory}'''
                 logger.critical(error)
                 raise ValueError(error)
         else:
-            error = f'''insert() cannot insert {type(val)} "{val}"'''
+            error = f'''insert() cannot insert {type(value)} "{value}"'''
             logger.critical(error)
             raise TypeError(error)
 
-        # Insert the object at index ii
-        self.data.insert(ii, obj)
+        # Insert the object at index index
+        self.data.insert(index, obj)
 
         # modify the current_checkpoint because this is
         # a change to the ConfigList()
         self.current_checkpoint = self.get_checkpoint()
 
-        if False:
-            self.data = self.bootstrap(self.as_text, debug=self.debug)
-
         if bool(self.auto_commit):
             # The config is not safe unless this is called after the append
-            self.ccp_ref.atomic()
+            self.ccp_ref.commit()
 
     # This method is on ConfigList()
     @logger.catch(reraise=True)
-    def _banner_mark_regex(self, regex):
+    def _banner_mark_regex(self, regex: str) -> None:
         """
-        Use the regex input parameter to identify all banner parent
-        objects. Find banner object children and formally build references
-        between banner parent / child objects.
-
-        Set the blank_line_keep attribute for all banner parent / child objs
-        Banner blank lines are automatically kept.
+        :param regex: Find banner object children with `regex`` and build references
+                      between banner parent / child objects.
+        :return: None
+        :rtype: None
         """
         # Build a list of all banner parent objects...
         banner_objs = list(
@@ -1487,7 +1527,7 @@ class ConfigList(UserList):
 
         banner_re_str = r"^(?:(?P<btype>(?:set\s+)*banner\s\w+\s+)(?P<bchar>\S))"
         for parent in banner_objs:
-            # blank_line_keep for Github Issue #229
+            # blank_line_keep for original ciscoconfparse Github Issue #229
             parent.blank_line_keep = True
 
             ## Parse out the banner type and delimiting banner character
@@ -1567,18 +1607,24 @@ class ConfigList(UserList):
                 except IndexError:
                     break
 
+        return None
+
     # This method is on ConfigList()
     @logger.catch(reraise=True)
-    def _macro_mark_children(self, macro_parent_idx_list):
+    def _ciscoios_macro_mark_children(self, macro_parent_idx_list: List[BaseCfgLine]) -> None:
         """
-        Set the blank_line_keep attribute for all banner parent / child objs.
+        Set the blank_line_keep attribute for all Cisco IOS banner parent / child objs.
 
         Macro blank lines are automatically kept.
+
+        :param macro_parent_idx_list: Cisco IOS configuration with *CfgLine() instances
+        :type macro_parent_idx_list: List[BaseCfgLine]
+        :rtype: None
         """
         # Mark macro children appropriately...
         for idx in macro_parent_idx_list:
             pobj = self.data[idx]
-            # blank_line_keep for Github Issue #229
+            # blank_line_keep for original ciscoconfparse Github Issue #229
             pobj.blank_line_keep = True
             pobj.child_indent = 0
 
@@ -1587,7 +1633,7 @@ class ConfigList(UserList):
             while not finished:
                 idx += 1
                 cobj = self.data[idx]
-                # blank_line_keep for Github Issue #229
+                # blank_line_keep for original ciscoconfpasre Github Issue #229
                 cobj.blank_line_keep = True
                 cobj.parent = pobj
                 pobj.children.append(cobj)
@@ -1597,8 +1643,26 @@ class ConfigList(UserList):
 
     # This method is on ConfigList()
     @logger.catch(reraise=True)
-    def _maintain_bootstrap_parent_cache(self, parents_cache, indent, max_indent, is_config_line):
-        """Find parent for a given indent level."""
+    def _maintain_bootstrap_parent_cache(self,
+                                         parents_cache: Dict[int,BaseCfgLine],
+                                         indent: int,
+                                         max_indent: int,
+                                         is_config_line: bool,
+                                         ) -> Tuple[Dict[int,BaseCfgLine],Union[BaseCfgLine,None]]:
+        """Use a family parent cache mapping to find the parent
+        for a given indent level; maintain the cache mapping.
+
+        :param parents_cache: Cached mapping of parents
+        :type parents_cache: Dict[int,BaseCfgLine]
+        :param indent: Line indent level
+        :type indent: int
+        :param max_indent: Max indent level in the cache
+        :type max_indent: int
+        :param is_config_line: Whether the line this was called for is a configuration line (vs a comment)
+        :type is_config_line: bool
+        :return: The (potentially) modified family cache mapping and the parent (or None)
+        :rtype: Tuple[Dict[int,BaseCfgLine],Union[BaseCfgLine,None]]:
+        """
         # Parent cache:
         # Maintain indent vs max_indent in a family and
         #     cache the parent until indent<max_indent
@@ -1625,7 +1689,14 @@ class ConfigList(UserList):
         return parents_cache, parent
 
     @logger.catch(reraise=True)
-    def _build_bootstrap_parent_child(self, retval, parents_cache, parent, idx, indent, obj, debug,):
+    def _build_bootstrap_parent_child(self,
+                                      retval: List[BaseCfgLine],
+                                      parents_cache: Dict[int,BaseCfgLine],
+                                      parent: Union[BaseCfgLine,None],
+                                      index: int,
+                                      indent: int,
+                                      obj: BaseCfgLine,
+                                      debug: bool) -> Tuple[List[BaseCfgLine],int,BaseCfgLine]:
         candidate_parent = None
         candidate_parent_idx = None
         # If indented, walk backwards and find the parent...
@@ -1635,10 +1706,10 @@ class ConfigList(UserList):
         # 4.  Maintain oldest_ancestor
         if (indent > 0) and (parent is not None):
             # Add the line as a child (parent was cached)
-            self._add_child_to_parent(retval, idx, indent, parent, obj)
+            self._add_child_to_parent(retval, index, indent, parent, obj)
         elif (indent > 0) and (parent is None):
             # Walk backwards to find parent, and add the line as a child
-            candidate_parent_idx = idx - 1
+            candidate_parent_idx = index - 1
             while candidate_parent_idx >= 0:
                 candidate_parent = retval[candidate_parent_idx]
                 if (
@@ -1652,7 +1723,7 @@ class ConfigList(UserList):
                     candidate_parent_idx -= 1
 
             # Add the line as a child...
-            self._add_child_to_parent(retval, idx, indent, parent, obj)
+            self._add_child_to_parent(retval, index, indent, parent, obj)
 
         else:
             if debug:
@@ -1662,16 +1733,18 @@ class ConfigList(UserList):
 
     # This method is on ConfigList()
     @logger.catch(reraise=True)
-    def bootstrap(self, text_list=None, debug=0):
+    def bootstrap(self, text_list: List[str]=None, debug: int=0) -> List[BaseCfgLine]:
         """
-        Accept a text list, and format into a list of *CfgLine() objects.
+        Accept a text list, and format into a list of BaseCfgLine() instances.
 
         Parent / child relationships are assigned in this method.
 
-        This method returns a list of *CfgLine() objects.
+        :return: Sequence of BaseCfgLine() objects.
+        :rtype: List[BaseCfgLine]
         """
         if text_list is None:
-            text_list = self.ccp_ref.text
+            # Default to the list of text strings on self.ccp_ref
+            text_list = self.ccp_ref.get_text()
 
         if not isinstance(text_list, Sequence):
             raise ValueError
@@ -1751,7 +1824,7 @@ class ConfigList(UserList):
             # We need to use a different method for macros than banners because
             #   macros don't specify a delimiter on their parent line, but
             #   banners call out a delimiter.
-            self._macro_mark_children(macro_parent_idx_list)  # Process macros
+            self._ciscoios_macro_mark_children(macro_parent_idx_list)  # Process macros
 
         # change ignore_blank_lines behavior for Github Issue #229...
         #    Always allow a blank line if it's in a banner or macro...
@@ -1762,6 +1835,9 @@ class ConfigList(UserList):
                 if obj.text.strip() != "" or obj.blank_line_keep is True
             ]
             self.data = retval
+
+        self.commit_checkpoint = self.get_checkpoint()
+        self.current_checkpoint = self.commit_checkpoint
 
         return retval
 
@@ -1913,14 +1989,14 @@ class ConfigList(UserList):
         return retval
 
 
-#@attrs.define(repr=False)
+@attrs.define(repr=False)
 class CiscoConfParse(object):
     """Parse Cisco IOS configurations and answer queries about the configs."""
-    config: Union[str, list] = None
+    config: Union[str,List[str]] = None
     syntax: str = "ios"
     encoding: str = locale.getpreferredencoding()
     loguru: bool = True
-    comment_delimiters: list = []
+    comment_delimiters: List[str] = []
     auto_indent_width: int = -1
     linesplit_rgx: str = r"\r*\n"
     ignore_blank_lines: bool = False
@@ -1936,23 +2012,23 @@ class CiscoConfParse(object):
     @logger.catch(reraise=True)
     def __init__(
         self,
-        config=None,
-        syntax="ios",
-        encoding=locale.getpreferredencoding(),
-        loguru=True,
-        comment_delimiters=None,
-        auto_indent_width=-1,
-        linesplit_rgx=r"\r*\n",
-        ignore_blank_lines=False,
-        auto_commit=True,
-        factory=False,
-        debug=0,
+        config: Union[str,List[str],tuple[str, ...]]=None,
+        syntax: str="ios",
+        encoding: str=locale.getpreferredencoding(),
+        loguru: bool=True,
+        comment_delimiters: List[str]=None,
+        auto_indent_width: int=-1,
+        linesplit_rgx: str=r"\r*\n",
+        ignore_blank_lines: bool=False,
+        auto_commit: bool=True,
+        factory: bool=False,
+        debug: int=0,
     ):
         """
         Initialize CiscoConfParse.
 
         :param config: A list of configuration lines or the filepath to the configuration.
-        :type config: Union[str, List[str], Tuple[str]]
+        :type config: Union[str,List[str],tuple[str, ...]]
         :param syntax: The configuration type, default to 'ios'; it must be one of: 'ios', 'nxos', 'iosxr', 'asa', 'junos'.  Use 'junos' for any brace-delimited network configuration (including F5, Palo Alto, etc...).
         :type syntax: str
         :param encoding: The configuration encoding, default to ``locale.getpreferredencoding()``.
@@ -2175,7 +2251,7 @@ class CiscoConfParse(object):
 
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
-    def handle_ccp_brace_syntax(self, tmp_lines: list=None, syntax: str=None) -> list:
+    def handle_ccp_brace_syntax(self, tmp_lines: list=None, syntax: str=None) -> List[str]:
         """Deal with brace-delimited syntax issues, such as conditionally discarding junos closing brace-lines.
 
         :param tmp_lines: Brace-delimited text configuration lines
@@ -2277,7 +2353,7 @@ class CiscoConfParse(object):
 
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
-    def read_config_file(self, filepath: str=None, linesplit_rgx: str=r"\r*\n") -> list:
+    def read_config_file(self, filepath: str=None, linesplit_rgx: str=r"\r*\n") -> List[str]:
         """Read the config lines from the filepath.  Return the list of text configuration commands or raise an error.
 
         :param filepath: Filepath to be read
@@ -2356,10 +2432,10 @@ class CiscoConfParse(object):
 
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
-    def check_ccp_input_good(self, config=None, logger=None) -> bool:
+    def check_ccp_input_good(self, config: Union[List[str],tuple[str, ...]]=None, logger: logger=None) -> bool:
         """
         :param config: Sequence of commands
-        :type config: Union[List[str], Tuple[str]]
+        :type config: Union[List[str], tuple[str, ...]]
         :param logger: loguru.logger() reference
         :type logger: loguru._logger.Logger
         :return: Whether the config can be parsed
@@ -2384,7 +2460,7 @@ class CiscoConfParse(object):
 
     @property
     @logger.catch(reraise=True)
-    def openargs(self) -> dict:
+    def openargs(self) -> Dict[str,Union[str,None]]:
         """
         Fix Py3.5 deprecation of universal newlines
 
@@ -2394,7 +2470,7 @@ class CiscoConfParse(object):
            https://softwareengineering.stackexchange.com/q/298677/23144.
 
         :return: The proper encoding parameters
-        :rtype: dict[str]
+        :rtype: Dict[str,Union[str,None]]
         """
         if sys.version_info >= (
             3,
@@ -2406,27 +2482,26 @@ class CiscoConfParse(object):
         return retval
 
     # This method is on CiscoConfParse()
-    @property
     @logger.catch(reraise=True)
-    def text(self) -> list:
+    def get_text(self) -> List[str]:
         """
         :return: All text configuration statements
         :rtype: List[str]
 
         .. warning::
 
-           The original ciscoconfparse ``ioscfg`` property has been renamed to ``text``.
+           The original ciscoconfparse ``ioscfg`` property has been renamed to ``get_text()``.
         """
         return [ii.text for ii in self.config_objs]
 
     # This method is on CiscoConfParse()
     @property
     @logger.catch(reraise=True)
-    def objs(self) -> list:
+    def objs(self) -> List[BaseCfgLine]:
         """CiscoConfParse().objs is an alias for the CiscoConfParse().config_objs property.
 
         :returns: All configuration objects.
-        :rtype: List[ConfigList]
+        :rtype: List[BaseCfgLine]
         """
         if self.config_objs is None:
             error = (
@@ -2435,31 +2510,6 @@ class CiscoConfParse(object):
             logger.error(error)
             raise ValueError(error)
         return self.config_objs
-
-    # This method is on CiscoConfParse()
-    @logger.catch(reraise=True)
-    def atomic(self) -> None:
-        """Alias for calling the :func:`~ciscoconfparse2.CiscoConfParse.commit` method.  This method is slow; try to batch calls to :func:`~ciscoconfparse2.CiscoConfParse.commit()` if possible.
-
-        :return: None
-        :rtype: None
-
-        .. warning::
-
-           If you modify a configuration after parsing it with
-           :py:class:`~ciscoconfparse2.CiscoConfParse`, you *must* call
-           :py:meth:`~ciscoconfparse2.CiscoConfParse.commit` or
-           :py:meth:`~ciscoconfparse2.CiscoConfParse.atomic` before searching the
-           configuration again with methods such as :py:meth:`~ciscoconfparse2.CiscoConfParse.find_objects`.
-           Failure to call :py:meth:`~ciscoconfparse2.CiscoConfParse.commit` or
-           :py:meth:`~ciscoconfparse2.CiscoConfParse.atomic` on config modifications
-           could lead to unexpected search results.
-
-        .. note::
-
-           Also see :py:meth:`~ciscoconfparse2.CiscoConfParse.commit`.
-        """
-        self.commit()  # atomic() calls self.config_objs.bootstrap
 
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
@@ -2473,15 +2523,11 @@ class CiscoConfParse(object):
 
            If you modify a configuration after parsing it with :class:`~ciscoconfparse2.CiscoConfParse`,
            you *must* call :py:meth:`~ciscoconfparse2.CiscoConfParse.commit` or
-           :py:meth:`~ciscoconfparse2.CiscoConfParse.atomic` before searching the configuration
+           :py:meth:`~ciscoconfparse2.CiscoConfParse.commit` before searching the configuration
            again with methods such as :func:`~ciscoconfparse2.CiscoConfParse.find_objects`.  Failure
            to call :py:meth:`~ciscoconfparse2.CiscoConfParse.commit` or
-           :py:meth:`~ciscoconfparse2.CiscoConfParse.atomic` on config modifications could
+           :py:meth:`~ciscoconfparse2.CiscoConfParse.commit` on config modifications could
            lead to unexpected search results.
-
-        .. note::
-
-           Also see :py:meth:`~ciscoconfparse2.CiscoConfParse.atomic`.
         """
 
         # perform a commit on the ConfigList()
@@ -2550,15 +2596,13 @@ debug={debug},
     @logger.catch(reraise=True)
     def find_object_branches(
         self,
-        branchspec=(),
-        regex_flags=0,
-        regex_groups=False,
-        empty_branches=False,
-        ignore_ws=False,
-        escape_chars=False,
-        reverse=False,
-        debug=0,
-    ):
+        branchspec: Union[tuple[str, ...],List[str]]=(),
+        regex_flags: Union[re.RegexFlag,int]=0,
+        regex_groups: bool=False,
+        empty_branches: bool=False,
+        reverse: bool=False,
+        debug: int=0,
+    ) -> List[List[BaseCfgLine]]:
         r"""Iterate over a tuple of regular expressions in `branchspec` and return matching objects in a list of lists (consider it similar to a table of matching config objects). `branchspec` expects to start at some ancestor and walk through the nested object hierarchy (with no limit on depth).
 
         Previous CiscoConfParse() methods only handled a single parent regex and single child regex (such as :func:`~ciscoconfparse2.CiscoConfParse.find_objects`).
@@ -2572,13 +2616,15 @@ debug={debug},
            The ``allow_none`` from original ciscoconfparse is removed and no longer a configuration option; it will always be regarded as True.
 
         :param branchspec: Regular expressions to be matched.
-        :type branchspec: Union[Tuple[str], List[str]]
+        :type branchspec: Union[tuple[str, ...],List[str]]
         :param regex_flags: Chained regular expression flags, such as `re.IGNORECASE|re.MULTILINE`
-        :type regex_flags: str
+        :type regex_flags: Union[re.RegexFlags,int]
         :param regex_groups: Return a tuple of re.Match groups instead of the matching configuration objects, default is False.
         :type regex_groups: bool
         :param empty_branches: If True, return a list of None statements if there is no match; before version 1.9.49, this defaulted True.
         :type empty_branches: bool
+        :param reverse: If True, reverse the return value order.
+        :type reverse: bool
         :param debug: Set > 0 for debug messages
         :type debug: int
         :return: A list of lists of matching :class:`~ciscoconfparse2.IOSCfgLine` objects
@@ -2775,7 +2821,7 @@ debug={debug},
         :class:`~models_cisco.IOSCfgLine` objects in a python list.
 
         :param linespec: A string or python regular expression, which should be matched
-        :type linespec: str
+        :type linespec: Union[str,re.Pattern,BaseCfgLine]
         :param exactmatch: When set True, this option requires ``linespec`` match the whole configuration line, instead of a
                            portion of the configuration line, default to False.
         :type exactmatch: str
@@ -2825,7 +2871,18 @@ debug={debug},
         if ignore_ws:
             linespec = build_space_tolerant_regex(linespec, encoding=self.encoding)
 
-        retval = self._find_line_OBJ(linespec, exactmatch)
+        if isinstance(linespec, str) or isinstance(linespec, re.Pattern):
+            retval = self._find_line_OBJ(linespec, exactmatch)
+        elif isinstance(linespec, BaseCfgLine):
+            retval = list()
+            for obj in self.objs:
+                if obj == linespec:
+                    retval.append(obj)
+        else:
+            error = f"linespec must be a string, re.Pattern, or BaseCfgLine instance; we got {type(linespec)}."
+            logger.critical(error)
+            raise InvalidParameters(error)
+
         if bool(reverse):
             retval.reverse()
         return retval
@@ -2847,7 +2904,7 @@ debug={debug},
         returned.
 
         :param parentspec: Text regular expression for the :class:`~models_cisco.IOSCfgLine` object to be matched; this must match the parent's line
-        :type parentspec: Union[str, List[str], Tuple[str]]
+        :type parentspec: Union[str,List[str],tuple[str, ...]]
         :param childspec: Text regular expression for the child's configuration line
         :type childspec: str
         :param ignore_ws: boolean that controls whether whitespace is ignored
@@ -2943,8 +3000,6 @@ debug={debug},
             _result = set()
             _tmp = self.find_object_branches(
                 parentspec,
-                ignore_ws=ignore_ws,
-                escape_chars=escape_chars
             )
             for _obj_branch in _tmp:
                 # add the parent of that object branch to the result set
@@ -3117,7 +3172,7 @@ debug={debug},
         and return a list of child objects, which matched the childspec.
 
         :param parentspec: Text regular expression for the parent's configuration line.  A list is preferred.
-        :type parentspec: Union[str, List[str], Tuple[str]]
+        :type parentspec: Union[str, List[str], tuple[str, ...]]
         :param childspec: Text regular expression for the child's configuration line.
         :type parentspec: str
         :param ignore_ws: Ignore whitespace, default to False
@@ -3219,8 +3274,6 @@ debug={debug},
                 _result = set()
                 _tmp = self.find_object_branches(
                     parentspec,
-                    ignore_ws=ignore_ws,
-                    escape_chars=False,
                 )
                 for _obj_branch in _tmp:
                     # add the child of that object branch to the result set
