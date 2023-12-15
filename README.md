@@ -31,6 +31,7 @@ Here's why, it:
 - Adds an `auto_commit` keyword, which defaults True
 - Documents much more of the API
 - Intentionally requires a different import statement to minimize confusion between the original and [ciscoconfparse2][17]
+- Vasly improves Cisco IOS diffs
 
 ### Simple Example
 
@@ -235,6 +236,7 @@ I will not. however, if it's truly a problem for your company, there are commerc
 - [tomlkit](https://github.com/sdispater/tomlkit)
 - [dnspython](https://github.com/rthalley/dnspython)
 - [`hier_config`](https://github.com/netdevops/hier_config)
+- [`PyYAML`](https://github.com/yaml/pyyaml)
 - [loguru](https://github.com/Delgan/loguru)
 - [deprecated](https://github.com/tantale/deprecated)
 

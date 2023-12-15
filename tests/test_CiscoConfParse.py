@@ -48,25 +48,25 @@ THIS_TEST_PATH = os.path.dirname(os.path.abspath(__file__))
 
 def testParse_valid_config_blanklines_01(parse_n01_w_blanklines):
     """Test reading a config with blank lines"""
-    assert len(parse_n01_w_blanklines.text) == 126
+    assert len(parse_n01_w_blanklines.get_text()) == 126
 
 
 def testParse_valid_filepath_nofactory_01_ios():
     """Test reading a cisco ios config-file on disk (from filename in the config parameter); ref github issue #262."""
     parse = CiscoConfParse(config=f"{THIS_TEST_PATH}/fixtures/configs/sample_01.ios")
-    assert len(parse.text) == 453
+    assert len(parse.get_text()) == 453
 
 
 def testParse_valid_filepath_01_f5():
     """Test reading an f5 config-file on disk (from filename in the config parameter); ref github issue #262."""
     parse = CiscoConfParse(config=f"{THIS_TEST_PATH}/fixtures/configs/sample_01.f5", comment_delimiters=["#"], syntax="junos")
-    assert len(parse.text) == 21
+    assert len(parse.get_text()) == 21
 
 
 def testParse_valid_filepath_01_junos():
     """Test reading a junos config-file on disk (without the config keyword); ref github issue #262."""
     parse = CiscoConfParse(f"{THIS_TEST_PATH}/fixtures/configs/sample_01.junos", comment_delimiters=["#"], syntax="junos")
-    assert len(parse.text) == 117
+    assert len(parse.get_text()) == 117
 
 
 def testParse_syntax_ios_nofactory_01():
@@ -225,7 +225,7 @@ def testParse_parse_syntax_f5_as_junos_nofactory_ioscfg_01():
         comment_delimiters=["#"],
         factory=False,
     )
-    assert parse.text == result_correct_ioscfg
+    assert parse.get_text() == result_correct_ioscfg
     # check parent of destination
     assert parse.objs[1].parent == parse.objs[0]
     # check parent of ip-protocol tcp
@@ -411,7 +411,7 @@ routing-options {
         ignore_blank_lines=True,
         factory=False,
     )
-    assert uut.text == result_correct_ioscfg
+    assert uut.get_text() == result_correct_ioscfg
     assert uut.find_child_objects("interfaces", "ge-0/0/1",)[0].text == "    ge-0/0/1"
     assert uut.find_parent_objects("interfaces", "ge-0/0/1")[0].text == "interfaces"
     assert len(uut.find_parent_objects_wo_child("interfaces", "vlan", recurse=True)) == 0
@@ -1671,7 +1671,7 @@ def testValues_delete_objects_01():
     objs.reverse()
     for obj in objs:
         obj.delete()
-    assert parse.text == correct_result
+    assert parse.get_text() == correct_result
 
 
 def testValues_delete_objects_02():
@@ -1700,7 +1700,7 @@ def testValues_delete_objects_02():
     parse = CiscoConfParse(config, syntax="ios")
     for obj in parse.find_objects(r"port-security", reverse=True):
         obj.delete()
-    assert parse.text == correct_result
+    assert parse.get_text() == correct_result
 
 
 def testValues_delete_objects_03():
@@ -1743,7 +1743,7 @@ def testValues_delete_objects_03():
     parse = CiscoConfParse(config, syntax="ios")
     for obj in parse.find_objects(r"port-security", reverse=True):
         obj.delete()
-    assert parse.text == correct_result
+    assert parse.get_text() == correct_result
 
 
 def testValues_replace_objects_01(parse_c01):
@@ -2348,7 +2348,7 @@ feature lldp"""
         ####################################################################
         # Legacy bug in NXOS parser...
         ####################################################################
-        assert len(parse.text) == 3
+        assert len(parse.get_text()) == 3
 
 
 def test_nxos_blank_line_02():
@@ -2592,7 +2592,7 @@ def testValues_find_objects_replace_01():
             objs[0].re_sub("boot system", "! old boot image")
         else:
             break
-    test_result = parse.text
+    test_result = parse.get_text()
     assert correct_result == test_result
 
 
@@ -2612,16 +2612,17 @@ def testValues_find_objects_delete_01():
     ]
     correct_result = ["!", "!", "!"]
     parse = CiscoConfParse(config, auto_commit=False)
-    for intf in parse.find_objects(r"^interface"):
+    for intf in parse.find_objects(r"^interface", reverse=True):
         # Delete all the interface objects
-        intf.delete(recurse=True)  # recurse=True is the default
-    test_result = parse.text
+        intf.delete()
+    parse.commit()
+    test_result = parse.get_text()
     assert correct_result == test_result
 
 
-def testValues_obj_insert_after_atomic_01(parse_c01):
+def testValues_obj_insert_after_commit_01(parse_c01):
     """We expect IOSCfgLine().insert_after() to correctly parse children"""
-    ## See also -> testValues_insert_after_nonatomic_02()
+    ## See also -> testValues_insert_after_noncommit_02()
     correct_result = [
         " shutdown",
         " switchport",
@@ -2637,7 +2638,7 @@ def testValues_obj_insert_after_atomic_01(parse_c01):
     assert correct_result == [ii.text for ii in obj02.children]
 
 
-def testValues_insert_after_atomic_factory_01(parse_c01_factory):
+def testValues_insert_after_commit_factory_01(parse_c01_factory):
     """Ensure that comments which are added, assert is_comment"""
     # mockobj pretends to be the IOSCfgLine object
     with patch(__name__ + "." + "IOSCfgLine") as mockobj:
@@ -2836,11 +2837,11 @@ def testValues_IOSIntfLine_find_objects_factory_02(
         assert uut.text == "default interface Serial 1/0"
 
         test_result01 = parse_c01_factory.find_objects(r"^interface\s+Serial\s+2\D0")[0]
-        test_result02 = parse_c01_factory.text
+        test_result02 = parse_c01_factory.get_text()
 
         # Check attributes of the IOSIntfLine object
         assert correct_result01.linenum == test_result01.linenum
-        assert correct_result01.text == test_result01.text
+        assert hash(correct_result01.text) == hash(test_result01.text)
         assert correct_result01.classname == test_result01.classname
         assert correct_result01.ipv4_addr_object == test_result01.ipv4_addr_object
 

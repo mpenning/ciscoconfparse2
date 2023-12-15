@@ -25,6 +25,7 @@ from loguru import logger
 import attrs
 
 from ciscoconfparse2.errors import InvalidTypecast, InvalidParameters
+from ciscoconfparse2.errors import ConfigListItemDoesNotExist
 from ciscoconfparse2.ccp_util import junos_unsupported
 
 DEFAULT_TEXT = "__undefined__"
@@ -51,10 +52,6 @@ class BaseCfgLine(object):
     __setstate__: Any = None
 
     feature: str = None
-    _line_id: int = None
-    diff_linenum: int = -1
-    _diff_word: str = ""  # diff_word: 'keep', 'remove', 'unchanged', 'add'
-    _diff_side: str = ""  # diff_side: 'before', 'after' or ''
 
     @logger.catch(reraise=True)
     def __init__(self, all_lines=None, line=DEFAULT_TEXT, **kwargs):
@@ -88,10 +85,6 @@ class BaseCfgLine(object):
         self.line = self._text
 
         self.feature = ""
-        self._line_id = None
-        self.diff_linenum = -1
-        self._diff_word = ""  # diff_word: 'keep', 'remove', 'unchanged', 'add'
-        self._diff_side = ""  # diff_side: 'before', 'after' or ''
 
         # Implementing __setstate__ for loguru picking problems...
         self.__setstate__ = None
@@ -228,7 +221,6 @@ class BaseCfgLine(object):
         is_comment = getattr(self, 'is_comment', None)
         if isinstance(val, str):
             self._text = self.safe_escape_curly_braces(val)
-            self.line_id = self.calculate_line_id()
 
             if is_comment is True:
                 # VERY IMPORTANT: due to old behavior, comment parents MUST be self
@@ -322,157 +314,6 @@ class BaseCfgLine(object):
 
     # On BaseCfgLine()
     @logger.catch(reraise=True)
-    def calculate_line_id(self):
-        """Calculate and return an integer line_id for BaseCfgLine()
-
-        The `hash()` of `self.text` is used to build a numerical identity
-        for a given BaseCfgLine().
-
-        Do NOT cache this value.  It must be recalculated when self._text
-        changes.
-        """
-        indent = self.indent
-
-        # Do NOT make changes to _line_id.  This hash() value built from
-        #     _line_id is the glue that holds `ciscoconfparse2.HDiff()`
-        #     together.
-        _line_id = hash(" " * indent + " ".join(self.text.strip().split()))
-
-        if bool([]): # Do not execute this code...
-            ##################################################################
-            # use str.split() below to ensure that whitespace differences
-            #     hash the same way... I added this code as a possible
-            #     implementation for github issue #266... however, after
-            #     using this new code, I decided that it makes HDiff()
-            #     too complicated.
-            #
-            # I am keeping this in calculate_line_id() to document the
-            #     proposal and why I decided against it.
-            ##################################################################
-            indent_str = indent * " "
-            if self.is_comment is False:
-                _line_id = hash(indent_str + " ".join(self.text.strip().split()))
-            elif self.is_comment is True:
-                _line_id = hash(indent_str + " ".join((str(self.linenum) + " " + self.text.strip()).split()))
-            elif self.text.strip() == "":
-                _line_id = hash(str(self.linenum))
-            else:
-                raise NotImplementedError(self.text)
-
-        return _line_id
-
-    # On BaseCfgLine()
-    @property
-    @logger.catch(reraise=True)
-    def diff_id_list(self):
-        """Return a list of integers as a context-sensitive diff identifier.
-
-        The returned value includes line_id of all parents.  The oldest
-        ancestor / parent line_id is last in the returned list of line_id
-        hash values.
-
-        object id integers are NOT the same between script runs.
-        """
-        retval = []
-        len_geneology = len(self.geneology)
-
-        for idx, obj in enumerate(self.geneology):
-            # W0212: Access to a protected attribute (i.e. with leading underscore)
-            obj._line_id = obj.calculate_line_id() # noqa: W0212
-
-            # idx = 0 is the oldest ancestor
-            if idx == 0:
-                # This object is NOT a child
-                retval.insert(0, obj._line_id)
-
-            elif idx <= len_geneology - 1:
-                # This object is a child of self.parent
-                retval.insert(0, obj._line_id)
-
-        # retval usually looks like this (example with a single parent obj):
-        #
-        #                          [-1387406312585020591, 3965133112392387338]
-        #  root / oldest _line_id:                        ^^^^^^^^^^^^^^^^^^^
-        #  child object _line_id:   ^^^^^^^^^^^^^^^^^^^^
-        return retval
-
-    # On BaseCfgLine()
-    @property
-    @logger.catch(reraise=True)
-    def diff_word(self):
-        """A diff_word getter attribute (typically used in HDiff())"""
-        return self._diff_word
-
-    # On BaseCfgLine()
-    @diff_word.setter
-    @logger.catch(reraise=True)
-    def diff_word(self, val):
-        """A diff_word setter attribute (typically used in HDiff())"""
-
-        # Check against expected HDiff() values...
-        if self.diff_side == "before":
-            assert val in set(
-                {
-                    "keep",
-                    "remove",
-                    "",
-                }
-            )
-
-        elif self.diff_side == "after":
-            assert val in set(
-                {
-                    "unchanged",
-                    "add",
-                    "unknown",
-                    "",
-                }
-            )
-
-        else:
-            raise ValueError("diff_side can only be 'before' or 'after'")
-        self._diff_word = val
-
-    # On BaseCfgLine()
-    @property
-    @logger.catch(reraise=True)
-    def diff_side(self):
-        """A diff_side getter attribute (typically used in HDiff())"""
-        return self._diff_side
-
-    # On BaseCfgLine()
-    @diff_side.setter
-    @logger.catch(reraise=True)
-    def diff_side(self, val):
-        """A diff_side setter attribute (typically used in HDiff())"""
-        assert val in set(
-            {
-                "before",
-                "after",
-                "",
-            }
-        )
-        self._diff_side = val
-
-    # On BaseCfgLine()
-    @property
-    @logger.catch(reraise=True)
-    def as_diff_dict(self):
-        """An internal dict which is used in :class:`~ciscoconfparse2.HDiff()`
-        """
-        retval = {
-            "linenum": self.diff_linenum,
-            "diff_side": self.diff_side,
-            "diff_word": self.diff_word,
-            "indent": self.indent,
-            "parents": [ii.text for ii in self.all_parents],
-            "text": self.text,
-            "diff_id_list": self.diff_id_list,
-        }
-        return retval
-
-    # On BaseCfgLine()
-    @logger.catch(reraise=True)
     def safe_escape_curly_braces(self, text):
         """Escape curly braces in strings since they could be misunderstood as
         f-string or string.format() delimiters...
@@ -494,17 +335,6 @@ class BaseCfgLine(object):
         text = text.replace("{", "{{")
         text = text.replace("}", "}}")
         return text
-
-    # On BaseCfgLine()
-    @property
-    def line_id(self):
-        return self._line_id
-
-    # On BaseCfgLine()
-    @line_id.setter
-    def line_id(self, value=None):
-        assert isinstance(value, int)
-        self._line_id = value
 
     # On BaseCfgLine()
     @property
@@ -643,76 +473,101 @@ class BaseCfgLine(object):
             self.parent = parentobj
             return True
 
-    # On BaseCfgLine()
-    @junos_unsupported
-    def add_child(self, childobj):
-        """Add references to childobj, on this object
-        """
-        ## In a perfect world, I would check childobj's type
-        ##     with isinstance(), but I'm not ready to take the perf hit
-        ##
-        ## Add the child, unless we already know it
-        if not (childobj in self.children):
-            self.children.append(childobj)
-            self.child_indent = childobj.indent
-            return True
-        else:
-            return False
+    if False:
+        # On BaseCfgLine()
+        @junos_unsupported
+        def add_child(self, childobj):
+            """Add references to childobj, on this object.  This
+            operation should fail if the child already exists in the
+            list of children.
+
+            :return: Whether the add child operation was a success.
+            :rtype: bool
+            """
+            ## In a perfect world, I would check childobj's type
+            ##     with isinstance(), but I'm not ready to take the perf hit
+            ##
+            ## Add the child, unless we already know it
+            if not (childobj in self.children):
+                self.children.append(childobj)
+                self.child_indent = childobj.indent
+                return True
+            else:
+                return False
 
     # On BaseCfgLine()
-    @junos_unsupported
-    def delete(self, recurse=True):
-        """Delete this object, including from references in lists of child objects.  By default, if a parent object is deleted, the child objects are also deleted; this happens because ``recurse`` defaults True.
+    @logger.catch(reraise=True)
+    def delete(self) -> bool:
+        """
+        Delete this object, including from references in lists of child
+        objects.  By default, if a parent object is deleted, the child
+        objects are also deleted.
+
+        :return: Whether the delete operation was a success.
+        :rtype: bool
+
+        .. note::
+
+           When deleting objects, delete from the bottom of the configuration
+           and work toward the beginning.  Failure to do this could result in
+           a ``ConfigListItemDoesNotExist()`` error.
+
+           Failure to commit after deleting objects will delete the object, but
+           it leaves line number gaps.
+
+        This example will delete all child objects; when deleting multiple
+        objects, you should call
+        :py:meth:`ciscoconfparse2.CiscoConfParse.find_objects` with
+        ``reverse=True``.
+
+        .. code-block:: python
+           :emphasize-lines: 5
+
+           >>> from ciscoconfparse2 import CiscoConfParse
+           >>> config = ['a', ' child-b', 'c', ' child-d']
+           >>> parse = CiscoConfParse(config)
+           >>> for obj in parse.find_objects(r"child", reverse=True):
+           ...     obj.delete()
+           >>> parse.get_text()
+           ['a', 'c']
+           >>>
         """
 
         if self.confobj.debug >= 1:
-            logger.info(f"{self}.delete(recurse={recurse}) was called.")
+            logger.info(f"{self}.delete() was called.")
 
-        # Build a set of all IOSCfgLine() object instances to be deleted...
-        delete_these = {self}
-
-        if recurse is True:
-            if self.confobj.debug >= 1:
-                logger.debug(f"Executing <IOSCfgLine line #{self.linenum}>.delete(recurse=True)")
-
-            # NOTE - 1.5.30 changed this from iterating over self.children
-            #        to self.all_children
-            for child in self.all_children:
-                delete_these.add(child)
-
-            # reverse is important here so we can delete a range of line numbers
-            # without clobbering the line numbers that haven't been deleted
-            # yet...
-            for obj in sorted(delete_these, reverse=True):
-                linenum = obj.linenum
-                if self.confobj.debug >= 1:
-                    logger.debug(f"    Deleting <IOSCfgLine(line # {linenum})>.")
-                # If there has not been a commit between the last search
-                # and delete, the line-number could be wrong...
-                try:
-                    del self.confobj.data[linenum]
-                except IndexError:
-                    pass
-                except BaseException as eee:
-                    logger.critical(str(eee))
-                    raise eee
-
+        if self in self.confobj.data:
+            # Build a set of all IOSCfgLine() object instances to be deleted...
+            delete_these = {self}
         else:
-            if self.confobj.debug >= 1:
-                logger.debug(f"Executing <IOSCfgLine line #{self.linenum}>.delete(recurse=False)")
-            ###################################################################
-            # Consistency check to refuse deletion of the wrong object...
-            #    only delete if the line numbers are consistent
-            ###################################################################
-            linenum = self.linenum
-            if self.confobj.data[linenum].text != self.text:
-                error = f"Object mis-match in BaseCfgLine().delete() of {self}"
-                logger.critical(error)
-                raise NotImplementedError(error)
+            error = f"{self} instance no longer exists in the same place."
+            logger.critical(error)
+            raise ConfigListItemDoesNotExist(error)
 
+        if self.confobj.debug >= 1:
+            logger.debug(f"Executing <IOSCfgLine line #{self.linenum}>.delete(recurse=True)")
+
+        # NOTE - 1.5.30 changed this from iterating over self.children
+        #        to self.all_children
+        for child in self.all_children:
+            delete_these.add(child)
+
+        # reverse is important here so we can delete a range of line numbers
+        # without clobbering the line numbers that haven't been deleted
+        # yet...
+        for obj in sorted(delete_these, reverse=True):
+            linenum = obj.linenum
             if self.confobj.debug >= 1:
                 logger.debug(f"    Deleting <IOSCfgLine(line # {linenum})>.")
-            del self.confobj.data[linenum]
+            # If there has not been a commit between the last search
+            # and delete, the line-number could be wrong...
+            try:
+                del self.confobj.data[linenum]
+            except IndexError as iii:
+                logger.critical(str(iii))
+            except BaseException as eee:
+                logger.critical(str(eee))
+                raise eee
 
         #######################################################################
         # IMPORTANT: delete this object from it's parents' list of direct
@@ -724,9 +579,10 @@ class BaseCfgLine(object):
                 parentobj.children.remove(cobj)
 
         if self.confobj and self.confobj.auto_commit:
-            self.confobj.ccp_ref.atomic()
-        else:
-            self.confobj.reassign_linenums()
+            self.confobj.ccp_ref.commit()
+        elif self.confobj is None:
+            raise NotImplementedError()
+
         return True
 
     # On BaseCfgLine()
@@ -768,15 +624,15 @@ class BaseCfgLine(object):
 
         retval = None
         if isinstance(insertstr, str) is True:
-            retval = self.confobj.insert_before(exist_val=self.text, new_val=insertstr, atomic=False)
+            retval = self.confobj.insert_before(exist_val=self.text, new_val=insertstr)
 
         elif isinstance(insertstr, BaseCfgLine) is True:
-            retval = self.confobj.insert_before(exist_val=self.text, new_val=insertstr.text, atomic=False)
+            retval = self.confobj.insert_before(exist_val=self.text, new_val=insertstr.text)
 
         else:
             raise ValueError(error)
 
-        # retval = self.confobj.insert_after(self, insertstr, atomic=False)
+        # retval = self.confobj.insert_after(self, insertstr, commit=False)
         return retval
 
     # On BaseCfgLine()
@@ -799,17 +655,17 @@ class BaseCfgLine(object):
 
         if isinstance(insertstr, str) is True:
             # Handle insertion of a plain-text line
-            retval = self.confobj.insert_after(exist_val=self.text, new_val=insertstr, atomic=False)
+            retval = self.confobj.insert_after(exist_val=self.text, new_val=insertstr)
 
         elif isinstance(insertstr, BaseCfgLine):
             # Handle insertion of a configuration line obj such as IOSCfgLine()
-            retval = self.confobj.insert_after(exist_val=self.text, new_val=insertstr.text, atomic=False)
+            retval = self.confobj.insert_after(exist_val=self.text, new_val=insertstr.text)
 
         else:
             logger.error(error)
             raise ValueError(error)
 
-        # retval = self.confobj.insert_after(self, insertstr, atomic=False)
+        # retval = self.confobj.insert_after(self, insertstr, commit=False)
         return retval
 
     # On BaseCfgLine()
@@ -957,7 +813,7 @@ class BaseCfgLine(object):
                         raise NotImplementedError()
 
                     if auto_commit is True:
-                        self.confobj.ccp_ref.atomic()
+                        self.confobj.ccp_ref.commit()
                     return retval
 
                 elif len(self.all_children) > 0 and len(self.children) == 0:
@@ -967,7 +823,7 @@ class BaseCfgLine(object):
                     insertstr_family_indent = self.classify_family_indent(insertstr)
                     self.children.append(newobj)
                     if auto_commit is True:
-                        self.confobj.ccp_ref.atomic()
+                        self.confobj.ccp_ref.commit()
                     return retval
 
                 elif len(self.all_children) > 0 and len(self.children) > 0:
@@ -1008,7 +864,7 @@ class BaseCfgLine(object):
                     retval = self.confobj.insert(_idx, newobj)
 
                     if auto_commit is True:
-                        self.confobj.ccp_ref.atomic()
+                        self.confobj.ccp_ref.commit()
 
                     return retval
 
@@ -1028,7 +884,7 @@ class BaseCfgLine(object):
                     retval = self.children.append(newobj)
 
                     if auto_commit is True:
-                        self.confobj.ccp_ref.atomic()
+                        self.confobj.ccp_ref.commit()
                     return retval
 
             except BaseException as eee:
@@ -1036,7 +892,7 @@ class BaseCfgLine(object):
         elif newobj_parent is not None:
             retval = self.confobj.insert(self.linenum + 1, newobj)
             if auto_commit is True:
-                self.confobj.ccp_ref.atomic()
+                self.confobj.ccp_ref.commit()
             return retval
         else:
             error = f"Cannot find parent for {newobj} under this instance: {self}"
@@ -1290,7 +1146,7 @@ class BaseCfgLine(object):
         # Only auto_commit if there was a text change
         if text_before_replace != text_after_replace:
             if self.confobj and self.confobj.auto_commit is True:
-                self.confobj.ccp_ref.atomic()
+                self.confobj.ccp_ref.commit()
 
         return text_after_replace
 
@@ -1298,27 +1154,23 @@ class BaseCfgLine(object):
     def re_match(self, regex, group=1, default=""):
         r"""Use ``regex`` to search the :class:`~models_cisco.IOSCfgLine` text and return the regular expression group, at the integer index.
 
-        Parameters
-        ----------
-
-        regex : str
-            A string or python regular expression, which should be matched.  This regular expression should contain parenthesis, which bound a match group.
-        group : int
-            An integer which specifies the desired regex group to be returned.  ``group`` defaults to 1.
-        default : str
-            The default value to be returned, if there is no match.  By default an empty string is returned if there is no match.
-
-        Returns
-        -------
-
-        str
-            The text matched by the regular expression group; if there is no match, ``default`` is returned.
-
-        Examples
-        --------
+        :param regex: A string or python regular expression, which should be
+                      matched.  This regular expression should contain
+                      parenthesis, which bound a match group.
+        :type regex: str
+        :param group: An integer which specifies the desired regex group to
+                      be returned, defaults to 1.
+        :type group: int
+        :param default: The default value to be returned, if there is no
+                        match.  By default an empty string is returned if
+                        there is no match.
+        :type default: str
+        :return: The text matched by the regular expression group; if there
+                 is no match, ``default`` is returned.
+        :rtype: str
 
         This example illustrates how you can use
-        :func:`~models_cisco.IOSCfgLine..re_match` to store the mask of the
+        :py:meth:`~models_cisco.BaseCfgLine.re_match` to store the mask of the
         interface which owns "1.1.1.5" in a variable called ``netmask``.
 
         .. code-block:: python

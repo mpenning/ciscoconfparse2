@@ -419,9 +419,9 @@ class BaseJunosIntfLine(JunosCfgLine):
 
     # This method is on BaseJunosIntfLine()
     #@logger.catch(reraise=True)
-    def reset(self, atomic=True):
+    def reset(self, commit=True):
         # Insert build_reset_string() before this line...
-        self.insert_before(self.build_reset_string(), atomic=atomic)
+        self.insert_before(self.build_reset_string(), commit=commit)
 
     # This method is on BaseJunosIntfLine()
     #@logger.catch(reraise=True)

@@ -356,9 +356,9 @@ class BaseNXOSIntfLine(NXOSCfgLine):
                 )
         return retval
 
-    def reset(self, atomic=True):
+    def reset(self, commit=True):
         # Insert build_reset_string() before this line...
-        self.insert_before(self.build_reset_string(), atomic=atomic)
+        self.insert_before(self.build_reset_string(), commit=commit)
 
     def build_reset_string(self):
         # IOS interfaces are defaulted like this...
@@ -2065,9 +2065,9 @@ class NXOSAccessLine(BaseCfgLine):
             return ""
         return retval
 
-    def reset(self, atomic=True):
+    def reset(self, commit=True):
         # Insert build_reset_string() before this line...
-        self.insert_before(self.build_reset_string(), atomic=atomic)
+        self.insert_before(self.build_reset_string(), commit=commit)
 
     def build_reset_string(self):
         # IOS interfaces are defaulted like this...
