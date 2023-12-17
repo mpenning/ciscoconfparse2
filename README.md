@@ -389,4 +389,4 @@ The word \"Cisco\" is a registered trademark of [Cisco Systems][27].
   [63]: https://docs.pytest.org/en/
   [64]: https://github.com/mpenning/ciscoconfparse
   [65]: https://pypi.org/project/ciscoconfparse/1.9.41/
-  [66]: http://pennington.net/media/images/ciscoconfparse_logo_01.png
+  [66]: https://raw.githubusercontent.com/mpenning/ciscoconfparse2/blob/main/sphinx-doc/_static/ciscoconfparse_logo_bw_01.png
