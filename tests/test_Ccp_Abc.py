@@ -6,6 +6,7 @@ from ciscoconfparse2.ciscoconfparse2 import CiscoConfParse
 from ciscoconfparse2.errors import ConfigListItemDoesNotExist
 from ciscoconfparse2.errors import DynamicAddressException
 from ciscoconfparse2.ccp_util import IPv4Obj, CiscoRange, CiscoIOSInterface
+from ciscoconfparse2.ccp_abc import get_brace_termination
 from ciscoconfparse2.ccp_abc import BaseCfgLine
 from ciscoconfparse2.models_cisco import IOSCfgLine
 import sys
@@ -34,6 +35,55 @@ r""" test_Ccp_Abc.py - Parse, Query, Build, and Modify IOS-style configs
      If you need to contact the author, you can do so by emailing:
      mike [~at~] pennington [/dot\] net
 """
+
+
+def testVal_get_brace_termination_01():
+    """Test correct parsing of opening braces"""
+    line = "ltm virtual ACME {"
+    uut = get_brace_termination(line)
+    assert uut == "{"
+
+def testVal_get_brace_termination_02():
+    """Test correct parsing of opening braces with a trailing space"""
+    line = "ltm virtual ACME { "
+    uut = get_brace_termination(line)
+    assert uut == "{"
+
+def testVal_get_brace_termination_03():
+    """Test correct parsing of closing braces"""
+    line = "    }"
+    uut = get_brace_termination(line)
+    assert uut == "}"
+
+def testVal_get_brace_termination_04():
+    """Test correct parsing of closing braces with a trailing space"""
+    line = "    } "
+    uut = get_brace_termination(line)
+    assert uut == "}"
+
+def testVal_get_brace_termination_05():
+    """Test correct parsing of opening and closing braces with a space in the middle"""
+    line = "tcp { }"
+    uut = get_brace_termination(line)
+    assert uut == "{ }"
+
+def testVal_get_brace_termination_05():
+    """Test correct parsing of opening and closing braces with a space in the middle and a leading / trailing space"""
+    line = " tcp { } "
+    uut = get_brace_termination(line)
+    assert uut == "{ }"
+
+def testVal_get_brace_termination_05():
+    """Test correct parsing of opening and closing braces with two spaces in the middle"""
+    line = "tcp {  }"
+    uut = get_brace_termination(line)
+    assert uut == "{  }"
+
+def testVal_get_brace_termination_05():
+    """Test correct parsing of opening and closing braces with a parameter in the middle"""
+    line = "    servers { 10.6.252.1 }"
+    uut = get_brace_termination(line)
+    assert uut == "{  }"
 
 
 def testVal_BaseCfgLine_obj_01():

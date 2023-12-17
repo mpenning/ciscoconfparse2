@@ -231,6 +231,16 @@ def testParse_parse_syntax_f5_as_junos_nofactory_ioscfg_01():
     # check parent of ip-protocol tcp
     assert parse.objs[2].parent == parse.objs[0]
 
+def testParse_parse_syntax_f5_as_junos_01():
+    """Parse fixtures/configs/sample_03.f5 as `syntax='junos'`, `factory=False` and test multiple child searches"""
+    parse = CiscoConfParse(
+        "fixtures/configs/sample_03.f5",
+        # Use ignore_blank_lines to strip out F5 closing brace lines
+        ignore_blank_lines=False,
+        syntax="junos",
+        comment_delimiters=["#"],
+        factory=False,
+    )
 
 def testParse_parse_syntax_junos_as_junos_nofactory_ioscfg_01():
     config = """## Last commit: 2015-06-28 13:00:59 CST by mpenning

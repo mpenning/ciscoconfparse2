@@ -4,6 +4,15 @@
 - Summary:
     - Insert something here
 
+## Version: 0.3.1
+
+- Released: 2023-12-15
+- Summary:
+    - Add `typing.Optional` to the primary argument for `CiscoConfParse()`, `ConfigList()`, `IPv4Obj()` and `IPv6Obj()`
+    - Add string `brace_termination` attribute to `BaseCfgLine()`
+    - Remove deprecated methods
+    - Documentation updates
+
 ## Version: 0.3.0
 
 - Released: 2023-12-15

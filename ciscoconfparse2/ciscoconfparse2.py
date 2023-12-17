@@ -20,7 +20,7 @@ If you need to contact the author, you can do so by emailing:
 mike [~at~] pennington [.dot.] net
 """
 
-from typing import Any, Callable, Union, List, Tuple, Dict
+from typing import Optional, Any, Callable, Union, List, Tuple, Dict
 from collections.abc import Sequence
 from collections import UserList
 import inspect
@@ -142,8 +142,12 @@ ALL_BRACE_SYNTAX = {
 
 
 @logger.catch(reraise=True)
-def get_version_number():
-    """Read the version number from 'pyproject.toml', or use version 0.0.0 in odd circumstances."""
+def get_version_number() -> str:
+    """Read the version number from 'pyproject.toml', or use version 0.0.0 in odd circumstances.
+
+    :return: The version
+    :rtype: str
+    """
     # Docstring props: http://stackoverflow.com/a/1523456/667301
     # version: if-else below fixes Github issue #123
 
@@ -157,7 +161,6 @@ def get_version_number():
         # Retrieve the version number from pyproject.toml...
         toml_values = {}
         with open(pyproject_toml_path, encoding=ENCODING) as fh:
-            #toml_values = toml.loads(fh.read())
             toml_values = tomlkit.load(fh)
             version = toml_values["tool"]["poetry"].get("version", -1.0)
 
@@ -221,8 +224,12 @@ def initialize_globals():
 
 
 @logger.catch(reraise=True)
-def get_comment_delimiters(syntax=None):
-    """Return a list of comment delimiters for the 'syntax' string in question"""
+def get_comment_delimiters(syntax=None) -> List[str]:
+    """Return a list of comment delimiters for the 'syntax' string in question
+
+    :return: A sequence of string comment delimiters
+    :rtype: List[str]
+    """
     if not isinstance(syntax, str):
         error = "The 'syntax' parameter must be a string"
         logger.error(error)
@@ -253,8 +260,12 @@ def get_comment_delimiters(syntax=None):
 
 
 @logger.catch(reraise=True)
-def initialize_ciscoconfparse(read_only=False, debug=0):
-    """Initialize ciscoconfparse2 global variables and configure logging."""
+def initialize_ciscoconfparse2(read_only=False, debug=0) -> tuple[Dict[str,str], List[int]]:
+    """Initialize ciscoconfparse2 global variables and configure logging.
+
+    :return: A tuple of the ciscoconfparse2 globals and active loguru handlers
+    :rtype: tuple[Dict[str,str], List[int]]
+    """
     globals_dict = initialize_globals()
     for key, value in globals_dict.items():
         # Example, this will set __version__ to content of 'value'
@@ -277,19 +288,19 @@ def initialize_ciscoconfparse(read_only=False, debug=0):
 
 
 # ALL ciscoconfparse2 global variables initizalization happens here...
-_, ACTIVE_LOGURU_HANDLERS = initialize_ciscoconfparse()
+_, ACTIVE_LOGURU_HANDLERS = initialize_ciscoconfparse2()
 
 
 @logger.catch(reraise=True)
-def parse_line_braces(line_txt: str=None, comment_delimiters: list=None) -> Tuple[Union[int, str]]:
+def parse_line_braces(line_txt: str=None, comment_delimiters: list=None) -> tuple[int, int, str]:
     """Internal helper-method for brace-delimited configs (typically JunOS, syntax='junos').
 
     :param line_txt: Brace-delimited configuration line to be parsed
     :type line_txt: str
     :param comment_delimiters: Sequence of string comment-delimiters
     :type comment_delimiters: List[str]
-    :return: A sequence of indents and commands
-    :rtype: Tuple[Union[int, str]]
+    :return: Tuple consisiting of ``this_line_indent`` level, ``child_indent`` level, configuration text (minus braces)
+    :rtype: tuple[int, int, str]
     """
 
     retval = ()
@@ -420,7 +431,12 @@ def parse_line_braces(line_txt: str=None, comment_delimiters: list=None) -> Tupl
 # This method was on ConfigList()
 @logger.catch(reraise=True)
 def cfgobj_from_text(
-    text_list: List[str], txt: str, idx: int, syntax: str=None, comment_delimiters: List[str]=None, factory: bool=None
+    text_list: List[str],
+    txt: str,
+    idx: int,
+    syntax: str=None,
+    comment_delimiters: List[str]=None,
+    factory: bool=None
 ) -> BaseCfgLine:
     """Build a configuration object from configuration text, syntax, and factory inputs.
 
@@ -593,11 +609,15 @@ def assign_parent_to_closing_braces(input_list: List[BaseCfgLine]=None) -> List[
 # This method was copied from the same method in git commit below...
 # https://raw.githubusercontent.com/mpenning/ciscoconfparse/bb3f77436023873da344377d3c839387f5131e7f/ciscoconfparse/ciscoconfparse2.py
 @logger.catch(reraise=True)
-def convert_junos_to_ios(input_list: List[str]=None, stop_width: int=4, comment_delimiters: List[str]=None, debug: int=0) -> List[str]:
+def convert_junos_to_ios(input_list: List[str]=None,
+                         stop_width: int=4,
+                         comment_delimiters: List[str]=None,
+                         debug: int=0) -> List[str]:
     """Accept `input_list` containing a list of junos-brace-formatted-string
     config lines.  This method strips off semicolons / braces from the string
     lines in `input_list` and returns the lines in a new list where all lines
     are explicitly indented as IOS would (as if IOS understood braces).
+
 
     :param input_list: A sequence of brace-delimited configuration strings.
     :type input_list: List[str]
@@ -661,8 +681,8 @@ def convert_junos_to_ios(input_list: List[str]=None, stop_width: int=4, comment_
 @attrs.define(repr=False)
 class ConfigList(UserList):
     """A custom list to hold :class:`~ccp_abc.BaseCfgLine` objects.  Most users will never need to use this class directly."""
-    initlist: Union[List[str],tuple[str, ...]] = None
-    comment_delimiters: List[str] = None
+    initlist: Optional[Union[List[str],tuple[str, ...]]] = None
+    comment_delimiters: Optional[List[str]] = None
     factory: bool = None
     ignore_blank_lines: bool = None
     syntax: str = None
@@ -678,8 +698,8 @@ class ConfigList(UserList):
     @logger.catch(reraise=True)
     def __init__(
         self,
-        initlist: Union[List[str],tuple[str, ...]]=None,
-        comment_delimiters: List[str]=None,
+        initlist: Optional[Union[List[str],tuple[str, ...]]]=None,
+        comment_delimiters: Optional[List[str]]=None,
         factory: bool=False,
         ignore_blank_lines: bool=False,
         # syntax="__undefined__",
@@ -708,8 +728,12 @@ class ConfigList(UserList):
         :type auto_commit: bool
         :param debug: Debug level of this object.
         :type debug: int
+
         :return: A :py:class:`ConfigList` instance.
         :rtype: :py:class:`ConfigList`
+
+        Attributes:
+            initlist (Union[List[str],tuple[str, ...]]): A sequence of text configuration statements
         """
 
         # Use this with UserList() instead of super()
@@ -1992,7 +2016,7 @@ class ConfigList(UserList):
 @attrs.define(repr=False)
 class CiscoConfParse(object):
     """Parse Cisco IOS configurations and answer queries about the configs."""
-    config: Union[str,List[str]] = None
+    config: Optional[Union[str,List[str]]] = None
     syntax: str = "ios"
     encoding: str = locale.getpreferredencoding()
     loguru: bool = True
@@ -2012,7 +2036,7 @@ class CiscoConfParse(object):
     @logger.catch(reraise=True)
     def __init__(
         self,
-        config: Union[str,List[str],tuple[str, ...]]=None,
+        config: Optional[Union[str,List[str],tuple[str, ...]]]=None,
         syntax: str="ios",
         encoding: str=locale.getpreferredencoding(),
         loguru: bool=True,
@@ -2557,9 +2581,6 @@ class CiscoConfParse(object):
         # I'm not using parent_obj.re_search_children() because
         # re_search_children() doesn't return None for no match...
 
-        # As of version 1.6.16, allow_none must always be True...
-        allow_none = True
-
         if debug > 1:
             msg = f"""Calling _find_child_object_branches(
 parent_obj={parent_obj},
@@ -2691,8 +2712,6 @@ debug={debug},
            >>> branches[2]
            [<IOSCfgLine # 10 'ltm pool BAR'>, <IOSCfgLine # 11 '    members' (parent is # 10)>, <IOSCfgLine # 12 '        k8s-07.localdomain:8443' (parent is # 11)>, None]
         """
-        allow_none = True
-
         if self.config_objs.search_safe is False:
             error = "The configuration has changed since the last commit; a config search is not safe."
             logger.critical(error)
@@ -3541,23 +3560,6 @@ debug={debug},
         for obj in objectlist:
             retval.add(obj)
         return sorted(retval)
-
-    if False:
-        # This method is on CiscoConfParse()
-        @logger.catch(reraise=True)
-        def _objects_to_uncfg(self, objectlist, unconflist):
-            # Used by req_cfgspec_excl_diff()
-            retval = []
-            unconfdict = {}
-            for unconf in unconflist:
-                unconfdict[unconf] = "DEFINED"
-            for obj in self._unique_OBJ(objectlist):
-                if unconfdict.get(obj, None) == "DEFINED":
-                    retval.append(obj.uncfgtext)
-                else:
-                    retval.append(obj.text)
-            return retval
-
 
 @attrs.define(repr=False)
 class Diff(object):

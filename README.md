@@ -1,3 +1,5 @@
+[![logo][66]][66]
+
 # ciscoconfparse2
 
 [![git commits][41]][42] [![Version][2]][3] [![Downloads][6]][7] [![License][8]][9]
@@ -202,8 +204,9 @@ network engineering toolbox; others regard it as a form of artwork.
 
 ## Pre-requisites
 
-[The ciscoconfparse2 python package][3] requires Python versions 3.7+ (note: Python version 3.7.0 has a bug - ref [Github issue \#117][18], but version 3.7.1 works); the OS should not matter.
+[The ciscoconfparse2 python package][3] requires Python versions 3.7+.
 
+Type-hinting (work-in-progress) targets Python3.9+ due to the need for `tuple[str, ...]` hints.
 
 ## Other Resources
 
@@ -384,3 +387,4 @@ The word \"Cisco\" is a registered trademark of [Cisco Systems][27].
   [63]: https://docs.pytest.org/en/
   [64]: https://github.com/mpenning/ciscoconfparse
   [65]: https://pypi.org/project/ciscoconfparse/1.9.41/
+  [66]: http://pennington.net/media/images/ciscoconfparse_logo_01.png
