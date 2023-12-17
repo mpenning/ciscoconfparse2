@@ -30,6 +30,51 @@ from ciscoconfparse2.ccp_util import junos_unsupported
 
 DEFAULT_TEXT = "__undefined__"
 
+@logger.catch(reraise=True)
+def get_brace_termination(line: str) -> str:
+    """
+    Get the brace termination string from the ``line`` parameter.
+
+    :return: The brace termination string for this ``line``.
+    :rtype: str
+
+    .. code-block:: python
+
+        >>> get_brace_termination("http { }")
+        '{ }'
+        >>>
+        >>> get_brace_termination("ltm virtual ACME { ")
+        '{'
+        >>> get_brace_termination("    } ")
+        '}'
+        >>>
+    """
+    brace_chars = {"{", "}"}
+    reversed_line = list(line.strip())
+    reversed_line.reverse()
+
+    _retval = list()
+    brace_open = False
+    # Walk backwards in the configuration line and get all brace termination
+    for char in reversed_line:
+        if char == "}":
+            brace_open = True
+
+        if char in brace_chars or char.isspace():
+            if brace_open and char.isspace():
+                _retval.append(char)
+            elif char in brace_chars:
+                _retval.append(char)
+
+        if brace_open and char == "{":
+            brace_open = False
+
+
+
+    # Go back to a normal left-to-right string...
+    _retval.reverse()
+    return "".join(_retval).strip()
+
 #
 # -------------  Config Line ABC
 #
@@ -52,6 +97,7 @@ class BaseCfgLine(object):
     __setstate__: Any = None
 
     feature: str = None
+    _brace_termination: str = ""
 
     @logger.catch(reraise=True)
     def __init__(self, all_lines=None, line=DEFAULT_TEXT, **kwargs):
@@ -84,10 +130,12 @@ class BaseCfgLine(object):
         self.all_lines = all_lines
         self.line = self._text
 
-        self.feature = ""
-
         # Implementing __setstate__ for loguru picking problems...
         self.__setstate__ = None
+
+        self.feature = ""
+        self._brace_termination = ""
+
 
         # FIXME
         #   Bypass @text.setter method for now...  @text.setter writes to
@@ -210,24 +258,63 @@ class BaseCfgLine(object):
     # On BaseCfgLine()
     @property
     @logger.catch(reraise=True)
-    def text(self):
+    def text(self) -> str:
+        """
+        :return: Configuration text
+        :rtype: str
+        """
         _text = getattr(self, '_text', DEFAULT_TEXT)
         return _text
 
     # On BaseCfgLine()
     @text.setter
     @logger.catch(reraise=True)
-    def text(self, val):
+    def text(self, value: str) -> None:
+        """
+        Set the value of the configuration text for the BaseCfgLine().
+
+        This method sets the :py:attr:`ccp_abc.BaseCfgLine.brace_termination` attribute.
+
+        :return: Configuration text
+        :rtype: None
+        """
         is_comment = getattr(self, 'is_comment', None)
-        if isinstance(val, str):
-            self._text = self.safe_escape_curly_braces(val)
+        if isinstance(value, str):
+            self._text = self.safe_escape_curly_braces(value)
 
             if is_comment is True:
                 # VERY IMPORTANT: due to old behavior, comment parents MUST be self
                 #
                 self.parent = self
         else:
-            error = f"BaseCfgLine() does not support assignment of {type(val)}"
+            error = f"BaseCfgLine() does not support 'text' assignment of {type(value)}"
+            logger.error(error)
+            raise InvalidParameters(error)
+
+    # On BaseCfgLine()
+    @property
+    @logger.catch(reraise=True)
+    def brace_termination(self) -> str:
+        """
+        :return: The brace termination string for this BaseCfgLine()
+        :rtype: str
+        """
+        _brace_termination = getattr(self, '_brace_termination', "")
+        return _brace_termination
+
+    # On BaseCfgLine()
+    @brace_termination.setter
+    @logger.catch(reraise=True)
+    def brace_termination(self, value: str) -> None:
+        """
+        :param value: The brace terminator string to be used with this BaseCfgLine().
+        :type value: str
+        :rtype: None
+        """
+        if isinstance(value, str):
+            self._brace_termination = value
+        else:
+            error = f"BaseCfgLine() does not support 'brace_termination' assignment of {type(value)}"
             logger.error(error)
             raise InvalidParameters(error)
 
@@ -473,28 +560,6 @@ class BaseCfgLine(object):
             self.parent = parentobj
             return True
 
-    if False:
-        # On BaseCfgLine()
-        @junos_unsupported
-        def add_child(self, childobj):
-            """Add references to childobj, on this object.  This
-            operation should fail if the child already exists in the
-            list of children.
-
-            :return: Whether the add child operation was a success.
-            :rtype: bool
-            """
-            ## In a perfect world, I would check childobj's type
-            ##     with isinstance(), but I'm not ready to take the perf hit
-            ##
-            ## Add the child, unless we already know it
-            if not (childobj in self.children):
-                self.children.append(childobj)
-                self.child_indent = childobj.indent
-                return True
-            else:
-                return False
-
     # On BaseCfgLine()
     @logger.catch(reraise=True)
     def delete(self) -> bool:
@@ -563,8 +628,6 @@ class BaseCfgLine(object):
             # and delete, the line-number could be wrong...
             try:
                 del self.confobj.data[linenum]
-            except IndexError as iii:
-                logger.critical(str(iii))
             except BaseException as eee:
                 logger.critical(str(eee))
                 raise eee
@@ -632,7 +695,6 @@ class BaseCfgLine(object):
         else:
             raise ValueError(error)
 
-        # retval = self.confobj.insert_after(self, insertstr, commit=False)
         return retval
 
     # On BaseCfgLine()
@@ -665,7 +727,6 @@ class BaseCfgLine(object):
             logger.error(error)
             raise ValueError(error)
 
-        # retval = self.confobj.insert_after(self, insertstr, commit=False)
         return retval
 
     # On BaseCfgLine()

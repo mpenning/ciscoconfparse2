@@ -33,8 +33,8 @@
 #pragma warning disable S5852
 #pragma warning disable S6395
 
+from typing import Optional, Any, Union
 from operator import attrgetter
-from typing import Any, Union
 from functools import wraps
 import subprocess
 import locale
@@ -874,7 +874,7 @@ def collapse_addresses(network_list):
 @attrs.define(repr=False)
 class IPv4Obj(object):
     dna: str = "IPv4Obj"
-    v4input: Union[str, int] = None
+    v4input: Optional[Union[str,int]] = None
     strict: bool = False
     debug: int = 0
 
@@ -884,7 +884,7 @@ class IPv4Obj(object):
     empty: bool = False
 
     # This method is on IPv4Obj().  @logger.catch() breaks the __init__() method.
-    def __init__(self, v4input=None, strict=False, debug=0):  # nosec
+    def __init__(self, v4input: Optional[Union[str,int]]=None, strict: bool=False, debug: int=0):
         """An object to represent IPv4 addresses and IPv4 networks.
 
         When :class:`~ccp_util.IPv4Obj` objects are compared or sorted, network numbers are sorted lower to higher.  If network numbers are the same, shorter masks are lower than longer masks. After comparing mask length, numerically higher IP addresses are greater than numerically lower IP addresses..  Comparisons between :class:`~ccp_util.IPv4Obj` instances was chosen so it's easy to find the longest-match for a given prefix (see examples below).
@@ -1681,7 +1681,7 @@ class IPv4Obj(object):
 @attrs.define(repr=False)
 class IPv6Obj(object):
     dna: str = "IPv6Obj"
-    v6input: Union[str, int] = None
+    v6input: Optional[Union[str, int]] = None
     strict: bool = False
     debug: int = 0
 
@@ -1693,7 +1693,7 @@ class IPv6Obj(object):
     __setstate__: Any = None
 
     # This method is on IPv6Obj().  @logger.catch() breaks the __init__() method.
-    def __init__(self, v6input=None, strict=False, debug=0):
+    def __init__(self, v6input: Optional[Union[str,int]]=None, strict: bool=False, debug: int=0):
         """An object to represent IPv6 addresses and IPv6 networks.
 
         When :class:`~ccp_util.IPv6Obj` objects are compared or sorted, network numbers are sorted lower to higher.  If network numbers are the same, shorter masks are lower than longer masks. After comparing mask length, numerically higher IP addresses are greater than numerically lower IP addresses.  Comparisons between :class:`~ccp_util.IPv6Obj` instances was chosen so it's easy to find the longest-match for a given prefix.
@@ -1701,7 +1701,7 @@ class IPv6Obj(object):
         This object emulates the behavior of ipaddr.IPv6Network() (in Python2) where host-bits were retained in the IPv6Network() object.  :class:`ipaddress.IPv6Network` in Python3 does not retain host-bits; the desire to retain host-bits in both Python2 and Python3 ip network objects was the genesis of this API.
 
         :param v6input: A string (or integer) containing an IPv6 address, and optionally a netmask or masklength.  Integers are also accepted and the masklength of the integer is assumed to be 128-bits.  The following address/netmask formats are supported: "2001::dead:beef", "2001::dead:beef/64",
-        :type v6input: Union[str,int]
+        :type v6input: Optional[Union[str,int]]
         :param strict: When `strict` is True, the value of `v4input` must not have host-bits set.  The default value is False.
         :type strict: bool
 
