@@ -45,11 +45,99 @@ import os
 
 THIS_TEST_PATH = os.path.dirname(os.path.abspath(__file__))
 
+def testValues_find_objects_list_01():
+    """Ensure that find_objects() accepts a list input"""
+    # Test banner delimiter on the same lines
+    config = ["!", "banner motd ^   trivial banner here ^", "end"]
+    parse = CiscoConfParse(config)
+    bannerobj = parse.find_objects(["banner"])[0]
+    BANNER_LINE_NUMBER = 1
+    assert bannerobj.linenum == BANNER_LINE_NUMBER
+    for obj in bannerobj.children:
+        assert obj.parent.linenum == BANNER_LINE_NUMBER
+
+def testValues_find_objects_list_02():
+    """Ensure that find_objects() rejects a list input that is too long"""
+    # Test banner delimiter on the same lines
+    config = ["!", "banner motd ^   trivial banner here ^", "end"]
+    parse = CiscoConfParse(config)
+    with pytest.raises(InvalidParameters):
+        bannerobj = parse.find_objects(["banner", "trivial"])[0]
+
+def testValues_find_object_branches_list_01():
+    """Ensure that find_object_branches() accepts a list input of arbitrary length"""
+    # Test banner delimiter on the same lines
+    config = ["!", "banner motd ^   trivial banner here ^", "end"]
+    parse = CiscoConfParse(config)
+    bannerobj = parse.find_object_branches(["banner", "trivial", "intentional-fail"])
+
+def testValues_find_object_branches_list_02():
+    """Ensure that find_object_branches() accepts a list input of arbitrary length and can identify a Cisco IOS banner"""
+    # Test banner delimiter on the same lines
+    config = ["!", "banner motd ^", "trivial banner here ^", "end"]
+    parse = CiscoConfParse(config)
+    bannerobj = parse.find_object_branches(["banner", "trivial"])[0][0]
+
+def testValues_find_object_branches_list_03():
+    """Ensure that find_object_branches() accepts a list input of arbitrary length and do not match on a missing child element"""
+    # Test banner delimiter on the same lines
+    config = ["!", "banner motd ^", "trivial banner here ^", "end"]
+    parse = CiscoConfParse(config)
+    bannerobjs = parse.find_object_branches(["banner", "trivial", "intentional-fail"])
+    assert len(bannerobjs) == 0
+
+def testValues_find_parent_objects_list_01():
+    """Ensure that find_parent_objects() accepts a list input of arbitrary length"""
+    # Test banner delimiter on the same lines
+    config = ["!", "banner motd ^", "trivial banner here ^", "end"]
+    parse = CiscoConfParse(config)
+    bannerobjs = parse.find_parent_objects(["banner", "trivial",])
+    assert len(bannerobjs) == 1
+
+def testValues_find_parent_objects_list_02():
+    """Ensure that find_parent_objects() accepts a list input of arbitrary length"""
+    # Test banner delimiter on the same lines
+    config = ["!", "banner motd ^", "trivial banner here ^", "end"]
+    parse = CiscoConfParse(config)
+    bannerobjs = parse.find_parent_objects(["banner", "trivial", "intentional-fail"])
+    assert isinstance(bannerobjs, list) is True
+    assert len(bannerobjs) == 0
+
+def testValues_find_parent_objects_wo_child_list_01():
+    """Ensure that find_parent_objects_wo_child() accepts a list input of arbitrary length"""
+    # Test banner delimiter on the same lines
+    config = ["!", "banner motd ^", "trivial banner here ^", "end"]
+    parse = CiscoConfParse(config)
+    bannerobjs = parse.find_parent_objects_wo_child(["banner", "that",])
+    assert len(bannerobjs) == 1
+
+def testValues_find_parent_objects_wo_child_list_02():
+    """Ensure that find_parent_objects_wo_child() rejects a list longer than 2"""
+    # Test banner delimiter on the same lines
+    config = ["!", "banner motd ^", "trivial banner here ^", "end"]
+    parse = CiscoConfParse(config)
+    with pytest.raises(InvalidParameters):
+        bannerobjs = parse.find_parent_objects_wo_child(["banner", "that", "intentional-fail"])
+
+def testValues_find_child_objects_list_01():
+    """Ensure that find_child_objects() accepts a list input of arbitrary length"""
+    # Test banner delimiter on the same lines
+    config = ["!", "banner motd ^", "trivial banner here ^", "end"]
+    parse = CiscoConfParse(config)
+    bannerobjs = parse.find_child_objects(["banner", "trivial",])
+    assert len(bannerobjs) == 1
+
+def testValues_find_child_objects_list_02():
+    """Ensure that find_child_objects() accepts a list input of arbitrary length"""
+    # Test banner delimiter on the same lines
+    config = ["!", "banner motd ^", "trivial banner here ^", "end"]
+    parse = CiscoConfParse(config)
+    bannerobjs = parse.find_child_objects(["banner", "trivial", "intentional-fail"])
+    assert len(bannerobjs) == 0
 
 def testParse_valid_config_blanklines_01(parse_n01_w_blanklines):
     """Test reading a config with blank lines"""
     assert len(parse_n01_w_blanklines.get_text()) == 126
-
 
 def testParse_valid_filepath_nofactory_01_ios():
     """Test reading a cisco ios config-file on disk (from filename in the config parameter); ref github issue #262."""
@@ -1858,7 +1946,7 @@ def testValues_Diff_01():
         old_config=config_01,
         new_config=required_config,
         syntax='ios')
-    assert uut.diff() == correct_result
+    assert uut.get_diff() == correct_result
 
 
 def testValues_Diff_02():
@@ -1909,7 +1997,7 @@ def testValues_Diff_02():
         old_config=config_01,
         new_config=required_config,
         syntax='ios')
-    assert uut.diff() == correct_result
+    assert uut.get_diff() == correct_result
 
 
 def testValues_Diff_03():
@@ -1939,7 +2027,7 @@ def testValues_Diff_03():
         old_config=config_01,
         new_config=required_config,
         syntax='ios')
-    assert uut.diff() == correct_result
+    assert uut.get_diff() == correct_result
 
 
 def testValues_Diff_04():
@@ -1977,7 +2065,7 @@ def testValues_Diff_04():
         old_config=config_01,
         new_config=required_config,
         syntax='ios')
-    assert uut.diff() == correct_result
+    assert uut.get_diff() == correct_result
 
 
 def testValues_Diff_05():
@@ -2017,7 +2105,7 @@ def testValues_Diff_05():
         old_config=config_01,
         new_config=required_config,
         syntax='ios')
-    assert uut.diff() == correct_result
+    assert uut.get_diff() == correct_result
 
 
 def testValues_Diff_06():
@@ -2057,7 +2145,7 @@ def testValues_Diff_06():
         old_config=config_01,
         new_config=required_config,
         syntax='ios')
-    assert uut.diff() == correct_result
+    assert uut.get_diff() == correct_result
 
 
 def testValues_Diff_07():
@@ -2097,7 +2185,7 @@ def testValues_Diff_07():
         old_config=config_01,
         new_config=required_config,
         syntax='ios')
-    assert uut.diff() == correct_result
+    assert uut.get_diff() == correct_result
 
 
 def testValues_Diff_08():
@@ -2108,7 +2196,7 @@ def testValues_Diff_08():
         old_config=before_config,
         new_config=after_config,
         syntax='ios')
-    assert uut.diff() == []
+    assert uut.get_diff() == []
 
 
 def testValues_Diff_09():
@@ -2122,7 +2210,7 @@ def testValues_Diff_09():
         syntax='ios')
     correct_result = ['no logging 1.1.3.4', 'logging 1.1.3.255']
 
-    assert uut.diff() == correct_result
+    assert uut.get_diff() == correct_result
 
 
 def testValues_ignore_ws():

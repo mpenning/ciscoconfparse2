@@ -2871,6 +2871,14 @@ debug={debug},
            [<IOSCfgLine # 1 'interface Serial1/0'>, <IOSCfgLine # 4 'interface Serial1/1'>]
            >>>
         """
+        if isinstance(linespec, list):
+            if len(linespec) == 1 and isinstance(linespec[0], (str, re.Pattern)):
+                linespec = linespec[0]
+            else:
+                error = "linespec list input must be exactly one string or compiled-regex long"
+                logger.critical(error)
+                raise InvalidParameters(error)
+
         if escape_chars is True:
             ###################################################################
             # Escape regex to avoid embedded parenthesis problems
@@ -3058,7 +3066,7 @@ debug={debug},
 
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
-    def find_parent_objects_wo_child(self, parentspec, childspec, ignore_ws=False, recurse=False, escape_chars=False, reverse=False):
+    def find_parent_objects_wo_child(self, parentspec, childspec=None, ignore_ws=False, recurse=False, escape_chars=False, reverse=False):
         r"""Return a list of parent :class:`~models_cisco.IOSCfgLine` objects, which matched the ``parentspec`` and whose children did not match ``childspec``.  Only the parent :class:`~models_cisco.IOSCfgLine` objects will be returned.  For simplicity, this method only finds oldest_ancestors without immediate children that match.
 
         Parameters
@@ -3140,6 +3148,20 @@ debug={debug},
            [<IOSCfgLine # 1 'interface FastEthernet0/1'>, <IOSCfgLine # 5 'interface FastEthernet0/2'>]
            >>>
         """
+        if isinstance(parentspec, list):
+            if len(parentspec) == 2 and isinstance(parentspec[0], (str, re.Pattern)) and isinstance(parentspec[1], (str, re.Pattern)):
+                parentspec = parentspec[0]
+                childspec = parentspec[1]
+            else:
+                error = "list input must be exactly two strings or compiled-regex long"
+                logger.critical(error)
+                raise InvalidParameters(error)
+
+        if not isinstance(childspec, (str, re.Pattern)):
+            error = "childspec input must be a string or compiled-regex"
+            logger.critical(error)
+            raise InvalidParameters(error)
+
         if self.config_objs.search_safe is False:
             error = "The configuration has changed since the last commit; a config search is not safe."
             logger.critical(error)
@@ -3566,25 +3588,21 @@ class Diff(object):
     host: str = None
 
     @logger.catch(reraise=True)
-    def __init__(self, hostname=None, old_config=None, new_config=None, syntax='ios'):
+    def __init__(self,
+                 old_config: Union[str, List[str], tuple[str, ...]]=None,
+                 new_config: Union[str, List[str], tuple[str, ...]]=None,
+                 syntax: str='ios'):
         """
         Initialize Diff().
 
-        Parameters
-        ----------
-        hostname : None
-            An empty parameter, which seems to be optional for the diff backend
-        old_config : str
-            A string containing text configuration statements representing the most-recent config. Default value: `None`. If a filepath is provided, load the configuration from the file.
-        new_config : str
-            A string containing text configuration statements representing the desired config. Default value: `None`. If a filepath is provided, load the configuration from the file.
-        syntax : str
-            A string holding the configuration type.  Default: 'ios'.
-
-        Returns
-        -------
-        :class:`~ciscoconfparse2.Diff()`
+        :param old_config: A string or sequence containing text configuration statements representing the old config. Default value: `None`. If a filepath is provided, load the configuration from the file.
+        :param old_config: Union[str, List[str], tuple[str, ...]]
+        :param new_config: A string or sequence containing text configuration statements representing the new config. Default value: `None`. If a filepath is provided, load the configuration from the file.
+        :param new_config: Union[str, List[str], tuple[str, ...]]
+        :param syntax: The configuration type.  Default: 'ios'.
+        :param syntax: ciscoconfparse2.Diff
         """
+        hostname = None
 
         ######################################################################
         # Handle hostname
@@ -3655,9 +3673,10 @@ class Diff(object):
         self.host.load_generated_config(new_config)
 
     @logger.catch(reraise=True)
-    def diff(self):
+    def get_diff(self) -> List[str]:
         """
-        diff() returns the list of required configuration statements to go from the old_config to the new_config
+        :return: The list of required configuration statements to go from the old_config to the new_config
+        :rtype: List[str]
         """
         retval = []
         diff_config = self.host.remediation_config()
@@ -3666,9 +3685,10 @@ class Diff(object):
         return retval
 
     @logger.catch(reraise=True)
-    def rollback(self):
+    def get_rollback(self) -> List[str]:
         """
-        rollback() returns the list of required configuration statements to rollback from the new_config to the old_config
+        :return: The list of required configuration statements to rollback from the new_config to the old_config
+        :rtype: List[str]
         """
         retval = []
         rollback_config = self.host.rollback_config()

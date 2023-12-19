@@ -4,6 +4,16 @@
 - Summary:
     - Insert something here
 
+## Version: 0.3.2
+
+- Released: 2023-12-19
+- Summary:
+    - Ensure that all `find_*` methods take a list input
+    - Fix `Diff()` to remove the `hostname` kwarg
+    - Rename `Diff().diff()` to `Diff().get_diff()`
+    - Rename `Diff().rollback()` to `Diff().get_rollback()`
+    - Documentation updates
+
 ## Version: 0.3.1
 
 - Released: 2023-12-15
