@@ -113,7 +113,7 @@ class ASACfgLine(BaseCfgLine):
 
     @classmethod
     @logger.catch(reraise=True)
-    def is_object_for(cls, all_lines, line, re=re):
+    def is_object_for(cls, all_lines, line, index=None, re=re):
         ## Default object, for now
         return True
 
@@ -247,7 +247,7 @@ class BaseASAIntfLine(ASACfgLine):
 
     @classmethod
     @logger.catch(reraise=True)
-    def is_object_for(cls, all_lines, line, re=re):
+    def is_object_for(cls, all_lines, line, index=None, re=re):
         return False
 
     ##-------------  Basic interface properties
@@ -644,7 +644,7 @@ class ASAName(ASACfgLine):
 
     @classmethod
     @logger.catch(reraise=True)
-    def is_object_for(cls, all_lines, line, re=re):
+    def is_object_for(cls, all_lines, line, index=None, re=re):
         if "name " in line[0:5].lower():
             return True
         return False
@@ -689,7 +689,7 @@ class ASAObjNetwork(ASACfgLine):
 
     @classmethod
     @logger.catch(reraise=True)
-    def is_object_for(cls, all_lines, line, re=re):
+    def is_object_for(cls, all_lines, line, index=None, re=re):
         if "object network " in line[0:15].lower():
             return True
         return False
@@ -724,7 +724,7 @@ class ASAObjService(ASACfgLine):
 
     @classmethod
     @logger.catch(reraise=True)
-    def is_object_for(cls, all_lines, line, re=re):
+    def is_object_for(cls, all_lines, line, index=None, re=re):
         if "object service " in line[0:15].lower():
             return True
         return False
@@ -772,7 +772,7 @@ class ASAObjGroupNetwork(ASACfgLine):
 
     @classmethod
     @logger.catch(reraise=True)
-    def is_object_for(cls, all_lines, line, re=re):
+    def is_object_for(cls, all_lines, line, index=None, re=re):
         if "object-group network " in line[0:21].lower():
             return True
         return False
@@ -925,7 +925,7 @@ class ASAObjGroupService(ASACfgLine):
 
     @classmethod
     @logger.catch(reraise=True)
-    def is_object_for(cls, all_lines, line, re=re):
+    def is_object_for(cls, all_lines, line, index=None, re=re):
         if "object-group service " in line[0:21].lower():
             return True
         return False
@@ -1042,7 +1042,7 @@ class ASAIntfLine(BaseASAIntfLine):
 
     @classmethod
     @logger.catch(reraise=True)
-    def is_object_for(cls, all_lines, line, re=re):
+    def is_object_for(cls, all_lines, line, index=None, re=re):
         intf_regex = r"^interface\s+(\S+.+)"
         if re.search(intf_regex, line):
             return True
@@ -1081,7 +1081,7 @@ class ASAIntfGlobal(BaseCfgLine):
 
     @classmethod
     @logger.catch(reraise=True)
-    def is_object_for(cls, all_lines, line, re=re):
+    def is_object_for(cls, all_lines, line, index=None, re=re):
         if re.search("^mtu", line):
             return True
         return False
@@ -1119,7 +1119,7 @@ class ASAHostnameLine(BaseCfgLine):
 
     @classmethod
     @logger.catch(reraise=True)
-    def is_object_for(cls, all_lines, line, re=re):
+    def is_object_for(cls, all_lines, line, index=None, re=re):
         if re.search("^hostname", line):
             return True
         return False
@@ -1181,7 +1181,7 @@ class BaseASARouteLine(BaseCfgLine):
 
     @classmethod
     @logger.catch(reraise=True)
-    def is_object_for(cls, all_lines, line, re=re):
+    def is_object_for(cls, all_lines, line, index=None, re=re):
         return False
 
     @property
@@ -1247,7 +1247,7 @@ class ASARouteLine(BaseASARouteLine):
 
     @classmethod
     @logger.catch(reraise=True)
-    def is_object_for(cls, all_lines, line, re=re):
+    def is_object_for(cls, all_lines, line, index=None, re=re):
         if re.search(r"^(ip|ipv6)\s+route\s+\S", line):
             return True
         return False
@@ -1515,7 +1515,7 @@ class ASAAclLine(ASACfgLine):
 
     @classmethod
     @logger.catch(reraise=True)
-    def is_object_for(cls, all_lines, line, re=re):
+    def is_object_for(cls, all_lines, line, index=None, re=re):
         # if _RE_ACLOBJECT.search(line):
         if "access-list " in line[0:12].lower():
             return True

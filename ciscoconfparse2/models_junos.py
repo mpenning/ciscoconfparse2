@@ -26,6 +26,7 @@ r""" models_junos.py - Parse, Query, Build, and Modify Junos-style configuration
 ###
 ###   Use models_junos.py at your own risk.  You have been warned :-)
 
+from typing import List
 import ipaddress
 import re
 
@@ -35,12 +36,13 @@ import attrs
 from ciscoconfparse2.ccp_abc import BaseCfgLine
 from ciscoconfparse2.ccp_util import IPv4Obj, IPv6Obj
 
+DEFAULT_IPV4_ADDR_OBJ = IPv4Obj("0.0.0.1/32", strict=False)
 
 ##
 ##-------------  Junos Configuration line object
 ##
 
-#@attrs.define(repr=False)
+@attrs.define(repr=False)
 class JunosCfgLine(BaseCfgLine):
     r"""An object for a parsed Junos-style configuration line.
     :class:`~models_junos.JunosCfgLine` objects contain references to other
@@ -97,15 +99,19 @@ class JunosCfgLine(BaseCfgLine):
     # This method is on JunosCfgLine()
     @classmethod
     @logger.catch(reraise=True)
-    def is_object_for(cls, all_lines, line, re=re):
+    def is_object_for(cls, all_lines, line, index=None, re=re):
         ## Default object, for now
         return True
 
     # This method is on JunosCfgLine()
     @classmethod
     @logger.catch(reraise=True)
-    def is_object_for_interface(cls, all_lines, line, re=re):
+    def is_object_for_interface(cls, all_lines, line, index=None, re=re):
         return False
+
+    @logger.catch(reraise=True)
+    def __hash__(self):
+        return self.get_unique_identifier()
 
     @property
     @logger.catch(reraise=True)
@@ -348,25 +354,33 @@ class JunosCfgLine(BaseCfgLine):
 #    default -> def
 
 
+@attrs.define(repr=False)
 class BaseJunosIntfLine(JunosCfgLine):
 
     # This method is on BaseJunosIntfLine()
     @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.ifindex = None  # Optional, for user use
-        self.default_ipv4_addr_object = IPv4Obj("0.0.0.1/32", strict=False)
+        super(BaseJunosIntfLine, self).__init__(*args, **kwargs)
+
+    # This method is on BaseJunosIntfLine()
+    @property
+    @logger.catch(reraise=True)
+    def is_switchport(self):
+        for obj in self.parent.all_children:
+            if obj.parent.text.split()[0] == "unit" and obj.text.split()[0:2] == ["family", "ethernet-switching"]:
+                return True
+        return False
 
     # This method is on BaseJunosIntfLine()
     @logger.catch(reraise=True)
     def __repr__(self):
         parent_str = ""
-        if self.parent:
+        if self.is_parent:
             parent_linenum = self.parent.linenum
             parent_str = f" (parent is #{parent_linenum})"
 
         if not self.is_switchport:
-            if self.ipv4_addr_object == self.default_ipv4_addr_object:
+            if self.ipv4_addr_object == DEFAULT_IPV4_ADDR_OBJ:
                 addr = "No IPv4"
             else:
                 ip = str(self.ipv4_addr_object.ip)
@@ -379,7 +393,22 @@ class BaseJunosIntfLine(JunosCfgLine):
     # This method is on BaseJunosIntfLine()
     @classmethod
     @logger.catch(reraise=True)
-    def is_object_for_interface(cls, all_lines, line, re=re):
+    def is_object_for_interface(cls,
+                                all_lines: List[str],
+                                line: str,
+                                index: int=None,
+                                re=re
+                                ) -> bool:
+        """
+        :param all_lines: A sequence of all text configuration lines
+        :type all_lines: List[str]
+        :param line: A configuration line
+        :type line: str
+        :param index: ``all_lines`` index of the config line
+        :type line: int
+        :return: Whether this line is a physical interface or interface unit
+        :rtype: bool
+        """
         is_interfaces = False
         intf_idx = -1
         parents = []
@@ -387,6 +416,7 @@ class BaseJunosIntfLine(JunosCfgLine):
         _intf_level = -1
         # This is the indent of the first interface line
         for lidx, lline in enumerate(all_lines):
+
             _llindent = len(lline) - len(lline.strip())
 
             #################################################################
@@ -396,12 +426,14 @@ class BaseJunosIntfLine(JunosCfgLine):
                 is_interfaces = True
                 intf_idx = lidx
                 parents.append(lline.strip())
+
             elif is_interfaces is True and _llindent == 0:
                 intf_idx = -1
                 is_interfaces = False
 
             if is_interfaces is True:
                 _intf_level = lidx - intf_idx
+
             else:
                 _intf_level = -1
 
@@ -409,8 +441,18 @@ class BaseJunosIntfLine(JunosCfgLine):
                 #############################################################
                 # Reset is_interfaces in another base config block...
                 #############################################################
-                if _intf_level > 0 and line.strip == lline.strip():
-                    return True
+                if _intf_level > 0 and lidx == index:
+                    if line.strip() != "" and line.split()[0] == "unit":
+                        # This should be a logical intf...
+                        return True
+                    elif all_lines[index + 1].strip() != "":
+                        if all_lines[index + 1].strip().split()[0] == "unit":
+                            # This should be a physical intf or vlan intf
+                            return True
+                        else:
+                            return False
+                    else:
+                        return False
 
         if _intf_level >= 0:
             return True
@@ -437,7 +479,10 @@ class BaseJunosIntfLine(JunosCfgLine):
         ######################################################################
         # Return an empty IPv4Obj() unless tihs is an interface unit line
         ######################################################################
-        if self.text.split()[0] != "unit":
+        if len(self.text.split()) > 0:
+            if self.text.split()[0] != "unit":
+                return IPv4Obj()
+        elif len(self.text.split()) == 0:
             return IPv4Obj()
 
         ######################################################################
@@ -685,7 +730,7 @@ class BaseJunosIntfLine(JunosCfgLine):
 ##
 
 
-#@attrs.define(repr=False)
+@attrs.define(repr=False)
 class JunosIntfLine(BaseJunosIntfLine):
 
     # This method is on JunosIntfLine()
@@ -704,14 +749,15 @@ class JunosIntfLine(BaseJunosIntfLine):
     # This method is on JunosIntfLine()
     @classmethod
     @logger.catch(reraise=True)
-    def is_object_for(cls, all_lines, line, re=re):
-        return cls.is_object_for_interface(all_lines, line, re=re)
+    def is_object_for(cls, all_lines, line, index=None, re=re):
+        return cls.is_object_for_interface(all_lines, line, index=index, re=re)
 
 ##
 ##-------------  Base Junos Route line object
 ##
 
 
+@attrs.define(repr=False)
 class BaseJunosRouteLine(BaseCfgLine):
     @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):
@@ -743,7 +789,7 @@ class BaseJunosRouteLine(BaseCfgLine):
 
     @classmethod
     @logger.catch(reraise=True)
-    def is_object_for(cls, all_lines, line, re=re):
+    def is_object_for(cls, all_lines, line, index=None, re=re):
         return False
 
     @property
@@ -788,7 +834,7 @@ class BaseJunosRouteLine(BaseCfgLine):
 ##
 
 
-#@attrs.define(repr=False)
+@attrs.define(repr=False)
 class JunosRouteLine(BaseJunosRouteLine):
     @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):
@@ -800,7 +846,7 @@ class JunosRouteLine(BaseJunosRouteLine):
 
     @classmethod
     @logger.catch(reraise=True)
-    def is_object_for(cls, all_lines, line, re=re):
+    def is_object_for(cls, all_lines, line, index=None, re=re):
         if re.search(r"^(ip|ipv6)\s+route\s+\S", line):
             return True
         return False

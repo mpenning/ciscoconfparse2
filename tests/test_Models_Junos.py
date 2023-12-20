@@ -94,6 +94,21 @@ def testVal_find_child_objects_01(parse_j01):
     assert not ("{" in set(obj.text))  # Ensure there are no braces on this line
     assert len(obj.all_children) == 6
 
+def testVal_junos_factory_JunOSIntfLine_01(parse_j01):
+    parse = CiscoConfParse('fixtures/configs/sample_01.junos',
+                           syntax='junos',
+                           factory=True
+                           )
+    assert parse.config_objs[0].dna == "JunosCfgLine"
+
+    assert parse.config_objs[81].text.strip() == "ge-0/0/0"
+    assert parse.config_objs[81].dna == "JunosIntfLine"
+
+    assert parse.config_objs[82].text.strip() == "unit 0"
+    assert parse.config_objs[82].dna == "JunosIntfLine"
+
+    assert parse.config_objs[83].text.strip() == "family ethernet-switching"
+    assert parse.config_objs[83].dna == "JunosCfgLine"
 
 # test for Github issue #49
 def testVal_parse_f5():

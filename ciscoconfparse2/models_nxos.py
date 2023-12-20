@@ -98,7 +98,7 @@ class NXOSCfgLine(BaseCfgLine):
 
 
     @classmethod
-    def is_object_for(cls, all_lines, line, re=re):
+    def is_object_for(cls, all_lines, line, index=None, re=re):
         ## Default object, for now
         return True
 
@@ -393,7 +393,7 @@ class BaseNXOSIntfLine(NXOSCfgLine):
             )
 
     @classmethod
-    def is_object_for(cls, all_lines, line, re=re):
+    def is_object_for(cls, all_lines, line, index=None, re=re):
         return False
 
     ##-------------  Basic interface properties
@@ -1747,7 +1747,7 @@ class NXOSIntfLine(BaseNXOSIntfLine):
 
 
     @classmethod
-    def is_object_for(cls, all_lines, line, re=re):
+    def is_object_for(cls, all_lines, line, index=None, re=re):
         if re.search(r"^interface\s+([a-zA-Z0-9]\S*)", line):
             return True
         return False
@@ -1781,7 +1781,7 @@ class NXOSIntfGlobal(BaseCfgLine):
 
 
     @classmethod
-    def is_object_for(cls, all_lines, line, re=re):
+    def is_object_for(cls, all_lines, line, index=None, re=re):
         if re.search(
             r"^(no\s+cdp\s+run)|(logging\s+event\s+link-status\s+global)|(spanning-tree\sportfast\sdefault)|(spanning-tree\sportfast\sbpduguard\sdefault)",
             line,
@@ -1840,7 +1840,7 @@ class NXOSvPCLine(BaseCfgLine):
         return "<{} # {} '{}'>".format(self.classname, self.linenum, self.vpc_domain_id)
 
     @classmethod
-    def is_object_for(cls, all_lines, line, re=re):
+    def is_object_for(cls, all_lines, line, index=None, re=re):
         if re.search(r"^vpc\s+domain", line):
             return True
         return False
@@ -2003,7 +2003,7 @@ class NXOSHostnameLine(BaseCfgLine):
         return "<{} # {} '{}'>".format(self.classname, self.linenum, self.hostname)
 
     @classmethod
-    def is_object_for(cls, all_lines, line, re=re):
+    def is_object_for(cls, all_lines, line, index=None, re=re):
         if re.search("^hostname", line):
             return True
         return False
@@ -2047,7 +2047,7 @@ class NXOSAccessLine(BaseCfgLine):
         )
 
     @classmethod
-    def is_object_for(cls, all_lines, line, re=re):
+    def is_object_for(cls, all_lines, line, index=None, re=re):
         if re.search("^line", line):
             return True
         return False
@@ -2152,7 +2152,7 @@ class BaseNXOSRouteLine(BaseCfgLine):
             return self.nexthop_str + " AD: " + str(self.admin_distance)
 
     @classmethod
-    def is_object_for(cls, all_lines, line, re=re):
+    def is_object_for(cls, all_lines, line, index=None, re=re):
         return False
 
     @property
@@ -2262,7 +2262,7 @@ class NXOSRouteLine(BaseNXOSRouteLine):
 
 
     @classmethod
-    def is_object_for(cls, all_lines, line, re=re):
+    def is_object_for(cls, all_lines, line, index=None, re=re):
         if (line[0:8] == "ip route") or (line[0:11] == "ipv6 route "):
             return True
         return False

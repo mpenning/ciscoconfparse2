@@ -119,7 +119,7 @@ class IOSXRCfgLine(BaseCfgLine):
     # This method is on IOSXRCfgLine()
     @classmethod
     @logger.catch(reraise=True)
-    def is_object_for(cls, all_lines, line, re=re):
+    def is_object_for(cls, all_lines, line, index=None, re=re):
         ## Default object, for now
         return True
 
@@ -478,7 +478,7 @@ class BaseIOSXRIntfLine(IOSXRCfgLine):
     # This method is on BaseIOSXRIntfLine()
     @classmethod
     @logger.catch(reraise=True)
-    def is_object_for(cls, all_lines, line, re=re):
+    def is_object_for(cls, all_lines, line, index=None, re=re):
         return False
 
     ##-------------  Basic interface properties
@@ -1993,7 +1993,7 @@ class IOSXRIntfLine(BaseIOSXRIntfLine):
     # This method is on IOSXRIntfLine()
     @classmethod
     @logger.catch(reraise=True)
-    def is_object_for(cls, all_lines, line, re=re):
+    def is_object_for(cls, all_lines, line, index=None, re=re):
         intf_regex = r"^interface\s+(\S+.+)"
         if re.search(intf_regex, line):
             return True

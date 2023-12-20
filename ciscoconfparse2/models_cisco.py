@@ -566,7 +566,7 @@ class IOSCfgLine(BaseCfgLine):
 
     @classmethod
     @logger.catch(reraise=True)
-    def is_object_for(cls, all_lines, line, re=re):
+    def is_object_for(cls, all_lines, line, index=None, re=re):
         """Return True if this object should be used for a given configuration line; otherwise return False"""
         ## Default object, for now
         if cls.is_object_for_hostname(line=line):
@@ -1002,7 +1002,7 @@ class BaseIOSIntfLine(IOSCfgLine):
     # This method is on BaseIOSIntfLine()
     @classmethod
     @logger.catch(reraise=True)
-    def is_object_for(cls, all_lines, line, re=re):
+    def is_object_for(cls, all_lines, line, index=None, re=re):
         return False
 
     ##-------------  Basic interface properties
@@ -2720,7 +2720,7 @@ class IOSIntfLine(BaseIOSIntfLine):
     # This method is on IOSIntfLine()
     @classmethod
     @logger.catch(reraise=True)
-    def is_object_for(cls, all_lines, line, re=re):
+    def is_object_for(cls, all_lines, line, index=None, re=re):
         return cls.is_object_for_interface(line)
 
 ##
@@ -2750,7 +2750,7 @@ class IOSIntfGlobal(IOSCfgLine):
 
     @classmethod
     @logger.catch(reraise=True)
-    def is_object_for(cls, all_lines, line, re=re):
+    def is_object_for(cls, all_lines, line, index=None, re=re):
         if re.search(
             r"^(no\s+cdp\s+run)|(logging\s+event\s+link-status\s+global)|(spanning-tree\sportfast\sdefault)|(spanning-tree\sportfast\sbpduguard\sdefault)",
             line,
@@ -2829,7 +2829,7 @@ class IOSAccessLine(IOSCfgLine):
 
     @classmethod
     @logger.catch(reraise=True)
-    def is_object_for(cls, all_lines, line, re=re):
+    def is_object_for(cls, all_lines, line, index=None, re=re):
         if re.search(r"^line", line):
             return True
         return False
@@ -2935,7 +2935,7 @@ class BaseIOSRouteLine(IOSCfgLine):
 
     @classmethod
     @logger.catch(reraise=True)
-    def is_object_for(cls, all_lines, line, re=re):
+    def is_object_for(cls, all_lines, line, index=None, re=re):
         return False
 
     @property
@@ -3062,7 +3062,7 @@ class IOSRouteLine(IOSCfgLine):
 
     @classmethod
     @logger.catch(reraise=True)
-    def is_object_for(cls, all_lines, line, re=re):
+    def is_object_for(cls, all_lines, line, index=None, re=re):
         if (line[0:9] == "ip route ") or (line[0:11] == "ipv6 route "):
             return True
         return False

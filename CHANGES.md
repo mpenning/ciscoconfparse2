@@ -8,6 +8,7 @@
 
 - Released: 2023-12-20
 - Summary:
+    - Updates to JunOS factory
     - Documentation updates
 
 ## Version: 0.3.2

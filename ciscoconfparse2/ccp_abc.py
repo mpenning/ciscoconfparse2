@@ -161,20 +161,19 @@ class BaseCfgLine(object):
         else:
             return f"<{self.classname} # {this_linenum} '{self.text}' (parent is # {parent_linenum})>"
 
-    if False:
-        # On BaseCfgLine()
-        @logger.catch(reraise=True)
-        def __str__(self):
-            return self.__repr__()
+    # On BaseCfgLine()
+    @logger.catch(reraise=True)
+    def __str__(self):
+        return self.__repr__()
 
     # On BaseCfgLine()
     @logger.catch(reraise=True)
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self._text)
 
     # On BaseCfgLine()
     @logger.catch(reraise=True)
-    def __hash__(self):
+    def __hash__(self) -> int:
         """
         :return: A unique identifier for this object
         :rtype: int
@@ -218,7 +217,7 @@ class BaseCfgLine(object):
 
     # On BaseCfgLine()
     @logger.catch(reraise=True)
-    def get_unique_identifier(self):
+    def get_unique_identifier(self) -> int:
         """
         :return: A unique number for the BaseCfgLine object
         :rtype: int
@@ -230,7 +229,7 @@ class BaseCfgLine(object):
     # On BaseCfgLine()
     @property
     @logger.catch(reraise=True)
-    def indent(self):
+    def indent(self) -> int:
         """
         :return: Padding of the number of left spaces of the ``text`` property
         :rtype: int
@@ -240,7 +239,7 @@ class BaseCfgLine(object):
     # On BaseCfgLine()
     @property
     @logger.catch(reraise=True)
-    def is_comment(self):
+    def is_comment(self) -> bool:
         """Return True if the line is a comment"""
         if not isinstance(self.confobj, Sequence):
             # Comments are only valid in a real configuration list; otherwise
@@ -504,11 +503,11 @@ class BaseCfgLine(object):
         :return: A sequence of all child objects, not including this object
         :rtype: List[BaseCfgLine]
         """
-        retval = set()
+        retval = list()
         if self.has_children:
             for child in self.children:
-                retval.add(child)
-                retval.update(child.all_children)
+                retval.append(child)
+                retval.extend(child.all_children)
         return sorted(retval)
 
     # On BaseCfgLine()
@@ -527,7 +526,7 @@ class BaseCfgLine(object):
         :return: Whether this object has children
         :rtype: bool
         """
-        if len(self.children) > 0:
+        if isinstance(self.children, list) and len(self.children) > 0:
             return True
         return False
 

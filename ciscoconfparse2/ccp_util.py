@@ -1022,6 +1022,10 @@ class IPv4Obj(object):
         self.debug = debug
         self.empty = False
 
+        # Initialize attributes
+        self.ip_object = None
+        self.network_object = None
+        self.finished_parsing = False
         #################################### NEW
 
         if v4input is None:
@@ -1751,6 +1755,8 @@ class IPv6Obj(object):
             An integer representing the number of hosts contained in the network
 
         """
+
+
         if isinstance(debug, int):
             if debug > 0:
                 logger.info(f"IPv6Obj(v6input='{v6input}', strict={strict}, debug={debug}) was called")
@@ -1772,10 +1778,13 @@ class IPv6Obj(object):
                 logger.error(error)
                 raise AddressValueError(error)
 
-        self.v6input = v6input
-        self.dna = "IPv6Obj"
+        # Initialize attributes
         self.ip_object = None
         self.network_object = None
+        self.finished_parsing = False
+
+        self.v6input = v6input
+        self.dna = "IPv6Obj"
         self.strict = strict
         self.debug = debug
 

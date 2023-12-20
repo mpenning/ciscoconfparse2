@@ -3937,7 +3937,7 @@ def config_line_factory(all_lines: List[str]=None,
         for _cls in factory_classes:
             if debug > 0:
                 logger.debug(f"Consider config_line_factory() CLASS {_cls}")
-            if _cls.is_object_for(all_lines=all_lines, line=line):
+            if _cls.is_object_for(all_lines=all_lines, line=line, index=index):
                 basecfgline_subclass = _cls(
                     all_lines=all_lines, line=line,
                     #comment_delimiters=comment_delimiters,
