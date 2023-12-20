@@ -496,6 +496,7 @@ def cfgobj_from_text(
         obj = config_line_factory(
             all_lines=text_list,
             line=txt,
+            index=idx,
             syntax=syntax,
         )
         if isinstance(obj, BaseCfgLine):
@@ -3845,8 +3846,29 @@ class CiscoPassword(object):
 
 
 @logger.catch(reraise=True)
-def config_line_factory(all_lines=None, line=None, comment_delimiters=None, syntax="ios", debug=0):
-    """A factory method to assign a custom BaseCfgLine() subclass based on `all_lines`, `line`, `comment_delimiters`, and `syntax` parameters."""
+def config_line_factory(all_lines: List[str]=None,
+                        line: str=None,
+                        index: int=None,
+                        comment_delimiters: List[str]=None,
+                        syntax: str="ios",
+                        debug: int=0) -> BaseCfgLine:
+    """A factory method to assign a custom BaseCfgLine() subclass.
+
+    :param all_lines: Sequence of string configuration commands
+    :type all_lines: List[str]
+    :param line: Configuration command string
+    :type line: str
+    :param index: Index of the configuration command string (useful if the command is duplicated elsewhere)
+    :type index: int
+    :param comment_delimiters: Sequence of string configuration delimiters
+    :type comment_delimiters: List[str]
+    :param syntax: Configuration syntax type.
+    :type syntax: str
+    :param debug: Debug level for this function
+    :type debug: int
+    :return: The appropriate :class:`BaseCfgLine` subclass for this config line
+    :rtype: BaseCfgLine
+    """
     # Complicted & Buggy
     # classes = [j for (i,j) in globals().iteritems() if isinstance(j, TypeType) and issubclass(j, BaseCfgLine)]
     if comment_delimiters is None:
