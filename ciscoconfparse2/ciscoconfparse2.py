@@ -62,7 +62,7 @@ from ciscoconfparse2.models_asa import ASACfgLine
 from ciscoconfparse2.models_asa import ASAName
 from ciscoconfparse2.models_asa import ASAAclLine
 
-# from ciscoconfparse2.models_junos import JunosIntfLine
+from ciscoconfparse2.models_junos import JunosIntfLine
 from ciscoconfparse2.models_junos import JunosCfgLine
 
 from ciscoconfparse2.ccp_abc import BaseCfgLine
@@ -115,7 +115,7 @@ ALL_JUNOS_FACTORY_CLASSES = [
     ##########################################################################
     # JunosIntfLine is rather broken; JunosCfgLine should be enough
     ##########################################################################
-    # JunosIntfLine,
+    JunosIntfLine,
     JunosCfgLine,      # JunosCfgLine MUST be last
 ]
 
@@ -732,8 +732,32 @@ class ConfigList(UserList):
         :return: A :py:class:`ConfigList` instance.
         :rtype: :py:class:`ConfigList`
 
-        Attributes:
-            initlist (Union[List[str],tuple[str, ...]]): A sequence of text configuration statements
+        Attributes
+        ----------
+            initlist : list, tuple
+                A sequence of text configuration statements
+            comment_delimiters : list
+                A sequence of text comment delimiters
+            factory : bool
+                Whether to derive beta-quality configuration attributes for Cisco configurations
+            ignore_blank_lines : bool
+                Whether to ignore blank lines in the configuration
+            syntax : str
+                One of 'ios', 'nxos', 'asa', 'iosxr', or 'junos'
+            auto_commit : bool
+                Whether to automatically commit changes to the configuration
+            debug : int
+                Debug level of this configuration instance
+            ccp_ref : CiscoConfParse
+                A reference to the CiscoConfParse instance which owns this ConfigList
+            dna : str
+                A string representing the type of CiscoConfParse instance this is
+            current_checkpoint : int
+                The value of the current checkpoint; this will be updated with each ConfigList change
+            commit_checkpoint : int
+                The value of the saved checkpoint; this will only be updated when a commit() is called
+            data : BaseCfgLine
+                An internal sequence of BaseCfgLine instances used to maintain the contents of this python UserList subclass
         """
 
         # Use this with UserList() instead of super()
@@ -892,21 +916,21 @@ class ConfigList(UserList):
 
     # This method is on ConfigList()
     @logger.catch(reraise=True)
-    def __getitem__(self, ii) -> BaseCfgLine:
-        if isinstance(ii, slice):
-            return self.__class__(self.data[ii])
+    def __getitem__(self, value) -> BaseCfgLine:
+        if isinstance(value, slice):
+            return self.__class__(self.data[value])
         else:
-            return self.data[ii]
+            return self.data[value]
 
     # This method is on ConfigList()
     @logger.catch(reraise=True)
-    def __setitem__(self, ii, val) -> None:
-        self.data[ii] = val
+    def __setitem__(self, idx, value) -> None:
+        self.data[idx] = value
 
     # This method is on ConfigList()
     @logger.catch(reraise=True)
-    def __delitem__(self, ii) -> None:
-        del self.data[ii]
+    def __delitem__(self, idx) -> None:
+        del self.data[idx]
         self.data = self.bootstrap(self.text, debug=self.debug)
 
     # This method is on ConfigList()
@@ -996,10 +1020,11 @@ class ConfigList(UserList):
             return ccp_method
 
     # This method is on ConfigList()
-    def get_checkpoint(self):
-        """Return an integer representing a unique version of this ConfigList() and its contents.
-
-        This should be a classmethod to ensure that the results are cachable via memoization.
+    @logger.catch(reraise=True)
+    def get_checkpoint(self) -> int:
+        """
+        :return: An integer representing a unique version of this ConfigList() and its contents.
+        :rtype: int
         """
         total = 0
         for idx, obj in enumerate(self.data):
@@ -1045,8 +1070,6 @@ class ConfigList(UserList):
             error = f"Could not finish commit: {eee}"
             logger.critical(error)
             raise eee
-
-
 
     # This method is on ConfigList()
     @property
@@ -1867,8 +1890,11 @@ class ConfigList(UserList):
 
     # This method is on ConfigList()
     @logger.catch(reraise=True)
-    def _build_banner_re_ios(self):
-        """Return a banner regexp for IOS (and at this point, NXOS)."""
+    def _build_banner_re_ios(self) -> re.Pattern:
+        """
+        :return: A banner regexp for IOS (and at this point, NXOS).
+        :rtype: re.Pattern
+        """
         banner_str = {
             "login",
             "motd",
@@ -1880,14 +1906,19 @@ class ConfigList(UserList):
         banner_all = [r"^(set\s+)*banner\s+{}".format(ii) for ii in banner_str]
         banner_all.append(
             "aaa authentication fail-message",
-        )  # Github issue #76
+        )  # original ciscoconfparse Github issue #76
         banner_re = re.compile("|".join(banner_all))
 
         return banner_re
 
     # This method is on ConfigList()
     @logger.catch(reraise=True)
-    def _add_child_to_parent(self, _list, idx, indent, parentobj, childobj):
+    def _add_child_to_parent(self, _list, idx, indent, parentobj, childobj) -> None:
+        """
+        Add the child object to the parent object; assign the parent
+        object to the child object.  Finally set the ``child_indent`` attribute
+        on the parent object.
+        """
         # parentobj could be None when trying to add a child that should not
         #    have a parent
         if parentobj is None:
@@ -1926,45 +1957,52 @@ class ConfigList(UserList):
 
     # This method is on ConfigList()
     @logger.catch(reraise=True)
-    def iter_with_comments(self, begin_index=0):
+    def iter_with_comments(self, begin_index: int=0) -> BaseCfgLine:
+        """
+        :return: The BaseCfgLine instance at or greater than ``begin_index``
+        :rtype: BaseCfgLine
+        """
         for idx, obj in enumerate(self.data):
             if idx >= begin_index:
                 yield obj
 
     # This method is on ConfigList()
     @logger.catch(reraise=True)
-    def iter_no_comments(self, begin_index=0):
+    def iter_no_comments(self, begin_index: int=0) -> BaseCfgLine:
+        """
+        :return: The BaseCfgLine instance at or greater than ``begin_index`` if it is not a comment
+        :rtype: BaseCfgLine
+        """
         for idx, obj in enumerate(self.data):
             if (idx >= begin_index) and (not obj.is_comment):
                 yield obj
 
     # This method is on ConfigList()
     @logger.catch(reraise=True)
-    def reassign_linenums(self):
+    def reassign_linenums(self) -> None:
+        """Renumber the configuration line numbers"""
         # Call this after any insertion or deletion
         for idx, obj in enumerate(self.data):
             obj.linenum = idx
 
     # This method is on ConfigList()
-    @ property
+    @property
     @logger.catch(reraise=True)
-    def all_parents(self):
+    def all_parents(self) -> List[BaseCfgLine]:
+        """
+        :return: A sequence of BaseCfgLine instances representing all parents in this ConfigList
+        :rtype: List[BaseCfgLine]
+        """
         return [obj for obj in self.data if obj.has_children]
-
-    # This method is on ConfigList()
-    @ property
-    @logger.catch(reraise=True)
-    def last_index(self):
-        return self.__len__() - 1
 
     ##########################################################################
     # Special syntax='asa' methods...
     ##########################################################################
 
     # This method was on ASAConfigList(); now tentatively on ConfigList()
-    @ property
+    @property
     @logger.catch(reraise=True)
-    def names(self):
+    def asa_object_group_names(self) -> Dict[str,str]:
         """Return a dictionary of name to address mappings"""
         if self.syntax != "asa":
             raise RequirementFailure()
@@ -1978,9 +2016,9 @@ class ConfigList(UserList):
         return retval
 
     # This method was on ASAConfigList(); now tentatively on ConfigList()
-    @ property
+    @property
     @logger.catch(reraise=True)
-    def object_group_network(self):
+    def asa_object_group_network(self) -> Dict[str,BaseCfgLine]:
         """Return a dictionary of name to object-group network mappings"""
         if self.syntax != "asa":
             raise RequirementFailure()
@@ -1993,9 +2031,9 @@ class ConfigList(UserList):
         return retval
 
     # This method was on ASAConfigList(); now tentatively on ConfigList()
-    @ property
+    @property
     @logger.catch(reraise=True)
-    def access_list(self):
+    def asa_access_list(self) -> Dict[str,BaseCfgLine]:
         """Return a dictionary of ACL name to ACE (list) mappings"""
         if self.syntax != "asa":
             raise RequirementFailure()
@@ -2051,6 +2089,15 @@ class CiscoConfParse(object):
         """
         Initialize CiscoConfParse.
 
+        .. note::
+
+           ``comment_delimiters`` always assumes the delimiter is one character wide.
+
+        .. note::
+
+           ``ignore_blank_lines`` changes the original ciscoconfparse default value.
+
+
         :param config: A list of configuration lines or the filepath to the configuration.
         :type config: Union[str,List[str],tuple[str, ...]]
         :param syntax: The configuration type, default to 'ios'; it must be one of: 'ios', 'nxos', 'iosxr', 'asa', 'junos'.  Use 'junos' for any brace-delimited network configuration (including F5, Palo Alto, etc...).
@@ -2086,14 +2133,6 @@ class CiscoConfParse(object):
         :return: A CiscoConfParse object
         :rtype: :py:class:`~ciscoconfparse2.CiscoConfParse`
 
-        .. note::
-
-           ``comment_delimiters`` always assumes the delimiter is one character wide.
-
-        .. note::
-
-           ``ignore_blank_lines`` changes the original ciscoconfparse default value.
-
         This example illustrates how to parse a simple Cisco IOS configuration
         with :class:`~ciscoconfparse2.CiscoConfParse` into a variable called
         ``parse``.  This example also illustrates what the ``config_objs``
@@ -2116,28 +2155,26 @@ class CiscoConfParse(object):
            ['logging trap debugging', 'logging 172.28.26.15']
            >>>
 
-        """
-
-        if False:
-            """
-            Attributes
-            ----------
-
+        Attributes
+        ----------
             comment_delimiters : list
                 A list of strings containing the comment-delimiters.  Default: ["!"]
-            config_objs : :class:`~ciscoconfparse2.ConfigList`
+            objs : :class:`ConfigList`
+                An alias for ``config_objs``
+            config_objs : :class:`ConfigList`
                 A custom list, which contains all parsed :class:`~models_cisco.IOSCfgLine` instances.
             debug : int
                 An int to enable verbose config parsing debugs. Default 0.
             ioscfg : list
                 A list of text configuration strings
-            objs
-                An alias for `config_objs`
             openargs : dict
                 Returns a dictionary of valid arguments for `open()` (these change based on the running python version).
             syntax : str
                 A string holding the configuration type.  Default: 'ios'.  Must be one of: 'ios', 'nxos', 'iosxr', 'asa', 'junos'.  Use 'junos' for any brace-delimited network configuration (including F5, Palo Alto, etc...).
-            """
+
+
+        """
+
         if syntax not in ALL_VALID_SYNTAX:
             error = f"{syntax} is not a valid syntax."
             logger.error(error)
@@ -2514,7 +2551,7 @@ class CiscoConfParse(object):
 
         .. warning::
 
-           The original ciscoconfparse ``ioscfg`` property has been renamed to ``get_text()``.
+           The original ciscoconfparse ``ioscfg`@property has been renamed to ``get_text()``.
         """
         return [ii.text for ii in self.config_objs]
 
@@ -2624,7 +2661,7 @@ debug={debug},
         reverse: bool=False,
         debug: int=0,
     ) -> List[List[BaseCfgLine]]:
-        r"""Iterate over a tuple of regular expressions in `branchspec` and return matching objects in a list of lists (consider it similar to a table of matching config objects). `branchspec` expects to start at some ancestor and walk through the nested object hierarchy (with no limit on depth).
+        r"""Iterate over a tuple of regular expression strings in `branchspec` and return matching objects in a list of lists (consider it similar to a table of matching config objects). `branchspec` expects to start at some ancestor and walk through the nested object hierarchy (with no limit on depth).
 
         Previous CiscoConfParse() methods only handled a single parent regex and single child regex (such as :func:`~ciscoconfparse2.CiscoConfParse.find_objects`).
 

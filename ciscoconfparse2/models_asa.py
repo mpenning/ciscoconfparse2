@@ -798,7 +798,7 @@ class ASAObjGroupNetwork(ASACfgLine):
         """Return a list of strings which represent the address space allowed by
         this object-group"""
         retval = list()
-        names = self.confobj.names
+        names = self.confobj.asa_object_group_names
         for obj in self.children:
 
             ## Parse out 'object-group ...' and 'group-object' lines...
@@ -830,7 +830,7 @@ class ASAObjGroupNetwork(ASACfgLine):
                         )
                     )
 
-                group_nets = self.confobj.object_group_network.get(groupobject, None)
+                group_nets = self.confobj.asa_object_group_network.get(groupobject, None)
                 if group_nets is None:
                     raise ValueError(
                         "FATAL: Cannot find group-object named {}".format(self.name)

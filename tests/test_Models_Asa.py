@@ -47,7 +47,7 @@ from loguru import logger
 
 def testVal_Access_List(parse_a01_factory):
     result_correct = {}
-    assert len(parse_a01_factory.objs.access_list["INSIDE_in"]) == 4
+    assert len(parse_a01_factory.objs.asa_access_list["INSIDE_in"]) == 4
 
 
 def testParse_asa_factory(config_a02):
@@ -55,7 +55,7 @@ def testParse_asa_factory(config_a02):
     assert (parse is not None)
 
 
-def testVal_Names(parse_a01, parse_a01_factory):
+def testVal_Asa_Object_Group_Names(parse_a01, parse_a01_factory):
     result_correct = {
         "dmzsrv00": "1.1.3.10",
         "dmzsrv01": "1.1.3.11",
@@ -63,8 +63,8 @@ def testVal_Names(parse_a01, parse_a01_factory):
         "dmzsrv03": "1.1.3.13",
         "loghost01": "1.1.2.20",
     }
-    assert parse_a01.config_objs.names == result_correct
-    assert parse_a01_factory.config_objs.names == result_correct
+    assert parse_a01.config_objs.asa_object_group_names == result_correct
+    assert parse_a01_factory.config_objs.asa_object_group_names == result_correct
 
 
 def testVal_object_group_network_01():

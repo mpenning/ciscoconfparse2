@@ -29,6 +29,9 @@ ciscoconfparse2.CiscoConfParse Object
    :undoc-members:
    :inherited-members:
 
+ciscoconfparse2.Diff Object
+---------------------------
+
 .. autoclass:: ciscoconfparse2.Diff
    :members:
    :undoc-members:
