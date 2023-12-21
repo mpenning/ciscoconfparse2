@@ -1009,6 +1009,21 @@ class BaseCfgLine(object):
             raise NotImplementedError(error)
 
     # On BaseCfgLine()
+    def replace(self, before, after, count=-1) -> str:
+        """String replace ``before`` with ``after``
+
+        If the optional argument count is given, only the first count occurrences are replaced.
+
+        .. note::
+
+           The original ``text`` in this object will be unmodified.
+
+        :return: The replaced config string
+        :rtype: str
+        """
+        return self._text.replace(before, after, count)
+
+    # On BaseCfgLine()
     @logger.catch(reraise=True)
     def rstrip(self, chars: str=None) -> str:
         """Implement rstrip() on the BaseCfgLine().text
@@ -1129,6 +1144,26 @@ class BaseCfgLine(object):
             logger.critical(error)
             raise InvalidTypecast(error)
         return retval
+
+    # On BaseCfgLine()
+    def replace_text(self, before, after, count=-1) -> str:
+        """String replace ``before`` with ``after``
+
+        If the optional argument count is given, only the first count occurrences are replaced.
+
+        This method is substantially faster than ``BaseCfgLine().re_sub()`` for a similar replace operation.
+
+        .. note::
+
+           This will replace the config tex string in-place.
+
+        :return: The replaced config string
+        :rtype: str
+        """
+        self.text = self._text.replace(before, after, count)
+        if self.confobj and self.confobj.auto_commit is True:
+            self.confobj.ccp_ref.commit()
+        return self._text
 
     # On BaseCfgLine()
     def re_sub(self, regex, replacergx, re_flags=None):

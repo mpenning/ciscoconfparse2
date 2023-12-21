@@ -4675,18 +4675,6 @@ class CiscoRange(UserList):
         return list(set([int(ii) for ii in integers]))
 
     # This method is on CiscoRange()
-    @property
-    @logger.catch(reraise=True)
-    def _list(self):
-        return self.data
-
-    # This method is on CiscoRange()
-    @logger.catch(reraise=True)
-    @_list.setter
-    def _list(self, val):
-        self.data = val
-
-    # This method is on CiscoRange()
     @logger.catch(reraise=True)
     def parse_strings(self, text, debug=False):
         """Parse text input to CiscoRange(), such as CiscoRange('1-5,7', result_type=None).  '1-5,7 will be parsed.  By default, CiscoIOSInterface() instances are used when CiscoRange(result_type=None) is parsed.'  An error is raised if the CiscoRange() cannot be parsed"""

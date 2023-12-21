@@ -6,9 +6,12 @@
 
 ## Version: 0.3.3
 
-- Released: 2023-12-20
+- Released: 2023-12-21
 - Summary:
-    - Updates to JunOS factory
+    - Fix JunOS factory parsing, and enable attrs on JunOS factory classes
+    - Add `BaseCfgLine().replace()` method
+    - Add `BaseCfgLine().replace_text()` method
+    - Remove `CiscoRange()._list` property and setter
     - Documentation updates
 
 ## Version: 0.3.2

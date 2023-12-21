@@ -532,6 +532,79 @@ def testVal_BaseCfgLine_is_comment_01():
     obj03 = parse.objs[0]
     assert obj03.is_comment is False
 
+def testVal_BaseCfgLine_CiscoIOS_replace_01():
+    """Ensure that we can call replace() without changing the original Cisco IOS configuration"""
+    config = [
+        "!",
+        "hostname Example",
+        "!",
+        "interface GigabitEthernet1/0",
+        " ip address 192.0.2.1 255.255.255.252",
+        "!",
+        "interface GigabitEthernet1/1",
+        " ip address 192.0.2.5 255.255.255.252",
+        "!",
+        "interface GigabitEthernet1/2",
+        " ip address 192.0.2.9 255.255.255.252",
+        "!",
+        "interface GigabitEthernet1/3",
+        " ip address 192.0.2.11 255.255.255.252",
+        "!",
+        "end",
+    ]
+
+    parse = CiscoConfParse(config, auto_commit=True)
+    # Ensure that the object exists...
+    assert len(parse.find_objects(r"GigabitEthernet1/1")) == 1
+    # Ensure that the object exists...
+    assert len(parse.find_objects(r"GigabitEthernet1/2")) == 1
+
+    # Execute the delete operation...
+    for obj in parse.find_objects(r"GigabitEthernet1/1", reverse=True):
+        newtext = obj.replace("GigabitEthernet1/1", "Loopback1")
+        assert newtext == "interface Loopback1"
+
+    # Ensure that the object was deleted...
+    assert len(parse.find_objects(r"GigabitEthernet1/1")) == 1
+    # Ensure that the object was deleted...
+    assert len(parse.find_objects(r"Loopback1")) == 0
+
+def testVal_BaseCfgLine_CiscoIOS_replace_text_01():
+    """Ensure that we can call replace_text() and it will change the original Cisco IOS configuration"""
+    config = [
+        "!",
+        "hostname Example",
+        "!",
+        "interface GigabitEthernet1/0",
+        " ip address 192.0.2.1 255.255.255.252",
+        "!",
+        "interface GigabitEthernet1/1",
+        " ip address 192.0.2.5 255.255.255.252",
+        "!",
+        "interface GigabitEthernet1/2",
+        " ip address 192.0.2.9 255.255.255.252",
+        "!",
+        "interface GigabitEthernet1/3",
+        " ip address 192.0.2.11 255.255.255.252",
+        "!",
+        "end",
+    ]
+
+    parse = CiscoConfParse(config, auto_commit=True)
+    # Ensure that the object exists...
+    assert len(parse.find_objects(r"GigabitEthernet1/1")) == 1
+    # Ensure that the object exists...
+    assert len(parse.find_objects(r"GigabitEthernet1/2")) == 1
+
+    # Execute the delete operation...
+    for obj in parse.find_objects(r"GigabitEthernet1/1", reverse=True):
+        newtext = obj.replace_text("GigabitEthernet1/1", "Loopback1")
+        assert newtext == "interface Loopback1"
+
+    # Ensure that the object was deleted...
+    assert len(parse.find_objects(r"GigabitEthernet1/1")) == 0
+    # Ensure that the object was deleted...
+    assert len(parse.find_objects(r"Loopback1")) == 1
 
 def testVal_re_match_iter_typed_parent_default_type_norecurse():
     """Test that re_match_iter_typed(recurse=False) finds the parent and returns the default `result_type`, which is `str`"""

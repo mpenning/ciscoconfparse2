@@ -99,16 +99,16 @@ def testVal_junos_factory_JunOSIntfLine_01(parse_j01):
                            syntax='junos',
                            factory=True
                            )
-    assert parse.config_objs[0].dna == "JunosCfgLine"
+    assert parse.config_objs[0].classname == "JunosCfgLine"
 
     assert parse.config_objs[81].text.strip() == "ge-0/0/0"
-    assert parse.config_objs[81].dna == "JunosIntfLine"
+    assert parse.config_objs[81].classname == "JunosIntfLine"
 
     assert parse.config_objs[82].text.strip() == "unit 0"
-    assert parse.config_objs[82].dna == "JunosIntfLine"
+    assert parse.config_objs[82].classname == "JunosIntfLine"
 
     assert parse.config_objs[83].text.strip() == "family ethernet-switching"
-    assert parse.config_objs[83].dna == "JunosCfgLine"
+    assert parse.config_objs[83].classname == "JunosCfgLine"
 
 # test for Github issue #49
 def testVal_parse_f5():
