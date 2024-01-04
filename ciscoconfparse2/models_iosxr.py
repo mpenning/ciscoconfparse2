@@ -19,6 +19,7 @@ r""" models_iosxr.py - Parse, Query, Build, and Modify IOS-style configurations
      mike [~at~] pennington [/dot\] net
 """
 
+from typing import Any, Union, Dict, List
 import re
 
 from loguru import logger
@@ -325,7 +326,7 @@ class IOSXRCfgLine(BaseCfgLine):
     # This method is on IOSXRCfgLine()
     @property
     @logger.catch(reraise=True)
-    def intf_in_portchannel(self):
+    def is_in_portchannel(self):
         r"""Return a boolean indicating whether this port is configured in a port-channel
 
         Returns
@@ -434,18 +435,6 @@ class BaseIOSXRIntfLine(IOSXRCfgLine):
         return retval
 
     # This method is on BaseIOSXRIntfLine()
-    @logger.catch(reraise=True)
-    def reset(self, commit=True):
-        # Insert build_reset_string() before this line...
-        self.insert_before(self.build_reset_string(), commit=commit)
-
-    # This method is on BaseIOSXRIntfLine()
-    @logger.catch(reraise=True)
-    def build_reset_string(self):
-        # IOS interfaces are defaulted like this...
-        return "default " + self.text
-
-    # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def verbose(self):
@@ -496,7 +485,7 @@ class BaseIOSXRIntfLine(IOSXRCfgLine):
     # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
-    def interface_object(self):
+    def cisco_interface_object(self):
         """Return a CiscoIOSXRInterface() instance for this interface
 
         Returns
@@ -888,13 +877,6 @@ class BaseIOSXRIntfLine(IOSXRCfgLine):
     # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
-    def has_no_ipv4(self):
-        r"""Return an ccp_util.IPv4Obj object representing the subnet on this interface; if there is no address, return ccp_util.IPv4Obj('0.0.0.1/32')"""
-        return self.ip_network_object == IPv4Obj("0.0.0.1/32")
-
-    # This method is on BaseIOSXRIntfLine()
-    @property
-    @logger.catch(reraise=True)
     def ip(self):
         r"""Return an ccp_util.IPv4Obj object representing the subnet on this interface; if there is no address, return ccp_util.IPv4Obj('0.0.0.1/32')"""
         return self.ipv4_addr_object
@@ -941,31 +923,6 @@ class BaseIOSXRIntfLine(IOSXRCfgLine):
             return True
         else:
             raise ValueError
-
-    # This method is on BaseIOSXRIntfLine()
-    @property
-    @logger.catch(reraise=True)
-    def has_manual_speed(self):
-        retval = self.re_match_iter_typed(
-            r"^\s*speed\s+(\d+)$", result_type=bool, default=False
-        )
-        return retval
-
-    # This method is on BaseIOSXRIntfLine()
-    @property
-    @logger.catch(reraise=True)
-    def has_manual_duplex(self):
-        retval = self.re_match_iter_typed(
-            r"^\s*duplex\s+(\S.+)$", result_type=bool, default=False
-        )
-        return retval
-
-    # This method is on BaseIOSXRIntfLine()
-    @property
-    @logger.catch(reraise=True)
-    def has_manual_carrierdelay(self):
-        r"""Return a python boolean for whether carrier delay is manually configured on the interface"""
-        return bool(self.manual_carrierdelay)
 
     # This method is on BaseIOSXRIntfLine()
     @property
@@ -1406,15 +1363,14 @@ class BaseIOSXRIntfLine(IOSXRCfgLine):
     # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
-    def manual_arp_timeout(self):
-        r"""Return an integer with the current interface ARP timeout, if there isn't one set, return 0.  If there is no IP address, return -1"""
-        ## NOTE: I have no intention of checking self.is_shutdown here
-        ##     People should be able to check the sanity of interfaces
-        ##     before they put them into production
-
+    def manual_arp_timeout(self) -> int:
+        r"""
+        :return: An integer with the manual ARP timeout, default to 0
+        :rtype: int
+        """
         ## Interface must have an IP addr to respond
         if self.ipv4_addr == "":
-            return -1
+            return 0
 
         ## By default, Cisco IOS defaults to 4 hour arp timers
         ## By default, Nexus defaults to 15 minute arp timers
@@ -1696,50 +1652,38 @@ class BaseIOSXRIntfLine(IOSXRCfgLine):
     @property
     @logger.catch(reraise=True)
     def hsrp_ip_addr(self):
+        """
+        :return: A dict keyed by integer HSRP group number with a string ipv4 address, default to an empty dict
+        :rtype: Dict[int,str]
+        """
         ## NOTE: I have no intention of checking self.is_shutdown here
         ##     People should be able to check the sanity of interfaces
         ##     before they put them into production
 
         ## For API simplicity, I always assume there is only one hsrp
         ##     group on the interface
+        retval = dict()
         if self.ipv4_addr == "":
-            return ""
+            return retval
 
-        retval = self.re_match_iter_typed(
-            r"^\s*standby\s+(\d+\s+)*ip\s+(\S+)", group=2, result_type=str, default=""
-        )
+        for cmd in self.all_children:
+            parts = cmd.splilt()
+            if cmd[0] == "standby" and cmd[2] == "ip":
+                hsrp_group = int(cmd[1])
+                hsrp_addr = cmd[2]
+                retval[hsrp_group] = hsrp_addr
+
         return retval
 
-    # This method is on BaseIOSXRIntfLine()
+    # This method is on BaseFactoryInterfaceLine()
     @property
     @logger.catch(reraise=True)
-    def hsrp_ip_mask(self):
-        ## NOTE: I have no intention of checking self.is_shutdown here
-        ##     People should be able to check the sanity of interfaces
-        ##     before they put them into production
-
-        ## For API simplicity, I always assume there is only one hsrp
-        ##     group on the interface
-        if self.ipv4_addr == "":
-            return ""
-        retval = self.re_match_iter_typed(
-            r"^\s*standby\s+(\d+\s+)*ip\s+\S+\s+(\S+)\s*$",
-            group=2,
-            result_type=str,
-            default="",
-        )
-        return retval
-
-    # This method is on BaseIOSXRIntfLine()
-    @property
-    @logger.catch(reraise=True)
-    def hsrp_group(self):
-        ## For API simplicity, I always assume there is only one hsrp
-        ##     group on the interface
-        retval = self.re_match_iter_typed(
-            r"^\s*standby\s+(\d+)\s+ip\s+\S+", result_type=int, default=-1
-        )
-        return retval
+    def hsrp_ip_addr_secondary(self) -> Dict[int,str]:
+        """
+        :return: A dict keyed by integer HSRP group number with a comma-separated string secondary ipv4 address, default to an empty dict
+        :rtype: Dict[int,str]
+        """
+        raise NotImplementedError()
 
     # This method is on BaseIOSXRIntfLine()
     @property
@@ -1761,81 +1705,25 @@ class BaseIOSXRIntfLine(IOSXRCfgLine):
     @property
     @logger.catch(reraise=True)
     def hsrp_hello_timer(self):
-        ## For API simplicity, I always assume there is only one hsrp
-        ##     group on the interface
-
-        # FIXME: handle msec timers...
-        retval = self.re_match_iter_typed(
-            r"^\s*standby\s+(\d+\s+)*timers\s+(\d+)\s+\d+",
-            group=2,
-            result_type=float,
-            default=0.0,
-        )
-        return retval
+        raise NotImplementedError()
 
     # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def hsrp_hold_timer(self):
-        ## For API simplicity, I always assume there is only one hsrp
-        ##     group on the interface
-
-        # FIXME: this should be a float (in case of msec timers)
-        retval = self.re_match_iter_typed(
-            r"^\s*standby\s+(\d+\s+)*timers\s+\d+\s+(\d+)",
-            group=2,
-            result_type=float,
-            default=0.0,
-        )
-        return retval
+        raise NotImplementedError()
 
     # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
-    def has_hsrp_track(self):
-        return bool(self.hsrp_track)
+    def hsrp_usebia(self):
+        raise NotImplementedError()
 
     # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
-    def hsrp_track(self):
-        ## For API simplicity, I always assume there is only one hsrp
-        ##     group on the interface
-        retval = self.re_match_iter_typed(
-            r"^\s*standby\s+(\d+\s+)*track\s(\S+.+?)\s+\d+\s*",
-            group=2,
-            result_type=str,
-            default="",
-        )
-        return retval
-
-    # This method is on BaseIOSXRIntfLine()
-    @property
-    @logger.catch(reraise=True)
-    def has_hsrp_usebia(self):
-        ## For API simplicity, I always assume there is only one hsrp
-        ##     group on the interface
-        retval = self.re_match_iter_typed(
-            r"^\s*standby\s+(\d+\s+)*(use-bia)",
-            group=2,
-            result_type=bool,
-            default=False,
-        )
-        return retval
-
-    # This method is on BaseIOSXRIntfLine()
-    @property
-    @logger.catch(reraise=True)
-    def has_hsrp_preempt(self):
-        ## For API simplicity, I always assume there is only one hsrp
-        ##     group on the interface
-        retval = self.re_match_iter_typed(
-            r"^\s*standby\s+(\d+\s+)*(use-bia)",
-            group=2,
-            result_type=bool,
-            default=False,
-        )
-        return retval
+    def hsrp_preempt(self):
+        raise NotImplementedError()
 
     # This method is on BaseIOSXRIntfLine()
     @property
@@ -1851,36 +1739,7 @@ class BaseIOSXRIntfLine(IOSXRCfgLine):
         )
         return retval
 
-    # This method is on BaseIOSXRIntfLine()
-    @property
-    @logger.catch(reraise=True)
-    def has_hsrp_authentication_md5(self):
-        keychain = self.hsrp_authentication_md5_keychain
-        return bool(keychain)
-
-    # This method is on BaseIOSXRIntfLine()
-    @property
-    @logger.catch(reraise=True)
-    def hsrp_authentication_cleartext(self):
-        pass
-
     ##-------------  MAC ACLs
-
-    # This method is on BaseIOSXRIntfLine()
-    @property
-    @logger.catch(reraise=True)
-    def has_mac_accessgroup_in(self):
-        if not self.is_switchport:
-            return False
-        return bool(self.mac_accessgroup_in)
-
-    # This method is on BaseIOSXRIntfLine()
-    @property
-    @logger.catch(reraise=True)
-    def has_mac_accessgroup_out(self):
-        if not self.is_switchport:
-            return False
-        return bool(self.mac_accessgroup_out)
 
     # This method is on BaseIOSXRIntfLine()
     @property
@@ -1901,30 +1760,6 @@ class BaseIOSXRIntfLine(IOSXRCfgLine):
         return retval
 
     ##-------------  IPv4 ACLs
-
-    # This method is on BaseIOSXRIntfLine()
-    @property
-    @logger.catch(reraise=True)
-    def has_ip_accessgroup_in(self):
-        return bool(self.ipv4_accessgroup_in)
-
-    # This method is on BaseIOSXRIntfLine()
-    @property
-    @logger.catch(reraise=True)
-    def has_ip_accessgroup_out(self):
-        return bool(self.ipv4_accessgroup_out)
-
-    # This method is on BaseIOSXRIntfLine()
-    @property
-    @logger.catch(reraise=True)
-    def has_ipv4_accessgroup_in(self):
-        return bool(self.ipv4_accessgroup_in)
-
-    # This method is on BaseIOSXRIntfLine()
-    @property
-    @logger.catch(reraise=True)
-    def has_ipv4_accessgroup_out(self):
-        return bool(self.ipv4_accessgroup_out)
 
     # This method is on BaseIOSXRIntfLine()
     @property

@@ -33,7 +33,7 @@
 #pragma warning disable S5852
 #pragma warning disable S6395
 
-from typing import Optional, Any, Union
+from typing import Optional, Callable, Any, Union, List
 from operator import attrgetter
 from functools import wraps
 import subprocess
@@ -2773,24 +2773,26 @@ def check_valid_ipaddress(input_addr=None):
     return (input_addr, ipaddr_family)
 
 
+@attrs.define(repr=False)
 class CiscoIOSInterface(object):
-    interface_name = None
-    interface_dict = None
-    debug = None
-    initialized = False
-    _list = []
-    _prefix = None
-    _digit_separator = None
-    _slot = None
-    _card = None
-    _port = None
-    _subinterface = None
-    _channel = None
-    _interface_class = None
+    interface_name: str = None
+    interface_dict: dict = None
+    debug: bool = None
+    initialized: bool = False
+    _list: List = []
+    _prefix: str = None
+    _digit_separator: str = None
+    _number: str = None
+    _slot: str = None
+    _card: str = None
+    _port: str = None
+    _subinterface: str = None
+    _channel: str = None
+    _interface_class: str = None
 
     # This method is on CiscoIOSInterface()
     @logger.catch(reraise=True)
-    def __init__(self, interface_name=None, interface_dict=None, debug=False):
+    def __init__(self, interface_name: str=None, interface_dict: dict=None, debug: bool=False):
         """
         Parse a string `interface_name` like "Serial4/1/2.9:5 point-to-point", (containing slot, card, port, subinterface, channel, and interface_class) into its typical Cisco IOS components:
         - prefix: 'Serial'
@@ -2804,6 +2806,19 @@ class CiscoIOSInterface(object):
 
         When comparing two CiscoIOSInterface() instances, the most explicit comparison is with `CiscoIOSInterface().sort_list`
         """
+        self.debug = debug
+        self.initialized = False
+        self._list = None
+        self._prefix = None
+        self._digit_separator = None
+        self._number = None
+        self._slot = None
+        self._card = None
+        self._port = None
+        self._subinterface = None
+        self._channel = None
+        self._interface_class = None
+
         if isinstance(interface_name, str):
             if debug is True:
                 logger.info(f"CiscoIOSInterface(interface_name='{interface_name}') was called")
@@ -3386,7 +3401,7 @@ class CiscoIOSInterface(object):
     # This method is on CiscoIOSInterface()
     @property
     @logger.catch(reraise=True)
-    def number(self):
+    def number(self) -> str:
         "Return '2/1/8' if self.interface_name is 'Serial 2/1/8.3:6'"
 
         if self.initialized is True:
@@ -3417,7 +3432,7 @@ class CiscoIOSInterface(object):
     # This method is on CiscoIOSInterface()
     @number.setter
     @logger.catch(reraise=True)
-    def number(self, value):
+    def number(self, value: str):
         self._number = value
 
     # This method is on CiscoIOSInterface()
@@ -3637,29 +3652,31 @@ class CiscoIOSInterface(object):
             raise ValueError(error)
 
 
+@attrs.define(repr=False)
 class CiscoIOSXRInterface(object):
     ##########################################################################
     ### FIXME CiscoIOSXRInterface() is fundamentally broken.
     ###       this is a placeholder until we fix CiscoIOSXRInterface
     ##########################################################################
-    interface_name = None
-    interface_dict = None
-    debug = None
-    initialized = False
-    _list = []
-    _prefix = None
-    _digit_separator = None
-    _slot = None
-    _card = None
-    _processor = None
-    _port = None
-    _subinterface = None
-    _channel = None
-    _interface_class = None
+    interface_name: str = None
+    interface_dict: dict = None
+    debug: bool = None
+    initialized: bool = False
+    _list: List = []
+    _prefix: str = None
+    _digit_separator: str = None
+    _number: str = None
+    _slot: str = None
+    _card: str = None
+    _processor: str = None
+    _port: str = None
+    _subinterface: str = None
+    _channel: str = None
+    _interface_class: str = None
 
     # This method is on CiscoIOSXRInterface()
     @logger.catch(reraise=True)
-    def __init__(self, interface_name=None, interface_dict=None, debug=False):
+    def __init__(self, interface_name: str=None, interface_dict: dict=None, debug: bool=False):
         """
         Parse a string `interface_name` like "Serial4/1/2.9:5 point-to-point", (containing slot, card, port, subinterface, channel, and interface_class) into its typical Cisco IOS components:
         - prefix: 'Serial'
@@ -3673,6 +3690,20 @@ class CiscoIOSXRInterface(object):
 
         When comparing two CiscoIOSXRInterface() instances, the most explicit comparison is with `CiscoIOSXRInterface().sort_list`
         """
+        self.debug = debug
+        self.initialized = False
+        self._list = None
+        self._prefix = None
+        self._digit_separator = None
+        self._number = None
+        self._slot = None
+        self._card = None
+        self._processor = None
+        self._port = None
+        self._subinterface = None
+        self._channel = None
+        self._interface_class = None
+
         if isinstance(interface_name, str):
             if debug is True:
                 logger.info(f"CiscoIOSXRInterface(interface_name='{interface_name}') was called")
@@ -4270,7 +4301,7 @@ class CiscoIOSXRInterface(object):
     # This method is on CiscoIOSXRInterface()
     @property
     @logger.catch(reraise=True)
-    def number(self):
+    def number(self) -> str:
         "Return '2/1/8' if self.interface_name is 'Serial 2/1/8.3:6'"
 
         if self.initialized is True:
@@ -4301,7 +4332,7 @@ class CiscoIOSXRInterface(object):
     # This method is on CiscoIOSXRInterface()
     @number.setter
     @logger.catch(reraise=True)
-    def number(self, value):
+    def number(self, value: str):
         self._number = value
 
     # This method is on CiscoIOSXRInterface()
@@ -4544,16 +4575,18 @@ class CiscoIOSXRInterface(object):
             raise ValueError(error)
 
 
+@attrs.define(repr=False)
 class CiscoRange(UserList):
     # Set up default attributes on the object...
-    text = None
-    result_type = None
-    default_iter_attr = None
-    reverse = None
-    begin_obj = None
-    this_obj = None
-    iterate_attribute = None
-    range_str = None
+    data: Any = None
+    text: str = None
+    result_type: Callable = None
+    default_iter_attr: str = None
+    reverse: bool = None
+    begin_obj: Union[CiscoIOSInterface,CiscoIOSXRInterface] = None
+    this_obj: Union[CiscoIOSInterface,CiscoIOSXRInterface] = None
+    iterate_attribute: int = None
+    range_str: str = None
     """Explode Cisco ranges into a list of explicit items... examples below...
 
     Examples
@@ -4580,7 +4613,10 @@ class CiscoRange(UserList):
     # This method is on CiscoRange()
     @logger.catch(reraise=True)
     def __init__(self, text="", result_type=str, empty=False, default_iter_attr='port', reverse=False, debug=False):
-        super().__init__()
+        # Use this with UserList() instead of super()
+        UserList.__init__(self)
+
+        self.data = None
 
         # Build an empty CiscoRange() in this case...
         if text == "":

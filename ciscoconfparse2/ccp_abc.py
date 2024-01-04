@@ -341,18 +341,6 @@ class BaseCfgLine(object):
             raise NotImplementedError(error)
 
     # On BaseCfgLine()
-    @logger.catch(reraise=True)
-    def reset(self):
-        # For subclass APIs such as models_cisco, models_nxos, etc...
-        raise NotImplementedError
-
-    # On BaseCfgLine()
-    @logger.catch(reraise=True)
-    def build_reset_string(self):
-        # For subclass APIs such as models_cisco, models_nxos, etc...
-        raise NotImplementedError
-
-    # On BaseCfgLine()
     @property
     @logger.catch(reraise=True)
     def is_intf(self):

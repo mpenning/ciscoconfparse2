@@ -4,6 +4,16 @@
 - Summary:
     - Insert something here
 
+## Version: 0.3.4
+
+- Released: 2024-01-03
+- Summary:
+    - Remove all `reset()` and `build_reset_string()` methods
+    - Add `attrs` to `CiscoIOSInterface()` and `CiscoIOSXRInterface()`
+    - Upgrade from `attrs` version 23.1.0 to version 23.2.0.
+    - BREAKING CHANGE:  Multiple deletions / changes to factory processing.  Integer defaults were changed from 0 to -1.  Float defaults were changed from 0.0 to -1.0.
+    - More documentation updates
+
 ## Version: 0.3.3
 
 - Released: 2023-12-21

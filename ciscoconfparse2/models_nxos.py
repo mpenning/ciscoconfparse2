@@ -26,6 +26,7 @@
 ###
 ###   You have been warned :-)
 
+from typing import Any, Union, Dict, List
 import re
 
 from loguru import logger
@@ -270,7 +271,7 @@ class NXOSCfgLine(BaseCfgLine):
         return False
 
     @property
-    def intf_in_portchannel(self):
+    def is_in_portchannel(self):
         """Return a boolean indicating whether this port is configured in a port-channel
 
         """
@@ -356,14 +357,6 @@ class BaseNXOSIntfLine(NXOSCfgLine):
                 )
         return retval
 
-    def reset(self, commit=True):
-        # Insert build_reset_string() before this line...
-        self.insert_before(self.build_reset_string(), commit=commit)
-
-    def build_reset_string(self):
-        # IOS interfaces are defaulted like this...
-        return "default " + self.text
-
     @property
     def verbose(self):
         if not self.is_switchport:
@@ -407,7 +400,7 @@ class BaseNXOSIntfLine(NXOSCfgLine):
     _INTF_NAME_REGEX = re.compile(_INTF_NAME_RE_STR)
 
     @property
-    def interface_object(self):
+    def cisco_interface_object(self):
         """Return a CiscoIOSInterface() instance for this interface
 
         Returns
@@ -762,12 +755,6 @@ class BaseNXOSIntfLine(NXOSCfgLine):
 
     @property
     @logger.catch(reraise=True)
-    def has_no_ipv4(self):
-        r"""Return an ccp_util.IPv4Obj object representing the subnet on this interface; if there is no address, return ccp_util.IPv4Obj('0.0.0.1/32')"""
-        return self.ip_network_object == IPv4Obj("0.0.0.1/32")
-
-    @property
-    @logger.catch(reraise=True)
     def ip(self):
         r"""Return an ccp_util.IPv4Obj object representing the subnet on this interface; if there is no address, return ccp_util.IPv4Obj('0.0.0.1/32')"""
         return self.ipv4_addr_object
@@ -807,25 +794,6 @@ class BaseNXOSIntfLine(NXOSCfgLine):
             return True
         else:
             raise ValueError
-
-    @property
-    def has_manual_speed(self):
-        retval = self.re_match_iter_typed(
-            r"^\s*speed\s+(\d+)$", result_type=bool, default=False
-        )
-        return retval
-
-    @property
-    def has_manual_duplex(self):
-        retval = self.re_match_iter_typed(
-            r"^\s*duplex\s+(\S.+)$", result_type=bool, default=False
-        )
-        return retval
-
-    @property
-    def has_manual_carrierdelay(self):
-        """Return a python boolean for whether carrier delay is manually configured on the interface"""
-        return bool(self.manual_carrierdelay)
 
     @property
     def manual_carrierdelay(self):
@@ -1181,15 +1149,18 @@ class BaseNXOSIntfLine(NXOSCfgLine):
         return retval
 
     @property
-    def manual_arp_timeout(self):
-        r"""Return an integer with the current interface ARP timeout, if there isn't one set, return 0.  If there is no IP address, return -1"""
+    def manual_arp_timeout(self) -> int:
+        r"""
+        :return: An integer with the manual ARP timeout, default to 0
+        :rtype: int
+        """
         ## NOTE: I have no intention of checking self.is_shutdown here
         ##     People should be able to check the sanity of interfaces
         ##     before they put them into production
 
         ## Interface must have an IP addr to respond
         if self.ipv4_addr == "":
-            return -1
+            return 0
 
         ## By default, Cisco IOS defaults to 4 hour arp timers
         ## By default, Nexus defaults to 15 minute arp timers
@@ -1373,7 +1344,8 @@ class BaseNXOSIntfLine(NXOSCfgLine):
         if self.is_switchport and not self.has_manual_switch_access:
             retval = CiscoRange("1-{}".format(MAX_VLAN), result_type=int)
         else:
-            return 0
+            # Return an empty CiscoRange()
+            return CiscoRange(result_type=int)
 
         ## Iterate over switchport trunk statements
         for obj in self.children:
@@ -1474,54 +1446,39 @@ class BaseNXOSIntfLine(NXOSCfgLine):
         return bool(self.hsrp_ip_addr)
 
     @property
-    def hsrp_ip_addr(self):
+    def hsrp_ip_addr(self) -> Dict[int,str]:
+        """
+        :return: A dict keyed by integer HSRP group number with a string ipv4 address, default to an empty dict
+        :rtype: Dict[int,str]
+        """
         ## NOTE: I have no intention of checking self.is_shutdown here
         ##     People should be able to check the sanity of interfaces
         ##     before they put them into production
-        retval = ""
 
         ## For API simplicity, I always assume there is only one hsrp
         ##     group on the interface
+        retval = dict()
         if self.ipv4_addr == "":
-            return ""
+            return retval
 
-        for hsrpobj in self.children:
-            if hsrpobj.re_match_typed(r"^\s+hsrp\s+(\d+)"):
-                for child in hsrpobj.children:
-                    retval = child.re_match_typed(r"^\s+ip\s+(\S+)")
-                    if retval:
-                        return retval
+        for cmd in self.all_children:
+            parts = cmd.splilt()
+            if cmd[0] == "standby" and cmd[2] == "ip":
+                hsrp_group = int(cmd[1])
+                hsrp_addr = cmd[2]
+                retval[hsrp_group] = hsrp_addr
+
         return retval
 
+    # This method is on BaseFactoryInterfaceLine()
     @property
-    def hsrp_ip_mask(self):
-        ## NOTE: I have no intention of checking self.is_shutdown here
-        ##     People should be able to check the sanity of interfaces
-        ##     before they put them into production
-        retval = ""
-
-        ## For API simplicity, I always assume there is only one hsrp
-        ##     group on the interface
-        if self.ipv4_addr == "":
-            return ""
-        retval = self.re_match_iter_typed(
-            r"^\s*standby\s+(\d+\s+)*ip\s+\S+\s+(\S+)\s*$",
-            group=2,
-            result_type=str,
-            default="",
-        )
-        return retval
-
-    @property
-    def hsrp_group(self):
-        ## For API simplicity, I always assume there is only one hsrp
-        ##     group on the interface
-        retval = ""
-        for hsrpobj in self.children:
-            retval = hsrpobj.re_match_typed(r"^\s+hsrp\s+(\d+)")
-            if retval:
-                return retval
-        return retval
+    @logger.catch(reraise=True)
+    def hsrp_ip_addr_secondary(self) -> Dict[int,str]:
+        """
+        :return: A dict keyed by integer HSRP group number with a comma-separated string secondary ipv4 address, default to an empty dict
+        :rtype: Dict[int,str]
+        """
+        raise NotImplementedError()
 
     @property
     def hsrp_priority(self):
@@ -1587,41 +1544,12 @@ class BaseNXOSIntfLine(NXOSCfgLine):
         return retval
 
     @property
-    def has_hsrp_track(self):
-        return bool(self.hsrp_track)
+    def hsrp_usebia(self):
+        raise NotImplementedError()
 
     @property
-    def hsrp_track(self):
-        ## For API simplicity, I always assume there is only one hsrp
-        ##     group on the interface
-        retval = ""
-        for hsrpobj in self.children:
-            if hsrpobj.re_match_typed(r"^\s+hsrp\s+(\d+)"):
-                retval = hsrpobj.re_match_iter_typed(
-                    r"^\s+track\s+(\d+)", result_type=str, default=""
-                )
-        return retval
-
-    @property
-    def has_hsrp_usebia(self):
-        ## For API simplicity, I always assume there is only one hsrp
-        ##     group on the interface
-        retval = self.re_match_iter_typed(
-            r"^\s*hsrp\s+(use-bia)", group=1, result_type=bool, default=False
-        )
-        return retval
-
-    @property
-    def has_hsrp_preempt(self):
-        ## For API simplicity, I always assume there is only one hsrp
-        ##     group on the interface
-        retval = False
-        for hsrpobj in self.children:
-            if hsrpobj.re_match_typed(r"^\s+hsrp\s+(\d+)"):
-                retval = hsrpobj.re_match_iter_typed(
-                    r"^\s+(preempt)", group=1, result_type=bool, default=False
-                )
-        return retval
+    def hsrp_preempt(self):
+        raise NotImplementedError()
 
     @property
     def hsrp_authentication_md5_keychain(self):
@@ -1636,29 +1564,7 @@ class BaseNXOSIntfLine(NXOSCfgLine):
         )
         return retval
 
-    @property
-    def has_hsrp_authentication_md5(self):
-        ## FIXME nxos
-        keychain = self.hsrp_authentication_md5_keychain
-        return bool(keychain)
-
-    @property
-    def hsrp_authentication_cleartext(self):
-        pass
-
     ##-------------  MAC ACLs
-
-    @property
-    def has_mac_accessgroup_in(self):
-        if not self.is_switchport:
-            return False
-        return bool(self.mac_accessgroup_in)
-
-    @property
-    def has_mac_accessgroup_out(self):
-        if not self.is_switchport:
-            return False
-        return bool(self.mac_accessgroup_out)
 
     @property
     def mac_accessgroup_in(self):
@@ -1675,22 +1581,6 @@ class BaseNXOSIntfLine(NXOSCfgLine):
         return retval
 
     ##-------------  IPv4 ACLs
-
-    @property
-    def has_ip_accessgroup_in(self):
-        return bool(self.ipv4_accessgroup_in)
-
-    @property
-    def has_ip_accessgroup_out(self):
-        return bool(self.ipv4_accessgroup_out)
-
-    @property
-    def has_ipv4_accessgroup_in(self):
-        return bool(self.ipv4_accessgroup_in)
-
-    @property
-    def has_ipv4_accessgroup_out(self):
-        return bool(self.ipv4_accessgroup_out)
 
     @property
     def ip_accessgroup_in(self):
@@ -2064,14 +1954,6 @@ class NXOSAccessLine(BaseCfgLine):
         if re.search(r"\d+", retval):
             return ""
         return retval
-
-    def reset(self, commit=True):
-        # Insert build_reset_string() before this line...
-        self.insert_before(self.build_reset_string(), commit=commit)
-
-    def build_reset_string(self):
-        # IOS interfaces are defaulted like this...
-        return "default " + self.text
 
     @property
     def range_str(self):

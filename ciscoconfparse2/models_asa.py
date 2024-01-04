@@ -206,16 +206,6 @@ class BaseASAIntfLine(ASACfgLine):
         else:
             return f"<{self.classname} # {self.linenum} '{self.text.strip()}' info: 'switchport'>"
 
-    @logger.catch(reraise=True)
-    def reset(self, commit=True):
-        # Insert build_reset_string() before this line...
-        self.insert_before(self.build_reset_string(), commit=commit)
-
-    @logger.catch(reraise=True)
-    def build_reset_string(self):
-        # ASA interfaces are defaulted like this...
-        raise NotImplementedError
-
     @property
     @logger.catch(reraise=True)
     def verbose(self):
@@ -308,9 +298,9 @@ class BaseASAIntfLine(ASACfgLine):
     # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
-    def has_no_ipv4(self):
+    def has_ipv4(self):
         r"""Return an ccp_util.IPv4Obj object representing the subnet on this interface; if there is no address, return ccp_util.IPv4Obj()"""
-        return self.ipv4_addr_object == IPv4Obj()
+        return self.ipv4_addr_object != IPv4Obj()
 
     # This method is on BaseIOSIntfLine()
     @property

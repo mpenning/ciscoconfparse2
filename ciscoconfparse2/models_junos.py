@@ -460,18 +460,6 @@ class BaseJunosIntfLine(JunosCfgLine):
             return False
 
     # This method is on BaseJunosIntfLine()
-    @logger.catch(reraise=True)
-    def reset(self, commit=True):
-        # Insert build_reset_string() before this line...
-        self.insert_before(self.build_reset_string(), commit=commit)
-
-    # This method is on BaseJunosIntfLine()
-    @logger.catch(reraise=True)
-    def build_reset_string(self):
-        # Junos interfaces are defaulted like this...
-        return "default " + self.text
-
-    # This method is on BaseJunosIntfLine()
     @property
     @logger.catch(reraise=True)
     def ipv4_addr_object(self):

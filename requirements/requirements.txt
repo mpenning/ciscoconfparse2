@@ -1,6 +1,6 @@
 # Ensure wheel is upgraded to fix CVE-2022-40898
 #     Also ref ciscoconfparse Github Issue #257
-attrs == 23.1.0
+attrs == 23.2.0
 loguru == 0.7.2
 passlib == 1.7.4
 tomlkit == 0.12.3

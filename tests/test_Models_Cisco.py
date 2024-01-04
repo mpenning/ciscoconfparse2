@@ -195,9 +195,9 @@ def testVal_IOSIntfLine_name():
 def testVal_IOSIntfLine_intf_in_portchannel01(parse_c01_factory):
     cfg = parse_c01_factory
     for intf_obj in cfg.find_objects(r"^interface\sGigabitEthernet4\/1$"):
-        assert intf_obj.intf_in_portchannel is False
+        assert intf_obj.is_in_portchannel is False
     for intf_obj in cfg.find_objects(r"^interface\sGigabitEthernet4\/4$"):
-        assert intf_obj.intf_in_portchannel is False
+        assert intf_obj.is_in_portchannel is False
 
 
 def testVal_IOSIntfLine_in_portchannel02():
@@ -211,7 +211,7 @@ def testVal_IOSIntfLine_in_portchannel02():
     ]
     cfg = CiscoConfParse(lines, factory=True)
     intf_obj = cfg.find_objects("^interface")[0]
-    assert intf_obj.intf_in_portchannel is True
+    assert intf_obj.is_in_portchannel is True
 
 
 def testVal_IOSIntfLine_portchannel_number_01():
@@ -256,7 +256,7 @@ def testVal_IOSIntfLine_access_vlan(parse_c01_factory):
     for intf_obj in cfg.find_objects(r"^interface\sGigabitEthernet4\/8$"):
         assert intf_obj.access_vlan == 110
     for intf_obj in cfg.find_objects(r"^interface\sGigabitEthernet4\/4$"):
-        assert intf_obj.access_vlan == 0
+        assert intf_obj.access_vlan == -1
 
 
 def testVal_IOSIntfLine_native_vlan(parse_c01_factory):
@@ -916,18 +916,18 @@ def testVal_IOSIntfLine_manual_bandwidth(parse_c03_factory):
     cfg = parse_c03_factory
     result_correct = {
         "interface Serial 1/0": 1500,
-        "interface Serial 1/1": 0,
-        "interface GigabitEthernet4/1": 0,
-        "interface GigabitEthernet4/2": 0,
-        "interface GigabitEthernet4/3": 0,
-        "interface GigabitEthernet4/4": 0,
-        "interface GigabitEthernet4/5": 0,
-        "interface GigabitEthernet4/6": 0,
-        "interface GigabitEthernet4/7": 0,
-        "interface GigabitEthernet4/8.120": 0,
-        "interface ATM5/0/0": 0,
-        "interface ATM5/0/0.32 point-to-point": 0,
-        "interface ATM5/0/1": 0,
+        "interface Serial 1/1": -1,
+        "interface GigabitEthernet4/1": -1,
+        "interface GigabitEthernet4/2": -1,
+        "interface GigabitEthernet4/3": -1,
+        "interface GigabitEthernet4/4": -1,
+        "interface GigabitEthernet4/5": -1,
+        "interface GigabitEthernet4/6": -1,
+        "interface GigabitEthernet4/7": -1,
+        "interface GigabitEthernet4/8.120": -1,
+        "interface ATM5/0/0": -1,
+        "interface ATM5/0/0.32 point-to-point": -1,
+        "interface ATM5/0/1": -1,
     }
     test_result = dict()
     ## Parse all interface objects in self.c01 and check bandwidth
@@ -940,18 +940,18 @@ def testVal_IOSIntfLine_manual_delay(parse_c03_factory):
     cfg = parse_c03_factory
     result_correct = {
         "interface Serial 1/0": 70,
-        "interface Serial 1/1": 0,
-        "interface GigabitEthernet4/1": 0,
-        "interface GigabitEthernet4/2": 0,
-        "interface GigabitEthernet4/3": 0,
-        "interface GigabitEthernet4/4": 0,
-        "interface GigabitEthernet4/5": 0,
-        "interface GigabitEthernet4/6": 0,
-        "interface GigabitEthernet4/7": 0,
-        "interface GigabitEthernet4/8.120": 0,
-        "interface ATM5/0/0": 0,
-        "interface ATM5/0/0.32 point-to-point": 0,
-        "interface ATM5/0/1": 0,
+        "interface Serial 1/1": -1,
+        "interface GigabitEthernet4/1": -1,
+        "interface GigabitEthernet4/2": -1,
+        "interface GigabitEthernet4/3": -1,
+        "interface GigabitEthernet4/4": -1,
+        "interface GigabitEthernet4/5": -1,
+        "interface GigabitEthernet4/6": -1,
+        "interface GigabitEthernet4/7": -1,
+        "interface GigabitEthernet4/8.120": -1,
+        "interface ATM5/0/0": -1,
+        "interface ATM5/0/0.32 point-to-point": -1,
+        "interface ATM5/0/1": -1,
     }
     test_result = dict()
     ## Parse all interface objects in c01 and check delay
@@ -963,19 +963,19 @@ def testVal_IOSIntfLine_manual_delay(parse_c03_factory):
 def testVal_IOSIntfLine_manual_holdqueue_in(parse_c03_factory):
     cfg = parse_c03_factory
     result_correct = {
-        "interface Serial 1/0": 0,
+        "interface Serial 1/0": -1,
         "interface Serial 1/1": 1000,
-        "interface GigabitEthernet4/1": 0,
-        "interface GigabitEthernet4/2": 0,
-        "interface GigabitEthernet4/3": 0,
-        "interface GigabitEthernet4/4": 0,
-        "interface GigabitEthernet4/5": 0,
-        "interface GigabitEthernet4/6": 0,
-        "interface GigabitEthernet4/7": 0,
-        "interface GigabitEthernet4/8.120": 0,
+        "interface GigabitEthernet4/1": -1,
+        "interface GigabitEthernet4/2": -1,
+        "interface GigabitEthernet4/3": -1,
+        "interface GigabitEthernet4/4": -1,
+        "interface GigabitEthernet4/5": -1,
+        "interface GigabitEthernet4/6": -1,
+        "interface GigabitEthernet4/7": -1,
+        "interface GigabitEthernet4/8.120": -1,
         "interface ATM5/0/0": 500,
-        "interface ATM5/0/0.32 point-to-point": 0,
-        "interface ATM5/0/1": 0,
+        "interface ATM5/0/0.32 point-to-point": -1,
+        "interface ATM5/0/1": -1,
     }
     test_result = dict()
     ## Parse all interface objects in c01 and check holdqueue in
@@ -987,19 +987,19 @@ def testVal_IOSIntfLine_manual_holdqueue_in(parse_c03_factory):
 def testVal_IOSIntfLine_manual_holdqueue_out(parse_c03_factory):
     cfg = parse_c03_factory
     result_correct = {
-        "interface Serial 1/0": 0,
+        "interface Serial 1/0": -1,
         "interface Serial 1/1": 1000,
-        "interface GigabitEthernet4/1": 0,
-        "interface GigabitEthernet4/2": 0,
-        "interface GigabitEthernet4/3": 0,
-        "interface GigabitEthernet4/4": 0,
-        "interface GigabitEthernet4/5": 0,
-        "interface GigabitEthernet4/6": 0,
-        "interface GigabitEthernet4/7": 0,
-        "interface GigabitEthernet4/8.120": 0,
-        "interface ATM5/0/0": 0,
-        "interface ATM5/0/0.32 point-to-point": 0,
-        "interface ATM5/0/1": 0,
+        "interface GigabitEthernet4/1": -1,
+        "interface GigabitEthernet4/2": -1,
+        "interface GigabitEthernet4/3": -1,
+        "interface GigabitEthernet4/4": -1,
+        "interface GigabitEthernet4/5": -1,
+        "interface GigabitEthernet4/6": -1,
+        "interface GigabitEthernet4/7": -1,
+        "interface GigabitEthernet4/8.120": -1,
+        "interface ATM5/0/0": -1,
+        "interface ATM5/0/0.32 point-to-point": -1,
+        "interface ATM5/0/1": -1,
     }
     test_result = dict()
     ## Parse all interface objects in c01 and check holdqueue out
@@ -1135,7 +1135,7 @@ def testVal_IOSIntfLine_has_autonegotiation(parse_c03_factory):
     assert test_result == result_correct
 
 
-def testVal_IOSIntfLine_has_manual_speed(parse_c03_factory):
+def testVal_IOSIntfLine_manual_speed(parse_c03_factory):
     cfg = parse_c03_factory
     result_correct = {
         "interface Serial 1/0": False,
@@ -1153,13 +1153,13 @@ def testVal_IOSIntfLine_has_manual_speed(parse_c03_factory):
         "interface ATM5/0/1": False,
     }
     test_result = dict()
-    ## Parse all interface objects in c01 and check has_manual_speed
+    ## Parse all interface objects in c01 and check manual_speed
     for intf_obj in cfg.find_objects("^interface"):
-        test_result[intf_obj.text] = intf_obj.has_manual_speed
+        test_result[intf_obj.text] = intf_obj.manual_speed > -1
     assert test_result == result_correct
 
 
-def testVal_IOSIntfLine_has_manual_duplex(parse_c03_factory):
+def testVal_IOSIntfLine_manual_duplex(parse_c03_factory):
     cfg = parse_c03_factory
     result_correct = {
         "interface Serial 1/0": False,
@@ -1177,13 +1177,13 @@ def testVal_IOSIntfLine_has_manual_duplex(parse_c03_factory):
         "interface ATM5/0/1": False,
     }
     test_result = dict()
-    ## Parse all interface objects in c01 and check has_manual_duplex
+    ## Parse all interface objects in c01 and check manual_duplex
     for intf_obj in cfg.find_objects("^interface"):
-        test_result[intf_obj.text] = intf_obj.has_manual_duplex
+        test_result[intf_obj.text] = bool(intf_obj.manual_duplex)
     assert test_result == result_correct
 
 
-def testVal_IOSIntfLine_has_manual_carrierdelay(parse_c03_factory):
+def testVal_IOSIntfLine_manual_carrierdelay(parse_c03_factory):
     cfg = parse_c03_factory
     result_correct = {
         "interface Serial 1/0": False,
@@ -1201,28 +1201,28 @@ def testVal_IOSIntfLine_has_manual_carrierdelay(parse_c03_factory):
         "interface ATM5/0/1": False,
     }
     test_result = dict()
-    ## Parse all interface objects in self.c01 and check has_manual_carrierdelay
+    ## Parse all interface objects in self.c01 and check manual_carrierdelay
     for intf_obj in cfg.find_objects("^interface"):
-        test_result[intf_obj.text] = intf_obj.has_manual_carrierdelay
+        test_result[intf_obj.text] = bool(intf_obj.manual_carrierdelay)
     assert test_result == result_correct
 
 
 def testVal_IOSIntfLine_manual_carrierdelay(parse_c03_factory):
     cfg = parse_c03_factory
     result_correct = {
-        "interface Serial 1/0": 0.0,
-        "interface Serial 1/1": 0.0,
-        "interface GigabitEthernet4/1": 0.0,
-        "interface GigabitEthernet4/2": 0.0,
-        "interface GigabitEthernet4/3": 0.0,
-        "interface GigabitEthernet4/4": 0.0,
-        "interface GigabitEthernet4/5": 0.0,
-        "interface GigabitEthernet4/6": 0.0,
-        "interface GigabitEthernet4/7": 0.0,
-        "interface GigabitEthernet4/8.120": 0.0,
+        "interface Serial 1/0": -1.0,
+        "interface Serial 1/1": -1.0,
+        "interface GigabitEthernet4/1": -1.0,
+        "interface GigabitEthernet4/2": -1.0,
+        "interface GigabitEthernet4/3": -1.0,
+        "interface GigabitEthernet4/4": -1.0,
+        "interface GigabitEthernet4/5": -1.0,
+        "interface GigabitEthernet4/6": -1.0,
+        "interface GigabitEthernet4/7": -1.0,
+        "interface GigabitEthernet4/8.120": -1.0,
         "interface ATM5/0/0": 0.1,
-        "interface ATM5/0/0.32 point-to-point": 0.0,
-        "interface ATM5/0/1": 0.0,
+        "interface ATM5/0/0.32 point-to-point": -1.0,
+        "interface ATM5/0/1": -1.0,
     }
     test_result = dict()
     ## Parse all interface objects in c01 and check manual_carrierdelay
@@ -1235,18 +1235,18 @@ def testVal_IOSIntfLine_manual_clock_rate(parse_c03_factory):
     cfg = parse_c03_factory
     result_correct = {
         "interface Serial 1/0": 1500,
-        "interface Serial 1/1": 0,
-        "interface GigabitEthernet4/1": 0,
-        "interface GigabitEthernet4/2": 0,
-        "interface GigabitEthernet4/3": 0,
-        "interface GigabitEthernet4/4": 0,
-        "interface GigabitEthernet4/5": 0,
-        "interface GigabitEthernet4/6": 0,
-        "interface GigabitEthernet4/7": 0,
-        "interface GigabitEthernet4/8.120": 0,
-        "interface ATM5/0/0": 0,
-        "interface ATM5/0/0.32 point-to-point": 0,
-        "interface ATM5/0/1": 0,
+        "interface Serial 1/1": -1,
+        "interface GigabitEthernet4/1": -1,
+        "interface GigabitEthernet4/2": -1,
+        "interface GigabitEthernet4/3": -1,
+        "interface GigabitEthernet4/4": -1,
+        "interface GigabitEthernet4/5": -1,
+        "interface GigabitEthernet4/6": -1,
+        "interface GigabitEthernet4/7": -1,
+        "interface GigabitEthernet4/8.120": -1,
+        "interface ATM5/0/0": -1,
+        "interface ATM5/0/0.32 point-to-point": -1,
+        "interface ATM5/0/1": -1,
     }
     test_result = dict()
     ## Parse all interface objects in self.c01 and check manual_clock_rate
@@ -1258,19 +1258,19 @@ def testVal_IOSIntfLine_manual_clock_rate(parse_c03_factory):
 def testVal_IOSIntfLine_manual_mtu(parse_c03_factory):
     cfg = parse_c03_factory
     result_correct = {
-        "interface Serial 1/0": 0,
-        "interface Serial 1/1": 0,
-        "interface GigabitEthernet4/1": 0,
-        "interface GigabitEthernet4/2": 0,
+        "interface Serial 1/0": -1,
+        "interface Serial 1/1": -1,
+        "interface GigabitEthernet4/1": -1,
+        "interface GigabitEthernet4/2": -1,
         "interface GigabitEthernet4/3": 9216,
-        "interface GigabitEthernet4/4": 0,
-        "interface GigabitEthernet4/5": 0,
-        "interface GigabitEthernet4/6": 0,
-        "interface GigabitEthernet4/7": 0,
-        "interface GigabitEthernet4/8.120": 0,
-        "interface ATM5/0/0": 0,
-        "interface ATM5/0/0.32 point-to-point": 0,
-        "interface ATM5/0/1": 0,
+        "interface GigabitEthernet4/4": -1,
+        "interface GigabitEthernet4/5": -1,
+        "interface GigabitEthernet4/6": -1,
+        "interface GigabitEthernet4/7": -1,
+        "interface GigabitEthernet4/8.120": -1,
+        "interface ATM5/0/0": -1,
+        "interface ATM5/0/0.32 point-to-point": -1,
+        "interface ATM5/0/1": -1,
     }
     test_result = dict()
     ## Parse all interface objects in c01 and check manual_mtu
@@ -1282,19 +1282,19 @@ def testVal_IOSIntfLine_manual_mtu(parse_c03_factory):
 def testVal_IOSIntfLine_manual_mpls_mtu(parse_c03_factory):
     cfg = parse_c03_factory
     result_correct = {
-        "interface Serial 1/0": 0,
+        "interface Serial 1/0": -1,
         "interface Serial 1/1": 1540,
-        "interface GigabitEthernet4/1": 0,
-        "interface GigabitEthernet4/2": 0,
-        "interface GigabitEthernet4/3": 0,
-        "interface GigabitEthernet4/4": 0,
-        "interface GigabitEthernet4/5": 0,
-        "interface GigabitEthernet4/6": 0,
-        "interface GigabitEthernet4/7": 0,
-        "interface GigabitEthernet4/8.120": 0,
-        "interface ATM5/0/0": 0,
-        "interface ATM5/0/0.32 point-to-point": 0,
-        "interface ATM5/0/1": 0,
+        "interface GigabitEthernet4/1": -1,
+        "interface GigabitEthernet4/2": -1,
+        "interface GigabitEthernet4/3": -1,
+        "interface GigabitEthernet4/4": -1,
+        "interface GigabitEthernet4/5": -1,
+        "interface GigabitEthernet4/6": -1,
+        "interface GigabitEthernet4/7": -1,
+        "interface GigabitEthernet4/8.120": -1,
+        "interface ATM5/0/0": -1,
+        "interface ATM5/0/0.32 point-to-point": -1,
+        "interface ATM5/0/1": -1,
     }
     test_result = dict()
     ## Parse all interface objects in c01 and check manual_mpls_mtu
@@ -1306,19 +1306,19 @@ def testVal_IOSIntfLine_manual_mpls_mtu(parse_c03_factory):
 def testVal_IOSIntfLine_manual_ip_mtu(parse_c03_factory):
     cfg = parse_c03_factory
     result_correct = {
-        "interface Serial 1/0": 0,
+        "interface Serial 1/0": -1,
         "interface Serial 1/1": 1500,
-        "interface GigabitEthernet4/1": 0,
-        "interface GigabitEthernet4/2": 0,
-        "interface GigabitEthernet4/3": 0,
-        "interface GigabitEthernet4/4": 0,
-        "interface GigabitEthernet4/5": 0,
-        "interface GigabitEthernet4/6": 0,
-        "interface GigabitEthernet4/7": 0,
-        "interface GigabitEthernet4/8.120": 0,
-        "interface ATM5/0/0": 0,
-        "interface ATM5/0/0.32 point-to-point": 0,
-        "interface ATM5/0/1": 0,
+        "interface GigabitEthernet4/1": -1,
+        "interface GigabitEthernet4/2": -1,
+        "interface GigabitEthernet4/3": -1,
+        "interface GigabitEthernet4/4": -1,
+        "interface GigabitEthernet4/5": -1,
+        "interface GigabitEthernet4/6": -1,
+        "interface GigabitEthernet4/7": -1,
+        "interface GigabitEthernet4/8.120": -1,
+        "interface ATM5/0/0": -1,
+        "interface ATM5/0/0.32 point-to-point": -1,
+        "interface ATM5/0/1": -1,
     }
     test_result = dict()
     ## Parse all interface objects in c01 and check manual_ip_mtu
@@ -1442,17 +1442,17 @@ def testVal_IOSIntfLine_ipv4_masklength(parse_c03_factory):
     result_correct = {
         "interface Serial 1/0": 30,
         "interface Serial 1/1": 31,
-        "interface GigabitEthernet4/1": 0,
-        "interface GigabitEthernet4/2": 0,
-        "interface GigabitEthernet4/3": 0,
-        "interface GigabitEthernet4/4": 0,
-        "interface GigabitEthernet4/5": 0,
-        "interface GigabitEthernet4/6": 0,
-        "interface GigabitEthernet4/7": 0,
+        "interface GigabitEthernet4/1": -1,
+        "interface GigabitEthernet4/2": -1,
+        "interface GigabitEthernet4/3": -1,
+        "interface GigabitEthernet4/4": -1,
+        "interface GigabitEthernet4/5": -1,
+        "interface GigabitEthernet4/6": -1,
+        "interface GigabitEthernet4/7": -1,
         "interface GigabitEthernet4/8.120": 24,
-        "interface ATM5/0/0": 0,
+        "interface ATM5/0/0": -1,
         "interface ATM5/0/0.32 point-to-point": 30,
-        "interface ATM5/0/1": 0,
+        "interface ATM5/0/1": -1,
     }
     test_result = dict()
     ## Parse all interface objects in c01 and check ipv4_masklength
@@ -1849,7 +1849,7 @@ interface Vlan21
 """
     cfg = CiscoConfParse(config.splitlines(), factory=True)
     intf_obj = cfg.find_objects("^interface")[0]
-    assert intf_obj.has_ip_secondary is True
+    assert bool(intf_obj.ip_secondary_addresses) is True
 
 
 def testVal_IOSIntfLine_ip_secondary02():
@@ -1864,7 +1864,7 @@ interface Vlan21
 """
     cfg = CiscoConfParse(config.splitlines(), factory=True)
     intf_obj = cfg.find_objects("^interface")[0]
-    assert intf_obj.has_ip_secondary is True
+    assert bool(intf_obj.ip_secondary_addresses) is True
 
 
 def testVal_IOSIntfLine_ip_secondary03():
@@ -1877,7 +1877,7 @@ interface Vlan21
 """
     cfg = CiscoConfParse(config.splitlines(), factory=True)
     intf_obj = cfg.find_objects("^interface")[0]
-    assert intf_obj.has_ip_secondary is False
+    assert bool(intf_obj.ip_secondary_addresses) is False
 
 
 ###
@@ -1894,9 +1894,9 @@ def testVal_IOSIPv4HelperAddress_01():
         " ip helper-address vrf FOO 10.1.1.3",
     ]
     result_correct = [
-        {"global": True, "addr": "10.1.1.1", "vrf": ""},
-        {"global": False, "addr": "10.1.1.2", "vrf": ""},
-        {"global": False, "addr": "10.1.1.3", "vrf": "FOO"},
+        {"scope": "global", "addr": "10.1.1.1", "vrf": ""},
+        {"scope": "local", "addr": "10.1.1.2", "vrf": ""},
+        {"scope": "local", "addr": "10.1.1.3", "vrf": "FOO"},
     ]
     parse = CiscoConfParse(CONFIG, syntax="ios", factory=True)
     obj = parse.find_objects("^interface")[0]
