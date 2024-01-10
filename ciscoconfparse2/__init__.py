@@ -27,6 +27,7 @@ from ciscoconfparse2.ccp_util import PythonOptimizeCheck
 from ciscoconfparse2.ciscoconfparse2 import *
 from ciscoconfparse2.ccp_util import IPv4Obj
 from ciscoconfparse2.ccp_util import IPv6Obj
+from ciscoconfparse2.ccp_util import MACObj, EUI64Obj
 from ciscoconfparse2.ccp_util import CiscoIOSInterface, CiscoIOSXRInterface
 from ciscoconfparse2.ccp_util import CiscoRange
 from ciscoconfparse2.ccp_util import run_this_posix_command

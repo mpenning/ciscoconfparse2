@@ -44,7 +44,8 @@ from ciscoconfparse2.models_cisco import IOSIntfLine
 from ciscoconfparse2.models_cisco import IOSAccessLine, IOSIntfGlobal
 from ciscoconfparse2.models_cisco import IOSCfgLine
 
-from ciscoconfparse2.models_nxos import NXOSHostnameLine, NXOSRouteLine
+if False:
+    from ciscoconfparse2.models_nxos import NXOSHostnameLine, NXOSRouteLine
 from ciscoconfparse2.models_nxos import NXOSAccessLine, NXOSIntfGlobal
 from ciscoconfparse2.models_nxos import NXOSCfgLine, NXOSIntfLine
 from ciscoconfparse2.models_nxos import NXOSvPCLine
@@ -88,10 +89,10 @@ ALL_IOS_FACTORY_CLASSES = [
 ]
 ALL_NXOS_FACTORY_CLASSES = [
     NXOSIntfLine,
-    NXOSRouteLine,
-    NXOSAccessLine,
+    #NXOSRouteLine,
     NXOSvPCLine,
-    NXOSHostnameLine,
+    #NXOSHostnameLine,
+    NXOSAccessLine,
     NXOSIntfGlobal,
     NXOSCfgLine,        # NXOSCfgLine MUST be last
 ]

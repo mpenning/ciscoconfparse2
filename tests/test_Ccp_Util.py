@@ -1,6 +1,6 @@
 r""" test_Ccp_Util.py - Parse, Query, Build, and Modify IOS-style configs
 
-     Copyright (C) 2023      David Michael Pennington
+     Copyright (C) 2014-2024  David Michael Pennington
 
      This program is free software: you can redistribute it and/or modify
      it under the terms of the GNU General Public License as published by
@@ -37,10 +37,14 @@ import ipaddress
 from ipaddress import IPv4Network, IPv6Network, IPv4Address, IPv6Address
 from loguru import logger
 import pytest
+
+from macaddress import OUI
+
 from ciscoconfparse2.ccp_util import CiscoRange
 from ciscoconfparse2.ccp_util import CiscoIOSInterface, CiscoIOSXRInterface
 from ciscoconfparse2.ccp_util import _RGX_IPV4ADDR, _RGX_IPV6ADDR
 from ciscoconfparse2.ccp_util import IPv6Obj, IPv4Obj, L4Object, ip_factory
+from ciscoconfparse2.ccp_util import MACObj, EUI64Obj
 from ciscoconfparse2.ccp_util import collapse_addresses
 import sys
 
@@ -621,6 +625,43 @@ def testIPv6Obj_IPv4_embedded_in_IPv6_04():
     """Test IPv6Obj with an IPv4 address (192.0.2.4) embedded in an IPv6 address"""
     assert IPv6Obj("::ffff:192.0.2.4") == IPv6Obj("::ffff:c000:204")
 
+def testMACObj_int_01():
+    assert int(MACObj("0001.dead.beef")) == 8030895855
+
+def testMACObj_oui_01():
+    assert MACObj("0001.dead.beef").oui == OUI("00-01-DE")
+
+def testMACObj_cisco_01():
+    assert MACObj("0001.dead.beef").cisco == "0001.dead.beef"
+
+def testMACObj_cisco_02():
+    assert MACObj("00-01-de-ad-be-ef").cisco == "0001.dead.beef"
+
+def testMACObj_cisco_03():
+    assert MACObj("00:01:de:ad:be:ef").cisco == "0001.dead.beef"
+
+def testMACObj_cisco_04():
+    assert MACObj("0001deadbeef").cisco == "0001.dead.beef"
+
+def testMACObj_dash():
+    assert MACObj("0001.dead.beef").dash == "00-01-de-ad-be-ef"
+
+def testMACObj_colon():
+    assert MACObj("0001.dead.beef").colon == "00:01:de:ad:be:ef"
+
+def testMACObj_invalid_01():
+    with pytest.raises(ValueError):
+        assert MACObj("0001.dead")
+
+def testMACObj_invalid_02():
+    with pytest.raises(ValueError):
+        assert MACObj("0001.dead.dead.dead.dead.dead.beef")
+
+def testEUI64Obj_dash_01():
+    assert EUI64Obj("0001.dead.beef.0001").dash == "00-01-de-ad-be-ef-00-01"
+
+def testEUI64Obj_colon_01():
+    assert EUI64Obj("0001.dead.beef.0001").colon == "00:01:de:ad:be:ef:00:01"
 
 def test_collapse_addresses_01():
 
@@ -760,7 +801,7 @@ def test_CiscoIOSInterface_09():
     assert uut.prefix == "Ethernet"
     assert uut.slot == None
     assert uut.card is None
-    assert uut.port is 1
+    assert uut.port == 1
     assert uut.subinterface is None
     assert uut.channel is None
     assert uut.digit_separator is None

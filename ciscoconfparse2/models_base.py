@@ -30,9 +30,9 @@ from ciscoconfparse2.ccp_abc import BaseCfgLine
 ###   for this functionality yet, so I consider all this code alpha quality.
 ###
 ###   Use models_cisco.py at your own risk.  You have been warned :-)
-r""" models_cisco.py - Parse, Query, Build, and Modify IOS-style configurations
+r""" models_base.py - Parse, Query, Build, and Modify IOS-style configurations
 
-     Copyright (C) 2021,2023 David Michael Pennington
+     Copyright (C) 2021-2024 David Michael Pennington
      Copyright (C) 2020-2021 David Michael Pennington at Cisco Systems
      Copyright (C) 2019      David Michael Pennington at ThousandEyes
      Copyright (C) 2014-2019 David Michael Pennington at Samsung Data Services
@@ -530,9 +530,9 @@ class BaseFactoryInterfaceLine(BaseFactoryLine):
     # This method is on BaseFactoryInterfaceLine()
     @property
     @logger.catch(reraise=True)
-    def ipv6_addr_object(self) -> IPv6Obj:
+    def ipv6_addr_objects(self) -> Dict[str,List[IPv6Obj]]:
         r"""
-        :return: A :class:`ccp_util.IPv6Obj` object representing the address on this interface, default to IPv6Obj()
+        :return: A Dict of :class:`ccp_util.IPv6Obj` objects representing all IPv6 addresses on this interface, default to {}
         :rtype: IPv6Obj
         """
         raise NotImplementedError()
@@ -659,6 +659,18 @@ class BaseFactoryInterfaceLine(BaseFactoryLine):
         ##    only mtu information I plan to support
         r"""
         :return: Return the manual IP MTU of the interface as a python integer, default to -1
+        :rtype: int
+        """
+        raise NotImplementedError()
+
+    # This method is on BaseFactoryInterfaceLine()
+    @property
+    @logger.catch(reraise=True)
+    def manual_ipv6_mtu(self) -> int:
+        ## Due to the diverse platform defaults, this should be the
+        ##    only mtu information I plan to support
+        r"""
+        :return: Return the manual IPv6 MTU of the interface as a python integer, default to -1
         :rtype: int
         """
         raise NotImplementedError()
@@ -843,6 +855,16 @@ class BaseFactoryInterfaceLine(BaseFactoryLine):
     # This method is on BaseFactoryInterfaceLine()
     @property
     @logger.catch(reraise=True)
+    def has_ipv6_pim_sparse_mode(self) -> bool:
+        r"""
+        :return: Whether the interface is configured with IPv6 PIM Sparse-Mode
+        :rtype: bool
+        """
+        raise NotImplementedError()
+
+    # This method is on BaseFactoryInterfaceLine()
+    @property
+    @logger.catch(reraise=True)
     def has_ip_pim_sparsedense_mode(self) -> bool:
         r"""
         :return: Whether the interface is configured with IP PIM Sparse-Dense-Mode
@@ -863,16 +885,6 @@ class BaseFactoryInterfaceLine(BaseFactoryLine):
     # This method is on BaseFactoryInterfaceLine()
     @property
     @logger.catch(reraise=True)
-    def has_ip_helper_addresses(self) -> bool:
-        r"""
-        :return: Return True if the intf has helper-addresses, default to False
-        :rtype: bool
-        """
-        raise NotImplementedError()
-
-    # This method is on BaseFactoryInterfaceLine()
-    @property
-    @logger.catch(reraise=True)
     def ip_helper_addresses(self) -> List[Dict[str,str]]:
         r"""
         :return: A sequence of dicts with IP helper-addresses.  Each helper-address is in a dictionary.
@@ -880,6 +892,15 @@ class BaseFactoryInterfaceLine(BaseFactoryLine):
         """
         raise NotImplementedError()
 
+    # This method is on BaseFactoryInterfaceLine()
+    @property
+    @logger.catch(reraise=True)
+    def ipv6_dhcp_server(self) -> List[Dict[str,str]]:
+        r"""
+        :return: A sequence of dicts with IPv6 dhcp server.  Each address is in a dictionary.
+        :rtype: List[Dict[str,str]]
+        """
+        raise NotImplementedError()
 
     # This method is on BaseFactoryInterfaceLine()
     @property
@@ -1182,6 +1203,49 @@ class BaseFactoryInterfaceLine(BaseFactoryLine):
         """
         raise NotImplementedError()
 
+    # This method is on BaseIOSIntfLine()
+    @property
+    @logger.catch(reraise=True)
+    def ipv6_trafficfilter_in(self) -> str:
+        """
+        :return: The name or number of the inbound IPv6 ACL
+        :rtype: str
+        """
+        raise NotImplementedError()
+
+    # This method is on BaseIOSIntfLine()
+    @property
+    @logger.catch(reraise=True)
+    def ipv6_trafficfilter_out(self) -> str:
+        """
+        :return: The name or number of the outbound IPv6 ACL
+        :rtype: str
+        """
+        raise NotImplementedError()
+
+    # This method is on BaseIOSIntfLine()
+    @property
+    @logger.catch(reraise=True)
+    def ipv6_accessgroup_in(self) -> str:
+        """
+        Alias for ipv6_trafficfilter_in
+
+        :return: The name or number of the inbound IPv6 ACL
+        :rtype: str
+        """
+        return self.ipv6_trafficfilter_in
+
+    # This method is on BaseIOSIntfLine()
+    @property
+    @logger.catch(reraise=True)
+    def ipv6_accessgroup_out(self) -> str:
+        """
+        Alias for ipv6_trafficfilter_out
+
+        :return: The name or number of the outbound IPv6 ACL
+        :rtype: str
+        """
+        return self.ipv6_trafficfilter_out
 
 ##
 ##-------------  IOS Interface Object
@@ -1204,14 +1268,17 @@ class IOSIntfLine(BaseFactoryInterfaceLine):
         super(IOSIntfLine, self).__init__(*args, **kwargs)
         self.feature = "interface"
 
+    # This method is on IOSIntfLine()
     @logger.catch(reraise=True)
     def __eq__(self, other):
         return self.get_unique_identifier() == other.get_unique_identifier()
 
+    # This method is on IOSIntfLine()
     @logger.catch(reraise=True)
     def __ne__(self, other):
         return self.get_unique_identifier() != other.get_unique_identifier()
 
+    # This method is on IOSIntfLine()
     @logger.catch(reraise=True)
     def __hash__(self):
         return self.get_unique_identifier()
@@ -1226,514 +1293,419 @@ class IOSIntfLine(BaseFactoryInterfaceLine):
 ##-------------  IOS Interface Globals
 ##
 
-if False:
-
-    @attrs.define(repr=False)
-    class IOSIntfGlobal(IOSCfgLine):
-        # This method is on IOSIntGlobal()
-        @logger.catch(reraise=True)
-        def __init__(self, *args, **kwargs):
-            super(IOSIntfGlobal).__init__(*args, **kwargs)
-            self.feature = "interface global"
-
-        @logger.catch(reraise=True)
-        def __eq__(self, other):
-            return self.get_unique_identifier() == other.get_unique_identifier()
-
-        @logger.catch(reraise=True)
-        def __ne__(self, other):
-            return self.get_unique_identifier() != other.get_unique_identifier()
-
-        @logger.catch(reraise=True)
-        def __hash__(self):
-            return self.get_unique_identifier()
-
-        @classmethod
-        @logger.catch(reraise=True)
-        def is_object_for(cls, all_lines, line, index=None, re=re):
-            if re.search(
-                r"^(no\s+cdp\s+run)|(logging\s+event\s+link-status\s+global)|(spanning-tree\sportfast\sdefault)|(spanning-tree\sportfast\sbpduguard\sdefault)",
-                line,
-            ):
-                return True
-            return False
-
-        @property
-        @logger.catch(reraise=True)
-        def has_cdp_disabled(self):
-            if self.re_search(r"^no\s+cdp\s+run\s*"):
-                return True
-            return False
-
-        @property
-        @logger.catch(reraise=True)
-        def has_intf_logging_def(self):
-            if self.re_search(r"^logging\s+event\s+link-status\s+global"):
-                return True
-            return False
-
-        @property
-        @logger.catch(reraise=True)
-        def has_stp_portfast_def(self):
-            if self.re_search(r"^spanning-tree\sportfast\sdefault"):
-                return True
-            return False
-
-        @property
-        @logger.catch(reraise=True)
-        def has_stp_portfast_bpduguard_def(self):
-            if self.re_search(r"^spanning-tree\sportfast\sbpduguard\sdefault"):
-                return True
-            return False
-
-        @property
-        @logger.catch(reraise=True)
-        def has_stp_mode_rapidpvst(self):
-            if self.re_search(r"^spanning-tree\smode\srapid-pvst"):
-                return True
-            return False
-
-
-    #
-    #-------------  IOS Access Line
-    #
-
-
-    @attrs.define(repr=False)
-    class IOSAccessLine(IOSCfgLine):
-        @logger.catch(reraise=True)
-        def __init__(self, *args, **kwargs):
-            super(IOSAccessLine, self).__init__(*args, **kwargs)
-            self.feature = "access line"
-
-        @logger.catch(reraise=True)
-        def __eq__(self, other):
-            return self.get_unique_identifier() == other.get_unique_identifier()
-
-        @logger.catch(reraise=True)
-        def __ne__(self, other):
-            return self.get_unique_identifier() != other.get_unique_identifier()
-
-        @logger.catch(reraise=True)
-        def __hash__(self):
-            return self.get_unique_identifier()
-
-        @logger.catch(reraise=True)
-        def __repr__(self):
-            return "<%s # %s '%s' info: '%s'>" % (
-                self.classname,
-                self.linenum,
-                self.name,
-                self.range_str,
-            )
-
-        @classmethod
-        @logger.catch(reraise=True)
-        def is_object_for(cls, all_lines, line, index=None, re=re):
-            if re.search(r"^line", line):
-                return True
-            return False
-
-        @property
-        @logger.catch(reraise=True)
-        def is_accessline(self):
-            retval = self.re_match_typed(r"^(line\s+\S+)", result_type=str, default="")
-            return bool(retval)
-
-        @property
-        @logger.catch(reraise=True)
-        def name(self):
-            retval = self.re_match_typed(r"^line\s+(\S+)", result_type=str, default="")
-            # special case for IOS async lines: i.e. "line 33 48"
-            if re.search(r"\d+", retval):
-                return ""
-            return retval
-
-        @property
-        @logger.catch(reraise=True)
-        def range_str(self):
-            return " ".join(map(str, self.line_range))
-
-        @property
-        @logger.catch(reraise=True)
-        def line_range(self):
-            ## Return the access-line's numerical range as a list
-            ## line con 0 => [0]
-            ## line 33 48 => [33, 48]
-            retval = self.re_match_typed(
-                r"([a-zA-Z]+\s+)*(\d+\s*\d*)$", group=2, result_type=str, default=""
-            )
-            tmp = map(int, retval.strip().split())
-            return tmp
-
-        @logger.catch(reraise=True)
-        def manual_exectimeout_minutes(self):
-            tmp = self.parse_exectimeout
-            return tmp[0]
-
-        @logger.catch(reraise=True)
-        def manual_exectimeout_seconds(self):
-            tmp = self.parse_exectimeout
-            if len(tmp > 0):
-                return 0
-            return tmp[1]
-
-        @property
-        @logger.catch(reraise=True)
-        def parse_exectimeout(self):
-            retval = self.re_match_iter_typed(
-                r"^\s*exec-timeout\s+(\d+\s*\d*)\s*$", group=1, result_type=str, default=""
-            )
-            tmp = map(int, retval.strip().split())
-            return tmp
-
-
-    ##
-    ##-------------  Base IOS Route line object
-    ##
-
-
-    @attrs.define(repr=False)
-    class BaseIOSRouteLine(IOSCfgLine):
-        @logger.catch(reraise=True)
-        def __init__(self, *args, **kwargs):
-            super(BaseIOSRouteLine, self).__init__(*args, **kwargs)
-
-        @logger.catch(reraise=True)
-        def __repr__(self):
-            return "<%s # %s '%s' info: '%s'>" % (
-                self.classname,
-                self.linenum,
-                self.network_object,
-                self.routeinfo,
-            )
-
-        @property
-        @logger.catch(reraise=True)
-        def routeinfo(self):
-            ### Route information for the repr string
-            if self.tracking_object_name:
-                return (
-                    self.nexthop_str
-                    + " AD: "
-                    + str(self.admin_distance)
-                    + " Track: "
-                    + self.tracking_object_name
-                )
-            else:
-                return self.nexthop_str + " AD: " + str(self.admin_distance)
-
-        @classmethod
-        @logger.catch(reraise=True)
-        def is_object_for(cls, all_lines, line, index=None, re=re):
-            return False
-
-        @property
-        @logger.catch(reraise=True)
-        def vrf(self):
-            raise NotImplementedError
-
-        @property
-        @logger.catch(reraise=True)
-        def address_family(self):
-            ## ipv4, ipv6, etc
-            raise NotImplementedError
-
-        @property
-        @logger.catch(reraise=True)
-        def network(self):
-            raise NotImplementedError
-
-        @property
-        @logger.catch(reraise=True)
-        def netmask(self):
-            raise NotImplementedError
-
-        @property
-        @logger.catch(reraise=True)
-        def admin_distance(self):
-            raise NotImplementedError
-
-        @property
-        @logger.catch(reraise=True)
-        def nexthop_str(self):
-            raise NotImplementedError
-
-        @property
-        @logger.catch(reraise=True)
-        def tracking_object_name(self):
-            raise NotImplementedError
-
-
-    ##
-    ##-------------  IOS Route line object
-    ##
-
-    _RE_IP_ROUTE = re.compile(
-        r"""^ip\s+route
-    (?:\s+(?:vrf\s+(?P<vrf>\S+)))?          # VRF detection
-    \s+
-    (?P<prefix>\d+\.\d+\.\d+\.\d+)          # Prefix detection
-    \s+
-    (?P<netmask>\d+\.\d+\.\d+\.\d+)         # Netmask detection
-    (?:\s+(?P<nh_intf>[^\d]\S+))?           # NH intf
-    (?:\s+(?P<nh_addr>\d+\.\d+\.\d+\.\d+))? # NH addr
-    (?:\s+(?P<dhcp>dhcp))?           # DHCP keyword       (FIXME: add unit test)
-    (?:\s+(?P<global>global))?       # Global keyword
-    (?:\s+(?P<ad>\d+))?              # Administrative distance
-    (?:\s+(?P<mcast>multicast))?     # Multicast Keyword  (FIXME: add unit test)
-    (?:\s+name\s+(?P<name>\S+))?     # Route name
-    (?:\s+(?P<permanent>permanent))? # Permanent Keyword  (exclusive of track)
-    (?:\s+track\s+(?P<track>\d+))?   # Track object (exclusive of permanent)
-    (?:\s+tag\s+(?P<tag>\d+))?       # Route tag
-    """,
-        re.VERBOSE,
-    )
-
-    _RE_IPV6_ROUTE = re.compile(
-        r"""^ipv6\s+route
-    (?:\s+vrf\s+(?P<vrf>\S+))?
-    (?:\s+(?P<prefix>{0})\/(?P<masklength>\d+))    # Prefix detection
-    (?:
-    (?:\s+(?P<nh_addr1>{1}))
-    |(?:\s+(?P<nh_intf>\S+(?:\s+\d\S*?\/\S+)?)(?:\s+(?P<nh_addr2>{2}))?)
-    )
-    (?:\s+nexthop-vrf\s+(?P<nexthop_vrf>\S+))?
-    (?:\s+(?P<ad>\d+))?              # Administrative distance
-    (?:\s+(?:(?P<ucast>unicast)|(?P<mcast>multicast)))?
-    (?:\s+tag\s+(?P<tag>\d+))?       # Route tag
-    (?:\s+track\s+(?P<track>\d+))?   # Track object
-    (?:\s+name\s+(?P<name>\S+))?     # Route name
-    """.format(
-            _IPV6_REGEX_STR_COMPRESSED1,
-            _IPV6_REGEX_STR_COMPRESSED2,
-            _IPV6_REGEX_STR_COMPRESSED3,
-        ),
-        re.VERBOSE,
-    )
-
-
-    @attrs.define(repr=False)
-    class IOSRouteLine(IOSCfgLine):
-        _address_family: str = None
-        route_info: dict = None
-
-        @logger.catch(reraise=True)
-        def __init__(self, *args, **kwargs):
-            super(IOSRouteLine, self).__init__(*args, **kwargs)
-            if "ipv6" in self.text[0:4]:
-                self.feature = "ipv6 route"
-                self._address_family = "ipv6"
-                mm = _RE_IPV6_ROUTE.search(self.text)
-                if (mm is not None):
-                    self.route_info = mm.groupdict()
-                else:
-                    raise ValueError("Could not parse '{0}'".format(self.text))
-            else:
-                self.feature = "ip route"
-                self._address_family = "ip"
-                mm = _RE_IP_ROUTE.search(self.text)
-                if (mm is not None):
-                    self.route_info = mm.groupdict()
-                else:
-                    raise ValueError("Could not parse '{0}'".format(self.text))
-
-        @logger.catch(reraise=True)
-        def __eq__(self, other):
-            return self.get_unique_identifier() == other.get_unique_identifier()
-
-        @logger.catch(reraise=True)
-        def __ne__(self, other):
-            return self.get_unique_identifier() != other.get_unique_identifier()
-
-        @logger.catch(reraise=True)
-        def __hash__(self):
-            return self.get_unique_identifier()
-
-        @classmethod
-        @logger.catch(reraise=True)
-        def is_object_for(cls, all_lines, line, index=None, re=re):
-            if (line[0:9] == "ip route ") or (line[0:11] == "ipv6 route "):
-                return True
-            return False
-
-        @property
-        @logger.catch(reraise=True)
-        def vrf(self):
-            if (self.route_info["vrf"] is not None):
-                return self.route_info["vrf"]
-            else:
-                return ""
-
-        @property
-        @logger.catch(reraise=True)
-        def address_family(self):
-            ## ipv4, ipv6, etc
-            return self._address_family
-
-        @property
-        @logger.catch(reraise=True)
-        def network(self):
-            if self._address_family == "ip":
-                return self.route_info["prefix"]
-            elif self._address_family == "ipv6":
-                retval = self.re_match_typed(
-                    r"^ipv6\s+route\s+(vrf\s+)*(\S+?)\/\d+",
-                    group=2,
-                    result_type=str,
-                    default="",
-                )
-            return retval
-
-        @property
-        @logger.catch(reraise=True)
-        def netmask(self):
-            if self._address_family == "ip":
-                return self.route_info["netmask"]
-            elif self._address_family == "ipv6":
-                return str(self.network_object.netmask)
-
-        @property
-        @logger.catch(reraise=True)
-        def masklen(self):
-            if self._address_family == "ip":
-                return self.network_object.prefixlen
-            elif self._address_family == "ipv6":
-                masklen_str = self.route_info["masklength"] or "128"
-                return int(masklen_str)
-
-        @property
-        @logger.catch(reraise=True)
-        def network_object(self):
-            try:
-                if self._address_family == "ip":
-                    return IPv4Obj("%s/%s" % (self.network, self.netmask), strict=False)
-                elif self._address_family == "ipv6":
-                    return IPv6Obj("%s/%s" % (self.network, self.masklen))
-            except BaseException:
-                logger.critical("Found _address_family = '{}''".format(self._address_family))
-                return None
-
-        @property
-        @logger.catch(reraise=True)
-        def nexthop_str(self):
-            if self._address_family == "ip":
-                if self.next_hop_interface:
-                    return self.next_hop_interface + " " + self.next_hop_addr
-                else:
-                    return self.next_hop_addr
-            elif self._address_family == "ipv6":
-                retval = self.re_match_typed(
-                    r"^ipv6\s+route\s+(vrf\s+)*\S+\s+(\S+)",
-                    group=2,
-                    result_type=str,
-                    default="",
-                )
-            return retval
-
-        @property
-        @logger.catch(reraise=True)
-        def next_hop_interface(self):
-            if self._address_family == "ip":
-                if self.route_info["nh_intf"]:
-                    return self.route_info["nh_intf"]
-                else:
-                    return ""
-            elif self._address_family == "ipv6":
-                if self.route_info["nh_intf"]:
-                    return self.route_info["nh_intf"]
-                else:
-                    return ""
-
-        @property
-        @logger.catch(reraise=True)
-        def next_hop_addr(self):
-            if self._address_family == "ip":
-                return self.route_info["nh_addr"] or ""
-            elif self._address_family == "ipv6":
-                return self.route_info["nh_addr1"] or self.route_info["nh_addr2"] or ""
-
-        @property
-        @logger.catch(reraise=True)
-        def global_next_hop(self):
-            if self._address_family == "ip" and bool(self.vrf):
-                return bool(self.route_info["global"])
-            elif self._address_family == "ip" and not bool(self.vrf):
-                return True
-            elif self._address_family == "ipv6":
-                ## ipv6 uses nexthop_vrf
-                raise ValueError(
-                    "[FATAL] ipv6 doesn't support a global_next_hop for '{0}'".format(
-                        self.text
-                    )
-                )
-            else:
-                raise ValueError(
-                    "[FATAL] Could not identify global next-hop for '{0}'".format(self.text)
-                )
-
-        @property
-        @logger.catch(reraise=True)
-        def nexthop_vrf(self):
-            if self._address_family == "ipv6":
-                return self.route_info["nexthop_vrf"] or ""
-            else:
-                raise ValueError(
-                    "[FATAL] ip doesn't support a global_next_hop for '{0}'".format(
-                        self.text
-                    )
-                )
-
-        @property
-        @logger.catch(reraise=True)
-        def admin_distance(self):
-            if self.route_info["ad"]:
-                return int(self.route_info["ad"])
-            else:
-                return 1
-
-        @property
-        @logger.catch(reraise=True)
-        def multicast(self):
-            r"""Return whether the multicast keyword was specified"""
-            return bool(self.route_info["mcast"])
-
-        @property
-        @logger.catch(reraise=True)
-        def unicast(self):
-            ## FIXME It's unclear how to implement this...
-            raise NotImplementedError
-
-        @property
-        @logger.catch(reraise=True)
-        def route_name(self):
-            if self.route_info["name"]:
-                return self.route_info["name"]
-            else:
-                return ""
-
-        @property
-        @logger.catch(reraise=True)
-        def permanent(self):
-            if self._address_family == "ip":
-                if self.route_info["permanent"]:
-                    return bool(self.route_info["permanent"])
-                else:
-                    return False
-            elif self._address_family == "ipv6":
-                raise NotImplementedError
-
-        @property
-        @logger.catch(reraise=True)
-        def tracking_object_name(self):
-            if bool(self.route_info["track"]):
-                return self.route_info["track"]
-            else:
-                return ""
-
-        @property
-        @logger.catch(reraise=True)
-        def tag(self):
-            return self.route_info["tag"] or ""
+
+@attrs.define(repr=False)
+class IOSIntfGlobal(BaseFactoryLine):
+    # This method is on IOSIntGlobal()
+    @logger.catch(reraise=True)
+    def __init__(self, *args, **kwargs):
+        super(IOSIntfGlobal).__init__(*args, **kwargs)
+        self.feature = "interface global"
+
+    # This method is on IOSIntGlobal()
+    @logger.catch(reraise=True)
+    def __eq__(self, other):
+        return self.get_unique_identifier() == other.get_unique_identifier()
+
+    # This method is on IOSIntGlobal()
+    @logger.catch(reraise=True)
+    def __ne__(self, other):
+        return self.get_unique_identifier() != other.get_unique_identifier()
+
+    # This method is on IOSIntGlobal()
+    @logger.catch(reraise=True)
+    def __hash__(self):
+        return self.get_unique_identifier()
+
+    # This method is on IOSIntGlobal()
+    @classmethod
+    @logger.catch(reraise=True)
+    def is_object_for(cls, all_lines, line, index=None, re=re):
+        raise NotImplementedError()
+
+    # This method is on IOSIntGlobal()
+    @property
+    @logger.catch(reraise=True)
+    def has_cdp_disabled(self):
+        raise NotImplementedError()
+
+    # This method is on IOSIntGlobal()
+    @property
+    @logger.catch(reraise=True)
+    def has_intf_logging_def(self):
+        raise NotImplementedError()
+
+    # This method is on IOSIntGlobal()
+    @property
+    @logger.catch(reraise=True)
+    def has_stp_portfast_def(self):
+        raise NotImplementedError()
+
+    # This method is on IOSIntGlobal()
+    @property
+    @logger.catch(reraise=True)
+    def has_stp_portfast_bpduguard_def(self):
+        raise NotImplementedError()
+
+    # This method is on IOSIntGlobal()
+    @property
+    @logger.catch(reraise=True)
+    def has_stp_mode_rapidpvst(self):
+        raise NotImplementedError()
+
+#
+#-------------  IOS Access Line
+#
+
+
+@attrs.define(repr=False)
+class IOSAccessLine(BaseFactoryLine):
+
+    # This method is on IOSAccessLine()
+    @logger.catch(reraise=True)
+    def __init__(self, *args, **kwargs):
+        super(IOSAccessLine, self).__init__(*args, **kwargs)
+        self.feature = "access line"
+
+    # This method is on IOSAccessLine()
+    @logger.catch(reraise=True)
+    def __eq__(self, other):
+        return self.get_unique_identifier() == other.get_unique_identifier()
+
+    # This method is on IOSAccessLine()
+    @logger.catch(reraise=True)
+    def __ne__(self, other):
+        return self.get_unique_identifier() != other.get_unique_identifier()
+
+    # This method is on IOSAccessLine()
+    @logger.catch(reraise=True)
+    def __hash__(self):
+        return self.get_unique_identifier()
+
+    # This method is on IOSAccessLine()
+    @logger.catch(reraise=True)
+    def __repr__(self):
+        return "<%s # %s '%s' info: '%s'>" % (
+            self.classname,
+            self.linenum,
+            self.name,
+            self.range_str,
+        )
+
+    # This method is on IOSAccessLine()
+    @classmethod
+    @logger.catch(reraise=True)
+    def is_object_for(cls, all_lines, line, index=None, re=re):
+        raise NotImplementedError()
+
+    # This method is on IOSAccessLine()
+    @property
+    @logger.catch(reraise=True)
+    def is_accessline(self):
+        raise NotImplementedError()
+
+    # This method is on IOSAccessLine()
+    @property
+    @logger.catch(reraise=True)
+    def name(self):
+        raise NotImplementedError()
+
+    # This method is on IOSAccessLine()
+    @property
+    @logger.catch(reraise=True)
+    def range_str(self):
+        raise NotImplementedError()
+
+    # This method is on IOSAccessLine()
+    @property
+    @logger.catch(reraise=True)
+    def line_range(self):
+        raise NotImplementedError()
+
+    # This method is on IOSAccessLine()
+    @logger.catch(reraise=True)
+    def manual_exectimeout_minutes(self):
+        raise NotImplementedError()
+
+    # This method is on IOSAccessLine()
+    @logger.catch(reraise=True)
+    def manual_exectimeout_seconds(self):
+        raise NotImplementedError()
+
+    # This method is on IOSAccessLine()
+    @property
+    @logger.catch(reraise=True)
+    def parse_exectimeout(self):
+        raise NotImplementedError()
+
+##
+##-------------  Base IOS Route line object
+##
+
+
+@attrs.define(repr=False)
+class BaseIOSRouteLine(BaseFactoryLine):
+    # This method is on BaseIOSRouteLine()
+    @logger.catch(reraise=True)
+    def __init__(self, *args, **kwargs):
+        super(BaseIOSRouteLine, self).__init__(*args, **kwargs)
+
+    # This method is on BaseIOSRouteLine()
+    @logger.catch(reraise=True)
+    def __repr__(self):
+        return "<%s # %s '%s' info: '%s'>" % (
+            self.classname,
+            self.linenum,
+            self.network_object,
+            self.routeinfo,
+        )
+
+    # This method is on BaseIOSRouteLine()
+    @property
+    @logger.catch(reraise=True)
+    def routeinfo(self):
+        raise NotImplementedError()
+
+    # This method is on BaseIOSRouteLine()
+    @classmethod
+    @logger.catch(reraise=True)
+    def is_object_for(cls, all_lines, line, index=None, re=re):
+        return False
+
+    # This method is on BaseIOSRouteLine()
+    @property
+    @logger.catch(reraise=True)
+    def vrf(self):
+        raise NotImplementedError
+
+    # This method is on BaseIOSRouteLine()
+    @property
+    @logger.catch(reraise=True)
+    def address_family(self):
+        ## ipv4, ipv6, etc
+        raise NotImplementedError
+
+    # This method is on BaseIOSRouteLine()
+    @property
+    @logger.catch(reraise=True)
+    def network(self):
+        raise NotImplementedError
+
+    # This method is on BaseIOSRouteLine()
+    @property
+    @logger.catch(reraise=True)
+    def netmask(self):
+        raise NotImplementedError
+
+    # This method is on BaseIOSRouteLine()
+    @property
+    @logger.catch(reraise=True)
+    def admin_distance(self):
+        raise NotImplementedError
+
+    # This method is on BaseIOSRouteLine()
+    @property
+    @logger.catch(reraise=True)
+    def nexthop_str(self):
+        raise NotImplementedError
+
+    # This method is on BaseIOSRouteLine()
+    @property
+    @logger.catch(reraise=True)
+    def tracking_object_name(self):
+        raise NotImplementedError
+
+
+##
+##-------------  IOS Route line object
+##
+
+_RE_IP_ROUTE = re.compile(
+    r"""^ip\s+route
+(?:\s+(?:vrf\s+(?P<vrf>\S+)))?          # VRF detection
+\s+
+(?P<prefix>\d+\.\d+\.\d+\.\d+)          # Prefix detection
+\s+
+(?P<netmask>\d+\.\d+\.\d+\.\d+)         # Netmask detection
+(?:\s+(?P<nh_intf>[^\d]\S+))?           # NH intf
+(?:\s+(?P<nh_addr>\d+\.\d+\.\d+\.\d+))? # NH addr
+(?:\s+(?P<dhcp>dhcp))?           # DHCP keyword       (FIXME: add unit test)
+(?:\s+(?P<global>global))?       # Global keyword
+(?:\s+(?P<ad>\d+))?              # Administrative distance
+(?:\s+(?P<mcast>multicast))?     # Multicast Keyword  (FIXME: add unit test)
+(?:\s+name\s+(?P<name>\S+))?     # Route name
+(?:\s+(?P<permanent>permanent))? # Permanent Keyword  (exclusive of track)
+(?:\s+track\s+(?P<track>\d+))?   # Track object (exclusive of permanent)
+(?:\s+tag\s+(?P<tag>\d+))?       # Route tag
+""",
+    re.VERBOSE,
+)
+
+_RE_IPV6_ROUTE = re.compile(
+    r"""^ipv6\s+route
+(?:\s+vrf\s+(?P<vrf>\S+))?
+(?:\s+(?P<prefix>{0})\/(?P<masklength>\d+))    # Prefix detection
+(?:
+(?:\s+(?P<nh_addr1>{1}))
+|(?:\s+(?P<nh_intf>\S+(?:\s+\d\S*?\/\S+)?)(?:\s+(?P<nh_addr2>{2}))?)
+)
+(?:\s+nexthop-vrf\s+(?P<nexthop_vrf>\S+))?
+(?:\s+(?P<ad>\d+))?              # Administrative distance
+(?:\s+(?:(?P<ucast>unicast)|(?P<mcast>multicast)))?
+(?:\s+tag\s+(?P<tag>\d+))?       # Route tag
+(?:\s+track\s+(?P<track>\d+))?   # Track object
+(?:\s+name\s+(?P<name>\S+))?     # Route name
+""".format(
+        _IPV6_REGEX_STR_COMPRESSED1,
+        _IPV6_REGEX_STR_COMPRESSED2,
+        _IPV6_REGEX_STR_COMPRESSED3,
+    ),
+    re.VERBOSE,
+)
+
+
+@attrs.define(repr=False)
+class IOSRouteLine(BaseFactoryLine):
+    _address_family: str = None
+    route_info: dict = None
+
+    # This method is on IOSRouteLine()
+    @logger.catch(reraise=True)
+    def __init__(self, *args, **kwargs):
+        super(IOSRouteLine, self).__init__(*args, **kwargs)
+        pass
+
+    # This method is on IOSRouteLine()
+    @logger.catch(reraise=True)
+    def __eq__(self, other):
+        return self.get_unique_identifier() == other.get_unique_identifier()
+
+    # This method is on IOSRouteLine()
+    @logger.catch(reraise=True)
+    def __ne__(self, other):
+        return self.get_unique_identifier() != other.get_unique_identifier()
+
+    # This method is on IOSRouteLine()
+    @logger.catch(reraise=True)
+    def __hash__(self):
+        return self.get_unique_identifier()
+
+    # This method is on IOSRouteLine()
+    @classmethod
+    @logger.catch(reraise=True)
+    def is_object_for(cls, all_lines, line, index=None, re=re):
+        if (line[0:9] == "ip route ") or (line[0:11] == "ipv6 route "):
+            return True
+        return False
+
+    # This method is on IOSRouteLine()
+    @property
+    @logger.catch(reraise=True)
+    def vrf(self):
+        raise NotImplementedError()
+
+    # This method is on IOSRouteLine()
+    @property
+    @logger.catch(reraise=True)
+    def address_family(self):
+        raise NotImplementedError()
+
+    # This method is on IOSRouteLine()
+    @property
+    @logger.catch(reraise=True)
+    def network(self):
+        raise NotImplementedError()
+
+    # This method is on IOSRouteLine()
+    @property
+    @logger.catch(reraise=True)
+    def netmask(self):
+        raise NotImplementedError()
+
+    # This method is on IOSRouteLine()
+    @property
+    @logger.catch(reraise=True)
+    def masklen(self):
+        raise NotImplementedError()
+
+    # This method is on IOSRouteLine()
+    @property
+    @logger.catch(reraise=True)
+    def network_object(self):
+        raise NotImplementedError()
+
+    # This method is on IOSRouteLine()
+    @property
+    @logger.catch(reraise=True)
+    def nexthop_str(self):
+        raise NotImplementedError()
+
+    # This method is on IOSRouteLine()
+    @property
+    @logger.catch(reraise=True)
+    def next_hop_interface(self):
+        raise NotImplementedError()
+
+    # This method is on IOSRouteLine()
+    @property
+    @logger.catch(reraise=True)
+    def next_hop_addr(self):
+        raise NotImplementedError()
+
+    # This method is on IOSRouteLine()
+    @property
+    @logger.catch(reraise=True)
+    def global_next_hop(self):
+        raise NotImplementedError()
+
+    # This method is on IOSRouteLine()
+    @property
+    @logger.catch(reraise=True)
+    def nexthop_vrf(self):
+        raise NotImplementedError()
+
+    # This method is on IOSRouteLine()
+    @property
+    @logger.catch(reraise=True)
+    def admin_distance(self):
+        raise NotImplementedError()
+
+    # This method is on IOSRouteLine()
+    @property
+    @logger.catch(reraise=True)
+    def multicast(self):
+        r"""Return whether the multicast keyword was specified"""
+        raise NotImplementedError()
+
+    # This method is on IOSRouteLine()
+    @property
+    @logger.catch(reraise=True)
+    def unicast(self):
+        ## FIXME It's unclear how to implement this...
+        raise NotImplementedError
+
+    # This method is on IOSRouteLine()
+    @property
+    @logger.catch(reraise=True)
+    def route_name(self):
+        raise NotImplementedError()
+
+    # This method is on IOSRouteLine()
+    @property
+    @logger.catch(reraise=True)
+    def permanent(self):
+        raise NotImplementedError()
+
+    # This method is on IOSRouteLine()
+    @property
+    @logger.catch(reraise=True)
+    def tracking_object_name(self):
+        raise NotImplementedError()
+
+    # This method is on IOSRouteLine()
+    @property
+    @logger.catch(reraise=True)
+    def tag(self):
+        raise NotImplementedError()
 
 

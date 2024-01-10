@@ -22,6 +22,7 @@ from ciscoconfparse2.ccp_util import CiscoRange
 from ciscoconfparse2.ccp_abc import BaseCfgLine
 
 from ciscoconfparse2.models_base import BaseFactoryInterfaceLine
+from ciscoconfparse2.models_base import BaseFactoryLine
 
 
 ### HUGE UGLY WARNING:
@@ -33,7 +34,7 @@ from ciscoconfparse2.models_base import BaseFactoryInterfaceLine
 ###   Use models_cisco.py at your own risk.  You have been warned :-)
 r""" models_cisco.py - Parse, Query, Build, and Modify IOS-style configurations
 
-     Copyright (C) 2021,2023 David Michael Pennington
+     Copyright (C) 2021-2024 David Michael Pennington
      Copyright (C) 2020-2021 David Michael Pennington at Cisco Systems
      Copyright (C) 2019      David Michael Pennington at ThousandEyes
      Copyright (C) 2014-2019 David Michael Pennington at Samsung Data Services
@@ -236,13 +237,6 @@ class HSRPInterfaceGroup(BaseCfgLine):
     # This method is on HSRPInterfaceGroup()
     @property
     @logger.catch(reraise=True)
-    def group(self):
-        """Return the integer HSRP group number for this HSRP group"""
-        return self.hsrp_group
-
-    # This method is on HSRPInterfaceGroup()
-    @property
-    @logger.catch(reraise=True)
     def ip(self):
         """Return the string IPv4 HSRP address for this HSRP group"""
         return self.ipv4
@@ -252,9 +246,9 @@ class HSRPInterfaceGroup(BaseCfgLine):
     @logger.catch(reraise=True)
     def ipv4(self):
         """Return the string IPv4 HSRP address for this HSRP group"""
-        ## NOTE: I have no intention of checking self.is_shutdown here
-        ##     People should be able to check the sanity of interfaces
-        ##     before they put them into production
+        # NOTE: I have no intention of checking self.is_shutdown here
+        #     People should be able to check the sanity of interfaces
+        #     before they put them into production
         for obj in self._parent.children:
             obj_parts = obj.text.lower().strip().split()
             if obj_parts[0:3] == ["standby", str(self._group), "ip"]:
@@ -268,9 +262,9 @@ class HSRPInterfaceGroup(BaseCfgLine):
     @logger.catch(reraise=True)
     def has_ipv6(self):
         """Return a boolean for whether this interface is configured with an IPv6 HSRP address"""
-        ## NOTE: I have no intention of checking self.is_shutdown here
-        ##     People should be able to check the sanity of interfaces
-        ##     before they put them into production
+        # NOTE: I have no intention of checking self.is_shutdown here
+        #     People should be able to check the sanity of interfaces
+        #     before they put them into production
         return bool(self.ipv6)
 
     # This method is on HSRPInterfaceGroup()
@@ -278,9 +272,9 @@ class HSRPInterfaceGroup(BaseCfgLine):
     @logger.catch(reraise=True)
     def ipv6(self):
         """Return the string IPv6 HSRP address for this HSRP group"""
-        ## NOTE: I have no intention of checking self.is_shutdown here
-        ##     People should be able to check the sanity of interfaces
-        ##     before they put them into production
+        # NOTE: I have no intention of checking self.is_shutdown here
+        #     People should be able to check the sanity of interfaces
+        #     before they put them into production
         for obj in self._parent.children:
             obj_parts = obj.text.lower().strip().split()
             if obj_parts[0:3] == ["standby", str(self._group), "ipv6"]:
@@ -350,8 +344,8 @@ class HSRPInterfaceGroup(BaseCfgLine):
     @logger.catch(reraise=True)
     def group(self):
         """Return the integer HSRP Group for this HSRPInterfaceGroup() instance."""
-        ## For API simplicity, I always assume there is only one hsrp
-        ##     group on the interface
+        # For API simplicity, I always assume there is only one hsrp
+        #     group on the interface
         return self._group
 
     # This method is on HSRPInterfaceGroup()
@@ -359,9 +353,9 @@ class HSRPInterfaceGroup(BaseCfgLine):
     @logger.catch(reraise=True)
     def preempt_delay(self):
         """Return the configured integer HSRP preempt delay, or 0 if there is none."""
-        ## NOTE: I have no intention of checking self.is_shutdown here
-        ##     People should be able to check the sanity of interfaces
-        ##     before they put them into production
+        # NOTE: I have no intention of checking self.is_shutdown here
+        #     People should be able to check the sanity of interfaces
+        #     before they put them into production
         for obj in self._parent.children:
             obj_parts = obj.text.lower().strip().split()
             if obj_parts[0:4] == ["standby", str(self._group), "preempt", "delay", "minimum"]:
@@ -374,9 +368,9 @@ class HSRPInterfaceGroup(BaseCfgLine):
     @logger.catch(reraise=True)
     def hello_timer(self):
         """Return the configured integer HSRP hello timer, or the HSRP default of 3 if there is no explicit hello timer."""
-        ## NOTE: I have no intention of checking self.is_shutdown here
-        ##     People should be able to check the sanity of interfaces
-        ##     before they put them into production
+        # NOTE: I have no intention of checking self.is_shutdown here
+        #     People should be able to check the sanity of interfaces
+        #     before they put them into production
         for obj in self._parent.children:
             obj_parts = obj.text.lower().strip().split()
             if obj_parts[0:4] == ["standby", str(self._group), "timers", "msec"]:
@@ -391,9 +385,9 @@ class HSRPInterfaceGroup(BaseCfgLine):
     @logger.catch(reraise=True)
     def hold_timer(self):
         """Return the configured integer HSRP hold timer, or the HSRP default of 10 if there is no explicit hold timer."""
-        ## NOTE: I have no intention of checking self.is_shutdown here
-        ##     People should be able to check the sanity of interfaces
-        ##     before they put them into production
+        # NOTE: I have no intention of checking self.is_shutdown here
+        #     People should be able to check the sanity of interfaces
+        #     before they put them into production
         for obj in self._parent.children:
             obj_parts = obj.text.lower().strip().split()
             if obj_parts[0:2] == ["standby", str(self._group)] and obj_parts[-2] == "msec":
@@ -494,7 +488,7 @@ class HSRPInterfaceGroup(BaseCfgLine):
 
 
 @attrs.define(repr=False)
-class IOSCfgLine(BaseCfgLine):
+class IOSCfgLine(BaseFactoryLine):
     """An object for a parsed IOS-style configuration line.
     :class:`~models_cisco.IOSCfgLine` objects contain references to other
     parent and child :class:`~models_cisco.IOSCfgLine` objects.
@@ -1406,25 +1400,17 @@ class BaseIOSIntfLine(IOSCfgLine, BaseFactoryInterfaceLine):
     # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
-    def ipv6_addr_object(self) -> IPv6Obj:
+    def ipv6_addr_objects(self) -> Dict[str,List[IPv6Obj]]:
         r"""
-        :return: A :class:`ccp_util.IPv6Obj` object representing the address on this interface, default to IPv6Obj()
+        :return: A Dict of :class:`ccp_util.IPv6Obj` objects representing the addresss on this interface, default to {}
         :rtype: IPv6Obj
         """
-        retval = self.re_match_iter_typed(
+        v6_globals = self.re_list_iter_typed(
             r"^\s+ipv6\s+address\s+(?P<v6addr>\S+?)\/(?P<v6masklength>\d+)",
             groupdict={"v6addr": str, "v6masklength": str},
-            default="",
+            result_type=IPv6Obj
         )
-
-        if retval["v6addr"] == "":
-            return self.default_ipv6_addr_object
-        elif retval["v6addr"] == "dhcp":
-            return self.default_ipv6_addr_object
-        elif retval["v6addr"] == "negotiated":
-            return self.default_ipv6_addr_object
-        else:
-            return IPv6Obj(f"{retval['v6addr']}/{retval['v6masklength']}")
+        return {"globals": v6_globals}
 
     # This method is on BaseIOSIntfLine()
     @property
@@ -1636,6 +1622,21 @@ class BaseIOSIntfLine(IOSCfgLine, BaseFactoryInterfaceLine):
         """
         retval = self.re_match_iter_typed(
             r"^\s*ip\s+mtu\s+(\d+)$", result_type=int, default=-1
+        )
+        return retval
+
+    # This method is on BaseIOSIntfLine()
+    @property
+    @logger.catch(reraise=True)
+    def manual_ipv6_mtu(self) -> int:
+        ## Due to the diverse platform defaults, this should be the
+        ##    only mtu information I plan to support
+        r"""
+        :return: Return the manual IPv6 MTU of the interface as a python integer, default to -1
+        :rtype: int
+        """
+        retval = self.re_match_iter_typed(
+            r"^\s*ipv6\s+mtu\s+(\d+)$", result_type=int, default=-1
         )
         return retval
 
@@ -2019,6 +2020,27 @@ class BaseIOSIntfLine(IOSCfgLine, BaseFactoryInterfaceLine):
     # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
+    def has_ipv6_pim_sparse_mode(self) -> bool:
+        r"""
+        :return: Whether the interface is configured with IP PIM Sparse-Mode
+        :rtype: bool
+        """
+        ## NOTE: I have no intention of checking self.is_shutdown here
+        ##     People should be able to check the sanity of interfaces
+        ##     before they put them into production
+
+        ## Interface must have an IP addr to run PIM
+        if self.ipv4_addr == "":
+            return False
+
+        retval = self.re_match_iter_typed(
+            r"^\s*(ipv6\spim\ssparse-mode)\s*$", result_type=bool, default=False
+        )
+        return retval
+
+    # This method is on BaseIOSIntfLine()
+    @property
+    @logger.catch(reraise=True)
     def has_ip_pim_sparsedense_mode(self) -> bool:
         r"""
         :return: Whether the interface is configured with IP PIM Sparse-Dense-Mode
@@ -2063,18 +2085,6 @@ class BaseIOSIntfLine(IOSCfgLine, BaseFactoryInterfaceLine):
     # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
-    def has_ip_helper_addresses(self) -> bool:
-        r"""
-        :return: Return True if the intf has helper-addresses, default to False
-        :rtype: bool
-        """
-        if len(self.ip_helper_addresses) > 0:
-            return True
-        return False
-
-    # This method is on BaseIOSIntfLine()
-    @property
-    @logger.catch(reraise=True)
     def ip_helper_addresses(self) -> List[Dict[str,str]]:
         r"""
         :return: A sequence of dicts with IP helper-addresses.  Each helper-address is in a dictionary.
@@ -2115,6 +2125,16 @@ class BaseIOSIntfLine(IOSCfgLine, BaseFactoryInterfaceLine):
                 else:
                     retval.append({"addr": addr, "vrf": vrf, "scope": 'local'})
         return retval
+
+    # This method is on BaseIOSIntfLine()
+    @property
+    @logger.catch(reraise=True)
+    def ipv6_dhcp_server(self) -> List[Dict[str,str]]:
+        r"""
+        :return: A sequence of dicts with IPv6 dhcp server.  Each address is in a dictionary.
+        :rtype: List[Dict[str,str]]
+        """
+        raise NotImplementedError()
 
     # This method is on BaseIOSIntfLine()
     @property
@@ -2656,6 +2676,19 @@ class BaseIOSIntfLine(IOSCfgLine, BaseFactoryInterfaceLine):
     # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
+    def ipv6_trafficfilter_in(self) -> str:
+        """
+        :return: The name or number of the inbound IPv6 ACL
+        :rtype: str
+        """
+        retval = self.re_match_iter_typed(
+            r"^\s*ipv6\straffic-filter\s+(\S+)\s+in\s*$", result_type=str, default=""
+        )
+        return retval
+
+    # This method is on BaseIOSIntfLine()
+    @property
+    @logger.catch(reraise=True)
     def ipv4_accessgroup_out(self) -> str:
         """
         :return: The name or number of the outbound IPv4 access-group
@@ -2666,6 +2699,55 @@ class BaseIOSIntfLine(IOSCfgLine, BaseFactoryInterfaceLine):
         )
         return retval
 
+    # This method is on BaseIOSIntfLine()
+    @property
+    @logger.catch(reraise=True)
+    def ipv6_trafficfilter_in(self) -> str:
+        """
+        :return: The name or number of the inbound IPv6 ACL
+        :rtype: str
+        """
+        retval = self.re_match_iter_typed(
+            r"^\s*ipv6\straffic-filter\s+(\S+)\s+in\s*$", result_type=str, default=""
+        )
+        return retval
+
+    # This method is on BaseIOSIntfLine()
+    @property
+    @logger.catch(reraise=True)
+    def ipv6_trafficfilter_out(self) -> str:
+        """
+        :return: The name or number of the outbound IPv6 ACL
+        :rtype: str
+        """
+        retval = self.re_match_iter_typed(
+            r"^\s*ipv6\straffic-filter\s+(\S+)\s+out\s*$", result_type=str, default=""
+        )
+        return retval
+
+    # This method is on BaseIOSIntfLine()
+    @property
+    @logger.catch(reraise=True)
+    def ipv6_accessgroup_in(self) -> str:
+        """
+        Alias for ipv6_trafficfilter_in
+
+        :return: The name or number of the inbound IPv6 ACL
+        :rtype: str
+        """
+        return self.ipv6_trafficfilter_in
+
+    # This method is on BaseIOSIntfLine()
+    @property
+    @logger.catch(reraise=True)
+    def ipv6_accessgroup_out(self) -> str:
+        """
+        Alias for ipv6_trafficfilter_out
+
+        :return: The name or number of the outbound IPv6 ACL
+        :rtype: str
+        """
+        return self.ipv6_trafficfilter_out
 
 ##
 ##-------------  IOS Interface Object

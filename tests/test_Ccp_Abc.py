@@ -5,9 +5,11 @@ import pytest
 from ciscoconfparse2.ciscoconfparse2 import CiscoConfParse
 from ciscoconfparse2.errors import ConfigListItemDoesNotExist
 from ciscoconfparse2.errors import DynamicAddressException
-from ciscoconfparse2.ccp_util import IPv4Obj, CiscoRange, CiscoIOSInterface
+from ciscoconfparse2.ccp_util import CiscoRange, CiscoIOSInterface
+from ciscoconfparse2.ccp_util import IPv4Obj, IPv6Obj
 from ciscoconfparse2.ccp_abc import get_brace_termination
 from ciscoconfparse2.ccp_abc import BaseCfgLine
+from ciscoconfparse2.models_cisco import IOSCfgLine
 from ciscoconfparse2.models_cisco import IOSCfgLine
 import sys
 
@@ -1136,6 +1138,54 @@ policy-map SHAPE_HEIR
     # Check that base assumption is True... we are checking the right parent
     assert obj.text == "interface GigabitEthernet 1/1"
     assert uut_result["vlan"] == 911
+
+
+def testVal_re_list_iter_typed_01():
+    """Test that we get a correct list of matches for a simple use-case (casting as an IPv6Obj)"""
+    config = [
+        '!',
+        'interface Serial1/0',
+        ' ip address 1.1.1.1 255.255.255.252',
+        ' ipv6 address dead:beef::11/64',
+        ' ipv6 address dead:beef::12/64',
+        ' ipv6 address negotiated',
+        '!',
+        'interface Serial2/0',
+        ' ip address 1.1.1.5 255.255.255.252',
+        ' ipv6 address dead:beef::21/64',
+        ' ipv6 address dead:beef::22/64',
+        '!',
+    ]
+    parse = CiscoConfParse(config)
+    obj = parse.find_objects(r"interface Serial1/0")[0]
+    uut = obj.re_list_iter_typed(r"ipv6\s+address\s+(\S+?\/\d+)", result_type=IPv6Obj)
+    assert isinstance(uut, list)
+    assert len(uut) == 2
+    assert uut[0] == IPv6Obj('dead:beef::11/64')
+    assert uut[1] == IPv6Obj('dead:beef::12/64')
+
+
+def testVal_re_list_iter_typed_02():
+    """Test that we get an empty list if there are no regex matches"""
+    config = [
+        '!',
+        'interface Serial1/0',
+        ' ip address 1.1.1.1 255.255.255.252',
+        ' ipv6 address dead:beef::11/64',
+        ' ipv6 address dead:beef::12/64',
+        ' ipv6 address negotiated',
+        '!',
+        'interface Serial2/0',
+        ' ip address 1.1.1.5 255.255.255.252',
+        ' ipv6 address dead:beef::21/64',
+        ' ipv6 address dead:beef::22/64',
+        '!',
+    ]
+    parse = CiscoConfParse(config)
+    obj = parse.find_objects(r"interface Serial1/0")[0]
+    uut = obj.re_list_iter_typed(r"this_should_not_match_anything\s+(\S+?\/\d+)", result_type=IPv6Obj)
+    assert isinstance(uut, list)
+    assert len(uut) == 0
 
 
 def testVal_last_family_linenum_01():

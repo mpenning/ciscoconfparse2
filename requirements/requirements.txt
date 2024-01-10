@@ -5,9 +5,9 @@ loguru == 0.7.2
 passlib == 1.7.4
 tomlkit == 0.12.3
 dnspython == 2.4.2
+macaddress == 2.0.2
 pyyaml == 6.0.1
-# reference a version tag on github since there's no pypi release
-git+https://github.com/netdevops/hier_config.git@v2.2.3
+hier_config == 2.2.3
 deprecated == 1.2.14
 # virtualenv is required by tox
 virtualenv > 20.2

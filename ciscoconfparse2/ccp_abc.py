@@ -1603,6 +1603,154 @@ class BaseCfgLine(object):
             raise ValueError(error)
 
     # On BaseCfgLine()
+    @logger.catch(reraise=True)
+    def re_list_iter_typed(
+        self,
+        regex: Union[str, re.Pattern],
+        group: int=1,
+        result_type: type=str,
+        groupdict: dict=None,
+        recurse: bool=True,
+        debug: bool=False,
+    ) -> List[Any]:
+        r"""Use ``regex`` to search the children of
+        :class:`~models_cisco.IOSCfgLine` text and return the contents of
+        the regular expression group, at the integer ``group`` index, cast as
+        ``result_type``; if there is no match, default to an empty list.
+
+        :param regex: A string or python compiled regular expression, which should be matched.  This regular expression should contain parenthesis, which are bound to a match group.
+        :type regex: Union[str, re.Pattern]
+        :param group: Specify the desired regex group to be returned.  ``group`` defaults to 1; this is only used if ``groupdict`` is None.
+        :type group: int
+        :param result_type: A type (typically one of: ``str``, ``int``, ``float``, or :class:`~ccp_util.IPv4Obj`).  Unless ``groupdict`` is specified, all returned values are cast as ``result_type``, which defaults to ``str``.
+        :type result_type: Type
+        :param recurse: Set True if you want to search all children (children, grand children, great grand children, etc...), default to True.
+        :type recurse: bool
+        :param groupdict: Set to a dict of types if you want to match on regex group names; ``groupdict`` overrides the ``group``, ``result_type`` and ``untyped_default`` arguments.
+        :type groupdict: dict
+        :param debug: Set True if you want to debug ``re_list_iter_typed()`` activity
+        :type debug: bool
+        :return: The text matched by the regular expression group; if there is no match, ``default`` is returned.  All values are cast as ``result_type``, unless `untyped_default` is True.
+        :rtype: Any
+
+        .. note::
+
+           This loops through the children (in order) and returns a list of all matched text
+
+        This example illustrates how you can use
+        :func:`~models_cisco.IOSCfgLine.re_list_iter_typed` to build a list of
+        :func:`~ccp_util.IPv6Obj` address objects for each interface.
+
+        .. code-block:: python
+           :emphasize-lines: 17
+
+           >>> import re
+           >>> from ciscoconfparse2 import CiscoConfParse
+           >>> from ciscoconfparse2.ccp_util import IPv6Obj
+           >>> config = [
+           ...     '!',
+           ...     'interface Serial1/0',
+           ...     ' ip address 1.1.1.1 255.255.255.252',
+           ...     ' ipv6 address dead:beef::11/64',
+           ...     ' ipv6 address dead:beef::12/64',
+           ...     '!',
+           ...     'interface Serial2/0',
+           ...     ' ip address 1.1.1.5 255.255.255.252',
+           ...     ' ipv6 address dead:beef::21/64',
+           ...     ' ipv6 address dead:beef::22/64',
+           ...     '!',
+           ...     ]
+           >>> parse = CiscoConfParse(config)
+           >>> obj = parse.find_objects(r"interface Serial1/0")[0]
+           >>> obj.text
+           interface Serial1/0
+           >>> addr_objs = obj.re_list_iter_typed(r"ipv6\s+address\s+(\S.+)", result_type=IPv6Obj)
+           >>> print(obj.text, addr_objs)
+           interface Serial1/0 [<IPv6Obj dead:beef::11/64>, <IPv6Obj dead:beef::12/64>]
+           >>>
+        """
+        if self.confobj is not None and self.confobj.search_safe is False:
+            error = "The configuration has changed since the last commit; a config search is not safe."
+            logger.critical(error)
+            raise NotImplementedError(error)
+
+        untyped_default = False
+
+        # iterate through children, and return all matching values
+        #  (cast as result_type) from all child.text that match regex
+        # if (default is True):
+        # Not using self.re_list_iter_typed(default=True), because I want
+        #   to be sure I build the correct API for match=False
+        #
+        if debug is True:
+            logger.info(f"{self}.re_list_iter_typed(`regex`={regex}, `group`={group}, `result_type`={result_type}, `recurse`={recurse}, `groupdict`={groupdict}, `debug`={debug}) was called")
+
+        retval = list()
+        if groupdict is None:
+            if debug is True:
+                logger.debug(f"    {self}.re_list_iter_typed() is checking with `groupdict`=None")
+
+            # Append to return values if the parent line matches the regex...
+            mm = re.search(regex, self.text)
+            if isinstance(mm, re.Match):
+                retval.append(result_type(mm.group(group)))
+
+            if recurse is False:
+                for cobj in self.children:
+                    if debug is True:
+                        logger.debug(f"    {self}.re_list_iter_typed() is checking match of r'''{regex}''' on -->{cobj}<--")
+                    mm = re.search(regex, cobj.text)
+                    if isinstance(mm, re.Match):
+                        retval.append(result_type(mm.group(group)))
+            else:
+                for cobj in self.all_children:
+                    if debug is True:
+                        logger.debug(f"    {self}.re_list_iter_typed() is checking match of r'''{regex}''' on -->{cobj}<--")
+                    mm = re.search(regex, cobj.text)
+                    if isinstance(mm, re.Match):
+                        retval.append(result_type(mm.group(group)))
+            return retval
+        elif isinstance(groupdict, dict) is True:
+            if debug is True:
+                logger.debug(f"    {self}.re_list_iter_typed() is checking with `groupdict`={groupdict}")
+
+            # Return the result if the parent line matches the regex...
+            mm = re.search(regex, self.text)
+            if isinstance(mm, re.Match):
+                tmp = self.get_regex_typed_dict(
+                    regex=mm,
+                    type_dict=groupdict,
+                    debug=debug,
+                )
+                retval.append(tmp)
+
+            if recurse is False:
+                for cobj in self.children:
+                    mm = re.search(regex, cobj.text)
+                    tmp = self.get_regex_typed_dict(
+                        regex=mm,
+                        type_dict=groupdict,
+                        debug=debug,
+                    )
+                    retval.append(tmp)
+                return retval
+            else:
+                for cobj in self.all_children:
+                    mm = re.search(regex, cobj.text)
+                    if isinstance(mm, re.Match):
+                        tmp = self.get_regex_typed_dict(
+                            regex=mm,
+                            type_dict=groupdict,
+                            debug=debug,
+                        )
+                        retval.append(tmp)
+                return retval
+        else:
+            error = f"`groupdict` must be None or a `dict`, but we got {type(groupdict)}."
+            logger.critical(error)
+            raise ValueError(error)
+
+    # On BaseCfgLine()
     @property
     def family_text(self):
         """Return a list with this the text of this object, and

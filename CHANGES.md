@@ -4,6 +4,17 @@
 - Summary:
     - Insert something here
 
+## Version: 0.4.0
+
+- Released: 2024-01-10
+- Summary:
+    - Add `re_list_iter_typed()` to return a list of all child matches
+    - Add `MACObj()` and `EUI64Obj()`
+    - BREAKING CHANGE:  Replace all `models_nxos.py` and `models_iosxr.py` code with a copy of `models_cisco.py` since there are so many broken parts of the aforementioned NXOS and IOS XR code.  These files will be re-implemented over time.
+    - Revise 'make coverage' to only use `coveragepy` instead of the `pytest-cov` plugin
+    - Rename 'make pypi-package-infra' as `make dep`
+    - More documentation updates
+
 ## Version: 0.3.4
 
 - Released: 2024-01-03

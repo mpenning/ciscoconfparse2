@@ -1,6 +1,6 @@
 """ ccp_util.py - Parse, Query, Build, and Modify IOS-style configurations
 
-     Copyright (C) 2023      David Michael Pennington
+     Copyright (C) 2014-2024  David Michael Pennington
 
      This program is free software: you can redistribute it and/or modify
      it under the terms of the GNU General Public License as published by
@@ -51,6 +51,8 @@ from collections import UserList
 from ipaddress import IPv4Network, IPv6Network, IPv4Address, IPv6Address
 from ipaddress import collapse_addresses as ipaddr_collapse_addresses
 from ipaddress import AddressValueError
+
+from macaddress import MAC, EUI48, EUI64
 
 from dns.exception import DNSException
 from dns.resolver import Resolver
@@ -2365,6 +2367,113 @@ class IPv6Obj(object):
     @property
     def sixtofour(self):
         return self.network_object.sixtofour
+
+
+@attrs.define(repr=False)
+class MACObj(MAC):
+    """
+    An object to represent a 48-bit mac-address in various formats.
+    """
+    value: str = None
+    mac: MAC = None
+    _address: Any = None
+
+    @logger.catch(reraise=True)
+    def __init__(self, value: str):
+        self.mac = MAC(value)
+        self._address = self.mac._address
+
+    @property
+    @logger.catch(reraise=True)
+    def cisco(self) -> str:
+        """
+        Render a Cisco IOS mac format.
+        """
+        # get basic bytes
+        mb = str(self.mac).lower().split("-")
+        cisco_mac = f"{mb[0]}{mb[1]}.{mb[2]}{mb[3]}.{mb[4]}{mb[5]}"
+        return cisco_mac
+
+    @property
+    @logger.catch(reraise=True)
+    def unix(self) -> str:
+        """
+        Render a UNIX mac format.
+        """
+        # get basic bytes
+        mb = str(self.mac).lower().split("-")
+        unix_mac = f"{mb[0]}-{mb[1]}-{mb[2]}-{mb[3]}-{mb[4]}-{mb[5]}"
+        return unix_mac
+
+    @property
+    @logger.catch(reraise=True)
+    def dash(self) -> str:
+        """
+        Render a dash-delimited mac format.
+        """
+        # get basic bytes
+        mb = str(self.mac).lower().split("-")
+        dash_mac = f"{mb[0]}-{mb[1]}-{mb[2]}-{mb[3]}-{mb[4]}-{mb[5]}"
+        return dash_mac
+
+    @property
+    @logger.catch(reraise=True)
+    def colon(self) -> str:
+        """
+        Render a colon-delimited mac format.
+        """
+        # get basic bytes
+        mb = str(self.mac).lower().split("-")
+        colon_mac = f"{mb[0]}:{mb[1]}:{mb[2]}:{mb[3]}:{mb[4]}:{mb[5]}"
+        return colon_mac
+
+    def __str__(self) -> str:
+        return self.__repr__()
+
+    def __repr__(self) -> str:
+        return f'<MACObj {str(self.mac)}>'
+
+@attrs.define(repr=False)
+class EUI64Obj(EUI64):
+    """
+    An object to represent a 64-bit EUI64 address in various formats.
+    """
+    value: str = None
+    eui64: MAC = None
+    _address: Any = None
+
+    @logger.catch(reraise=True)
+    def __init__(self, value: str):
+        self.eui64 = EUI64(value)
+        self._address = self.eui64._address
+
+    @property
+    @logger.catch(reraise=True)
+    def dash(self) -> str:
+        """
+        Render a dash-delimited EUI64 format.
+        """
+        # get basic bytes
+        mb = str(self.eui64).lower().split("-")
+        dash_eui64 = f"{mb[0]}-{mb[1]}-{mb[2]}-{mb[3]}-{mb[4]}-{mb[5]}-{mb[6]}-{mb[7]}"
+        return dash_eui64
+
+    @property
+    @logger.catch(reraise=True)
+    def colon(self) -> str:
+        """
+        Render a colon-delimited EUI64 format
+        """
+        # get basic bytes
+        mb = str(self.eui64).lower().split("-")
+        colon_eui64 = f"{mb[0]}:{mb[1]}:{mb[2]}:{mb[3]}:{mb[4]}:{mb[5]}:{mb[6]}:{mb[7]}"
+        return colon_eui64
+
+    def __str__(self) -> str:
+        return self.__repr__()
+
+    def __repr__(self) -> str:
+        return f'<EUI64Obj {str(self.eui64)}>'
 
 
 class L4Object(object):

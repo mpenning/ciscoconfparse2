@@ -33,6 +33,8 @@ from ciscoconfparse2.ccp_abc import BaseCfgLine
 
 from ciscoconfparse2.errors import InvalidParameters
 
+from macaddress import EUI48, EUI64
+
 from operator import attrgetter
 from itertools import repeat
 from copy import deepcopy
@@ -2201,6 +2203,7 @@ def testValues_Diff_08():
 
 def testValues_Diff_09():
     """Test Diff() output for different input global configurations"""
+
     before_config = ["logging 1.1.3.4", "logging 1.1.3.5", "logging 1.1.3.6",]
     after_config = ["logging 1.1.3.255", "logging 1.1.3.5", "logging 1.1.3.6",]
 
@@ -2212,6 +2215,55 @@ def testValues_Diff_09():
 
     assert uut.get_diff() == correct_result
 
+def testValues_Diff_10():
+    """Get multi-level configuration diffs"""
+
+    before_config = """!
+    policy-map type inspect THIS
+      class class-default
+        accept
+    """
+
+    after_config = """!
+    policy-map type inspect THIS
+      class class-default
+        drop
+    """
+
+    correct_result = """policy-map type inspect THIS
+  class class-default
+    no accept
+    drop""".splitlines()
+
+    uut = Diff(old_config=before_config, new_config=after_config)
+    assert uut.get_diff() == correct_result
+
+def testValues_Diff_11():
+    """Get multi-level configuration diffs"""
+
+    before_config = """
+    policy-map type inspect THIS
+      class foo
+        accept
+      class class-default
+        drop
+    """
+
+    after_config = """
+    policy-map type inspect THIS
+      class bar
+        drop
+      class class-default
+        drop
+    """
+
+    correct_result = """policy-map type inspect THIS
+  no class foo
+  class bar
+    drop""".splitlines()
+
+    uut = Diff(old_config=before_config, new_config=after_config)
+    assert uut.get_diff() == correct_result
 
 def testValues_ignore_ws():
     config = ["set snmp community read-only     myreadonlystring"]

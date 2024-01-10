@@ -26,9 +26,9 @@ COL_END=\033[0;0m
 
 # Ref -> https://stackoverflow.com/a/26737258/667301
 # Ref -> https://packaging.python.org/en/latest/guides/making-a-pypi-friendly-readme/
-.PHONY: pypi-package-infra
-pypi-package-infra:
-	@echo "$(COL_GREEN)>> building ciscoconfparse2 pypi artifacts (wheel and tar.gz)$(COL_END)"
+.PHONY: dep
+dep:
+	@echo "$(COL_GREEN)>> getting ciscoconfparse2 pypi artifacts (wheel and tar.gz)$(COL_END)"
 	pip install -U pip
 	pip install -r requirements/requirements.txt
 	pip install -r requirements/requirements-dev.txt
@@ -40,7 +40,7 @@ pypi:
 	@echo "$(COL_CYAN)>> uploading ciscoconfparse2 pypi artifacts to pypi$(COL_END)"
 	make clean
 	# upgrade packaging infra and ciscoconfparse2 dependencies...
-	make pypi-package-infra
+	make dep
 	# tag the repo with $$VERSION and push to origin
 	git tag $$VERSION
 	git push origin $$VERSION
@@ -134,8 +134,8 @@ perf-factory-intf:
 flake:
 	flake8 --ignore E501,E226,E225,E221,E303,E302,E265,E128,E125,E124,E41,W291 --max-complexity 10 ciscoconfparse2 | less
 
-.PHONY: coverage
-coverage:
+.PHONY: coverage-pytest
+coverage-pytest:
 	@echo "[[[ py.test Coverage ]]]"
 	cd tests;py.test --cov-report term-missing --cov=ciscoconfparse2.py -s -v
 
@@ -175,6 +175,18 @@ test:
 	# You can also test with verbose output:
 	#     cd tests && pytest -vvs ./test_*py
 	cd tests && pytest ./test_*py
+
+.PHONY: coverage
+coverage:
+	@echo "$(COL_GREEN)>> running unit tests$(COL_END)"
+	$(shell touch .pip_dependency)
+	make timestamp
+	#make ping
+	make clean
+	# run tests with coverage (ensure you run 'make dep' before)
+	cd tests && coverage run -m pytest test*py
+	# Move the coverage file to the base git directory
+	cd tests && mv .coverage ../
 
 .PHONY: clean
 clean:
