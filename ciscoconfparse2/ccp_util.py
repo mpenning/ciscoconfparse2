@@ -52,7 +52,7 @@ from ipaddress import IPv4Network, IPv6Network, IPv4Address, IPv6Address
 from ipaddress import collapse_addresses as ipaddr_collapse_addresses
 from ipaddress import AddressValueError
 
-from macaddress import MAC, EUI48, EUI64
+from macaddress import EUI48, EUI64
 
 from dns.exception import DNSException
 from dns.resolver import Resolver
@@ -2370,17 +2370,17 @@ class IPv6Obj(object):
 
 
 @attrs.define(repr=False)
-class MACObj(MAC):
+class MACObj(EUI48):
     """
     An object to represent a 48-bit mac-address in various formats.
     """
     value: str = None
-    mac: MAC = None
+    mac: EUI48 = None
     _address: Any = None
 
     @logger.catch(reraise=True)
     def __init__(self, value: str):
-        self.mac = MAC(value)
+        self.mac = EUI48(value)
         self._address = self.mac._address
 
     @property
@@ -2439,7 +2439,7 @@ class EUI64Obj(EUI64):
     An object to represent a 64-bit EUI64 address in various formats.
     """
     value: str = None
-    eui64: MAC = None
+    eui64: EUI64 = None
     _address: Any = None
 
     @logger.catch(reraise=True)
