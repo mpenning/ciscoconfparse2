@@ -65,32 +65,52 @@ MAX_VLAN = 4094
 
 @attrs.define(repr=False)
 class TrackingInterface(BaseCfgLine):
+    grp: int = None
+    intf: BaseCfgLine = None
+    decr: int = None
+    weight: int = None
     feature = "tracking_interface"
-    _parent = None
-    _group = None
-    _interface = None
-    _decrement = None
-    _weighting = None
+    _group: int = None
+    _interface: Any = None
+    _decrement: int = None
+    _weighting: int = None
 
     # This method is on TrackingInterface()
     @logger.catch(reraise=True)
-    def __init__(self, group, interface, decrement, weighting=None):
+    def __init__(self,
+                 grp: int,
+                 intf: BaseCfgLine,
+                 decr: int = 0,
+                 weight: int = None):
         """Implement a TrackingInterface() object for Cisco IOS HSRP, GLBP and VRRP"""
-        super(TrackingInterface, self).__init__(group, interface, decrement, weighting=weighting)
+        super(TrackingInterface, self).__init__()
 
-        self._parent = self.parent
-        self._group = int(group)
-        self._interface = interface
-        self._decrement = decrement
-        self._weighting = weighting
+        self._group = int(grp)
+        self._interface = intf
+        self._decrement = decr
+        self._weighting = weight
+
+    @property
+    def group(self):
+        return self._group
+
+    @property
+    def interface(self):
+        return self._interface
+
+    @property
+    def decrement(self):
+        return self._decrement
+
+    @property
+    def weighting(self):
+        return self._weighting
 
     # This method is on TrackingInterface()
-    @logger.catch(reraise=True)
     def __str__(self):
-        return f"'{self.name}' group: {self.group}, weighting: {self.weighting}, decrement: {self.decrement}"
+        return f"'{self.name}' group: {self._group}, weighting: {self._weighting}, decrement: {self._decrement}"
 
     # This method is on TrackingInterface()
-    @logger.catch(reraise=True)
     def __repr__(self):
         return f"<TrackingInterface {self.__str__()}>"""
 
@@ -179,34 +199,34 @@ class TrackingInterface(BaseCfgLine):
 
 @attrs.define(repr=False)
 class HSRPInterfaceGroup(BaseCfgLine):
-    feature = "hsrp"
-    _group = None
-    _parent = None
+    grp: int = 0
+    parent_obj: BaseCfgLine = None
+    parent: BaseCfgLine = None
+    feature: str = "hsrp"
+    _group: int = None
+    intf_name: str = None
 
     ##-------------  HSRP
 
     # This method is on HSRPInterfaceGroup()
     @logger.catch(reraise=True)
-    def __init__(self, group, parent):
+    def __init__(self, grp = 0, parent_obj = None):
         """A HSRP Interface Group object"""
-        super(HSRPInterfaceGroup, self).__init__(group, parent)
-        self.feature = "hsrp"
-        self._group = int(group)
-        if isinstance(parent, BaseCfgLine):
-            self._parent = parent
+        super(HSRPInterfaceGroup, self).__init__()
+        if isinstance(parent_obj, BaseCfgLine):
+            self.parent = parent_obj
         else:
-            error = f"{parent} is not a valid configuration line"
-            logger.error(error)
-            raise ValueError(error)
+            raise NotImplementedError()
+        self.feature = "hsrp"
+        self._group = int(grp)
+        self.intf_name = parent_obj
 
     # This method is on HSRPInterfaceGroup()
-    @logger.catch(reraise=True)
     def __str__(self):
         """Return a string representation of this HSRPInterfaceGroup() instance."""
         return f"'{self.interface_name}' version: {self.version}, group: {self.group}, ipv4: {self.ipv4}, has_ipv6: {self.has_ipv6}, priority: {self.priority}, preempt: {self.preempt}, preempt_delay: {self.preempt_delay}, hello_timer: {self.hello_timer}, hold_timer: {self.hold_timer}"
 
     # This method is on HSRPInterfaceGroup()
-    @logger.catch(reraise=True)
     def __repr__(self):
         return f"<HSRPInterfaceGroup {self.__str__()}>"""
 
@@ -246,16 +266,19 @@ class HSRPInterfaceGroup(BaseCfgLine):
     @logger.catch(reraise=True)
     def ipv4(self):
         """Return the string IPv4 HSRP address for this HSRP group"""
-        # NOTE: I have no intention of checking self.is_shutdown here
-        #     People should be able to check the sanity of interfaces
-        #     before they put them into production
-        for obj in self._parent.children:
-            obj_parts = obj.text.lower().strip().split()
-            if obj_parts[0:3] == ["standby", str(self._group), "ip"]:
-                return obj_parts[-1]
-        error = f"{self} does not have an HSRP ip configured"
-        logger.error(error)
-        raise ValueError(error)
+        ipv4 = ""
+        for obj in self.parent.children:
+            parts = obj.text.lower().strip().split()
+            if parts[0] == "standby":
+                if len(parts) == 4:
+                    # standby 100 ip 172.16.0.1
+                    if parts[1].isdigit() and int(parts[1]) == self.group and parts[2] == "ip":
+                        ipv4 = parts[3]
+                elif len(parts) == 3:
+                    # standby ip 172.16.0.1
+                    if self.group == 0 and parts[2] == "ip":
+                        ipv4 = parts[2]
+        return ipv4
 
     # This method is on HSRPInterfaceGroup()
     @property
@@ -275,12 +298,19 @@ class HSRPInterfaceGroup(BaseCfgLine):
         # NOTE: I have no intention of checking self.is_shutdown here
         #     People should be able to check the sanity of interfaces
         #     before they put them into production
-        for obj in self._parent.children:
-            obj_parts = obj.text.lower().strip().split()
-            if obj_parts[0:3] == ["standby", str(self._group), "ipv6"]:
-                return obj_parts[-1]
-        # Default to an empty string if there is no IPv6 HSRP addr config'd
-        return ""
+        ipv6 = ""
+        for obj in self.parent.children:
+            parts = obj.text.lower().strip().split()
+            if parts[0] == "standby":
+                if len(parts) == 4:
+                    # standby 100 ipv6 autoconfig
+                    if parts[1].isdigit() and int(parts[1]) == self.group and parts[2] == "ipv6":
+                        ipv6 = parts[3]
+                elif len(parts) == 3:
+                    # standby ipv6 autoconfig
+                    if self.group == 0 and parts[2] == "ipv6":
+                        ipv6 = parts[2]
+        return ipv6
 
     # This method is on HSRPInterfaceGroup()
     @property
@@ -288,7 +318,11 @@ class HSRPInterfaceGroup(BaseCfgLine):
     def interface_name(self):
         """Return the string interface name of the interface owning this HSRP group instance."""
         # return the name of the interface that owns this HSRPInterfaceGroup()
-        return " ".join(self._parent.text.strip().split()[1:])
+        if self.parent is None:
+            error = "HSRPInterfaceGroup() parent interface is None"
+            logger.critical(error)
+            raise ValueError(error)
+        return " ".join(self.parent.text.strip().split()[1:])
 
     # This method is on HSRPInterfaceGroup()
     @property
@@ -313,30 +347,61 @@ class HSRPInterfaceGroup(BaseCfgLine):
     @logger.catch(reraise=True)
     def get_hsrp_tracking_interfaces(self):
         """Return a list of HSRP TrackingInterface() interfaces for this HSRPInterfaceGroup()"""
-        ######################################################################
-        # Find decrement and interface
-        ######################################################################
         retval = list()
-        for obj in self._parent.children:
-            obj_parts = obj.text.strip().split()
-            if obj_parts[0:3] == ["standby", str(self._group), "track"]:
-                interface = None
-                decrement = 10
+        for obj in self.parent.children:
+            parts = obj.text.lower().strip().split()
+            if parts[0] == "standby":
                 _gg = obj.re_match_iter_typed(
-                    r"standby\s(\d+)\s+track\s+(?P<intf>\S.+?)(?P<decr>\s+\d+)*$",
+                    r"standby\s(?P<group>\d+)\s+track\s+(?P<intf>\S.+?)(?P<decr>\s+\d+)*\s*$",
+                    groupdict={"group": int, "intf": str, "decr": str},
+                )
+                _hh = obj.re_match_iter_typed(
+                    r"standby\s+track\s+(?P<intf>\S.+?)(?P<decr>\s+\d+)*\s*$",
                     groupdict={"intf": str, "decr": str},
                 )
-                interface = _gg["intf"]
-                if isinstance(_gg["decr"], str) and _gg["decr"] != "None":
-                    decrement = int(_gg["decr"].strip())
-                retval.append(
-                    TrackingInterface(
-                        group=int(self._group),
-                        interface=interface,
-                        decrement=decrement,
-                        weighting=None
-                    )
-                )
+
+                if _gg["group"] == "":
+                    hsrp_group = 0
+                else:
+                    hsrp_group = int(_gg["group"])
+
+                # Default IOS decrement value
+                decrement = 10
+
+                if _gg is not None and hsrp_group == self._group:
+                    # standby 111 track Dialer0 50
+                    interface = _gg["intf"]
+                    if isinstance(_gg["decr"], str) and _gg["decr"] != "None":
+                        decr_str = _gg["decr"].strip()
+                        if decr_str == "":
+                            decr_str = "0"
+                        decrement = int(decr_str)
+                    if interface != "":
+                        retval.append(
+                            TrackingInterface(
+                                grp=int(self._group),
+                                intf=interface,
+                                decr=decrement,
+                                weight=None
+                            )
+                        )
+                elif _hh is not None and self._group == 0:
+                    # standby track Dialer0 50
+                    interface = _hh["intf"]
+                    if isinstance(_hh["decr"], str) and _hh["decr"] != "None":
+                        decr_str = _hh["decr"].strip()
+                        if decr_str == "":
+                            decr_str = "0"
+                        decrement = int(decr_str)
+                    if interface != "":
+                        retval.append(
+                            TrackingInterface(
+                                grp=int(self._group),
+                                intf=interface,
+                                decr=decrement,
+                                weight=None
+                            )
+                        )
         return retval
 
     # This method is on HSRPInterfaceGroup()
@@ -351,17 +416,51 @@ class HSRPInterfaceGroup(BaseCfgLine):
     # This method is on HSRPInterfaceGroup()
     @property
     @logger.catch(reraise=True)
+    def preempt_delay_minimum(self):
+        """Return the configured integer HSRP preempt delay minimum, or 0 if there is none."""
+        # NOTE: I have no intention of checking self.is_shutdown here
+        #     People should be able to check the sanity of interfaces
+        #     before they put them into production
+        delay_min = 0
+        for obj in self.parent.children:
+            parts = obj.text.lower().strip().split()
+            if parts[0] == "standby":
+                if len(parts) == 6:
+                    # standby 100 preempt delay minimum 120
+                    if parts[1].isdigit() and int(parts[1]) == self.group and parts[3] == "delay" and parts[4] == "minimum":
+                        delay_min = int(parts[5])
+                elif len(parts) == 5:
+                    # standby preempt delay minimum 120
+                    if self.group == 0 and parts[2] == "delay" and parts[3] == "minimum":
+                        delay_min = int(parts[4])
+        return delay_min
+
+    # This method is on HSRPInterfaceGroup()
+    @property
+    @logger.catch(reraise=True)
     def preempt_delay(self):
         """Return the configured integer HSRP preempt delay, or 0 if there is none."""
         # NOTE: I have no intention of checking self.is_shutdown here
         #     People should be able to check the sanity of interfaces
         #     before they put them into production
-        for obj in self._parent.children:
-            obj_parts = obj.text.lower().strip().split()
-            if obj_parts[0:4] == ["standby", str(self._group), "preempt", "delay", "minimum"]:
-                return int(obj_parts[5])
-        # The default hello timer is 3 seconds...
-        return 0
+        delay = 0
+        for obj in self.parent.children:
+            parts = obj.text.lower().strip().split()
+            if parts[0] == "standby":
+                if len(parts) == 5:
+                    # standby 100 preempt delay 120
+                    if parts[1].isdigit() and int(parts[1]) == self.group and parts[3] == "delay" and parts[4] != "minimum":
+                        delay = int(parts[4])
+                elif len(parts) == 4:
+                    # standby preempt delay 120
+                    if self.group == 0 and parts[2] == "delay" and parts[3] != "minimum":
+                        delay = int(parts[3])
+
+        delay_minimum = self.preempt_delay_minimum
+        if delay_minimum > delay:
+            return delay_minimum
+        else:
+            return delay
 
     # This method is on HSRPInterfaceGroup()
     @property
@@ -371,7 +470,7 @@ class HSRPInterfaceGroup(BaseCfgLine):
         # NOTE: I have no intention of checking self.is_shutdown here
         #     People should be able to check the sanity of interfaces
         #     before they put them into production
-        for obj in self._parent.children:
+        for obj in self.parent.children:
             obj_parts = obj.text.lower().strip().split()
             if obj_parts[0:4] == ["standby", str(self._group), "timers", "msec"]:
                 return float(obj_parts[4]) / 1000.0
@@ -388,7 +487,7 @@ class HSRPInterfaceGroup(BaseCfgLine):
         # NOTE: I have no intention of checking self.is_shutdown here
         #     People should be able to check the sanity of interfaces
         #     before they put them into production
-        for obj in self._parent.children:
+        for obj in self.parent.children:
             obj_parts = obj.text.lower().strip().split()
             if obj_parts[0:2] == ["standby", str(self._group)] and obj_parts[-2] == "msec":
                 return float(obj_parts[-1]) / 1000.0
@@ -402,7 +501,7 @@ class HSRPInterfaceGroup(BaseCfgLine):
     @logger.catch(reraise=True)
     def priority(self):
         """Return the configured integer HSRP priority, or the HSRP default of 100 if there is no explicit HSRP priority configured."""
-        for obj in self._parent.children:
+        for obj in self.parent.children:
             obj_parts = obj.text.lower().strip().split()
             if obj_parts[0:3] == ["standby", str(self._group), "priority"]:
                 return int(obj_parts[3])
@@ -417,7 +516,7 @@ class HSRPInterfaceGroup(BaseCfgLine):
         ## NOTE: I have no intention of checking self.is_shutdown here
         ##     People should be able to check the sanity of interfaces
         ##     before they put them into production
-        for obj in self._parent.children:
+        for obj in self.parent.children:
             obj_parts = obj.text.lower().strip().split()
             if obj_parts[0:2] == ["standby", "version"]:
                 return int(obj_parts[-1])
@@ -435,7 +534,7 @@ class HSRPInterfaceGroup(BaseCfgLine):
     @logger.catch(reraise=True)
     def use_bia(self):
         """Return True if the router is configured with `standby use-bia`; `standby use-bia` helps avoid instability when introducing new HSRP routers.  Return False if the router is not configured with `standby use-bia`."""
-        for obj in self._parent.children:
+        for obj in self.parent.children:
             if "use-bia" in obj.text:
                 return True
         return False
@@ -447,7 +546,7 @@ class HSRPInterfaceGroup(BaseCfgLine):
         """Return True if the router is configured to preempt for this HSRP Group; otherwise return False."""
         ## For API simplicity, I always assume there is only one hsrp
         ##     group on the interface
-        for obj in self._parent.children:
+        for obj in self.parent.children:
             obj_parts = obj.text.lower().strip().split()
             if obj_parts[0:3] == ["standby", str(self._group), "preempt"]:
                 return True
@@ -890,7 +989,6 @@ class BaseIOSIntfLine(IOSCfgLine, BaseFactoryInterfaceLine):
         self.default_ipv6_addr_object = IPv6Obj()
 
     # This method is on BaseIOSIntfLine()
-    @logger.catch(reraise=True)
     def __repr__(self) -> str:
         if not self.is_switchport:
             try:
@@ -924,9 +1022,8 @@ class BaseIOSIntfLine(IOSCfgLine, BaseFactoryInterfaceLine):
         return retval
 
     # This method is on BaseIOSIntfLine()
-    @property
     @logger.catch(reraise=True)
-    def hsrp_interfaces(self) -> List[HSRPInterfaceGroup]:
+    def get_hsrp_groups(self) -> List[HSRPInterfaceGroup]:
         """
         :return: the sequence of configured HSRPInterfaceGroup() instances
         :rtype: List[HSRPInterfaceGroup]
@@ -934,9 +1031,12 @@ class BaseIOSIntfLine(IOSCfgLine, BaseFactoryInterfaceLine):
         retval = set()
         for obj in self.children:
             # Get each HSRP group number...
-            if re.search(r"standby\s+(?P<group>\d+)\s+ip", obj.text.strip()):
-                group = int(obj.text.split()[1])
-                retval.add(HSRPInterfaceGroup(group=group, parent=self))
+            tmp = obj.text.split()
+            if tmp[0] == "standby" and tmp[1] == "ip":
+                retval.add(HSRPInterfaceGroup(grp=0, parent_obj=self))
+            elif tmp[0] == "standby" and tmp[2] == "ip":
+                group = int(tmp[1])
+                retval.add(HSRPInterfaceGroup(grp=group, parent_obj=self))
         # Return a sorted list of HSRPInterfaceGroup() instances...
         intf_groups = sorted(retval, key=lambda x: x.group, reverse=False)
         return intf_groups
@@ -2883,7 +2983,6 @@ class IOSAccessLine(IOSCfgLine):
     def __hash__(self):
         return self.get_unique_identifier()
 
-    @logger.catch(reraise=True)
     def __repr__(self):
         return "<%s # %s '%s' info: '%s'>" % (
             self.classname,
@@ -2964,7 +3063,6 @@ class BaseIOSRouteLine(IOSCfgLine):
     def __init__(self, *args, **kwargs):
         super(BaseIOSRouteLine, self).__init__(*args, **kwargs)
 
-    @logger.catch(reraise=True)
     def __repr__(self):
         return "<%s # %s '%s' info: '%s'>" % (
             self.classname,

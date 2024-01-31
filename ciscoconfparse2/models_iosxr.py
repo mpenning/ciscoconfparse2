@@ -465,7 +465,6 @@ class BaseIOSXRIntfLine(IOSXRCfgLine, BaseFactoryInterfaceLine):
         self.default_ipv6_addr_object = IPv6Obj()
 
     # This method is on BaseIOSXRIntfLine()
-    @logger.catch(reraise=True)
     def __repr__(self) -> str:
         if not self.is_switchport:
             try:
@@ -499,9 +498,8 @@ class BaseIOSXRIntfLine(IOSXRCfgLine, BaseFactoryInterfaceLine):
         return retval
 
     # This method is on BaseIOSXRIntfLine()
-    @property
     @logger.catch(reraise=True)
-    def hsrp_interfaces(self) -> List[HSRPInterfaceGroup]:
+    def get_hsrp_groups(self) -> List[HSRPInterfaceGroup]:
         """
         :return: the sequence of configured HSRPInterfaceGroup() instances
         :rtype: List[HSRPInterfaceGroup]
@@ -2454,7 +2452,6 @@ class IOSXRvPCLine(BaseCfgLine):
     def __hash__(self):
         return self.get_unique_identifier()
 
-
     def __repr__(self):
         return "<{} # {} '{}'>".format(self.classname, self.linenum, self.vpc_domain_id)
 
@@ -2617,7 +2614,6 @@ class IOSXRAccessLine(IOSXRCfgLine):
     def __hash__(self):
         return self.get_unique_identifier()
 
-    @logger.catch(reraise=True)
     def __repr__(self):
         return "<%s # %s '%s' info: '%s'>" % (
             self.classname,
@@ -2698,7 +2694,6 @@ class BaseIOSXRRouteLine(IOSXRCfgLine):
     def __init__(self, *args, **kwargs):
         super(BaseIOSXRRouteLine, self).__init__(*args, **kwargs)
 
-    @logger.catch(reraise=True)
     def __repr__(self):
         return "<%s # %s '%s' info: '%s'>" % (
             self.classname,

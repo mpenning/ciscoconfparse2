@@ -4,6 +4,20 @@
 - Summary:
     - Insert something here
 
+## Version: 0.4.2
+
+- Released: 2024-01-30
+- Summary:
+    - Add more HSRP support
+    - More documentation updates
+
+## Version: 0.4.1
+
+- Released: 2024-01-14
+- Summary:
+    - BREAKING CHANGE Rename `hsrp_interface_groups` property to `get_hsrp_groups()` method
+    - More documentation updates
+
 ## Version: 0.4.0
 
 - Released: 2024-01-10
