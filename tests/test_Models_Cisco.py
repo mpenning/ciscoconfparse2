@@ -5,6 +5,7 @@ import pytest
 from ciscoconfparse2.ciscoconfparse2 import CiscoConfParse
 from ciscoconfparse2.errors import DynamicAddressException
 from ciscoconfparse2.ccp_util import IPv4Obj, CiscoRange, CiscoIOSInterface
+from ciscoconfparse2.models_cisco import HSRPInterfaceGroup
 import sys
 
 sys.path.insert(0, "..")
@@ -1879,6 +1880,175 @@ interface Vlan21
     intf_obj = cfg.find_objects("^interface")[0]
     assert bool(intf_obj.ip_secondary_addresses) is False
 
+###
+### ------ HSRP
+###
+def testVal_IOSHSRPGroups_01(parse_sample_08_ios_factory):
+    """Test that a list of hsrp interface group instances is returned by get_hsrp_groups()"""
+    intf_obj = parse_sample_08_ios_factory.find_objects("^interface FastEthernet0/0")[0]
+    hsrp_groups = intf_obj.get_hsrp_groups()
+
+    assert isinstance(hsrp_groups, list)
+    assert len(hsrp_groups) == 4
+
+def testVal_IOSHSRPGroups_02(parse_sample_08_ios_factory):
+    """Test that the correct object instance is returned by get_hsrp_groups()"""
+    intf_obj = parse_sample_08_ios_factory.find_objects("^interface FastEthernet0/0")[0]
+    hsrp_groups = intf_obj.get_hsrp_groups()
+
+    assert isinstance(hsrp_groups, list)
+    assert len(hsrp_groups) == 4
+    # HSRP Group 0
+    assert isinstance(hsrp_groups[0], HSRPInterfaceGroup)
+    # HSRP Group 110
+    assert isinstance(hsrp_groups[1], HSRPInterfaceGroup)
+    # HSRP Group 111
+    assert isinstance(hsrp_groups[2], HSRPInterfaceGroup)
+    # HSRP Group 112
+    assert isinstance(hsrp_groups[3], HSRPInterfaceGroup)
+
+def testVal_IOSHSRPGroups_03(parse_sample_08_ios_factory):
+    """Test that the correct HSRP group numbers are populated"""
+    intf_obj = parse_sample_08_ios_factory.find_objects("^interface FastEthernet0/0")[0]
+    hsrp_groups = intf_obj.get_hsrp_groups()
+
+    assert isinstance(hsrp_groups, list)
+    assert len(hsrp_groups) == 4
+    assert isinstance(hsrp_groups[0], HSRPInterfaceGroup)
+    assert isinstance(hsrp_groups[1], HSRPInterfaceGroup)
+    assert isinstance(hsrp_groups[2], HSRPInterfaceGroup)
+    assert isinstance(hsrp_groups[3], HSRPInterfaceGroup)
+    # HSRP Group 0
+    assert hsrp_groups[0].group == 0
+    # HSRP Group 110
+    assert hsrp_groups[1].group == 110
+    # HSRP Group 111
+    assert hsrp_groups[2].group == 111
+    # HSRP Group 112
+    assert hsrp_groups[3].group == 112
+
+def testVal_IOSHSRPGroups_04(parse_sample_08_ios_factory):
+    """Test that the correct HSRP IPv4 addresses are returned"""
+    intf_obj = parse_sample_08_ios_factory.find_objects("^interface FastEthernet0/0")[0]
+    hsrp_groups = intf_obj.get_hsrp_groups()
+
+    assert isinstance(hsrp_groups, list)
+    assert len(hsrp_groups) == 4
+    assert isinstance(hsrp_groups[0], HSRPInterfaceGroup)
+    assert isinstance(hsrp_groups[1], HSRPInterfaceGroup)
+    assert isinstance(hsrp_groups[2], HSRPInterfaceGroup)
+    assert isinstance(hsrp_groups[3], HSRPInterfaceGroup)
+    # HSRP Group 0
+    assert hsrp_groups[0].ip == "172.16.2.251"
+    # HSRP Group 110
+    assert hsrp_groups[1].ip == "172.16.2.252"
+    # HSRP Group 111 
+    assert hsrp_groups[2].ip == "172.16.2.253"
+    # HSRP Group 112
+    assert hsrp_groups[3].ip == "172.16.2.254"
+
+def testVal_IOSHSRPGroups_04(parse_sample_08_ios_factory):
+    """Test that the correct HSRP preempt boolean is returned"""
+    intf_obj = parse_sample_08_ios_factory.find_objects("^interface FastEthernet0/0")[0]
+    hsrp_groups = intf_obj.get_hsrp_groups()
+
+    assert isinstance(hsrp_groups, list)
+    assert len(hsrp_groups) == 4
+    assert isinstance(hsrp_groups[0], HSRPInterfaceGroup)
+    assert isinstance(hsrp_groups[1], HSRPInterfaceGroup)
+    assert isinstance(hsrp_groups[2], HSRPInterfaceGroup)
+    assert isinstance(hsrp_groups[3], HSRPInterfaceGroup)
+    # HSRP Group 0
+    assert hsrp_groups[0].preempt is False
+    # HSRP Group 110
+    assert hsrp_groups[1].preempt is True
+    # HSRP Group 111
+    assert hsrp_groups[2].preempt is True
+    # HSRP Group 112
+    assert hsrp_groups[3].preempt is False
+
+def testVal_IOSHSRPGroups_05(parse_sample_08_ios_factory):
+    """Test that the correct HSRP preempt_delay is returned"""
+    intf_obj = parse_sample_08_ios_factory.find_objects("^interface FastEthernet0/0")[0]
+    hsrp_groups = intf_obj.get_hsrp_groups()
+
+    assert isinstance(hsrp_groups, list)
+    assert len(hsrp_groups) == 4
+    assert isinstance(hsrp_groups[0], HSRPInterfaceGroup)
+    assert isinstance(hsrp_groups[1], HSRPInterfaceGroup)
+    assert isinstance(hsrp_groups[2], HSRPInterfaceGroup)
+    assert isinstance(hsrp_groups[3], HSRPInterfaceGroup)
+    # HSRP Group 0
+    assert hsrp_groups[0].preempt_delay == 10
+    # HSRP Group 110
+    assert hsrp_groups[1].preempt_delay == 15
+    # HSRP Group 111
+    assert hsrp_groups[2].preempt_delay == 20
+    # HSRP Group 112
+    assert hsrp_groups[3].preempt_delay == 0
+
+def testVal_IOSHSRPGroups_06(parse_sample_08_ios_factory):
+    """Test that the correct HSRP tracking interfaces are returned"""
+    intf_obj = parse_sample_08_ios_factory.find_objects("^interface FastEthernet0/0")[0]
+    hsrp_groups = intf_obj.get_hsrp_groups()
+
+    assert isinstance(hsrp_groups, list)
+    assert len(hsrp_groups) == 4
+    # HSRP Group 0
+    assert isinstance(hsrp_groups[0], HSRPInterfaceGroup)
+    # HSRP Group 110
+    assert isinstance(hsrp_groups[1], HSRPInterfaceGroup)
+    # HSRP Group 111
+    assert isinstance(hsrp_groups[2], HSRPInterfaceGroup)
+    # HSRP Group 112
+    assert isinstance(hsrp_groups[3], HSRPInterfaceGroup)
+    track_intfs_00 = hsrp_groups[0].get_hsrp_tracking_interfaces()
+    track_intfs_01 = hsrp_groups[1].get_hsrp_tracking_interfaces()
+    track_intfs_02 = hsrp_groups[2].get_hsrp_tracking_interfaces()
+    track_intfs_03 = hsrp_groups[3].get_hsrp_tracking_interfaces()
+    # HSRP Group 0
+    assert len(track_intfs_00) == 0
+    # HSRP Group 110
+    assert len(track_intfs_01) == 3
+    # HSRP Group 111
+    assert len(track_intfs_02) == 1
+    # HSRP Group 112
+    assert len(track_intfs_03) == 0
+
+    # HSRP Group 110 tracking interfaces (total of three tracking objects)
+    assert track_intfs_01[0].interface_name == "Dialer1"
+    assert track_intfs_01[0].decrement == 75
+    assert track_intfs_01[1].interface_name == "FastEthernet 0/1"
+    assert track_intfs_01[1].decrement == 10
+    assert track_intfs_01[2].interface_name == "FastEthernet1/0"
+    assert track_intfs_01[2].decrement == 30
+
+    # HSRP Group 111 tracking interfaces (total of one tracking object)
+    assert track_intfs_02[0].interface_name == "Dialer1"
+    assert track_intfs_02[0].decrement == 50
+
+def testVal_IOSHSRPGroups_07(parse_sample_08_ios_factory):
+    """Test that the correct HSRP priority is returned for each HSRP Group"""
+    intf_obj = parse_sample_08_ios_factory.find_objects("^interface FastEthernet0/0")[0]
+    hsrp_groups = intf_obj.get_hsrp_groups()
+
+    assert isinstance(hsrp_groups, list)
+    assert len(hsrp_groups) == 4
+    # HSRP Group 0
+    assert isinstance(hsrp_groups[0], HSRPInterfaceGroup)
+    assert hsrp_groups[0].priority == 100
+
+    # HSRP Group 110
+    assert isinstance(hsrp_groups[1], HSRPInterfaceGroup)
+    assert hsrp_groups[1].priority == 110
+
+    # HSRP Group 111
+    assert isinstance(hsrp_groups[2], HSRPInterfaceGroup)
+    assert hsrp_groups[2].priority == 150
+
+    # HSRP Group 112
+    assert isinstance(hsrp_groups[3], HSRPInterfaceGroup)
+    assert hsrp_groups[3].priority == 150
 
 ###
 ### ------ IPv4 Helper-Addresses --------

@@ -1288,7 +1288,6 @@ def parse_c02_factory(request):
     yield parse_c02
 
 
-## parse_c03 yields configs/sample_01.ios
 @pytest.fixture(scope="function")
 def parse_c03(request):
     """Preparsed c03"""
@@ -1297,7 +1296,6 @@ def parse_c03(request):
     yield parse_c03
 
 
-## parse_c03_factory yields configs/sample_01.ios
 @pytest.fixture(scope="function")
 def parse_c03_factory(request):
     """Preparsed c01 with factory option"""
@@ -1421,6 +1419,68 @@ def parse_n01_factory(request):
 
     yield parse_n01_factory
 
+@pytest.fixture(scope="function")
+def parse_sample_01_ios_factory(request):
+    """Preparsed sample_01.ios with factory option"""
+    parse = CiscoConfParse("fixtures/configs/sample_01.ios", syntax="ios", factory=True)
+
+    yield parse
+
+@pytest.fixture(scope="function")
+def parse_sample_02_ios_factory(request):
+    """Preparsed sample_02.ios with factory option"""
+    parse = CiscoConfParse("fixtures/configs/sample_02.ios", syntax="ios", factory=True)
+
+    yield parse
+
+@pytest.fixture(scope="function")
+def parse_sample_03_ios_factory(request):
+    """Preparsed sample_03.ios with factory option"""
+    parse = CiscoConfParse("fixtures/configs/sample_03.ios", syntax="ios", factory=True)
+
+    yield parse
+
+@pytest.fixture(scope="function")
+def parse_sample_04_ios_factory(request):
+    """Preparsed sample_04.ios with factory option"""
+    parse = CiscoConfParse("fixtures/configs/sample_04.ios", syntax="ios", factory=True)
+
+    yield parse
+
+@pytest.fixture(scope="function")
+def parse_sample_05_ios_factory(request):
+    """Preparsed sample_05.ios with factory option"""
+    parse = CiscoConfParse("fixtures/configs/sample_05.ios", syntax="ios", factory=True)
+
+    yield parse
+
+@pytest.fixture(scope="function")
+def parse_sample_06_ios_factory(request):
+    """Preparsed sample_06.ios with factory option"""
+    parse = CiscoConfParse("fixtures/configs/sample_06.ios", syntax="ios", factory=True)
+
+    yield parse
+
+@pytest.fixture(scope="function")
+def parse_sample_07_ios_factory(request):
+    """Preparsed sample_07.ios with factory option"""
+    parse = CiscoConfParse("fixtures/configs/sample_07.ios", syntax="ios", factory=True)
+
+    yield parse
+
+@pytest.fixture(scope="function")
+def parse_sample_08_ios_factory(request):
+    """Preparsed sample_08.ios with factory option"""
+    parse = CiscoConfParse("fixtures/configs/sample_08.ios", syntax="ios", factory=True)
+
+    yield parse
+
+@pytest.fixture(scope="function")
+def parse_sample_09_ios_factory(request):
+    """Preparsed sample_09.ios with factory option"""
+    parse = CiscoConfParse("fixtures/configs/sample_09.ios", syntax="ios", factory=True)
+
+    yield parse
 
 @pytest.mark.skipif(sys.version_info[0] >= 3, reason="No Python3 MockSSH support")
 @pytest.mark.skipif(

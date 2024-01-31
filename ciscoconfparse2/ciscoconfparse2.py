@@ -2996,18 +2996,18 @@ debug={debug},
 
            !
            interface FastEthernet0/1
-               switchport access vlan 532
-               spanning-tree vlan 532 cost 3
+            switchport access vlan 532
+            spanning-tree vlan 532 cost 3
            !
            interface FastEthernet0/2
-               switchport access vlan 300
-               spanning-tree portfast
+            switchport access vlan 300
+            spanning-tree portfast
            !
            interface FastEthernet0/3
-               duplex full
-               speed 100
-               switchport access vlan 300
-               spanning-tree portfast
+            duplex full
+            speed 100
+            switchport access vlan 300
+            spanning-tree portfast
            !
 
         The following interfaces should be returned:

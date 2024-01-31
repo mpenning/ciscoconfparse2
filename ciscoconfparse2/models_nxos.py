@@ -465,7 +465,6 @@ class BaseNXOSIntfLine(NXOSCfgLine, BaseFactoryInterfaceLine):
         self.default_ipv6_addr_object = IPv6Obj()
 
     # This method is on BaseNXOSIntfLine()
-    @logger.catch(reraise=True)
     def __repr__(self) -> str:
         if not self.is_switchport:
             try:
@@ -499,9 +498,8 @@ class BaseNXOSIntfLine(NXOSCfgLine, BaseFactoryInterfaceLine):
         return retval
 
     # This method is on BaseNXOSIntfLine()
-    @property
     @logger.catch(reraise=True)
-    def hsrp_interfaces(self) -> List[HSRPInterfaceGroup]:
+    def get_hsrp_groups(self) -> List[HSRPInterfaceGroup]:
         """
         :return: the sequence of configured HSRPInterfaceGroup() instances
         :rtype: List[HSRPInterfaceGroup]
@@ -2617,7 +2615,6 @@ class NXOSAccessLine(NXOSCfgLine):
     def __hash__(self):
         return self.get_unique_identifier()
 
-    @logger.catch(reraise=True)
     def __repr__(self):
         return "<%s # %s '%s' info: '%s'>" % (
             self.classname,
@@ -2698,7 +2695,6 @@ class BaseNXOSRouteLine(NXOSCfgLine):
     def __init__(self, *args, **kwargs):
         super(BaseNXOSRouteLine, self).__init__(*args, **kwargs)
 
-    @logger.catch(reraise=True)
     def __repr__(self):
         return "<%s # %s '%s' info: '%s'>" % (
             self.classname,

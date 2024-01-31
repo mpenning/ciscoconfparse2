@@ -302,9 +302,8 @@ class BaseFactoryInterfaceLine(BaseFactoryLine):
         raise NotImplementedError()
 
     # This method is on BaseFactoryInterfaceLine()
-    @property
     @logger.catch(reraise=True)
-    def hsrp_interfaces(self) -> List[Any]:
+    def get_hsrp_groups(self) -> List[Any]:
         """
         :return: the sequence of configured HSRPInterfaceGroup() instances
         :rtype: List[Any]
