@@ -4,6 +4,14 @@
 - Summary:
     - Insert something here
 
+## Version: 0.5.0
+
+- Released: 2024-02-05
+- Summary:
+    - Fix attributes in JunosCfgLine
+    - Fix attributes in BaseCfgLine
+    - Replace `parse_line_braces()` with `BraceParse()` to fix original [ciscoconfparse issue #287](https://github.com/mpenning/ciscoconfparse/issues/287)
+
 ## Version: 0.4.2
 
 - Released: 2024-01-30

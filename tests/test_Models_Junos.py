@@ -42,6 +42,9 @@ def testVal_JunosCfgLine_dna_parent_01(parse_j01):
     assert obj.dna == "JunosCfgLine"
     assert obj.is_intf is False
     assert obj.is_subintf is False
+    assert obj.indent == 4
+    assert obj.child_indent == 8
+    assert obj.confobj is not None
 
 @pytest.mark.xfail(True, reason="parse_j01 ge-0/0/1 is not correctly identified by `is_intf`")
 def testVal_JunosCfgLine_child_01(parse_j01):
