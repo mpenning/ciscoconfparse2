@@ -1,7 +1,7 @@
 """
 ciscoconfparse2.py - Parse, Query, Build, and Modify IOS-style configs.
 
-Copyright (C) 2023 David Michael Pennington
+Copyright (C) 2023-2024 David Michael Pennington
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -291,6 +291,134 @@ def initialize_ciscoconfparse2(read_only=False, debug=0) -> tuple[Dict[str,str],
 # ALL ciscoconfparse2 global variables initizalization happens here...
 _, ACTIVE_LOGURU_HANDLERS = initialize_ciscoconfparse2()
 
+@attrs.define(repr=False)
+class BraceParse():
+    config_txt: str = None
+    comment_delimiters: list = None
+    stop_width: int = 4
+    config_objs: list = None
+    ignore_blank_lines: bool = False
+    semicolon_end: bool = False
+
+    @logger.catch(reraise=True)
+    def __init__(self,
+                 config_txt: str = None,
+                 comment_delimiters: list = None,
+                 stop_width = 4,
+                 ignore_blank_lines = False,
+                 semicolon_end = False,
+                ) -> None:
+        """
+        :param config_txt: Brace-delimited configuration lines to be parsed
+        :type config_txt: str
+        :param comment_delimiters: Sequence of string comment-delimiters
+        :type comment_delimiters: List[str]
+        :param stop_width: Number of spaces per indent-level, defaults to 4
+        :type stop_width: int
+        :param ignore_blank_lines: Ignore blank lines in the configuration
+        :type ignore_blank_lines: bool
+        :param semicolon_end: Whether semicolons are allowed at the end of a line
+        :type semicolon_end: bool
+        """
+        if comment_delimiters is None:
+            comment_delimiters = []
+
+        enforce_valid_types(config_txt, (str,), "config_txt parameter must be a string.")
+        enforce_valid_types(
+            comment_delimiters, (list,), "comment_delimiters parameter must be a list."
+        )
+        enforce_valid_types(
+            stop_width, (int,), "stop_width parameter must be an int."
+        )
+
+        # Flag the config invalid if it starts with a curly-brace...
+        if len(config_txt) > 0:
+            if config_txt[0] == '{' or config_txt[0] == '}':
+                error = "Invalid JunOS configuration"
+                logger.critical(error)
+                raise ValueError(error)
+
+        self.config_txt = config_txt
+        self.comment_delimiters = comment_delimiters
+        self.stop_width = stop_width
+        self.ignore_blank_lines = ignore_blank_lines
+        self.semicolon_end = semicolon_end
+        self.config_objs = self.get_junoscfgline_list()
+
+    def get_junoscfgline_list(self) -> List[IOSCfgLine]:
+        """Strip out all braces and return a list of JunosCfgLine() instances"""
+
+        all_lines = []
+
+        total_indent = 0
+        indent = 0
+        dedent = 0
+        linenum = -1
+
+        # locally remove JunOS / F5 text such as "{ }"
+        #     The indent / dedent algorithm needs something between the
+        #     curly-braces.
+        _config_txt = re.sub("\{\s*\}", "", self.config_txt)
+
+        for tmp_line in _config_txt.splitlines():
+
+            if self.ignore_blank_lines and tmp_line.strip() == "":
+                continue
+
+            line = """"""
+            line_end = False
+            for char in list(tmp_line.strip()):
+                # Build the individual lines
+                if char == '{':
+                    indent += 1
+                    line_end = True
+                elif char == '}':
+                    dedent += 1
+                    line_end = True
+
+                if not line_end:
+                    line += char
+                else:
+                    break
+
+            if total_indent >= 0:
+
+                # Remove any semi-colons at the end of a line by default
+                if not self.semicolon_end:
+                    line = line.rstrip(";")
+
+                # Prevent frivilous children with no text. No indent-only line
+                if line.strip() == "":
+                    text = ""
+                else:
+                    text = " " * total_indent * self.stop_width + line.strip()
+
+                # Handle comments
+                if len(line.strip()) > 0 and line.strip()[0] in self.comment_delimiters:
+                    is_a_comment = True
+                else:
+                    is_a_comment = False
+
+                linenum += 1
+                obj = JunosCfgLine(
+                    text=text,
+                    linenum=linenum,
+                    children=[],
+                    child_indent=(total_indent + 1) * self.stop_width,
+                    indent=total_indent,
+                    is_comment=is_a_comment,
+                )
+                all_lines.append(obj)
+
+                # Account for all indent changes after appending the line
+                total_indent = indent - dedent
+
+            else:
+                # Somehow we got a negative indent... this is a config error
+                raise NotImplementedError()
+
+        # Return all IOSCfgLine instances w/o assigned children
+        return all_lines
 
 @logger.catch(reraise=True)
 def parse_line_braces(line_txt: str=None, comment_delimiters: list=None) -> tuple[int, int, str]:
@@ -611,10 +739,11 @@ def assign_parent_to_closing_braces(input_list: List[BaseCfgLine]=None) -> List[
 # This method was copied from the same method in git commit below...
 # https://raw.githubusercontent.com/mpenning/ciscoconfparse/bb3f77436023873da344377d3c839387f5131e7f/ciscoconfparse/ciscoconfparse2.py
 @logger.catch(reraise=True)
-def convert_junos_to_ios(input_list: List[str]=None,
-                         stop_width: int=4,
-                         comment_delimiters: List[str]=None,
-                         debug: int=0) -> List[str]:
+def convert_junos_to_ios(input_list: List[str] = None,
+                         stop_width: int = 4,
+                         comment_delimiters: List[str] = None,
+                         ignore_blank_lines: bool = False,
+                         debug: int = 0) -> List[str]:
     """Accept `input_list` containing a list of junos-brace-formatted-string
     config lines.  This method strips off semicolons / braces from the string
     lines in `input_list` and returns the lines in a new list where all lines
@@ -628,6 +757,8 @@ def convert_junos_to_ios(input_list: List[str]=None,
     :type stop_width: int
     :param comment_delimiters: Sequence of string comment-delimiters
     :type comment_delimiters: List[str]
+    :param ignore_blank_lines: Whether to ignore blank lines, defaults to False
+    :type ignore_blank_lines: bool
     :param debug: Debug level for this method
     :type debug: int
     :return: Indented configuration strings
@@ -639,22 +770,22 @@ def convert_junos_to_ios(input_list: List[str]=None,
 
     if not isinstance(input_list, list):
         error = "convert_junos_to_ios() `input_list` must be a non-empty python list"
-        logger.error(error)
+        logger.critical(error)
         raise InvalidParameters(error)
 
     if not isinstance(stop_width, int):
         error = "convert_junos_to_ios() `stop_width` must be an integer"
-        logger.error(error)
+        logger.critical(error)
         raise InvalidParameters(error)
 
     if not isinstance(comment_delimiters, list):
         error = "convert_junos_to_ios() `comment_delimiters` must be a list"
-        logger.error(error)
+        logger.critical(error)
         raise InvalidParameters(error)
 
     if not isinstance(debug, int):
         error = "convert_junos_to_ios() `debug` must be an integer"
-        logger.error(error)
+        logger.critical(error)
         raise InvalidParameters(error)
 
     # Note to self, I made this regex fairly junos-specific...
@@ -663,22 +794,17 @@ def convert_junos_to_ios(input_list: List[str]=None,
     input_condition_03 = "}" not in set(comment_delimiters)
     if not (input_condition_01 and input_condition_02 and input_condition_03):
         error = "convert_junos_to_ios() input conditions failed"
-        logger.error(error)
+        logger.critical(error)
         raise ValueError(error)
 
-    lines = []
-    offset = 0
-    STOP_WIDTH = stop_width
-    for idx, tmp in enumerate(input_list):
-        if debug > 0:
-            logger.debug(f"Parse line {idx + 1}:'{tmp.strip()}'")
-        (this_line_indent, child_indent, line) = parse_line_braces(
-            tmp.strip(), comment_delimiters=[comment_delimiters[0]]
-        )
-        lines.append((" " * STOP_WIDTH * (offset + this_line_indent)) + line.strip())
-        offset += child_indent
+    config_txt = '\n'.join(input_list)
+    braceobj = BraceParse(config_txt=config_txt,
+                          comment_delimiters=comment_delimiters,
+                          stop_width=stop_width,
+                          ignore_blank_lines=ignore_blank_lines,
+                          )
+    return [ii.text for ii in braceobj.get_junoscfgline_list()]
 
-    return lines
 
 @attrs.define(repr=False)
 class ConfigList(UserList):
@@ -2339,7 +2465,9 @@ class CiscoConfParse(object):
         # Explicitly handle all brace-parsing factory syntax here...
         ######################################################################
         if syntax == "junos":
-            config_lines = convert_junos_to_ios(tmp_lines, comment_delimiters=["#"])
+            config_lines = convert_junos_to_ios(tmp_lines,
+                                                comment_delimiters=["#"],
+                                                ignore_blank_lines=self.ignore_blank_lines)
         elif syntax in ALL_VALID_SYNTAX:
             config_lines = tmp_lines
         else:

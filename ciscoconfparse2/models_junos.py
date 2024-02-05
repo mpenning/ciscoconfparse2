@@ -96,6 +96,7 @@ class JunosCfgLine(BaseCfgLine):
         attributes"""
         super(JunosCfgLine, self).__init__(*args, **kwargs)
 
+
     # This method is on JunosCfgLine()
     @classmethod
     @logger.catch(reraise=True)

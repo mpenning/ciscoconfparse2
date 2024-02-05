@@ -6,48 +6,43 @@
 
 [![SonarCloud][51]][52] [![SonarCloud Maintainability Rating][53]][54] [![SonarCloud Lines of Code][55]][56] [![SonarCloud Bugs][59]][60] [![SonarCloud Code Smells][57]][58] [![SonarCloud Tech Debt][61]][62]
 
-
 ## Introduction: What is ciscoconfparse2?
 
 ### Summary
 
-[ciscoconfparse2][17] is the next generation of [ciscoconfparse][64], which
-has been the primary development package from 2007 until 2023.
+[ciscoconfparse2][17] is similar to an advanced grep and diff that
+specializes in network configuration files (such as those from Cisco,
+Juniper, Palo Alto, etc); it is the next generation of
+[ciscoconfparse][64], which has been the primary development package
+from 2007 until 2023.
 
-In late 2023, I started a rewrite because [ciscoconfparse][64] is too large 
-and has some defaults that I wish it didn't have.  I froze
-[ciscoconfparse][64] PYPI releases at [version 1.9.41][65]; there will be no
-more [ciscoconfparse][64] PYPI releases.
-
-What do you do?  Upgrade to [ciscoconfparse2][17]!
-
-Here's why, it:
-
-- Streamlines the API towards a simpler user interface.
-- Removes legacy and flawed methods from the original (this could be a breaking change for old scripts).
-- Adds string methods to `BaseCfgLine()` objects
-- Defaults `ignore_blank_lines=False` (this could be a breaking change for old scripts).
-- Is better at handling multiple-child-level configurations (such as IOS XR and JunOS)
-- Can search for parents and children using an *arbitrary list of ancestors*
-- Adds the concept of change commits; this is a config-modification safety feature that [ciscoconfparse][64] lacks
-- Adds an `auto_commit` keyword, which defaults True
-- Documents much more of the API
-- Intentionally requires a different import statement to minimize confusion between the original and [ciscoconfparse2][17]
-- Vasly improves Cisco IOS diffs
-
-### Simple Example
+### Simple Usage
 
 The following code will parse a configuration stored in
 `tests/fixtures/configs/sample_02.ios` and select interfaces that are shutdown.
 
-In this case, the parent is a line containing `interface` and
-the child is a line containing the word `shutdown`.
+In this case, the parent is a line containing `interface` and the child is a
+line containing the word `shutdown`.
 
 ```python
+# filename: example.py
 from ciscoconfparse2 import CiscoConfParse
 
+##############################################################################
+# Find all Cisco IOS interface names that are shutdown
+##############################################################################
+#
+# Search for:
+#     !
+#     interface Foo
+#      description ignore-this-line
+#      shutdown
+#     !
+
+# Search a configuration in the test fixutres directory
 parse = CiscoConfParse('tests/fixtures/configs/sample_02.ios', syntax='ios')
 
+# Find a parent line containing 'interface' and child line with 'shutdown'
 for intf_obj in parse.find_parent_objects(['interface', 'shutdown']):
     intf_name = " ".join(intf_obj.split()[1:])
     print(f"Shutdown: {intf_name}")
@@ -160,6 +155,29 @@ it into a set of linked parent / child relationships. You can perform
 complex queries about these relationships.
 
 [![Cisco IOS config: Parent / child][11]][11]
+
+### What changed in ciscoconfparse2?
+
+In late 2023, I started a rewrite because [ciscoconfparse][64] is too large 
+and has some defaults that I wish it didn't have.  I froze
+[ciscoconfparse][64] PYPI releases at [version 1.9.41][65]; there will be no
+more [ciscoconfparse][64] PYPI releases.
+
+What do you do?  Upgrade to [ciscoconfparse2][17]!
+
+Here's why, it:
+
+- Streamlines the API towards a simpler user interface.
+- Removes legacy and flawed methods from the original (this could be a breaking change for old scripts).
+- Adds string methods to `BaseCfgLine()` objects
+- Defaults `ignore_blank_lines=False` (this could be a breaking change for old scripts).
+- Is better at handling multiple-child-level configurations (such as IOS XR and JunOS)
+- Can search for parents and children using an *arbitrary list of ancestors*
+- Adds the concept of change commits; this is a config-modification safety feature that [ciscoconfparse][64] lacks
+- Adds an `auto_commit` keyword, which defaults True
+- Documents much more of the API
+- Intentionally requires a different import statement to minimize confusion between the original and [ciscoconfparse2][17]
+- Vasly improves Cisco IOS diffs
 
 ## What if we don\'t use Cisco IOS?
 
@@ -315,7 +333,7 @@ Building the ciscoconfparse2 documentation tarball comes down to this one wierd 
 
 [ciscoconfparse2][3] is licensed [GPLv3][21]
 
-- Copyright (C) 2023 David Michael Pennington
+- Copyright (C) 2023-2024 David Michael Pennington
 
 The word \"Cisco\" is a registered trademark of [Cisco Systems][27].
 

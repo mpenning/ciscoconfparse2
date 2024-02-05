@@ -112,6 +112,22 @@ class BaseCfgLine(object):
         if isinstance(kwargs.get("text", None), str):
             # The text kwarg is now called line
             line = kwargs.get("text")
+        if isinstance(kwargs.get("linenum", None), int):
+            linenum = kwargs.get("linenum")
+        else:
+            linenum = -1
+        if isinstance(kwargs.get("children", None), list):
+            children = kwargs.get("children")
+        else:
+            children = []
+        if isinstance(kwargs.get("child_indent", None), int):
+            child_indent = kwargs.get("child_indent")
+        else:
+            child_indent = 0
+        if kwargs.get("confobj", None) is not None:
+            confobj = kwargs.get("confobj")
+        else:
+            confobj = None
 
         if isinstance(kwargs.get("comment_delimiters", None), list):
             error = "BaseCfgLine() does not accept a comment_delimiters parameter"
@@ -119,11 +135,11 @@ class BaseCfgLine(object):
             raise InvalidParameters(error)
 
         self._text = line
-        self._children = []
-        self.linenum = -1
+        self._children = children
+        self.linenum = linenum
         self.parent = self  # by default, assign parent as itself
-        self.child_indent = 0
-        self.confobj = None  # Reference to the list object which owns it
+        self.child_indent = child_indent
+        self.confobj = confobj
         self.blank_line_keep = False  # CiscoConfParse() uses blank_line_keep
 
         self.all_text = all_lines

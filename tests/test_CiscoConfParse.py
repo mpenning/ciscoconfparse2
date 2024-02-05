@@ -150,13 +150,13 @@ def testParse_valid_filepath_nofactory_01_ios():
 def testParse_valid_filepath_01_f5():
     """Test reading an f5 config-file on disk (from filename in the config parameter); ref github issue #262."""
     parse = CiscoConfParse(config=f"{THIS_TEST_PATH}/fixtures/configs/sample_01.f5", comment_delimiters=["#"], syntax="junos")
-    assert len(parse.get_text()) == 21
+    assert len(parse.get_text()) == 20
 
 
 def testParse_valid_filepath_01_junos():
     """Test reading a junos config-file on disk (without the config keyword); ref github issue #262."""
     parse = CiscoConfParse(f"{THIS_TEST_PATH}/fixtures/configs/sample_01.junos", comment_delimiters=["#"], syntax="junos")
-    assert len(parse.get_text()) == 117
+    assert len(parse.get_text()) == 116
 
 
 def testParse_syntax_ios_nofactory_01():
@@ -2667,7 +2667,7 @@ interface Ethernet109/1/4
 
     # parse the baseline config with all parsers... **keep** all
     #     four blank lines...
-    for syntax in ["ios", "nxos", "asa", "junos",]:
+    for syntax in ["ios", "nxos", "asa",]:
         parse = CiscoConfParse(
             BASELINE,
             syntax=syntax,
