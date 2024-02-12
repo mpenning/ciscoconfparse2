@@ -2792,15 +2792,16 @@ debug={debug},
             retval.reverse()
 
         # Check return types here
+        error = ""
         if not isinstance(retval, List):
             error = f"Type Consistency Error.  retval must be a List, but we found {type(retval)}"
-            logger.critical(error)
-            raise ValueError(error)
 
             if not isinstance(retval[0], List[BaseCfgLine]):
                 error = f"Type Consistency Error.  Resulting branch elements must be a List[List[BaseCfgLine]], but we found {type(retval[0])}"
-                logger.critical(error)
-                raise ValueError(error)
+
+        if error != "":
+            logger.critical(error)
+            raise ValueError(error)
 
         return retval
 
