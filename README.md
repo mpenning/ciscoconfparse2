@@ -181,13 +181,11 @@ Here's why, it:
 
 ## What if we don\'t use Cisco IOS?
 
-Don\'t let that stop you.
+In some cases, you can parse [brace-delimited configurations][13] into a Cisco IOS style (see [original ciscoconfparse Github Issue \#17][14]), which means that CiscoConfParse may be able to parse some of these configurations:
 
-You can parse [brace-delimited configurations][13] into a Cisco IOS style (see [original ciscoconfparse Github Issue \#17][14]), which means that CiscoConfParse can parse these configurations:
-
-- Juniper Networks Junos
+- Juniper Networks Junos OS
 - Palo Alto Networks Firewall configurations
-- F5 Networks configurations
+- F5 Networks configurations (known caveats)
 
 CiscoConfParse also handles anything that has a Cisco IOS style of configuration, which includes:
 
@@ -258,8 +256,9 @@ I will not. however, if it's truly a problem for your company, there are commerc
 - [dnspython](https://github.com/rthalley/dnspython)
 - [`hier_config`](https://github.com/netdevops/hier_config)
 - [`PyYAML`](https://github.com/yaml/pyyaml)
+- [`pyparsing`](https://github.com/pyparsing/pyparsing)
+- [typeguard](https://github.com/agronholm/typeguard)
 - [loguru](https://github.com/Delgan/loguru)
-- [deprecated](https://github.com/tantale/deprecated)
 
 
 ## Unit-Tests and Development

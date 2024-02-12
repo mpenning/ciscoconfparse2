@@ -58,8 +58,6 @@ from dns.exception import DNSException
 from dns.resolver import Resolver
 from dns import reversename, query, zone
 
-from deprecated import deprecated
-
 from loguru import logger
 import attrs
 

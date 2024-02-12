@@ -32,9 +32,14 @@ import sys
 import re
 import os
 
-from deprecated import deprecated
+from typeguard import typechecked
 from loguru import logger
 import attrs
+
+from pyparsing import Word, White, printables
+from pyparsing import OneOrMore, Combine
+from pyparsing import Word, printables
+from pyparsing import nested_expr
 import hier_config
 import tomlkit
 import yaml    # import for pyyaml
@@ -297,31 +302,34 @@ class BraceParse():
     comment_delimiters: list = None
     stop_width: int = 4
     config_objs: list = None
-    ignore_blank_lines: bool = False
     semicolon_end: bool = False
+    current_linenum: int = False
 
     @logger.catch(reraise=True)
+    @typechecked
     def __init__(self,
                  config_txt: str = None,
-                 comment_delimiters: list = None,
-                 stop_width = 4,
-                 ignore_blank_lines = False,
-                 semicolon_end = False,
-                ) -> None:
+                 comment_delimiters: Union[list, None] = None,
+                 stop_width: int = 4,
+                 semicolon_end: bool = False,
+                 ) -> None:
         """
         :param config_txt: Brace-delimited configuration lines to be parsed
         :type config_txt: str
-        :param comment_delimiters: Sequence of string comment-delimiters
+        :param comment_delimiters: Sequence of string comment-delimiters, default to ['#'].
         :type comment_delimiters: List[str]
         :param stop_width: Number of spaces per indent-level, defaults to 4
         :type stop_width: int
-        :param ignore_blank_lines: Ignore blank lines in the configuration
-        :type ignore_blank_lines: bool
         :param semicolon_end: Whether semicolons are allowed at the end of a line
         :type semicolon_end: bool
         """
+        if not isinstance(config_txt, str):
+            error = f"BraceParse() must be called with a JunOS-style text configuration; however, {type(config_txt)} was received"
+            logger.critical(error)
+            raise NotImplementedError(error)
+
         if comment_delimiters is None:
-            comment_delimiters = []
+            comment_delimiters = ["#"]
 
         enforce_valid_types(config_txt, (str,), "config_txt parameter must be a string.")
         enforce_valid_types(
@@ -341,221 +349,58 @@ class BraceParse():
         self.config_txt = config_txt
         self.comment_delimiters = comment_delimiters
         self.stop_width = stop_width
-        self.ignore_blank_lines = ignore_blank_lines
         self.semicolon_end = semicolon_end
-        self.config_objs = self.get_junoscfgline_list()
 
-    def get_junoscfgline_list(self) -> List[IOSCfgLine]:
-        """Strip out all braces and return a list of JunosCfgLine() instances"""
+        self.current_linenum = 0
+        self.config_objs = list()
 
-        all_lines = []
+        pyparsing_list = self.parse_braces_to_nested_list(config_txt)
+        self.unpack_nested_list_to_config_objs(-1, pyparsing_list)
 
-        total_indent = 0
-        indent = 0
-        dedent = 0
-        linenum = -1
+    @logger.catch(reraise=True)
+    def parse_braces_to_nested_list(self, config_txt: str):
+        # Define valid pyparsing characters for the JunOS lines... use all
+        # non-brace printable characters, except curly-braces plus whitespace
+        valid_chars = Combine(OneOrMore(Word(printables, exclude_chars="{}") | White(' ')))
+        parseobj = nested_expr(opener="{", closer="}", content=valid_chars)
+        # pyparsing_list is a nested-list of configuration statements where
+        # a nested list is appended for every JunOS indent level
+        pyparsing_list = parseobj.parse_string("{" + config_txt + "}").as_list()[0]
 
-        # locally remove JunOS / F5 text such as "{ }"
-        #     The indent / dedent algorithm needs something between the
-        #     curly-braces.
-        _config_txt = re.sub("\{\s*\}", "", self.config_txt)
+        return pyparsing_list
 
-        for tmp_line in _config_txt.splitlines():
+    @logger.catch(reraise=True)
+    def unpack_nested_list_to_config_objs(self, indent: int, nested_list: list):
+        """Unpack the nested pyparsing results"""
+        indent += 1
+        for elem in nested_list:
 
-            if self.ignore_blank_lines and tmp_line.strip() == "":
-                continue
+            if isinstance(elem, str):
+                if not self.semicolon_end and elem[-1] == ';':
+                    # Delete the trailing semicolon
+                    elem = elem[:-1]
 
-            line = """"""
-            line_end = False
-            for char in list(tmp_line.strip()):
-                # Build the individual lines
-                if char == '{':
-                    indent += 1
-                    line_end = True
-                elif char == '}':
-                    dedent += 1
-                    line_end = True
-
-                if not line_end:
-                    line += char
-                else:
-                    break
-
-            if total_indent >= 0:
-
-                # Remove any semi-colons at the end of a line by default
-                if not self.semicolon_end:
-                    line = line.rstrip(";")
-
-                # Prevent frivilous children with no text. No indent-only line
-                if line.strip() == "":
-                    text = ""
-                else:
-                    text = " " * total_indent * self.stop_width + line.strip()
-
-                # Handle comments
-                if len(line.strip()) > 0 and line.strip()[0] in self.comment_delimiters:
-                    is_a_comment = True
-                else:
-                    is_a_comment = False
-
-                linenum += 1
+                space_offset = indent * self.stop_width
                 obj = JunosCfgLine(
-                    text=text,
-                    linenum=linenum,
-                    children=[],
-                    child_indent=(total_indent + 1) * self.stop_width,
-                    indent=total_indent,
-                    is_comment=is_a_comment,
-                )
-                all_lines.append(obj)
+                        indent=space_offset,
+                        linenum=self.current_linenum,
+                        text=" " * space_offset + elem.strip())
+                self.config_objs.append(obj)
 
-                # Account for all indent changes after appending the line
-                total_indent = indent - dedent
+                self.current_linenum += 1
 
-            else:
-                # Somehow we got a negative indent... this is a config error
-                raise NotImplementedError()
+            elif isinstance(elem, list):
+                indent = self.unpack_nested_list_to_config_objs(indent, elem)
 
-        # Return all IOSCfgLine instances w/o assigned children
-        return all_lines
+        indent -= 1
+        return indent
 
-@logger.catch(reraise=True)
-def parse_line_braces(line_txt: str=None, comment_delimiters: list=None) -> tuple[int, int, str]:
-    """Internal helper-method for brace-delimited configs (typically JunOS, syntax='junos').
+    @logger.catch(reraise=True)
+    def get_junoscfgline_list(self) -> List[JunosCfgLine]:
+        return self.config_objs
 
-    :param line_txt: Brace-delimited configuration line to be parsed
-    :type line_txt: str
-    :param comment_delimiters: Sequence of string comment-delimiters
-    :type comment_delimiters: List[str]
-    :return: Tuple consisiting of ``this_line_indent`` level, ``child_indent`` level, configuration text (minus braces)
-    :rtype: tuple[int, int, str]
-    """
-
-    retval = ()
-
-    enforce_valid_types(line_txt, (str,), "line_txt parameter must be a string.")
-    enforce_valid_types(
-        comment_delimiters, (list,), "comment_delimiters parameter must be a list."
-    )
-    if len(comment_delimiters) > 1:
-        raise ValueError("len(comment_delimiters) must be one.")
-
-    child_indent = 0
-    this_line_indent = 0
-
-    junos_re_str = r"""^
-    (?:\s*
-        (?P<braces_close_left>\})*(?P<line1>.*?)(?P<braces_open_right>\{)*;*
-        |(?P<line2>[^\{\}]*?)(?P<braces_open_left>\{)(?P<condition2>.*?)(?P<braces_close_right>\});*\s*
-        |(?P<line3>[^\{\}]*?);*\s*
-    )\s*$
-    """
-    brace_re = re.compile(junos_re_str, re.VERBOSE)
-    comment_re = re.compile(
-        r"^\s*(?P<delimiter>[{0}]+)(?P<comment>[^{0}]*)$".format(
-            re.escape(comment_delimiters[0])
-        )
-    )
-
-    brace_match = brace_re.search(line_txt.strip())
-    comment_match = comment_re.search(line_txt.strip())
-
-    if isinstance(comment_match, re.Match):
-        results = comment_match.groupdict()
-        delimiter = results.get("delimiter", "")
-        comment = results.get("comment", "")
-        retval = (
-            this_line_indent,
-            child_indent,
-            delimiter + comment
-        )
-
-    elif isinstance(brace_match, re.Match):
-        results = brace_match.groupdict()
-
-        # } line1 { foo bar this } {
-        braces_close_left = bool(results.get("braces_close_left", ""))
-        braces_open_right = bool(results.get("braces_open_right", ""))
-
-        # line2
-        braces_open_left = bool(results.get("braces_open_left", ""))
-        braces_close_right = bool(results.get("braces_close_right", ""))
-
-        # line3
-        line1_str = results.get("line1", "")
-        line2_str = results.get("line2", "")
-
-        if braces_close_left and braces_open_right:
-            # Based off line1
-            #     } elseif { bar baz } {
-            this_line_indent -= 1
-            child_indent += 0
-            line1 = results.get("line1", None)
-            retval = (this_line_indent, child_indent, line1)
-
-        elif bool(line1_str) and (braces_close_left is False) and (braces_open_right is False):
-            # Based off line1:
-            #     address 1.1.1.1
-            this_line_indent -= 0
-            child_indent += 0
-            _line1 = results.get("line1", "").strip()
-            # Strip empty braces here
-            line1 = re.sub(r"\s*\{\s*\}\s*", "", _line1)
-            retval = (this_line_indent, child_indent, line1)
-
-        elif (line1_str == "") and (braces_close_left is False) and (braces_open_right is False):
-            # Based off line1:
-            #     return empty string
-            this_line_indent -= 0
-            child_indent += 0
-            retval = (this_line_indent, child_indent, "")
-
-        elif braces_open_left and braces_close_right:
-            # Based off line2
-            #    this { bar baz }
-            this_line_indent -= 0
-            child_indent += 0
-            _line2 = results.get("line2", None) or ""
-            condition = results.get("condition2", None) or ""
-            if condition.strip() == "":
-                line2 = _line2
-            else:
-                line2 = _line2 + " {" + condition + " }"
-            retval = (this_line_indent, child_indent, line2)
-
-        elif braces_close_left:
-            # Based off line1
-            #   }
-            this_line_indent -= 1
-            child_indent -= 1
-            retval = (this_line_indent, child_indent, "")
-
-        elif braces_open_right:
-            # Based off line1
-            #   this that foo {
-            this_line_indent -= 0
-            child_indent += 1
-            line = results.get("line1", None) or ""
-            retval = (this_line_indent, child_indent, line)
-
-        elif (line2_str != "") and (line2_str is not None):
-            this_line_indent += 0
-            child_indent += 0
-            retval = (this_line_indent, child_indent, "")
-
-        else:
-            error = f'Cannot parse `{line_txt}`'
-            logger.error(error)
-            raise ValueError(error)
-
-    else:
-        error = f'Cannot parse `{line_txt}`'
-        logger.error(error)
-        raise ValueError(error)
-
-    return retval
-
+    def __repr__(self) -> str:
+        return f"""<BraceParse() config_txt: {len(self.config_txt)} lines, comment_delimiter: {self.comment_delimiters}, stop_width: {self.stop_width}>"""
 
 # This method was on ConfigList()
 @logger.catch(reraise=True)
@@ -674,68 +519,6 @@ def build_space_tolerant_regex(linespec: str, encoding: str="utf-8") -> str:
 
     return linespec
 
-
-@logger.catch(reraise=True)
-def assign_parent_to_closing_braces(input_list: List[BaseCfgLine]=None) -> List[BaseCfgLine]:
-    """Accept a list of brace-delimited BaseCfgLine() objects; these objects
-    should not already have a parent assigned to closing brace lines.  Walk
-    the list of BaseCfgLine() objects and assign the 'parent' attribute to
-    BaseCfgLine() objects for the closing config braces.  Return the list of
-    objects (with the assigned 'parent' attributes).
-
-    :param input_list: A sequence of :py:class:`BaseCfgLine` objects (no parents assigned to closing braces).
-    :type input_list: List[BaseCfgLine]
-    :return: A sequence of BaseCfgLine with parents assigned to closing braces.
-    :rtype: List[BaseCfgLine]
-
-    Closing brace assignment example:
-
-    .. parsed-literal::
-
-       line number 1
-       line number 2 {
-           line number 3 {
-               line number 4
-               line number 5 {
-                   line number 6
-                   line number 7
-                   line number 8
-               }            # Assign this closing-brace's parent as line 5
-           }                # Assign this closing-brace's parent as line 3
-       }                    # Assign this closing-brace's parent as line 2
-       line number 11
-    """
-    if input_list is None:
-        raise ValueError("Cannot modify.  The input_list is None")
-
-    sequence_condition = isinstance(input_list, Sequence)
-    if sequence_condition is True and len(input_list) > 0:
-        opening_brace_objs = []
-        # Modify obj.parent, below...
-        for obj in input_list:
-            # All obj in input_list has obj.parent is modified in-place...
-            if isinstance(obj, BaseCfgLine) and isinstance(obj._text, str):
-                # Assign obj.parent for closing braces.  Lines in braces will
-                # have parents assigned elsewhere.
-                #
-                # These rstrip() are one of two fixes, intended to catch user
-                # error such as the problems that the submitter of Github issue
-                # #251 had. CiscoConfParse() could not read his configuration
-                # because he submitted a multi-line string...
-                #
-                # This check will explicitly catch some problems like that...
-                if len(obj._text.rstrip()) >= 1 and obj._text.rstrip()[-1] == "{":
-                    opening_brace_objs.append(obj)
-
-                elif len(obj._text.strip()) >= 1 and obj._text.strip()[0] == "}":
-                    if len(opening_brace_objs) >= 1:
-                        obj.parent = opening_brace_objs.pop()
-                    else:
-                        raise ValueError
-
-    return input_list
-
-
 # This method was copied from the same method in git commit below...
 # https://raw.githubusercontent.com/mpenning/ciscoconfparse/bb3f77436023873da344377d3c839387f5131e7f/ciscoconfparse/ciscoconfparse2.py
 @logger.catch(reraise=True)
@@ -801,7 +584,6 @@ def convert_junos_to_ios(input_list: List[str] = None,
     braceobj = BraceParse(config_txt=config_txt,
                           comment_delimiters=comment_delimiters,
                           stop_width=stop_width,
-                          ignore_blank_lines=ignore_blank_lines,
                           )
     return [ii.text for ii in braceobj.get_junoscfgline_list()]
 
@@ -824,6 +606,7 @@ class ConfigList(UserList):
     CiscoConfParse: Any = None
 
     @logger.catch(reraise=True)
+    @typechecked
     def __init__(
         self,
         initlist: Optional[Union[List[str],tuple[str, ...]]]=None,
@@ -995,7 +778,6 @@ class ConfigList(UserList):
 
 
     # This method is on ConfigList()
-    @logger.catch(reraise=True)
     def __repr__(self) -> str:
         return """<ConfigList, syntax='{}', comment_delimiters={}, conf={}>""".format(
             self.syntax,
@@ -1437,7 +1219,7 @@ class ConfigList(UserList):
 
     # This method is on ConfigList()
     @logger.catch(reraise=True)
-    def insert_before(self, exist_val=None, new_val=None) -> List[str]:
+    def insert_before(self, exist_val=None, new_val=None) -> None:
         """
         Insert new_val before all occurances of exist_val.
 
@@ -1445,8 +1227,8 @@ class ConfigList(UserList):
         :type exist_val: str
         :param new_val: A new value to be inserted in the configuration.
         :type new_val: str
-        :return: An ios-style configuration list (indented by stop_width for each configuration level).
-        :rtype: List[str]
+        :return: None
+        :rtype: None
 
         .. code-block:: python
 
@@ -1532,7 +1314,7 @@ class ConfigList(UserList):
 
     # This method is on ConfigList()
     @logger.catch(reraise=True)
-    def insert_after(self, exist_val=None, new_val=None) -> List[str]:
+    def insert_after(self, exist_val=None, new_val=None) -> None:
         """
         Insert new_val after all occurances of exist_val.
 
@@ -1540,8 +1322,8 @@ class ConfigList(UserList):
         :type exist_val: str
         :param new_val: A new value to be inserted in the configuration.
         :type new_val: str
-        :return: An ios-style configuration list (indented by stop_width for each configuration level).
-        :rtype: List[str]
+        :return: None
+        :rtype: None
 
         .. code-block:: python
 
@@ -1688,7 +1470,7 @@ class ConfigList(UserList):
 
     # This method is on ConfigList()
     @logger.catch(reraise=True)
-    def _banner_mark_regex(self, regex: str) -> None:
+    def _banner_mark_regex(self, regex: Union[str, re.Pattern]) -> None:
         """
         :param regex: Find banner object children with `regex`` and build references
                       between banner parent / child objects.
@@ -1786,7 +1568,8 @@ class ConfigList(UserList):
 
     # This method is on ConfigList()
     @logger.catch(reraise=True)
-    def _ciscoios_macro_mark_children(self, macro_parent_idx_list: List[BaseCfgLine]) -> None:
+    def _ciscoios_macro_mark_children(self, macro_parent_idx_list: List[Any]) -> None:
+                                                                   
         """
         Set the blank_line_keep attribute for all Cisco IOS banner parent / child objs.
 
@@ -1871,7 +1654,7 @@ class ConfigList(UserList):
                                       index: int,
                                       indent: int,
                                       obj: BaseCfgLine,
-                                      debug: bool) -> Tuple[List[BaseCfgLine],int,BaseCfgLine]:
+                                      debug: int) -> Tuple[List[BaseCfgLine], Dict, Union[BaseCfgLine, None]]:
         candidate_parent = None
         candidate_parent_idx = None
         # If indented, walk backwards and find the parent...
@@ -1908,7 +1691,9 @@ class ConfigList(UserList):
 
     # This method is on ConfigList()
     @logger.catch(reraise=True)
-    def bootstrap(self, text_list: List[str]=None, debug: int=0) -> List[BaseCfgLine]:
+    def bootstrap(self,
+                  text_list: Union[List[str], None] = None,
+                  debug: int = 0) -> List[BaseCfgLine]:
         """
         Accept a text list, and format into a list of BaseCfgLine() instances.
 
@@ -1983,8 +1768,7 @@ class ConfigList(UserList):
 
             retval.append(obj)
 
-        # Manually assign a parent on all closing braces
-        self.data = assign_parent_to_closing_braces(input_list=retval)
+        self.data = retval
 
         # Call _banner_mark_regex() to process banners in the returned obj
         # list.
@@ -2041,7 +1825,12 @@ class ConfigList(UserList):
 
     # This method is on ConfigList()
     @logger.catch(reraise=True)
-    def _add_child_to_parent(self, _list, idx, indent, parentobj, childobj) -> None:
+    def _add_child_to_parent(self,
+                             _list: List[BaseCfgLine],
+                             idx: int,
+                             indent: int,
+                             parentobj: Union[BaseCfgLine, None],
+                             childobj: BaseCfgLine) -> None:
         """
         Add the child object to the parent object; assign the parent
         object to the child object.  Finally set the ``child_indent`` attribute
@@ -2200,13 +1989,14 @@ class CiscoConfParse(object):
 
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
+    @typechecked
     def __init__(
         self,
         config: Optional[Union[str,List[str],tuple[str, ...]]]=None,
         syntax: str="ios",
         encoding: str=locale.getpreferredencoding(),
         loguru: bool=True,
-        comment_delimiters: List[str]=None,
+        comment_delimiters: Union[List[str], None] = None,
         auto_indent_width: int=-1,
         linesplit_rgx: str=r"\r*\n",
         ignore_blank_lines: bool=False,
@@ -2302,11 +2092,17 @@ class CiscoConfParse(object):
 
 
         """
+        self.config_objs = None
+        self.factory = bool(factory)
+        self.ignore_blank_lines = False
+        self.encoding = encoding or ENCODING
+        self.auto_commit = auto_commit
 
         if syntax not in ALL_VALID_SYNTAX:
             error = f"{syntax} is not a valid syntax."
             logger.error(error)
             raise InvalidParameters(error)
+        self.syntax = syntax
 
         if comment_delimiters is None:
             comment_delimiters = get_comment_delimiters(syntax=syntax)
@@ -2324,18 +2120,22 @@ class CiscoConfParse(object):
             error = "'comment_delimiters' must be a list of string comment delimiters"
             logger.critical(error)
             raise InvalidParameters(error)
+        self.comment_delimiters = comment_delimiters
 
         if int(auto_indent_width) <= 0:
             auto_indent_width = int(self.get_auto_indent_from_syntax(syntax=syntax))
+        self.auto_indent_width = int(auto_indent_width)
 
         ######################################################################
         # Log an error if parsing with `ignore_blank_lines=True` and
-        #     `factory=False`
+        #     `factory=False` because it causes probles with indexing into the
+        #     ConfigList()
         ######################################################################
         if ignore_blank_lines is True and factory is True:
             error = "ignore_blank_lines and factory are not supported together."
-            logger.error(error)
+            logger.critical(error)
             raise NotImplementedError(error)
+        self.ignore_blank_lines = ignore_blank_lines
 
         ######################################################################
         # Reconfigure loguru if read_only is True
@@ -2348,25 +2148,16 @@ class CiscoConfParse(object):
 
         if not (isinstance(syntax, str) and (syntax in ALL_VALID_SYNTAX)):
             error = f"'{syntax}' is an unknown syntax"
-            logger.error(error)
+            logger.critical(error)
             raise ValueError(error)
+
 
         # all IOSCfgLine object instances...
         self.finished_config_parse = False
 
-        self.syntax = syntax
-        self.encoding = encoding or ENCODING
         self.loguru = bool(loguru)
-        self.comment_delimiters = comment_delimiters
-        self.auto_indent_width = int(auto_indent_width)
         self.debug = int(debug)
-        self.factory = bool(factory)
         self.linesplit_rgx = linesplit_rgx
-        self.ignore_blank_lines = ignore_blank_lines
-        self.auto_commit = auto_commit
-
-        self.config_objs = None
-
 
         # Convert an None config into an empty list
         if config is None:
@@ -2517,7 +2308,6 @@ class CiscoConfParse(object):
         return int(indent_width)
 
     # This method is on CiscoConfParse()
-    @logger.catch(reraise=True)
     def __repr__(self) -> str:
         """Return a string that represents this CiscoConfParse object instance.  The number of lines embedded in the string is calculated from the length of the config_objs attribute.
 
@@ -2688,7 +2478,7 @@ class CiscoConfParse(object):
     # This method is on CiscoConfParse()
     @property
     @logger.catch(reraise=True)
-    def objs(self) -> List[BaseCfgLine]:
+    def objs(self) -> ConfigList[BaseCfgLine]:
         """CiscoConfParse().objs is an alias for the CiscoConfParse().config_objs property.
 
         :returns: All configuration objects.
@@ -2728,9 +2518,9 @@ class CiscoConfParse(object):
     @logger.catch(reraise=True)
     def _find_child_object_branches(
         self,
-        parent_obj: BaseCfgLine,
+        parent_obj: Union[IOSCfgLine, JunosCfgLine, None],
         childspec: str,
-        regex_flags: str,
+        regex_flags: Union[re.RegexFlag,int] = 0,
         debug: int=0,
     ) -> list:
         """
@@ -2782,15 +2572,17 @@ debug={debug},
 
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
-    def find_object_branches(
-        self,
-        branchspec: Union[tuple[str, ...],List[str]]=(),
-        regex_flags: Union[re.RegexFlag,int]=0,
-        regex_groups: bool=False,
-        empty_branches: bool=False,
-        reverse: bool=False,
-        debug: int=0,
-    ) -> List[List[BaseCfgLine]]:
+    @typechecked
+    # NOTE typechecked does NOT correctly verify the return value of this
+    #   method.  Sadly, I have to use List[Any] instead of
+    #   List[List[BaseCfgLine]]
+    def find_object_branches(self,
+                             branchspec: Union[tuple[str, ...], List[str]] = (),
+                             regex_flags: Union[re.RegexFlag,int] = 0,
+                             regex_groups: bool = False,
+                             empty_branches: bool = False,
+                             reverse: bool = False,
+                             debug: int = 0,) -> List[Any]:
         r"""Iterate over a tuple of regular expression strings in `branchspec` and return matching objects in a list of lists (consider it similar to a table of matching config objects). `branchspec` expects to start at some ancestor and walk through the nested object hierarchy (with no limit on depth).
 
         Previous CiscoConfParse() methods only handled a single parent regex and single child regex (such as :func:`~ciscoconfparse2.CiscoConfParse.find_objects`).
@@ -2899,6 +2691,7 @@ debug={debug},
             raise ValueError(error)
 
         branches = []
+        new_branches = ()
         # iterate over the regular expressions in branchspec
         for idx, childspec in enumerate(branchspec):
             # FIXME: Insert debugging here...
@@ -2967,14 +2760,14 @@ debug={debug},
                             if len(matched_capture) == 0:
                                 # If the branchspec groups() matches are a
                                 # zero-length tuple, populate this return_row
-                                # with the whole element's text
-                                return_row[idx] = (element.text,)
+                                # with the whole element's BaseCfgLine instance
+                                return_row[idx] = [element,]
                             else:
                                 # In this case, we found regex capture groups
                                 return_row[idx] = matched_capture
                         else:
                             # No regex capture groups b/c of no regex match...
-                            return_row[idx] = (None,)
+                            return_row[idx] = [None,]
 
                 return_matrix.append(return_row)
 
@@ -2998,16 +2791,33 @@ debug={debug},
         if reverse:
             retval.reverse()
 
+        # Check return types here
+        if not isinstance(retval, List):
+            error = f"Type Consistency Error.  retval must be a List, but we found {type(retval)}"
+            logger.critical(error)
+            raise ValueError(error)
+
+            if not isinstance(retval[0], List[BaseCfgLine]):
+                error = f"Type Consistency Error.  Resulting branch elements must be a List[List[BaseCfgLine]], but we found {type(retval[0])}"
+                logger.critical(error)
+                raise ValueError(error)
+
         return retval
 
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
-    def find_objects(self, linespec, exactmatch=False, ignore_ws=False, escape_chars=False, reverse=False):
+    @typechecked
+    def find_objects(self,
+                     linespec: Union[str, re.Pattern, BaseCfgLine, List[str], List[re.Pattern]],
+                     exactmatch: bool = False,
+                     ignore_ws: bool = False,
+                     escape_chars: bool = False,
+                     reverse: bool = False) -> List[BaseCfgLine]:
         """Find all :class:`~models_cisco.IOSCfgLine` objects whose text matches ``linespec`` and return the
         :class:`~models_cisco.IOSCfgLine` objects in a python list.
 
-        :param linespec: A string or python regular expression, which should be matched
-        :type linespec: Union[str,re.Pattern,BaseCfgLine]
+        :param linespec: Text regular expression or a list with an expression for the :class:`~models_cisco.IOSCfgLine` objects to be matched
+        :type linespec: Union[str,re.Pattern,BaseCfgLine, List[str], List[re.Pattern]]
         :param exactmatch: When set True, this option requires ``linespec`` match the whole configuration line, instead of a
                            portion of the configuration line, default to False.
         :type exactmatch: str
@@ -3083,21 +2893,22 @@ debug={debug},
 
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
+    @typechecked
     def find_parent_objects(
         self,
-        parentspec,
-        childspec=None,
-        ignore_ws=False,
-        recurse=True,
-        escape_chars=False,
-        reverse=False,
-    ):
+        parentspec: Union[str, re.Pattern, List[str]],
+        childspec: Union[str, None] = None,
+        ignore_ws: bool = False,
+        recurse: bool = True,
+        escape_chars: bool = False,
+        reverse: bool = False,
+    ) -> List[BaseCfgLine]:
         """Return a list of parent :class:`~models_cisco.IOSCfgLine` objects,
         which matched the ``parentspec`` and whose children match ``childspec``.
         Only the parent :class:`~models_cisco.IOSCfgLine` objects will be
         returned.
 
-        :param parentspec: Text regular expression for the :class:`~models_cisco.IOSCfgLine` object to be matched; this must match the parent's line
+        :param parentspec: Text regular expression or a list of expressions for the :class:`~models_cisco.IOSCfgLine` object to be matched
         :type parentspec: Union[str,List[str],tuple[str, ...]]
         :param childspec: Text regular expression for the child's configuration line
         :type childspec: str

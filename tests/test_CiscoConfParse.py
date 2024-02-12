@@ -24,7 +24,6 @@ import pytest
 
 from ciscoconfparse2.ciscoconfparse2 import CiscoConfParse
 from ciscoconfparse2.ciscoconfparse2 import IOSCfgLine, IOSIntfLine
-from ciscoconfparse2.ciscoconfparse2 import parse_line_braces
 from ciscoconfparse2.ciscoconfparse2 import CiscoPassword
 from ciscoconfparse2.ciscoconfparse2 import Diff
 from ciscoconfparse2.models_junos import JunosCfgLine
@@ -149,14 +148,20 @@ def testParse_valid_filepath_nofactory_01_ios():
 
 def testParse_valid_filepath_01_f5():
     """Test reading an f5 config-file on disk (from filename in the config parameter); ref github issue #262."""
-    parse = CiscoConfParse(config=f"{THIS_TEST_PATH}/fixtures/configs/sample_01.f5", comment_delimiters=["#"], syntax="junos")
-    assert len(parse.get_text()) == 20
-
+    parse = CiscoConfParse(
+            config=f"{THIS_TEST_PATH}/fixtures/configs/sample_01.f5",
+            comment_delimiters=["#"],
+            syntax="junos",
+            )
+    assert len(parse.get_text()) == 16
 
 def testParse_valid_filepath_01_junos():
     """Test reading a junos config-file on disk (without the config keyword); ref github issue #262."""
-    parse = CiscoConfParse(f"{THIS_TEST_PATH}/fixtures/configs/sample_01.junos", comment_delimiters=["#"], syntax="junos")
-    assert len(parse.get_text()) == 116
+    parse = CiscoConfParse(
+            f"{THIS_TEST_PATH}/fixtures/configs/sample_01.junos",
+            comment_delimiters=["#"],
+            syntax="junos")
+    assert len(parse.get_text()) == 79
 
 
 def testParse_syntax_ios_nofactory_01():
@@ -276,16 +281,6 @@ def testParse_ios_parent_01():
     assert parse.objs[1].parent == parse.objs[1]
     # Check the parent of ' ip address 192.0.2.1 255.255.255.0'
     assert parse.objs[2].parent == parse.objs[1]
-
-def testParse_parse_line_braces_01():
-    uut = parse_line_braces("ltm pool FOO {", comment_delimiters=["#"])
-    assert uut == (0, 1, "ltm pool FOO ")
-
-
-def testParse_parse_line_braces_02():
-    uut = parse_line_braces("}", comment_delimiters=["#"])
-    assert uut == (-1, -1, "")
-
 
 def testParse_parse_syntax_f5_as_junos_nofactory_ioscfg_01():
     """Parse fixtures/configs/sample_01.f5 as `syntax='junos'`, `factory=False` and test rendering as Cisco-IOS"""
@@ -577,7 +572,7 @@ def testParse_f5_as_ios_00(parse_f01_ios):
     assert len(parse_f01_ios.objs) == 20
 
 
-def testParse_f5_as_ios_02(parse_f02_ios_01):
+def testParse_f5_as_ios_02(parse_f02_junos_01):
     """
     Test parsing a brace-delimited f5 config with ios syntax.  Use fixtures/configs/sample_02.f5 as the test config.  That f5 config is pre-parsed in conftest.py as 'parse_f02_ios'.
 
@@ -589,162 +584,126 @@ def testParse_f5_as_ios_02(parse_f02_ios_01):
     a child of the opening curly-brace.
     """
 
-    correct_result = [
-        "ltm profile udp DNS-UDP {",
-        "    app-service none",
-        "    datagram-load-balancing disabled",
-        "    idle-timeout 31",
-        "}",
-        "ltm rule contrail-monitor {",
-        "    when HTTP_REQUEST {",
-        "                if {[active_members APN-DNS-TCP] > 0 & [active_members APN-DNS-UDP] > 0  } {",
-        '''                        HTTP::respond 200 content "up"''',
-        "                }",
-        "        }",
-        "}",
-        "ltm rule contrail-monitor1 {",
-        "    when HTTP_REQUEST {",
-        "                if {[active_members APN-DNS-TCP] >= 0 & [active_members APN-DNS-UDP] >= 0  } {",
-        '''                        HTTP::respond 200 content "up"''',
-        "                }",
-        "        }",
-        "}",
-        "ltm tacdb licenseddb licensed-tacdb {",
-        "    partition none",
-        "}",
-        "ltm virtual ACME_VIP {",
-        "    destination 192.168.1.191:http",
-        "    ip-protocol tcp",
-        "    mask 255.255.255.255",
-        "    pool pool1",
-        "    profiles {",
-        "        http { }",
-        "        tcp { }",
-        "    }",
-        "    rules {",
-        "        MOBILE",
-        "    }",
-        "    source 0.0.0.0/0",
-        "    source-address-translation {",
-        "        type automap",
-        "    }",
-        "    translate-address enabled",
-        "    translate-port enabled",
-        "    vs-index 17",
-        "}",
-        "sys state-mirroring { }",
-        "sys syslog {",
-        '''    include "''',
-        '''template t_remotetmpl {''',
-        '''template (\"<$PRI>$STAMP $HOST $FACILITY[$PID]: $MSGONLY\"); template_escape(no);''',
-        "};",
-        "filter f_remote_loghost {",
-        "level(info..emerg);",
-        "};",
-        "destination d_remote_loghost {",
-        "udp(\"102.223.51.181\" port(519) template(t_remotetmpl));",
-        "};",
-        "log {",
-        "source(s_syslog_pipe);",
-        "filter(f_remote_loghost);",
-        "destination(d_remote_loghost);",
-        "};",
-        '''"''',
-        "remote-servers {",
-        "        JSA {",
-        "            host 102.223.51.181",
-        "        }",
-        "    }",
-        "}",
-        "sys url-db download-schedule urldb { }",
-    ]
-    # Close curly-braces should be assigned as children of the open curly-brace
-    correct_result_linenum_dict = {
-        0: {'linenum': 1, 'parent_linenum': 1},
-        1: {'linenum': 2, 'parent_linenum': 1},
-        2: {'linenum': 3, 'parent_linenum': 1},
-        3: {'linenum': 4, 'parent_linenum': 1},
-        4: {'linenum': 5, 'parent_linenum': 1},
-        5: {'linenum': 6, 'parent_linenum': 6},
-        6: {'linenum': 7, 'parent_linenum': 6},
-        7: {'linenum': 8, 'parent_linenum': 7},
-        8: {'linenum': 9, 'parent_linenum': 8},
-        9: {'linenum': 10, 'parent_linenum': 8},
-        10: {'linenum': 11, 'parent_linenum': 7},
-        11: {'linenum': 12, 'parent_linenum': 6},
-        12: {'linenum': 13, 'parent_linenum': 13},
-        13: {'linenum': 14, 'parent_linenum': 13},
-        14: {'linenum': 15, 'parent_linenum': 14},
-        15: {'linenum': 16, 'parent_linenum': 15},
-        16: {'linenum': 17, 'parent_linenum': 15},
-        17: {'linenum': 18, 'parent_linenum': 14},
-        18: {'linenum': 19, 'parent_linenum': 13},
-        19: {'linenum': 20, 'parent_linenum': 20},
-        20: {'linenum': 21, 'parent_linenum': 20},
-        21: {'linenum': 22, 'parent_linenum': 20},
-        22: {'linenum': 23, 'parent_linenum': 23},
-        23: {'linenum': 24, 'parent_linenum': 23},
-        24: {'linenum': 25, 'parent_linenum': 23},
-        25: {'linenum': 26, 'parent_linenum': 23},
-        26: {'linenum': 27, 'parent_linenum': 23},
-        27: {'linenum': 28, 'parent_linenum': 23},
-        28: {'linenum': 29, 'parent_linenum': 28},
-        29: {'linenum': 30, 'parent_linenum': 28},
-        30: {'linenum': 31, 'parent_linenum': 28},
-        31: {'linenum': 32, 'parent_linenum': 23},
-        32: {'linenum': 33, 'parent_linenum': 32},
-        33: {'linenum': 34, 'parent_linenum': 32},
-        34: {'linenum': 35, 'parent_linenum': 23},
-        35: {'linenum': 36, 'parent_linenum': 23},
-        36: {'linenum': 37, 'parent_linenum': 36},
-        37: {'linenum': 38, 'parent_linenum': 36},
-        38: {'linenum': 39, 'parent_linenum': 23},
-        39: {'linenum': 40, 'parent_linenum': 23},
-        40: {'linenum': 41, 'parent_linenum': 23},
-        41: {'linenum': 42, 'parent_linenum': 23},
-        42: {'linenum': 43, 'parent_linenum': 43},
-        43: {'linenum': 44, 'parent_linenum': 44},
-        44: {'linenum': 45, 'parent_linenum': 44},
-        45: {'linenum': 46, 'parent_linenum': 46},
-        46: {'linenum': 47, 'parent_linenum': 47},
-        47: {'linenum': 48, 'parent_linenum': 46},
-        48: {'linenum': 49, 'parent_linenum': 49},
-        49: {'linenum': 50, 'parent_linenum': 50},
-        50: {'linenum': 51, 'parent_linenum': 49},
-        51: {'linenum': 52, 'parent_linenum': 52},
-        52: {'linenum': 53, 'parent_linenum': 53},
-        53: {'linenum': 54, 'parent_linenum': 52},
-        54: {'linenum': 55, 'parent_linenum': 55},
-        55: {'linenum': 56, 'parent_linenum': 56},
-        56: {'linenum': 57, 'parent_linenum': 57},
-        57: {'linenum': 58, 'parent_linenum': 58},
-        58: {'linenum': 59, 'parent_linenum': 55},
-        59: {'linenum': 60, 'parent_linenum': 60},
-        60: {'linenum': 61, 'parent_linenum': 61},
-        61: {'linenum': 62, 'parent_linenum': 61},
-        62: {'linenum': 63, 'parent_linenum': 62},
-        63: {'linenum': 64, 'parent_linenum': 62},
-        64: {'linenum': 65, 'parent_linenum': 61},
-        65: {'linenum': 66, 'parent_linenum': 44},
-        66: {'linenum': 67, 'parent_linenum': 67},
+    correct_text = {
+        0: "ltm profile udp DNS-UDP",
+        1: "    app-service none",
+        2: "    datagram-load-balancing disabled",
+        3: "    idle-timeout 31",
+        4: "ltm rule contrail-monitor",
+        5: "    when HTTP_REQUEST",
+        6: "        if",
+        7: "            [active_members APN-DNS-TCP] > 0 & [active_members APN-DNS-UDP] > 0",
+        8: '            HTTP::respond 200 content "up"',
+        9: "ltm rule contrail-monitor1",
+        10: "    when HTTP_REQUEST",
+        11: "        if",
+        12: "            [active_members APN-DNS-TCP] >= 0 & [active_members APN-DNS-UDP] >= 0",
+        13: '            HTTP::respond 200 content "up"',
+        14: "ltm tacdb licenseddb licensed-tacdb",
+        15: "    partition none",
+        16: "ltm virtual ACME_VIP",
+        17: "    destination 192.168.1.191:http",
+        18: "    ip-protocol tcp",
+        19: "    mask 255.255.255.255",
+        20: "    pool pool1",
+        21: "    profiles",
+        22: "        http",
+        23: "        tcp",
+        24: "    rules",
+        25: "        MOBILE",
+        26: "    source 0.0.0.0/0",
+        27: "    source-address-translation",
+        28: "        type automap",
+        29: "    translate-address enabled",
+        30: "    translate-port enabled",
+        31: "    vs-index 17",
+        32: "sys state-mirroring",
+        33: "sys syslog",
+        34: '    include "',
+        35: '    template t_remotetmpl',
+        36: '        template (\"<$PRI>$STAMP $HOST $FACILITY[$PID]: $MSGONLY\"); template_escape(no)',
+        37: "    filter f_remote_loghost",
+        38: "        level(info..emerg)",
+        39: "    destination d_remote_loghost",
+        40: "        udp(\"102.223.51.181\" port(519) template(t_remotetmpl))",
+        41: "    log",
+        42: "        source(s_syslog_pipe)",
+        43: "        filter(f_remote_loghost)",
+        44: "        destination(d_remote_loghost)",
+        45: '    "',
+        46: "    remote-servers",
+        47: "        JSA",
+        48: "            host 102.223.51.181",
+        49: "sys url-db download-schedule urldb",
     }
-    assert len(parse_f02_ios_01.objs) == 67
-    for dict_idx, obj in enumerate(parse_f02_ios_01.objs):
-        assert dict_idx == obj.linenum
+    # Close curly-braces should be assigned as children of the open curly-brace
+    linenums = {
+        0: {'linenum': 0, 'parent': 0},
+        1: {'linenum': 1, 'parent': 0},
+        2: {'linenum': 2, 'parent': 0},
+        3: {'linenum': 3, 'parent': 0},
+        4: {'linenum': 4, 'parent': 4},
+        5: {'linenum': 5, 'parent': 4},
+        6: {'linenum': 6, 'parent': 5},
+        7: {'linenum': 7, 'parent': 6},
+        8: {'linenum': 8, 'parent': 6},
+        9: {'linenum': 9, 'parent': 9},
+        10: {'linenum': 10, 'parent': 9},
+        11: {'linenum': 11, 'parent': 10},
+        12: {'linenum': 12, 'parent': 11},
+        13: {'linenum': 13, 'parent': 11},
+        14: {'linenum': 14, 'parent': 14},
+        15: {'linenum': 15, 'parent': 14},
+        16: {'linenum': 16, 'parent': 16},
+        17: {'linenum': 17, 'parent': 16},
+        18: {'linenum': 18, 'parent': 16},
+        19: {'linenum': 19, 'parent': 16},
+        20: {'linenum': 20, 'parent': 16},
+        21: {'linenum': 21, 'parent': 16},
+        22: {'linenum': 22, 'parent': 21},
+        23: {'linenum': 23, 'parent': 21},
+        24: {'linenum': 24, 'parent': 16},
+        25: {'linenum': 25, 'parent': 24},
+        26: {'linenum': 26, 'parent': 16},
+        27: {'linenum': 27, 'parent': 16},
+        28: {'linenum': 28, 'parent': 27},
+        29: {'linenum': 29, 'parent': 16},
+        30: {'linenum': 30, 'parent': 16},
+        31: {'linenum': 31, 'parent': 16},
+        32: {'linenum': 32, 'parent': 32},
+        33: {'linenum': 33, 'parent': 33},
+        34: {'linenum': 34, 'parent': 33},
+        35: {'linenum': 35, 'parent': 33},
+        36: {'linenum': 36, 'parent': 35},
+        37: {'linenum': 37, 'parent': 33},
+        38: {'linenum': 38, 'parent': 37},
+        39: {'linenum': 39, 'parent': 33},
+        40: {'linenum': 40, 'parent': 39},
+        41: {'linenum': 41, 'parent': 33},
+        42: {'linenum': 42, 'parent': 41},
+        43: {'linenum': 43, 'parent': 41},
+        44: {'linenum': 44, 'parent': 41},
+        45: {'linenum': 45, 'parent': 33},
+        46: {'linenum': 46, 'parent': 33},
+        47: {'linenum': 47, 'parent': 46},
+        48: {'linenum': 48, 'parent': 47},
+        49: {'linenum': 49, 'parent': 49},
+    }
+    assert len(parse_f02_junos_01.objs) == 50
+    for idx, obj in enumerate(parse_f02_junos_01.objs):
 
         # Be sure to strip off any double-spacing before comparing to obj.text
-        tmp = correct_result[dict_idx]
-        indent = len(tmp.rstrip()) - len(tmp.strip())
-        assert indent == obj.indent
-        assert correct_result[dict_idx] == obj.text
+        assert correct_text[idx] == obj.text
+        assert idx == obj.linenum
 
-        assert correct_result_linenum_dict[dict_idx]['linenum'] == obj.linenum + 1
-        assert correct_result_linenum_dict[dict_idx]['parent_linenum'] == obj.parent.linenum + 1
+        correct_linenum = linenums[idx]['linenum']
+        correct_parent = linenums[idx]['parent']
+        assert (correct_linenum, correct_parent) == (obj.linenum, obj.parent.linenum)
 
 
 def testParse_f5_as_junos(parse_f01_junos_01):
     """Test parsing f5 config as junos syntax"""
-    assert len(parse_f01_junos_01.objs) == 20
+    assert len(parse_f01_junos_01.objs) == 16
 
 
 def testParse_asa_as_ios(config_a02):

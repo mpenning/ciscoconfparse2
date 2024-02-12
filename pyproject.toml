@@ -23,7 +23,7 @@ requires-python = ">=3.8"
 
 [tool.poetry]
 name = "ciscoconfparse2"
-version = "0.5.0"
+version = "0.5.1"
 description = "Parse, Audit, Query, Build, and Modify Cisco IOS-style and JunOS-style configs"
 license = "GPL-3.0-only"
 authors = [
@@ -86,7 +86,8 @@ loguru = "0.7.2"
 tomlkit = ">=0.12.3"
 pyyaml = "6.0.1"
 hier_config = ">=2.2.3"
-deprecated = ">=1.2.14"
+pyparsing = ">=3.1.1"
+typeguard = ">=4.1.5"
 
 [tool.poetry.urls]
 source = "https://github.com/mpenning/ciscoconfparse2"

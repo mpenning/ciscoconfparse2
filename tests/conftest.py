@@ -1,6 +1,6 @@
 r""" conftest.py - Parse, Query, Build, and Modify IOS-style configs
 
-     Copyright (C) 2023      David Michael Pennington at Cisco Systems
+     Copyright (C) 2023-2024  David Michael Pennington at Cisco Systems
 
      This program is free software: you can redistribute it and/or modify
      it under the terms of the GNU General Public License as published by
@@ -26,6 +26,7 @@ import os
 sys.path.insert(0, "..")
 
 from ciscoconfparse2.ciscoconfparse2 import CiscoConfParse
+from ciscoconfparse2.ciscoconfparse2 import BraceParse
 from ciscoconfparse2.ccp_util import PythonOptimizeCheck
 import dns.exception
 import dns.resolver
@@ -576,6 +577,7 @@ ethernet-switching-options {
     storm-control {
         interface all;
     }
+}
 }
 interfaces {
     ge-0/0/0 {
@@ -1315,11 +1317,15 @@ def parse_f01_ios(request):
 
 ## parse_f02 yields configs/sample_02.f5
 @pytest.fixture(scope="function")
-def parse_f02_ios_01(request):
-    """Preparsed F5 f02 configuration as ios syntax"""
-    parse_f02_ios_01 = CiscoConfParse(f02, syntax="ios", comment_delimiters=["#"], ignore_blank_lines=True, factory=False)
+def parse_f02_junos_01(request):
+    """Preparsed F5 f02 configuration as junos syntax"""
+    parse_f02_junos_01 = CiscoConfParse(f02,
+                                      syntax="junos",
+                                      comment_delimiters=["#"],
+                                      ignore_blank_lines=True,
+                                      factory=False)
 
-    yield parse_f02_ios_01
+    yield parse_f02_junos_01
 
 @pytest.fixture(scope="function")
 def parse_f01_junos_01(request):
@@ -1343,6 +1349,48 @@ def parse_j01_factory(request):
     parse_j01_factory = CiscoConfParse(j01, syntax="junos", comment_delimiters=["#", "!"], factory=True)
 
     yield parse_j01_factory
+
+## parse_j01 yields configs/sample_01.junos
+@pytest.fixture(scope="function")
+def parse_j01(request):
+    """Preparsed j01"""
+    parse_j01 = CiscoConfParse(j01, syntax="junos", comment_delimiters=["#"], ignore_blank_lines=True, factory=False)
+
+    yield parse_j01
+
+## parse_fixture_j01 yields fixtures/configs/sample_01.junos
+@pytest.fixture(scope="function")
+def parse_fixture_j01(request):
+    """Preparsed j01"""
+    parse_fixture_j01 = CiscoConfParse('fixtures/configs/sample_01.junos',
+                               syntax="junos",
+                               comment_delimiters=["#"],
+                               ignore_blank_lines=True,
+                               factory=False)
+
+    yield parse_fixture_j01
+
+## parse_fixture_j03 yields fixtures/configs/sample_03.junos
+@pytest.fixture(scope="function")
+def parse_fixture_j03(request):
+    """Preparsed j03"""
+    parse_fixture_j03 = CiscoConfParse('fixtures/configs/sample_03.junos',
+                               syntax="junos",
+                               comment_delimiters=["#"],
+                               ignore_blank_lines=True,
+                               factory=False)
+
+    yield parse_fixture_j03
+
+## parse_fixture_j03 yields fixtures/configs/sample_03.junos
+@pytest.fixture(scope="function")
+def brace_fixture_j03(request):
+    """Preparsed j03"""
+    brace_fixture_j03 = BraceParse('fixtures/configs/sample_03.junos',
+                               comment_delimiters=["#"],
+                               ignore_blank_lines=True,)
+
+    yield brace_fixture_j03
 
 
 ## parse_a01 yields the asa configuration
