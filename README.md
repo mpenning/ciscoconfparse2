@@ -181,7 +181,7 @@ Here's why, it:
 
 ## What if we don\'t use Cisco IOS?
 
-In some cases, you can parse [brace-delimited configurations][13] into a Cisco IOS style (see [original ciscoconfparse Github Issue \#17][14]), which means that CiscoConfParse may be able to parse some of these configurations:
+In many cases, you can parse [brace-delimited configurations][13] into a Cisco IOS style (see [original ciscoconfparse Github Issue \#17][14]), which means that CiscoConfParse may be able to parse these configurations:
 
 - Juniper Networks Junos OS
 - Palo Alto Networks Firewall configurations
