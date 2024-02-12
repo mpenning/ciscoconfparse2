@@ -4,6 +4,18 @@
 - Summary:
     - Insert something here
 
+## Version: 0.5.1
+
+- Released: 2024-02-10
+- Summary:
+    - Remove [deprecated](https://pypi.org/project/Deprecated/) as a dependency
+    - Add `typeguard` as a dependency
+    - Add `pyparsing` as a dependency
+    - Reimplement `BraceParse()` with `pyparsing`
+    - Fix `junos` pytest race-condition in CiscoConfParse when `factory` and `ignore_blank_lines` are both True
+    - Fix some type annotations
+    - More documentation updates
+
 ## Version: 0.5.0
 
 - Released: 2024-02-05

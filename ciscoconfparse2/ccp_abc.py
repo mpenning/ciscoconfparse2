@@ -1630,8 +1630,8 @@ class BaseCfgLine(object):
         debug: bool=False,
     ) -> List[Any]:
         r"""Use ``regex`` to search the children of
-        :class:`~models_cisco.IOSCfgLine` text and return the contents of
-        the regular expression group, at the integer ``group`` index, cast as
+        :class:`~models_cisco.IOSCfgLine` text and return a list of the contents of
+        objects matching the regular expression group, at the integer ``group`` index, cast as
         ``result_type``; if there is no match, default to an empty list.
 
         :param regex: A string or python compiled regular expression, which should be matched.  This regular expression should contain parenthesis, which are bound to a match group.

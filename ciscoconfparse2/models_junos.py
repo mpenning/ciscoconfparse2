@@ -373,7 +373,6 @@ class BaseJunosIntfLine(JunosCfgLine):
         return False
 
     # This method is on BaseJunosIntfLine()
-    @logger.catch(reraise=True)
     def __repr__(self):
         parent_str = ""
         if self.is_parent:
@@ -752,7 +751,6 @@ class BaseJunosRouteLine(BaseCfgLine):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    @logger.catch(reraise=True)
     def __repr__(self):
         return "<{} # {} '{}' info: '{}'>".format(
             self.classname,

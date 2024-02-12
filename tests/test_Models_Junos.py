@@ -42,8 +42,8 @@ def testVal_JunosCfgLine_dna_parent_01(parse_j01):
     assert obj.dna == "JunosCfgLine"
     assert obj.is_intf is False
     assert obj.is_subintf is False
-    assert obj.indent == 4
-    assert obj.child_indent == 8
+    assert obj.indent == 0
+    assert obj.child_indent == 4
     assert obj.confobj is not None
 
 @pytest.mark.xfail(True, reason="parse_j01 ge-0/0/1 is not correctly identified by `is_intf`")
@@ -93,25 +93,33 @@ def testVal_JunosCfgLine_child_04():
 def testVal_find_child_objects_01(parse_j01):
     """Identify the number of grandchildren of parse_j01 ge-0/0/1"""
     parse = parse_j01
-    obj = parse.find_child_objects("interfaces", "ge-0/0/1")[0]
+    obj = parse.find_child_objects(["interfaces", "ge-0/0/1"])[0]
     assert not ("{" in set(obj.text))  # Ensure there are no braces on this line
     assert len(obj.all_children) == 6
 
 def testVal_junos_factory_JunOSIntfLine_01(parse_j01):
     parse = CiscoConfParse('fixtures/configs/sample_01.junos',
                            syntax='junos',
-                           factory=True
+                           factory=True,
+                           ignore_blank_lines=False,
                            )
     assert parse.config_objs[0].classname == "JunosCfgLine"
 
-    assert parse.config_objs[81].text.strip() == "ge-0/0/0"
-    assert parse.config_objs[81].classname == "JunosIntfLine"
+    assert parse.config_objs[58].text.strip() == "ge-0/0/0"
+    assert parse.config_objs[58].text.strip() == "ge-0/0/0"
+    assert parse.config_objs[58].classname == "JunosIntfLine"
+    assert parse.config_objs[58].linenum == 58
+    assert parse.config_objs[58].indent == 4
 
-    assert parse.config_objs[82].text.strip() == "unit 0"
-    assert parse.config_objs[82].classname == "JunosIntfLine"
+    assert parse.config_objs[59].text.strip() == "unit 0"
+    assert parse.config_objs[59].classname == "JunosIntfLine"
+    assert parse.config_objs[59].linenum == 59
+    assert parse.config_objs[59].indent == 8
 
-    assert parse.config_objs[83].text.strip() == "family ethernet-switching"
-    assert parse.config_objs[83].classname == "JunosCfgLine"
+    assert parse.config_objs[60].text.strip() == "family ethernet-switching"
+    assert parse.config_objs[60].classname == "JunosCfgLine"
+    assert parse.config_objs[60].linenum == 60
+    assert parse.config_objs[60].indent == 12
 
 # test for Github issue #49
 def testVal_parse_f5():
