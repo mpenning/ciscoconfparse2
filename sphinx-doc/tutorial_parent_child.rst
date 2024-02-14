@@ -66,32 +66,32 @@ to build queries.  For instance, you can find a list of all parents with or
 without a child; or you can find all the configuration elements that are
 required to reconfigure a certain class-map.
 
-:class:`~models_cisco.IOSCfgLine` objects
------------------------------------------
+:class:`~ciscoconfparse2.models_cisco.IOSCfgLine` objects
+---------------------------------------------------------
 
 When :class:`~ciscoconfparse2.CiscoConfParse()` reads a configuration, it stores
-parent-child relationships as a special :class:`~models_cisco.IOSCfgLine`
+parent-child relationships as a special :class:`~ciscoconfparse2.models_cisco.IOSCfgLine`
 object.  These objects are very powerful.
 
-:class:`~models_cisco.IOSCfgLine` objects remember:
+:class:`~ciscoconfparse2.models_cisco.IOSCfgLine` objects remember:
 
 - The original IOS configuration line
 - The parent configuration line
 - All child configuration lines
 
-:class:`~models_cisco.IOSCfgLine` objects also know about child indentation,
+:class:`~ciscoconfparse2.models_cisco.IOSCfgLine` objects also know about child indentation,
 and they keep special configuration query methods in the object itself.  For
-instance, if you found an :class:`~models_cisco.IOSCfgLine` object with
+instance, if you found an :class:`~ciscoconfparse2.models_cisco.IOSCfgLine` object with
 children, you can search the children directly from the parent by using
-:func:`~models_cisco.IOSCfgLine.re_search_children()`.
+:func:`~ciscoconfparse2.models_cisco.IOSCfgLine.re_search_children()`.
 
-Example: Retrieving text from an :class:`~models_cisco.IOSCfgLine` object
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Example: Retrieving text from an :class:`~ciscoconfparse2.models_cisco.IOSCfgLine` object
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This example:
 
 - Parses through a configuration
-- Finds an :class:`~models_cisco.IOSCfgLine` object with :func:`~ciscoconfparse2.CiscoConfParse.find_objects()`
+- Finds an :class:`~ciscoconfparse2.models_cisco.IOSCfgLine` object with :func:`~ciscoconfparse2.CiscoConfParse.find_objects()`
 - Retrieves the configuration text from that object (highlighted in yellow)
 
 .. code-block:: python
@@ -112,7 +112,7 @@ This example:
    >>>
    >>> quit()
 
-In the example, ``obj.text`` refers to the :class:`~models_cisco.IOSCfgLine`
+In the example, ``obj.text`` refers to the :class:`~ciscoconfparse2.models_cisco.IOSCfgLine`
 ``text`` attribute, which retrieves the text of the original IOS configuration
 statement.
 
@@ -179,7 +179,7 @@ Note that the ``^`` symbol at the beginning of the search string is a regular ex
 The assuming we use the configuration in the example above,
 :func:`~ciscoconfparse2.CiscoConfParse.find_objects()` scans the
 configuration for matching config objects and stores a list of
-:class:`~models_cisco.IOSCfgLine` objects in ``serial_objs``.
+:class:`~ciscoconfparse2.models_cisco.IOSCfgLine` objects in ``serial_objs``.
 
 .. code-block:: python
 
@@ -189,8 +189,8 @@ configuration for matching config objects and stores a list of
    <IOSCfgLine # 23 'interface Serial1/2'>]
 
 As you can see, the config statements are stored inside
-:class:`~models_cisco.IOSCfgLine` objects.  If you want to access the
-text inside the :class:`~models_cisco.IOSCfgLine` objects, just call their
+:class:`~ciscoconfparse2.models_cisco.IOSCfgLine` objects.  If you want to access the
+text inside the :class:`~ciscoconfparse2.models_cisco.IOSCfgLine` objects, just call their
 ``text`` attribute.  For example...
 
 .. code-block:: python
@@ -272,9 +272,9 @@ when you have more than one child line to inspect per interface, because
 :func:`~ciscoconfparse2.CiscoConfParse.find_parent_objects()` performs a
 line-by-line search of the whole configuration line each time it is called.
 By contrast, Method 1 is more efficient because you could simply call
-:func:`~models_cisco.IOSCfgLine.re_search_children()` multiple times for each
-interface object.  :func:`~models_cisco.IOSCfgLine.re_search_children()`
-only searches the child lines of that :func:`~models_cisco.IOSCfgLine`
+:func:`~ciscoconfparse2.models_cisco.IOSCfgLine.re_search_children()` multiple times for each
+interface object.  :func:`~ciscoconfparse2.models_cisco.IOSCfgLine.re_search_children()`
+only searches the child lines of that :func:`~ciscoconfparse2.models_cisco.IOSCfgLine`
 interface object.
 
 Example Usage: Finding parents *without* a specific child
