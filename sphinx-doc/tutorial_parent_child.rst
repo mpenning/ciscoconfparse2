@@ -247,7 +247,7 @@ Method 2: `list-comprehension`_ to iterate over objects and search children
    >>> qos_intfs
    [<IOSCfgLine # 18 'interface Serial1/1'>]
 
-Method 3: :func:`~ciscoconfparse.CiscoConfParse.find_parent_objects()`
+Method 3: :func:`~ciscoconfparse2.CiscoConfParse.find_parent_objects()`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: python
