@@ -4,9 +4,16 @@
 - Summary:
     - Insert something here
 
+## Version: 0.6.0
+
+- Released: 2024-02-14
+- Summary:
+    - Fix comment-detection bug
+    - More documentation updates
+
 ## Version: 0.5.1
 
-- Released: 2024-02-10
+- Released: 2024-02-12
 - Summary:
     - Remove [deprecated](https://pypi.org/project/Deprecated/) as a dependency
     - Add `typeguard` as a dependency

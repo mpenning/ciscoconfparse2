@@ -265,7 +265,7 @@ class BaseCfgLine(object):
 
         if isinstance(self._text, str):
             if len(self._text.lstrip()) > 0:
-                first_char = self._text.lstrip().split()[0]
+                first_char = self._text.lstrip()[0]
                 if first_char in self.confobj.comment_delimiters:
                     return True
         return False

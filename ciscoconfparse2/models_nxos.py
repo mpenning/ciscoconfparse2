@@ -68,23 +68,10 @@ class NXOSCfgLine(BaseFactoryLine):
     :class:`~models_nxos.NXOSCfgLine` objects contain references to other
     parent and child :class:`~models_nxos.NXOSCfgLine` objects.
 
-    Notes
-    -----
-    Originally, :class:`~models_nxos.NXOSCfgLine` objects were only
-    intended for advanced ciscoconfparse2 users.  As of ciscoconfparse
-    version 0.9.10, *all users* are strongly encouraged to prefer the
-    methods directly on :class:`~models_nxos.NXOSCfgLine` objects.
-    Ultimately, if you write scripts which call methods on
-    :class:`~models_nxos.NXOSCfgLine` objects, your scripts will be much
-    more efficient than if you stick strictly to the classic
-    :class:`~ciscoconfparse2.CiscoConfParse` methods.
-
     Parameters
     ----------
     line : str
         A string containing a text copy of the NXOS configuration line.  :class:`~ciscoconfparse2.CiscoConfParse` will automatically identify the parent and children (if any) when it parses the configuration.
-    comment_delimiter : str
-        A string which is considered a comment for the configuration format.  Since this is for Cisco NXOS-style configurations, it defaults to ``!``.
 
     Attributes
     ----------

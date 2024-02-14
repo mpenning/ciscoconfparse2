@@ -258,15 +258,24 @@ def testParse_syntax_asa_factory_01():
 
 
 def testParse_ios_is_comment_01():
+    """Ensure that a comment is detected"""
     parse = CiscoConfParse(["!"], syntax='ios')
     assert len(parse.objs) == 1
     assert parse.objs[0].is_comment is True
 
 def testParse_ios_is_comment_02():
+    """Ensure that a command is not detected as a comment"""
     parse = CiscoConfParse(["!", "hostname Foo"], syntax='ios')
     assert len(parse.objs) == 2
     assert parse.objs[0].is_comment is True
     assert parse.objs[1].is_comment is False
+
+def testParse_ios_is_comment_03():
+    """Ensure that a commented command is detected as a comment"""
+    parse = CiscoConfParse(["!", "!hostname Foo"], syntax='ios')
+    assert len(parse.objs) == 2
+    assert parse.objs[0].is_comment is True
+    assert parse.objs[1].is_comment is True
 
 def testParse_ios_parent_01():
     parse = CiscoConfParse(["!", "interface GigabitEthernet1/1", " ip address 192.0.2.1 255.255.255.0"], syntax='ios')

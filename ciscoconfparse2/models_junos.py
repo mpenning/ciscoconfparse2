@@ -48,23 +48,10 @@ class JunosCfgLine(BaseCfgLine):
     :class:`~models_junos.JunosCfgLine` objects contain references to other
     parent and child :class:`~models_junos.JunosCfgLine` objects.
 
-    Notes
-    -----
-    Originally, :class:`~models_junos.JunosCfgLine` objects were only
-    intended for advanced ciscoconfparse2 users.  As of ciscoconfparse
-    version 0.9.10, *all users* are strongly encouraged to prefer the
-    methods directly on :class:`~models_junos.JunosCfgLine` objects.
-    Ultimately, if you write scripts which call methods on
-    :class:`~models_junos.JunosCfgLine` objects, your scripts will be much
-    more efficient than if you stick strictly to the classic
-    :class:`~ciscoconfparse2.CiscoConfParse` methods.
-
     Parameters
     ----------
     line : str
         A string containing a text copy of the Junos configuration line.  :class:`~ciscoconfparse2.CiscoConfParse` will automatically identify the parent and children (if any) when it parses the configuration.
-     comment_delimiters : list
-         A list of strings which are considered a comment for the configuration format.  Since this is for Cisco Junos-style configurations, it defaults to ``!``.
 
     Attributes
     ----------

@@ -7,17 +7,21 @@ Introduction
 Overview
 ---------
 
-ciscoconfparse2 is a Python_ library, which parses through Cisco IOS-style
-configurations.  It can:
+ciscoconfparse2_ is similar to an advanced grep and diff API for python_; it
+should be used with text network configuration files (such as those from
+Cisco, Juniper, Palo Alto, etc).  It is the next generation of ciscoconfparse_,
+which was the primary development vehicle from 2007 until 2023.
+
+ciscoconfparse2_ can:
 
 - Audit existing router / switch / firewall / wlc configurations against a text configuration template
 - Retrieve portions of the configuration
 - Modify existing configurations
 - Build new configurations
 
-The library examines an IOS-style config and breaks it into a set of linked
-parent / child relationships; each configuration line is stored in a different
-:class:`~models_cisco.IOSCfgLine` object.
+The library examines a Cisco or JunOS-style configuration and breaks it into a set
+of linked parent / child relationships; each configuration line is stored in a
+different :class:`~ciscoconfparse2.models_cisco.IOSCfgLine` object.
 
 .. figure:: _static/ciscoconfparse_overview.png
    :width: 600px
@@ -37,9 +41,9 @@ the ability to find all parents that have or do not have children matching a
 certain template.
 
 The package also provides a set of methods to query and manipulate the
-:class:`~models_cisco.IOSCfgLine` objects themselves. This gives you a flexible
+:class:`~ciscoconfparse2.models_cisco.IOSCfgLine` objects themselves. This gives you a flexible
 mechanism to build your own custom queries, because the
-:class:`~models_cisco.IOSCfgLine` objects store all the parent / child
+:class:`~ciscoconfparse2.models_cisco.IOSCfgLine` objects store all the parent / child
 hierarchy in them.
 
 |br|
@@ -53,7 +57,7 @@ project.
 
 After many years of updates, `ciscoconfparse`_ grew too large. `ciscoconfparse2`_:
 
-- Is tested against Python3.9+ (limited due to type annotation issues)
+- Is tested against Python3.9+ (limited to Python 3.9+ due to python type annotation dynamics before 3.9)
 - Streamlines the API on a simpler user interface.
 - Removes legacy and flawed methods from the original (*this could be a breaking change for old scripts*).
 - Defaults ``ignore_blank_lines=False`` (*this could be a breaking change for old scripts*).
