@@ -13,7 +13,7 @@
 [ciscoconfparse2][17] is similar to an advanced grep and diff that
 specializes in network configuration files (such as those from Cisco,
 Juniper, Palo Alto, etc); it is the next generation of
-[ciscoconfparse][64], which has been the primary development package
+[ciscoconfparse][64], which was the primary development package
 from 2007 until 2023.
 
 ### Simple Usage
