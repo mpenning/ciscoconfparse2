@@ -1375,7 +1375,7 @@ class BaseNXOSIntfLine(NXOSCfgLine, BaseFactoryInterfaceLine):
     @logger.catch(reraise=True)
     def in_ipv4_subnet(self, ipv4network: IPv4Obj=None, strict: bool=False) -> bool:
         r"""
-        :return: Whether the interface is in a :class:`~ccp_util.IPv4Obj` subnet, default to False.
+        :return: Whether the interface is in a :class:`~ciscoconfparse2.ccp_util.IPv4Obj` subnet, default to False.
         :rtype: bool
 
         This example illustrates use of the method.

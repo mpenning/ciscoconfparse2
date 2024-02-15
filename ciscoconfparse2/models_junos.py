@@ -716,7 +716,7 @@ class JunosIntfLine(BaseJunosIntfLine):
 
         Warnings
         --------
-        All :class:`~models_cisco.JunosIntfLine` methods are still considered beta-quality, until this notice is removed.  The behavior of APIs on this object could change at any time.
+        All :class:`~ciscoconfparse2.models_junos.JunosIntfLine` methods are still considered beta-quality, until this notice is removed.  The behavior of APIs on this object could change at any time.
         """
         super(JunosIntfLine, self).__init__(*args, **kwargs)
         self.feature = "interface"

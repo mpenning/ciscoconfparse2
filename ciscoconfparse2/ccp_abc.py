@@ -735,7 +735,7 @@ class BaseCfgLine(object):
     # On BaseCfgLine()
     @logger.catch(reraise=True)
     def append_to_family(self, insertstr: str, indent: int=-1, auto_indent: bool=False) -> None:
-        """Append an :py:class:`~models_cisco.IOSCfgLine` object with ``insertstr``
+        """Append an :py:class:`~ciscoconfparse2.models_cisco.IOSCfgLine` object with ``insertstr``
         as a child at the top of the current configuration family.
 
         ``insertstr`` is inserted at the end of the family to ensure there are no
@@ -1171,7 +1171,7 @@ class BaseCfgLine(object):
 
     # On BaseCfgLine()
     def re_sub(self, regex, replacergx, re_flags=None):
-        """Replace all strings matching ``linespec`` with ``replacestr`` in the :class:`~models_cisco.IOSCfgLine` object; however, if the :class:`~models_cisco.IOSCfgLine` text matches ``ignore_rgx``, then the text is *not* replaced.
+        """Replace all strings matching ``linespec`` with ``replacestr`` in the :class:`~ciscoconfparse2.models_cisco.IOSCfgLine` object; however, if the :class:`~ciscoconfparse2.models_cisco.IOSCfgLine` text matches ``ignore_rgx``, then the text is *not* replaced.
 
         Parameters
         ----------
@@ -1181,7 +1181,7 @@ class BaseCfgLine(object):
         replacergx : str
             A string or python regular expression, which should replace the text matched by ``regex``.
         ignore_rgx : str
-            A string or python regular expression; the replacement is skipped if :class:`~models_cisco.IOSCfgLine` text matches ``ignore_rgx``.  ``ignore_rgx`` defaults to None, which means no lines matching ``regex`` are skipped.
+            A string or python regular expression; the replacement is skipped if :class:`~ciscoconfparse2.models_cisco.IOSCfgLine` text matches ``ignore_rgx``.  ``ignore_rgx`` defaults to None, which means no lines matching ``regex`` are skipped.
 
         Returns
         -------
@@ -1192,7 +1192,7 @@ class BaseCfgLine(object):
         Examples
         --------
 
-        This example illustrates how you can use :func:`~models_cisco.IOSCfgLine.re_sub` to replace ``Serial1`` with
+        This example illustrates how you can use :func:`~ciscoconfparse2.models_cisco.IOSCfgLine.re_sub` to replace ``Serial1`` with
         ``Serial0`` in a configuration...
 
         .. code-block:: python
@@ -1251,7 +1251,7 @@ class BaseCfgLine(object):
 
     # On BaseCfgLine()
     def re_match(self, regex, group=1, default=""):
-        r"""Use ``regex`` to search the :class:`~models_cisco.IOSCfgLine` text and return the regular expression group, at the integer index.
+        r"""Use ``regex`` to search the :class:`~ciscoconfparse2.models_cisco.IOSCfgLine` text and return the regular expression group, at the integer index.
 
         :param regex: A string or python regular expression, which should be
                       matched.  This regular expression should contain
@@ -1269,7 +1269,7 @@ class BaseCfgLine(object):
         :rtype: str
 
         This example illustrates how you can use
-        :py:meth:`~models_cisco.BaseCfgLine.re_match` to store the mask of the
+        :py:meth:`~ciscoconfparse2.models_cisco.BaseCfgLine.re_match` to store the mask of the
         interface which owns "1.1.1.5" in a variable called ``netmask``.
 
         .. code-block:: python
@@ -1306,7 +1306,7 @@ class BaseCfgLine(object):
 
     # On BaseCfgLine()
     def re_search(self, regex, default="", debug=0):
-        """Search :class:`~models_cisco.IOSCfgLine` with ``regex``
+        """Search :class:`~ciscoconfparse2.models_cisco.IOSCfgLine` with ``regex``
 
         Parameters
         ----------
@@ -1314,13 +1314,13 @@ class BaseCfgLine(object):
         regex : str
             A string or python regular expression, which should be matched.
         default : str
-            A value which is returned if :func:`~ccp_abc.re_search()` doesn't find a match while looking for ``regex``.
+            A value which is returned if :func:`~ciscoconfparse2.ccp_abc.re_search()` doesn't find a match while looking for ``regex``.
 
         Returns
         -------
 
         str
-            The :class:`~models_cisco.IOSCfgLine` text which matched.  If there is no match, ``default`` is returned.
+            The :class:`~ciscoconfparse2.models_cisco.IOSCfgLine` text which matched.  If there is no match, ``default`` is returned.
         """
         if self.confobj is not None and self.confobj.search_safe is False:
             error = "The configuration has changed since the last commit; a config search is not safe."
@@ -1344,7 +1344,7 @@ class BaseCfgLine(object):
     # On BaseCfgLine()
     def re_search_children(self, regex, recurse=False):
         """Use ``regex`` to search the text contained in the children of
-        this :class:`~models_cisco.IOSCfgLine`.
+        this :class:`~ciscoconfparse2.models_cisco.IOSCfgLine`.
 
         Parameters
         ----------
@@ -1358,7 +1358,7 @@ class BaseCfgLine(object):
         -------
 
         list
-            A list of matching :class:`~models_cisco.IOSCfgLine` objects which matched.  If there is no match, an empty :py:func:`list` is returned.
+            A list of matching :class:`~ciscoconfparse2.models_cisco.IOSCfgLine` objects which matched.  If there is no match, an empty :py:func:`list` is returned.
         """
         if self.confobj is not None and self.confobj.search_safe is False:
             error = "The configuration has changed since the last commit; a config search is not safe."
@@ -1381,7 +1381,7 @@ class BaseCfgLine(object):
         untyped_default: bool=False,
         groupdict: dict=None,
     ) -> Any:
-        r"""Use ``regex`` to search the :class:`~models_cisco.IOSCfgLine` text
+        r"""Use ``regex`` to search the :class:`~ciscoconfparse2.models_cisco.IOSCfgLine` text
         and return the contents of the regular expression group, at the
         integer ``group`` index, cast as ``result_type``; if there is no match,
         ``default`` is returned.
@@ -1390,7 +1390,7 @@ class BaseCfgLine(object):
         :type regex: Union[str, re.Pattern]
         :param group: Specify the desired regex group to be returned.  ``group`` defaults to 1; this is only used if ``groupdict`` is None.
         :type group: int
-        :param result_type: A type (typically one of: ``str``, ``int``, ``float``, or :class:`~ccp_util.IPv4Obj`).  Unless ``groupdict`` is specified, all returned values are cast as ``result_type``, which defaults to ``str``.
+        :param result_type: A type (typically one of: ``str``, ``int``, ``float``, or :class:`~ciscoconfparse2.ccp_util.IPv4Obj`).  Unless ``groupdict`` is specified, all returned values are cast as ``result_type``, which defaults to ``str``.
         :type result_type: Type
         :param default: The default value to be returned, if there is no match.
         :type default: Any
@@ -1402,7 +1402,7 @@ class BaseCfgLine(object):
         :rtype: Any
 
         This example illustrates how you can use
-        :func:`~models_cisco.IOSCfgLine.re_match_typed` to build an
+        :func:`~ciscoconfparse2.models_cisco.IOSCfgLine.re_match_typed` to build an
         association between an interface name, and its numerical slot value.
         The name will be cast as :py:func:`str`, and the slot will be cast as
         :py:func:`int`.
@@ -1463,7 +1463,7 @@ class BaseCfgLine(object):
         debug: bool=False,
     ) -> Any:
         r"""Use ``regex`` to search the children of
-        :class:`~models_cisco.IOSCfgLine` text and return the contents of
+        :class:`~ciscoconfparse2.models_cisco.IOSCfgLine` text and return the contents of
         the regular expression group, at the integer ``group`` index, cast as
         ``result_type``; if there is no match, ``default`` is returned.
 
@@ -1471,7 +1471,7 @@ class BaseCfgLine(object):
         :type regex: Union[str, re.Pattern]
         :param group: Specify the desired regex group to be returned.  ``group`` defaults to 1; this is only used if ``groupdict`` is None.
         :type group: int
-        :param result_type: A type (typically one of: ``str``, ``int``, ``float``, or :class:`~ccp_util.IPv4Obj`).  Unless ``groupdict`` is specified, all returned values are cast as ``result_type``, which defaults to ``str``.
+        :param result_type: A type (typically one of: ``str``, ``int``, ``float``, or :class:`~ciscoconfparse2.ccp_util.IPv4Obj`).  Unless ``groupdict`` is specified, all returned values are cast as ``result_type``, which defaults to ``str``.
         :type result_type: Type
         :param default: The default value to be returned, if there is no match.
         :type default: Any
@@ -1491,8 +1491,8 @@ class BaseCfgLine(object):
            This loops through the children (in order) and returns when the regex hits its first match.
 
         This example illustrates how you can use
-        :func:`~models_cisco.IOSCfgLine.re_match_iter_typed` to build an
-        :func:`~ccp_util.IPv4Obj` address object for each interface.
+        :func:`~ciscoconfparse2.models_cisco.IOSCfgLine.re_match_iter_typed` to build an
+        :func:`~ciscoconfparse2.ccp_util.IPv4Obj` address object for each interface.
 
         .. code-block:: python
            :emphasize-lines: 17
@@ -1630,7 +1630,7 @@ class BaseCfgLine(object):
         debug: bool=False,
     ) -> List[Any]:
         r"""Use ``regex`` to search the children of
-        :class:`~models_cisco.IOSCfgLine` text and return a list of the contents of
+        :class:`~ciscoconfparse2.models_cisco.IOSCfgLine` text and return a list of the contents of
         objects matching the regular expression group, at the integer ``group`` index, cast as
         ``result_type``; if there is no match, default to an empty list.
 
@@ -1638,7 +1638,7 @@ class BaseCfgLine(object):
         :type regex: Union[str, re.Pattern]
         :param group: Specify the desired regex group to be returned.  ``group`` defaults to 1; this is only used if ``groupdict`` is None.
         :type group: int
-        :param result_type: A type (typically one of: ``str``, ``int``, ``float``, or :class:`~ccp_util.IPv4Obj`).  Unless ``groupdict`` is specified, all returned values are cast as ``result_type``, which defaults to ``str``.
+        :param result_type: A type (typically one of: ``str``, ``int``, ``float``, or :class:`~ciscoconfparse2.ccp_util.IPv4Obj`).  Unless ``groupdict`` is specified, all returned values are cast as ``result_type``, which defaults to ``str``.
         :type result_type: Type
         :param recurse: Set True if you want to search all children (children, grand children, great grand children, etc...), default to True.
         :type recurse: bool
@@ -1654,8 +1654,8 @@ class BaseCfgLine(object):
            This loops through the children (in order) and returns a list of all matched text
 
         This example illustrates how you can use
-        :func:`~models_cisco.IOSCfgLine.re_list_iter_typed` to build a list of
-        :func:`~ccp_util.IPv6Obj` address objects for each interface.
+        :func:`~ciscoconfparse2.models_cisco.IOSCfgLine.re_list_iter_typed` to build a list of
+        :func:`~ciscoconfparse2.ccp_util.IPv6Obj` address objects for each interface.
 
         .. code-block:: python
            :emphasize-lines: 17

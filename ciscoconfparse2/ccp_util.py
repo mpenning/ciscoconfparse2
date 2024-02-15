@@ -887,7 +887,7 @@ class IPv4Obj(object):
     def __init__(self, v4input: Optional[Union[str,int]]=None, strict: bool=False, debug: int=0):
         """An object to represent IPv4 addresses and IPv4 networks.
 
-        When :class:`~ccp_util.IPv4Obj` objects are compared or sorted, network numbers are sorted lower to higher.  If network numbers are the same, shorter masks are lower than longer masks. After comparing mask length, numerically higher IP addresses are greater than numerically lower IP addresses..  Comparisons between :class:`~ccp_util.IPv4Obj` instances was chosen so it's easy to find the longest-match for a given prefix (see examples below).
+        When :class:`~ciscoconfparse2.ccp_util.IPv4Obj` objects are compared or sorted, network numbers are sorted lower to higher.  If network numbers are the same, shorter masks are lower than longer masks. After comparing mask length, numerically higher IP addresses are greater than numerically lower IP addresses..  Comparisons between :class:`~ciscoconfparse2.ccp_util.IPv4Obj` instances was chosen so it's easy to find the longest-match for a given prefix (see examples below).
 
         This object emulates the behavior of ipaddr.IPv4Network (in Python2) where host-bits were retained in the IPv4Network() object.  :class:`ipaddress.IPv4Network` in Python3 does not retain host-bits; the desire to retain host-bits in both Python2 and Python3 ip network objects was the genesis of this API.
 
@@ -1700,7 +1700,7 @@ class IPv6Obj(object):
     def __init__(self, v6input: Optional[Union[str,int]]=None, strict: bool=False, debug: int=0):
         """An object to represent IPv6 addresses and IPv6 networks.
 
-        When :class:`~ccp_util.IPv6Obj` objects are compared or sorted, network numbers are sorted lower to higher.  If network numbers are the same, shorter masks are lower than longer masks. After comparing mask length, numerically higher IP addresses are greater than numerically lower IP addresses.  Comparisons between :class:`~ccp_util.IPv6Obj` instances was chosen so it's easy to find the longest-match for a given prefix.
+        When :class:`~ciscoconfparse2.ccp_util.IPv6Obj` objects are compared or sorted, network numbers are sorted lower to higher.  If network numbers are the same, shorter masks are lower than longer masks. After comparing mask length, numerically higher IP addresses are greater than numerically lower IP addresses.  Comparisons between :class:`~ciscoconfparse2.ccp_util.IPv6Obj` instances was chosen so it's easy to find the longest-match for a given prefix.
 
         This object emulates the behavior of ipaddr.IPv6Network() (in Python2) where host-bits were retained in the IPv6Network() object.  :class:`ipaddress.IPv6Network` in Python3 does not retain host-bits; the desire to retain host-bits in both Python2 and Python3 ip network objects was the genesis of this API.
 
@@ -2595,7 +2595,7 @@ class DNSResponse(object):
 
     Returns
     -------
-    A :class:`~ccp_util.DNSResponse` instance"""
+    A :class:`~ciscoconfparse2.ccp_util.DNSResponse` instance"""
 
     def __init__(self, query_type="", result_str="", input_str="", duration=0.0):
         self.query_type = query_type
@@ -2634,7 +2634,7 @@ def dns_query(input_str="", query_type="", server="", timeout=2.0):
 
     Returns
     -------
-    A set([]) of :class:`~ccp_util.DNSResponse` instances.  Refer to the DNSResponse object in these docs for more information.
+    A set([]) of :class:`~ciscoconfparse2.ccp_util.DNSResponse` instances.  Refer to the DNSResponse object in these docs for more information.
 
     Examples
     --------

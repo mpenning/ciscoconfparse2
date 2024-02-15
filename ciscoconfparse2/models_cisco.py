@@ -604,7 +604,7 @@ class IOSCfgLine(BaseFactoryLine):
         A string containing the parsed IOS configuration statement
     linenum : int
         The line number of this configuration statement in the original config; default is -1 when first initialized.
-    parent : (:class:`~models_cisco.IOSCfgLine()`)
+    parent : (:class:`~ciscoconfparse2.models_cisco.IOSCfgLine()`)
         The parent of this object; defaults to ``self``.
     children : list
         A list of ``IOSCfgLine()`` objects which are children of this object.
@@ -617,7 +617,7 @@ class IOSCfgLine(BaseFactoryLine):
 
     Returns
     -------
-    An instance of :class:`~models_cisco.IOSCfgLine`.
+    An instance of :class:`~ciscoconfparse2.models_cisco.IOSCfgLine`.
 
     """
 
@@ -741,7 +741,7 @@ class IOSCfgLine(BaseFactoryLine):
     def is_intf(self) -> bool:
         # Includes subinterfaces
         r"""Returns a boolean (True or False) to answer whether this
-        :class:`~models_cisco.IOSCfgLine` is an interface; subinterfaces
+        :class:`~ciscoconfparse2.models_cisco.IOSCfgLine` is an interface; subinterfaces
         also return True.
 
         :return: Returns a boolean (True or False) to answer whether this
@@ -1903,7 +1903,7 @@ class BaseIOSIntfLine(IOSCfgLine, BaseFactoryInterfaceLine):
     @logger.catch(reraise=True)
     def in_ipv4_subnet(self, ipv4network: IPv4Obj=None, strict: bool=False) -> bool:
         r"""
-        :return: Whether the interface is in a :class:`~ccp_util.IPv4Obj` subnet, default to False.
+        :return: Whether the interface is in a :class:`~ciscoconfparse2.ccp_util.IPv4Obj` subnet, default to False.
         :rtype: bool
 
         This example illustrates use of the method.
@@ -2853,7 +2853,7 @@ class IOSIntfLine(BaseIOSIntfLine):
 
         Warnings
         --------
-        All :class:`~models_cisco.IOSIntfLine` methods are still considered beta-quality, until this notice is removed.  The behavior of APIs on this object could change at any time.
+        All :class:`~ciscoconfparse2.models_cisco.IOSIntfLine` methods are still considered beta-quality, until this notice is removed.  The behavior of APIs on this object could change at any time.
         """
         super(IOSIntfLine, self).__init__(*args, **kwargs)
         self.feature = "interface"
