@@ -2446,7 +2446,7 @@ class CiscoConfParse(object):
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
     def check_ccp_input_good(self, config: Optional[Union[List[str],tuple[str, ...]]] = None,
-                             logger: Optional[logger] = None) -> bool:
+                             logger: Any = None) -> bool:
         """
         :param config: Sequence of commands
         :type config: Union[List[str], tuple[str, ...]]
