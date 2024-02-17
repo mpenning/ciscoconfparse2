@@ -745,7 +745,7 @@ class IOSCfgLine(BaseFactoryLine):
         also return True.
 
         :return: Returns a boolean (True or False) to answer whether this
-                 :class:`~models_base.BaseFactoryLine` is an interface; subinterfaces
+                 :class:`ciscoconfparse2.models_base.BaseFactoryLine` is an interface; subinterfaces
                  also return True.
         :rtype: bool
 
@@ -787,7 +787,7 @@ class IOSCfgLine(BaseFactoryLine):
     def is_subintf(self) -> bool:
         r"""
         :return: Returns a boolean (True or False) to answer whether this
-                 :class:`~models_base.BaseFactoryLine` is a subinterface.
+                 :class:`ciscoconfparse2.models_base.BaseFactoryLine` is a subinterface.
         :rtype: bool
 
         This example illustrates use of the method.
@@ -841,7 +841,7 @@ class IOSCfgLine(BaseFactoryLine):
     def is_loopback_intf(self) -> bool:
         r"""
         :return: Returns a boolean (True or False) to answer whether this
-                 :class:`~models_base.BaseFactoryLine` is a loopback interface.
+                 :class:`ciscoconfparse2.models_base.BaseFactoryLine` is a loopback interface.
         :rtype: bool
 
         This example illustrates use of the method.
@@ -878,7 +878,7 @@ class IOSCfgLine(BaseFactoryLine):
     def is_ethernet_intf(self) -> bool:
         r"""
         :return: Returns a boolean (True or False) to answer whether this
-                 :class:`~models_base.BaseFactoryLine` is an ethernet interface.  Any ethernet interface
+                 :class:`ciscoconfparse2.models_base.BaseFactoryLine` is an ethernet interface.  Any ethernet interface
                  (10M and up) is considered an ethernet interface.
         :rtype: bool
 

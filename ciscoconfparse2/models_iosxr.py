@@ -65,17 +65,17 @@ MAX_VLAN = 4094
 @attrs.define(repr=False)
 class IOSXRCfgLine(BaseFactoryLine):
     """An object for a parsed IOSXR-style configuration line.
-    :class:`~models_iosxr.IOSXRCfgLine` objects contain references to other
-    parent and child :class:`~models_iosxr.IOSXRCfgLine` objects.
+    :class:`ciscoconfparse2.models_iosxr.IOSXRCfgLine` objects contain references to other
+    parent and child :class:`ciscoconfparse2.models_iosxr.IOSXRCfgLine` objects.
 
     Notes
     -----
-    Originally, :class:`~models_iosxr.IOSXRCfgLine` objects were only
+    Originally, :class:`ciscoconfparse2.models_iosxr.IOSXRCfgLine` objects were only
     intended for advanced ciscoconfparse2 users.  As of ciscoconfparse
     version 0.9.10, *all users* are strongly encouraged to prefer the
-    methods directly on :class:`~models_iosxr.IOSXRCfgLine` objects.
+    methods directly on :class:`ciscoconfparse2.models_iosxr.IOSXRCfgLine` objects.
     Ultimately, if you write scripts which call methods on
-    :class:`~models_iosxr.IOSXRCfgLine` objects, your scripts will be much
+    :class:`ciscoconfparse2.models_iosxr.IOSXRCfgLine` objects, your scripts will be much
     more efficient than if you stick strictly to the classic
     :class:`~ciscoconfparse2.CiscoConfParse` methods.
 
@@ -90,7 +90,7 @@ class IOSXRCfgLine(BaseFactoryLine):
         A string containing the parsed IOSXR configuration statement
     linenum : int
         The line number of this configuration statement in the original config; default is -1 when first initialized.
-    parent : (:class:`~models_iosxr.IOSXRCfgLine()`)
+    parent : (:class:`ciscoconfparse2.models_iosxr.IOSXRCfgLine()`)
         The parent of this object; defaults to ``self``.
     children : list
         A list of ``IOSXRCfgLine()`` objects which are children of this object.
@@ -103,7 +103,7 @@ class IOSXRCfgLine(BaseFactoryLine):
 
     Returns
     -------
-    An instance of :class:`~models_iosxr.IOSXRCfgLine`.
+    An instance of :class:`ciscoconfparse2.models_iosxr.IOSXRCfgLine`.
 
     """
 
@@ -227,11 +227,11 @@ class IOSXRCfgLine(BaseFactoryLine):
     def is_intf(self) -> bool:
         # Includes subinterfaces
         r"""Returns a boolean (True or False) to answer whether this
-        :class:`~models_iosxr.IOSXRCfgLine` is an interface; subinterfaces
+        :class:`ciscoconfparse2.models_iosxr.IOSXRCfgLine` is an interface; subinterfaces
         also return True.
 
         :return: Returns a boolean (True or False) to answer whether this
-                 :class:`~models_base.BaseFactoryLine` is an interface; subinterfaces
+                 :class:`ciscoconfparse2.models_base.BaseFactoryLine` is an interface; subinterfaces
                  also return True.
         :rtype: bool
 
@@ -273,7 +273,7 @@ class IOSXRCfgLine(BaseFactoryLine):
     def is_subintf(self) -> bool:
         r"""
         :return: Returns a boolean (True or False) to answer whether this
-                 :class:`~models_base.BaseFactoryLine` is a subinterface.
+                 :class:`ciscoconfparse2.models_base.BaseFactoryLine` is a subinterface.
         :rtype: bool
 
         This example illustrates use of the method.
@@ -327,7 +327,7 @@ class IOSXRCfgLine(BaseFactoryLine):
     def is_loopback_intf(self) -> bool:
         r"""
         :return: Returns a boolean (True or False) to answer whether this
-                 :class:`~models_base.BaseFactoryLine` is a loopback interface.
+                 :class:`ciscoconfparse2.models_base.BaseFactoryLine` is a loopback interface.
         :rtype: bool
 
         This example illustrates use of the method.
@@ -364,7 +364,7 @@ class IOSXRCfgLine(BaseFactoryLine):
     def is_ethernet_intf(self) -> bool:
         r"""
         :return: Returns a boolean (True or False) to answer whether this
-                 :class:`~models_base.BaseFactoryLine` is an ethernet interface.  Any ethernet interface
+                 :class:`ciscoconfparse2.models_base.BaseFactoryLine` is an ethernet interface.  Any ethernet interface
                  (10M and up) is considered an ethernet interface.
         :rtype: bool
 
@@ -2336,7 +2336,7 @@ class IOSXRIntfLine(BaseIOSXRIntfLine):
 
         Warnings
         --------
-        All :class:`~models_iosxr.IOSXRIntfLine` methods are still considered beta-quality, until this notice is removed.  The behavior of APIs on this object could change at any time.
+        All :class:`ciscoconfparse2.models_iosxr.IOSXRIntfLine` methods are still considered beta-quality, until this notice is removed.  The behavior of APIs on this object could change at any time.
         """
         super(IOSXRIntfLine, self).__init__(*args, **kwargs)
         self.feature = "interface"

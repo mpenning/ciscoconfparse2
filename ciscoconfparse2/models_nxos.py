@@ -65,8 +65,8 @@ MAX_VLAN = 4094
 @attrs.define(repr=False)
 class NXOSCfgLine(BaseFactoryLine):
     """An object for a parsed NXOS-style configuration line.
-    :class:`~models_nxos.NXOSCfgLine` objects contain references to other
-    parent and child :class:`~models_nxos.NXOSCfgLine` objects.
+    :class:`ciscoconfparse2.models_nxos.NXOSCfgLine` objects contain references to other
+    parent and child :class:`ciscoconfparse2.models_nxos.NXOSCfgLine` objects.
 
     Parameters
     ----------
@@ -79,7 +79,7 @@ class NXOSCfgLine(BaseFactoryLine):
         A string containing the parsed NXOS configuration statement
     linenum : int
         The line number of this configuration statement in the original config; default is -1 when first initialized.
-    parent : (:class:`~models_nxos.NXOSCfgLine()`)
+    parent : (:class:`ciscoconfparse2.models_nxos.NXOSCfgLine()`)
         The parent of this object; defaults to ``self``.
     children : list
         A list of ``NXOSCfgLine()`` objects which are children of this object.
@@ -92,7 +92,7 @@ class NXOSCfgLine(BaseFactoryLine):
 
     Returns
     -------
-    An instance of :class:`~models_nxos.NXOSCfgLine`.
+    An instance of :class:`ciscoconfparse2.models_nxos.NXOSCfgLine`.
 
     """
 
@@ -216,11 +216,11 @@ class NXOSCfgLine(BaseFactoryLine):
     def is_intf(self) -> bool:
         # Includes subinterfaces
         r"""Returns a boolean (True or False) to answer whether this
-        :class:`~models_nxos.NXOSCfgLine` is an interface; subinterfaces
+        :class:`ciscoconfparse2.models_nxos.NXOSCfgLine` is an interface; subinterfaces
         also return True.
 
         :return: Returns a boolean (True or False) to answer whether this
-                 :class:`~models_base.BaseFactoryLine` is an interface; subinterfaces
+                 :class:`ciscoconfparse2.models_base.BaseFactoryLine` is an interface; subinterfaces
                  also return True.
         :rtype: bool
 
@@ -262,7 +262,7 @@ class NXOSCfgLine(BaseFactoryLine):
     def is_subintf(self) -> bool:
         r"""
         :return: Returns a boolean (True or False) to answer whether this
-                 :class:`~models_base.BaseFactoryLine` is a subinterface.
+                 :class:`ciscoconfparse2.models_base.BaseFactoryLine` is a subinterface.
         :rtype: bool
 
         This example illustrates use of the method.
@@ -316,7 +316,7 @@ class NXOSCfgLine(BaseFactoryLine):
     def is_loopback_intf(self) -> bool:
         r"""
         :return: Returns a boolean (True or False) to answer whether this
-                 :class:`~models_base.BaseFactoryLine` is a loopback interface.
+                 :class:`ciscoconfparse2.models_base.BaseFactoryLine` is a loopback interface.
         :rtype: bool
 
         This example illustrates use of the method.
@@ -353,7 +353,7 @@ class NXOSCfgLine(BaseFactoryLine):
     def is_ethernet_intf(self) -> bool:
         r"""
         :return: Returns a boolean (True or False) to answer whether this
-                 :class:`~models_base.BaseFactoryLine` is an ethernet interface.  Any ethernet interface
+                 :class:`ciscoconfparse2.models_base.BaseFactoryLine` is an ethernet interface.  Any ethernet interface
                  (10M and up) is considered an ethernet interface.
         :rtype: bool
 
@@ -2325,7 +2325,7 @@ class NXOSIntfLine(BaseNXOSIntfLine):
 
         Warnings
         --------
-        All :class:`~models_nxos.NXOSIntfLine` methods are still considered beta-quality, until this notice is removed.  The behavior of APIs on this object could change at any time.
+        All :class:`ciscoconfparse2.models_nxos.NXOSIntfLine` methods are still considered beta-quality, until this notice is removed.  The behavior of APIs on this object could change at any time.
         """
         super(NXOSIntfLine, self).__init__(*args, **kwargs)
         self.feature = "interface"

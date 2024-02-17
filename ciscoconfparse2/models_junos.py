@@ -45,8 +45,8 @@ DEFAULT_IPV4_ADDR_OBJ = IPv4Obj("0.0.0.1/32", strict=False)
 @attrs.define(repr=False)
 class JunosCfgLine(BaseCfgLine):
     r"""An object for a parsed Junos-style configuration line.
-    :class:`~models_junos.JunosCfgLine` objects contain references to other
-    parent and child :class:`~models_junos.JunosCfgLine` objects.
+    :class:`ciscoconfparse2.models_junos.JunosCfgLine` objects contain references to other
+    parent and child :class:`ciscoconfparse2.models_junos.JunosCfgLine` objects.
 
     Parameters
     ----------
@@ -59,7 +59,7 @@ class JunosCfgLine(BaseCfgLine):
         A string containing the parsed Junos configuration statement
     linenum : int
         The line number of this configuration statement in the original config; default is -1 when first initialized.
-    parent : :class:`~models_junos.JunosCfgLine()`
+    parent : :class:`ciscoconfparse2.models_junos.JunosCfgLine()`
         The parent of this object; defaults to ``self``.
     children : list
         A list of ``JunosCfgLine()`` objects which are children of this object.
@@ -72,7 +72,7 @@ class JunosCfgLine(BaseCfgLine):
 
     Returns
     -------
-    :class:`~models_junos.JunosCfgLine`
+    :class:`ciscoconfparse2.models_junos.JunosCfgLine`
 
     """
 
@@ -128,7 +128,7 @@ class JunosCfgLine(BaseCfgLine):
     @logger.catch(reraise=True)
     def is_intf(self):
         # Includes subinterfaces / JunOS units
-        r"""Returns a boolean (True or False) to answer whether this :class:`~models_junos.JunosCfgLine` is an interface; subinterfaces
+        r"""Returns a boolean (True or False) to answer whether this :class:`ciscoconfparse2.models_junos.JunosCfgLine` is an interface; subinterfaces
         and unit numbers also return True.
 
         Returns
@@ -186,7 +186,7 @@ class JunosCfgLine(BaseCfgLine):
     @logger.catch(reraise=True)
     def is_subintf(self):
         r"""Returns a boolean (True or False) to answer whether this
-        :class:`~models_junos.JunosCfgLine` is a subinterface.
+        :class:`ciscoconfparse2.models_junos.JunosCfgLine` is a subinterface.
 
         Returns:
             - bool.
@@ -251,7 +251,7 @@ class JunosCfgLine(BaseCfgLine):
     @logger.catch(reraise=True)
     def is_loopback_intf(self):
         r"""Returns a boolean (True or False) to answer whether this
-        :class:`~models_junos.JunosCfgLine` is a loopback interface.
+        :class:`ciscoconfparse2.models_junos.JunosCfgLine` is a loopback interface.
 
         Returns:
             - bool.
@@ -289,7 +289,7 @@ class JunosCfgLine(BaseCfgLine):
     @logger.catch(reraise=True)
     def is_ethernet_intf(self):
         r"""Returns a boolean (True or False) to answer whether this
-        :class:`~models_junos.JunosCfgLine` is an ethernet interface.
+        :class:`ciscoconfparse2.models_junos.JunosCfgLine` is an ethernet interface.
         Any ethernet interface (10M through 10G) is considered an ethernet
         interface.
 
