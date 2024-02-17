@@ -4,6 +4,13 @@
 - Summary:
     - Insert something here
 
+## Version: 0.6.1
+
+- Released: 2024-02-17
+- Summary:
+    - Enforce requirement for at least python 3.9
+    - More documentation updates
+
 ## Version: 0.6.0
 
 - Released: 2024-02-14

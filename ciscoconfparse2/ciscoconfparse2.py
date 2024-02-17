@@ -82,6 +82,11 @@ from ciscoconfparse2.errors import ConfigListItemDoesNotExist
 from ciscoconfparse2.errors import RequirementFailure
 from ciscoconfparse2.errors import InvalidParameters
 
+if sys.version_info < (3, 9):
+    error = f"CiscoConfParse2 requires Python 3.9 or higher"
+    logger.critical(error)
+    raise NotImplementedError(error)
+
 # Not using ccp_re yet... still a work in progress
 # from ciscoconfparse2.ccp_util import ccp_re
 
