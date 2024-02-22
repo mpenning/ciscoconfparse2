@@ -4,6 +4,12 @@
 - Summary:
     - Insert something here
 
+## Version: 0.6.6
+
+- Released: 2024-02-22
+- Summary:
+    - Remove `backports` as a dependendency
+
 ## Version: 0.6.5
 
 - Released: 2024-02-22

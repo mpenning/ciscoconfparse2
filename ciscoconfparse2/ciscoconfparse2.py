@@ -23,10 +23,10 @@ mike [~at~] pennington [.dot.] net
 from typing import Optional, Any, Callable, Union, List, Tuple, Dict
 from collections.abc import Sequence
 from collections import UserList
-#from hashlib import scrypt
-import scrypt
+import hashlib
 import inspect
 import pathlib
+import scrypt
 import base64
 import random
 import locale
@@ -40,7 +40,6 @@ from typeguard import typechecked
 from loguru import logger
 import attrs
 
-from backports.pbkdf2 import pbkdf2_hmac
 from passlib.hash import md5_crypt
 from passlib.hash import cisco_type7
 
@@ -3896,13 +3895,14 @@ class CiscoPassword(object):
         :raises InvalidPassword: If the password contains invalid characters not supported by Cisco
         :return: Hashed password
         """
+        # See https://stackoverflow.com/a/73867774/667301
         self.pwd_check(pwd)
         salt_chars = []
         for _ in range(14):
             salt_chars.append(random.choice(self.cisco_b64chars))
         salt = "".join(salt_chars)
         # Create the hash
-        _hash = pbkdf2_hmac("sha256", pwd.encode(), salt.encode(), 20000, 32)
+        _hash = hashlib.pbkdf2_hmac("sha256", pwd.encode(), salt.encode(), 20000, 32)
         # Convert the hash from Standard Base64 to Cisco Base64
         chash = base64.b64encode(_hash).decode().translate(self.b64table)[:-1]
         # Print the hash in the Cisco IOS CLI format
