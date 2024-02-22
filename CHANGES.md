@@ -4,6 +4,12 @@
 - Summary:
     - Insert something here
 
+## Version: 0.6.3
+
+- Released: 2024-02-22
+- Summary:
+    - Fix missing backports requirement
+
 ## Version: 0.6.2
 
 - Released: 2024-02-22
