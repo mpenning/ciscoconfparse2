@@ -3888,7 +3888,7 @@ class CiscoPassword(object):
         raise NotImplementedError()
 
     @logger.catch(reraise=True)
-    def encrypt_type_8(pwd):
+    def encrypt_type_8(self, pwd):
         """
         Hashes cleartext password to Cisco type 8
         :param pwd: Clear text password to be hashed

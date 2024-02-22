@@ -4,6 +4,13 @@
 - Summary:
     - Insert something here
 
+## Version: 0.6.7
+
+- Released: 2024-02-22
+- Summary:
+    - Fix missing `self`
+    - Add test for hashing cisco type 5 and cisco type 8 passwords
+
 ## Version: 0.6.6
 
 - Released: 2024-02-22

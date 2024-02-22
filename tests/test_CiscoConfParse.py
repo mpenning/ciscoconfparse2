@@ -3132,7 +3132,28 @@ def testValues_CiscoPassword_decrypt_7_01():
     assert correct_result == test_result_01
     assert correct_result == test_result_02
 
-def testValues_CiscoPassword_decrypt_9_01():
+def testValues_CiscoPassword_encrypt_5_01():
+    """Test that we can build a type 5 password hash"""
+    test_result_01 = CiscoPassword().encrypt_type_5("cisco")
+
+    one_correct_result = "$1$pFgG$bUkwuomK10T9JcYmDCOJv1"
+    assert len(one_correct_result) == len(test_result_01)
+    # We can only compare the first three characters...
+    #    the rest are basically random
+    assert one_correct_result[0:3] == test_result_01[0:3]
+
+def testValues_CiscoPassword_encrypt_8_01():
+    """Test that we can build a type 8 password hash"""
+    test_result_01 = CiscoPassword().encrypt_type_8("cisco")
+
+    one_correct_result = "$8$5VnMVRhw7Wf./D$Bpkgb2i4FgTxRwjCKafdtvO7rw2cVLSM2NlhrpdDUCo"
+    assert len(one_correct_result) == len(test_result_01)
+    # We can only compare the first three characters...
+    #    the rest are basically random
+    assert one_correct_result[0:3] == test_result_01[0:3]
+
+def testValues_CiscoPassword_encrypt_9_01():
+    """Test that we can build a type 9 password hash"""
     test_result_01 = CiscoPassword().encrypt_type_9("cisco")
 
     one_correct_result = "$9$5etsgfGnB46s.8$5.haZUvlChIWsYPyAT8E7hxUZX8LNWireAy40LsdxVA"
