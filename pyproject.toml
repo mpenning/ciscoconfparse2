@@ -23,7 +23,7 @@ requires-python = ">=3.8"
 
 [tool.poetry]
 name = "ciscoconfparse2"
-version = "0.6.1"
+version = "0.6.2"
 description = "Parse, Audit, Query, Build, and Modify Cisco IOS-style and JunOS-style configs"
 license = "GPL-3.0-only"
 authors = [
@@ -80,6 +80,7 @@ classifiers=[
 python = ">=3.8,<4.0.0"
 attrs = "23.2.0"
 passlib = "^1.7.4"
+scrypt = "0.8.20"
 dnspython = "^2.4.2"
 macaddress = "^2.0.2"
 loguru = "0.7.2"

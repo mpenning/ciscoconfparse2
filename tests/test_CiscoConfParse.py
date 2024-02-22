@@ -3123,11 +3123,20 @@ def testValues_IOSCfgLine_ioscfg01(parse_c02):
     assert test_result == "interface GigabitEthernet4/1"
 
 
-def testValues_CiscoPassword():
+def testValues_CiscoPassword_decrypt_7_01():
     ep = "04480E051A33490E"
-    test_result_01 = CiscoPassword(ep).decrypt()
-    test_result_02 = CiscoPassword().decrypt(ep)
+    test_result_01 = CiscoPassword(ep).decrypt_type_7()
+    test_result_02 = CiscoPassword().decrypt_type_7(ep)
 
     correct_result = cisco_type7(0).decode(ep)
     assert correct_result == test_result_01
     assert correct_result == test_result_02
+
+def testValues_CiscoPassword_decrypt_9_01():
+    test_result_01 = CiscoPassword().encrypt_type_9("cisco")
+
+    one_correct_result = "$9$5etsgfGnB46s.8$5.haZUvlChIWsYPyAT8E7hxUZX8LNWireAy40LsdxVA"
+    assert len(one_correct_result) == len(test_result_01)
+    # We can only compare the first three characters...
+    #    the rest are basically random
+    assert one_correct_result[0:3] == test_result_01[0:3]

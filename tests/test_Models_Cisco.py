@@ -2072,4 +2072,26 @@ def testVal_IOSIPv4HelperAddress_01():
     obj = parse.find_objects("^interface")[0]
     assert obj.ip_helper_addresses == result_correct
 
+def testVal_IOSSDWAN_systemip_01():
+    """Test that we can parse out the SDWAN system ip address (i.e. one child level)"""
+    parse = CiscoConfParse('fixtures/configs/sample_10.ios', syntax="ios", factory=False)
+    system_ip = parse.find_child_objects(['system',
+                                          'system-ip'])[0]
+    assert system_ip.split()[-1] == "192.168.11.1"
 
+def testVal_IOSSDWAN_vrf_route_target_01():
+    """Test that we can parse out the SDWAN vrf 3001 export route-target (i.e. two child levels)"""
+    parse = CiscoConfParse('fixtures/configs/sample_10.ios', syntax="ios", factory=False)
+    route_target_export = parse.find_child_objects(['vrf definition 3001',
+                                                    'address-family ipv4',
+                                                    'route-target export'])[0]
+    assert route_target_export.split()[-1] == "65111:3001"
+
+def testVal_IOSSDWAN_sdwan_interface_tunnel_color():
+    """Test that we can parse out the SDWAN interface tunnel color (i.e. three child levels)"""
+    parse = CiscoConfParse('fixtures/configs/sample_10.ios', syntax="ios", factory=False)
+    intf_tunnel_color = parse.find_child_objects(['sdwan',
+                                                    'interface GigabitEthernet1$',
+                                                    'tunnel-interface',
+                                                    'color'])[0]
+    assert intf_tunnel_color.split()[-1] == "gold"

@@ -175,3 +175,12 @@ class UntypedError(Exception):
     def __init__(self, msg=""):
         super().__init__(msg)
         self.msg = msg
+
+
+class InvalidPassword(Exception):
+    """
+    Exception to be thrown if an invalid password is submitted to be hashed.
+    """
+    def __init__(self, msg=""):
+        super().__init__(msg)
+        self.msg = msg

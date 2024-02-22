@@ -23,8 +23,12 @@ mike [~at~] pennington [.dot.] net
 from typing import Optional, Any, Callable, Union, List, Tuple, Dict
 from collections.abc import Sequence
 from collections import UserList
+#from hashlib import scrypt
+import scrypt
 import inspect
 import pathlib
+import base64
+import random
 import locale
 import time
 import copy
@@ -35,6 +39,10 @@ import os
 from typeguard import typechecked
 from loguru import logger
 import attrs
+
+from backports.pbkdf2 import pbkdf2_hmac
+from passlib.hash import md5_crypt
+from passlib.hash import cisco_type7
 
 from pyparsing import Word, White, printables
 from pyparsing import OneOrMore, Combine
@@ -81,6 +89,7 @@ from ciscoconfparse2.ccp_util import configure_loguru
 from ciscoconfparse2.errors import ConfigListItemDoesNotExist
 from ciscoconfparse2.errors import RequirementFailure
 from ciscoconfparse2.errors import InvalidParameters
+from ciscoconfparse2.errors import InvalidPassword
 
 if sys.version_info < (3, 9):
     error = f"CiscoConfParse2 requires Python 3.9 or higher"
@@ -3736,12 +3745,48 @@ class DiffObject(object):
 
 
 class CiscoPassword(object):
+    """Encrypt all cisco password types and decrypt cisco type 7 passwords.
+
+    Cisco Encryption type 7, 8, and 9 code inspired by this MIT-licensed repo:
+        https://github.com/BrettVerney/ciscoPWDhasher/
+    """
+
+    # Translate Standard Base64 table to Cisco Base64 Table used in Type8 and TYpe 9
+    std_b64chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+    cisco_b64chars = "./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+    b64table = str.maketrans(std_b64chars, cisco_b64chars)
+
     @logger.catch(reraise=True)
     def __init__(self, ep=""):
         self.ep = ep
 
     @logger.catch(reraise=True)
-    def decrypt(self, ep=""):
+    def pwd_check(self, pwd):
+        """
+        Checks cleartext password for invalid characters
+        :param pwd: Clear text password
+        :raises InvalidPassword: If the password contains invalid characters not supported by Cisco
+        :return: None
+        """
+        invalid_chars = r"?\""
+        if len(pwd) > 127:
+            raise InvalidPassword('Password must be between 1 and 127 characters in length.')
+        if any(char in invalid_chars for char in pwd):
+            raise InvalidPassword(r'? and \" are invalid characters for Cisco passwords.')
+
+    @logger.catch(reraise=True)
+    def encrypt_type_7(self, pwd):
+        """
+        Hashes cleartext password to Cisco type 7
+        :param pwd: Clear text password to be hashed
+        :raises InvalidPassword: If the password contains invalid characters not supported by Cisco
+        :return: Hashed password
+        """
+        self.pwd_check(pwd)
+        return cisco_type7.hash(pwd)
+
+    @logger.catch(reraise=True)
+    def decrypt_type_7(self, ep=""):
         """Cisco Type 7 password decryption.  Converted from perl code that was
         written by jbash [~at~] cisco.com; enhancements suggested by
         rucjain [~at~] cisco.com"""
@@ -3825,6 +3870,69 @@ class CiscoPassword(object):
         #    logger.warning("password decryption failed.")
         return dp
 
+    @logger.catch(reraise=True)
+    def decrypt_type_5(self, pwd):
+        raise NotImplementedError()
+
+    @logger.catch(reraise=True)
+    def encrypt_type_5(self, pwd):
+        """
+        Hashes cleartext password to Cisco type 5
+        :param pwd: Clear text password to be hashed
+        :raises InvalidPassword: If the password contains invalid characters not supported by Cisco
+        :return: Hashed password
+        """
+        self.pwd_check(pwd)
+        return md5_crypt.using(salt_size=4).hash(pwd)
+
+    def decrypt_type_8(self, pwd):
+        raise NotImplementedError()
+
+    @logger.catch(reraise=True)
+    def encrypt_type_8(pwd):
+        """
+        Hashes cleartext password to Cisco type 8
+        :param pwd: Clear text password to be hashed
+        :raises InvalidPassword: If the password contains invalid characters not supported by Cisco
+        :return: Hashed password
+        """
+        self.pwd_check(pwd)
+        salt_chars = []
+        for _ in range(14):
+            salt_chars.append(random.choice(self.cisco_b64chars))
+        salt = "".join(salt_chars)
+        # Create the hash
+        _hash = pbkdf2_hmac("sha256", pwd.encode(), salt.encode(), 20000, 32)
+        # Convert the hash from Standard Base64 to Cisco Base64
+        chash = base64.b64encode(_hash).decode().translate(self.b64table)[:-1]
+        # Print the hash in the Cisco IOS CLI format
+        password_string = f"$8${salt}${chash}"
+        
+        return password_string
+
+    def decrypt_type_9(self, pwd):
+        raise NotImplementedError()
+
+    @logger.catch(reraise=True)
+    def encrypt_type_9(self, pwd):
+        """
+        Hashes password to Cisco type 9
+        :param pwd: Clear text password
+        :raises InvalidPassword: If the password contains invalid characters not supported by Cisco
+        :return: Hashed password
+        """
+        self.pwd_check(pwd)
+        salt_chars = []
+        for _ in range(14):
+            salt_chars.append(random.choice(self.cisco_b64chars))
+        salt = "".join(salt_chars)
+        # Create the hash
+        _hash = scrypt.scrypt.hash(pwd.encode(), salt.encode(), 16384, 1, 1, 32)
+        # Convert the hash from Standard Base64 to Cisco Base64
+        hash_c64 = base64.b64encode(_hash).decode().translate(self.b64table)[:-1]
+        # Print the hash in the Cisco IOS CLI format
+        password_string = f'$9${salt}${hash_c64}'
+        return password_string
 
 @logger.catch(reraise=True)
 def config_line_factory(all_lines: List[str]=None,
@@ -3975,11 +4083,11 @@ def parse_global_options():
 
     if opts.method == "decrypt":
         pp = CiscoPassword()
-        print(pp.decrypt(opts.arg1))
+        print(pp.decrypt_type_07(opts.arg1))
         exit(1)
     elif opts.method == "help":
         print("Valid methods and their arguments:")
-        print("   decrypt:                arg1=encrypted_passwd")
+        print("   decrypt 7:                arg1=encrypted_passwd")
         exit(1)
     else:
         import doctest

@@ -4,6 +4,15 @@
 - Summary:
     - Insert something here
 
+## Version: 0.6.2
+
+- Released: 2024-02-22
+- Summary:
+    - Add example SDWAN configuration as `sample_10.ios`.  Thanks to [sjhloco@github](https://github.com/sjhloco/sdwan_bgp_lab/issues/1) for permission to use his SDWAN lab configuration.
+    - Rename `CiscoPassword()` type 7 password methods
+    - Add cisco password ecryption for type 5, type 8 and type 9 passwords
+    - More documentation updates
+
 ## Version: 0.6.1
 
 - Released: 2024-02-17
