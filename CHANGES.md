@@ -4,6 +4,12 @@
 - Summary:
     - Insert something here
 
+## Version: 0.6.4
+
+- Released: 2024-02-22
+- Summary:
+    - Fix `pyproject.toml` complaints about backports
+
 ## Version: 0.6.3
 
 - Released: 2024-02-22
