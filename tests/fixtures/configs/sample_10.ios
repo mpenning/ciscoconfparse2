@@ -1,0 +1,349 @@
+! Used with permission from:
+! https://github.com/sjhloco/sdwan_bgp_lab/blob/main/S11-cEdge01.txt
+!
+! Ref: https://github.com/sjhloco/sdwan_bgp_lab/issues/1
+!
+S11-cEdge01#show sdwan running-config
+system
+ system-ip             192.168.11.1
+ overlay-id            1
+ site-id               11
+ port-offset           0
+ control-session-pps   300
+ admin-tech-on-failure
+ sp-organization-name  stesworld
+ organization-name     stesworld
+ port-hop
+ track-transport
+ track-default-gateway
+ console-baud-rate     9600
+ no on-demand enable
+ on-demand idle-timeout 10
+ vbond 100.100.100.2 port 12346
+!
+service tcp-keepalives-in
+service tcp-keepalives-out
+no service tcp-small-servers
+no service udp-small-servers
+hostname S11-cEdge01
+username admin privilege 15 secret 9 $9$3V6L3V6L2VUI2k$ysPnXOdg8RLj9KgMdmfHdSHkdaMmiHzGaUpcqH6pfTo
+vrf definition 3001
+ description BLU
+ rd          1:3001
+ address-family ipv4
+  route-target export 65111:3001
+  route-target import 65111:3001
+  exit-address-family
+ !
+ address-family ipv6
+  exit-address-family
+ !
+!
+vrf definition Mgmt-intf
+ description mgmt
+ rd          1:512
+ address-family ipv4
+  route-target export 65111:512
+  route-target import 65111:512
+  exit-address-family
+ !
+ address-family ipv6
+  exit-address-family
+ !
+!
+ip arp proxy disable
+no ip finger
+no ip rcmd rcp-enable
+no ip rcmd rsh-enable
+no ip dhcp use class
+ip name-server 1.1.1.1 8.8.8.8
+ip prefix-list PL_DEFAULT permit 0.0.0.0/0
+ip route 0.0.0.0 0.0.0.0 172.16.11.2
+ip route 0.0.0.0 0.0.0.0 192.168.10.1
+ip route 10.10.10.0 255.255.255.240 Null0
+ip route vrf Mgmt-intf 0.0.0.0 0.0.0.0 10.1.1.254
+ip bootp server
+no ip source-route
+no ip http server
+no ip http secure-server
+no ip igmp ssm-map query dns
+ip nat settings central-policy
+ip nat pool natpool-GigabitEthernet1-0 10.10.10.14 10.10.10.15 prefix-length 28
+ip nat inside source list global-list pool natpool-GigabitEthernet1-0 overload egress-interface GigabitEthernet1
+ip nat translation tcp-timeout 3600
+ip nat translation udp-timeout 60
+ip nat route vrf 3001 0.0.0.0 0.0.0.0 global
+cdp run
+interface GigabitEthernet1
+ description      UPLINK - ISP A
+ no shutdown
+ arp timeout 1200
+ ip address 192.168.10.2 255.255.255.252
+ no ip redirects
+ ip mtu    1500
+ ip nat outside
+ load-interval    30
+ mtu              1500
+ endpoint-tracker umbrella
+exit
+interface GigabitEthernet2
+ description   UPLINK - Southside to core switch
+ no shutdown
+ arp timeout 1200
+ mpls bgp forwarding
+ ip address 172.16.10.1 255.255.255.252
+ no ip redirects
+ ip mtu    1500
+ load-interval 30
+ mtu           1500
+exit
+interface GigabitEthernet3
+ no shutdown
+ no ip address
+exit
+interface GigabitEthernet3.11
+ description TLOC EXT - Tunnel end
+ no shutdown
+ encapsulation dot1Q 11
+ ip address 172.16.11.1 255.255.255.252
+ no ip redirects
+ ip mtu    1496
+exit
+interface GigabitEthernet3.12
+ description TLOC EXT - Extension end
+ no shutdown
+ encapsulation dot1Q 12
+ ip address 172.16.12.2 255.255.255.252
+ no ip redirects
+ ip mtu    1496
+exit
+interface GigabitEthernet4
+ no shutdown
+ arp timeout 1200
+ vrf forwarding Mgmt-intf
+ ip address 10.1.1.11 255.255.255.0
+ no ip redirects
+ ip mtu    1500
+ load-interval 30
+ mtu           1500
+exit
+interface Tunnel1
+ no shutdown
+ ip unnumbered GigabitEthernet1
+ no ip redirects
+ ipv6 unnumbered GigabitEthernet1
+ no ipv6 redirects
+ tunnel source GigabitEthernet1
+ tunnel mode sdwan
+exit
+interface Tunnel11003
+ no shutdown
+ ip unnumbered GigabitEthernet3.11
+ no ip redirects
+ ipv6 unnumbered GigabitEthernet3.11
+ no ipv6 redirects
+ tunnel source GigabitEthernet3.11
+ tunnel mode sdwan
+exit
+route-map RM_ISP_IN permit 1
+ match ip address prefix-list PL_DEFAULT
+!
+route-map RM_ISP_IN deny 65535
+!
+clock summer-time BST recurring
+clock timezone BST 0 0
+logging persistent size 104857600 filesize 10485760
+logging buffered 512000
+logging persistent
+aaa authentication login default local
+aaa authorization exec default local
+endpoint-tracker umbrella
+ endpoint-ip  208.67.222.222
+ tracker-type interface
+ threshold    200
+ interval     20
+!
+no crypto ikev2 diagnose error
+no crypto isakmp diagnose error
+mpls label mode all-vrfs protocol bgp-vpnv4 per-vrf
+mpls label mode all-vrfs protocol bgp-vpnv6 per-vrf
+mpls label range 100000 1048575 static 16 99
+router bgp 65111
+ bgp router-id        192.168.11.1
+ bgp log-neighbor-changes
+ distance bgp 20 200 20
+ neighbor 172.16.10.2 remote-as 65111
+ neighbor 172.16.10.2 description MPLS - service-side
+ neighbor 172.16.10.2 ebgp-multihop 1
+ neighbor 192.168.10.1 remote-as 10
+ neighbor 192.168.10.1 description ISP A
+ neighbor 192.168.10.1 ebgp-multihop 1
+ address-family ipv4 unicast vrf 3001
+  default-information originate
+  redistribute omp
+  redistribute nat-route dia
+  exit-address-family
+ !
+ address-family ipv4 unicast
+  neighbor 172.16.10.2 remote-as 65111
+  neighbor 172.16.10.2 activate
+  neighbor 172.16.10.2 send-community both
+  neighbor 192.168.10.1 remote-as 10
+  neighbor 192.168.10.1 activate
+  neighbor 192.168.10.1 route-map RM_ISP_IN in
+  neighbor 192.168.10.1 send-community both
+  network 10.10.10.0 mask 255.255.255.240
+  exit-address-family
+ !
+ address-family vpnv4 unicast
+  neighbor 172.16.10.2 activate
+  exit-address-family
+ !
+ timers bgp 3 9
+!
+snmp-server ifindex persist
+line con 0
+ login authentication default
+ speed    9600
+ stopbits 1
+!
+line vty 0 4
+ login authentication default
+ transport input ssh
+!
+line vty 5 80
+ transport input ssh
+!
+ntp server uk.pool.ntp.org source GigabitEthernet1 version 4
+ntp source GigabitEthernet1
+lldp run
+nat64 translation timeout tcp 60
+nat64 translation timeout udp 1
+sdwan
+ interface GigabitEthernet1
+  tunnel-interface
+   encapsulation ipsec weight 1
+   no border
+   color gold
+   no last-resort-circuit
+   no low-bandwidth-link
+   no vbond-as-stun-server
+   vmanage-connection-preference 5
+   port-hop
+   carrier                       default
+   nat-refresh-interval          5
+   hello-interval                1000
+   hello-tolerance               12
+   no allow-service all
+   allow-service bgp
+   no allow-service dhcp
+   allow-service dns
+   allow-service icmp
+   allow-service sshd
+   no allow-service netconf
+   allow-service ntp
+   no allow-service ospf
+   no allow-service stun
+   allow-service https
+   no allow-service snmp
+   no allow-service bfd
+  exit
+ exit
+ interface GigabitEthernet3.11
+  tunnel-interface
+   encapsulation ipsec weight 1
+   no border
+   color silver
+   no last-resort-circuit
+   no low-bandwidth-link
+   no vbond-as-stun-server
+   vmanage-connection-preference 5
+   port-hop
+   carrier                       default
+   nat-refresh-interval          5
+   hello-interval                1000
+   hello-tolerance               12
+   no allow-service all
+   no allow-service bgp
+   no allow-service dhcp
+   allow-service dns
+   allow-service icmp
+   no allow-service sshd
+   no allow-service netconf
+   no allow-service ntp
+   no allow-service ospf
+   no allow-service stun
+   no allow-service https
+   no allow-service snmp
+   no allow-service bfd
+  exit
+ exit
+ interface GigabitEthernet3.12
+  tloc-extension GigabitEthernet1
+ exit
+ appqoe
+  no tcpopt enable
+ !
+ omp
+  no shutdown
+  send-path-limit  4
+  ecmp-limit       4
+  graceful-restart
+  no as-dot-notation
+  timers
+   holdtime               60
+   advertisement-interval 1
+   graceful-restart-timer 43200
+   eor-timer              300
+  exit
+  address-family ipv4
+   advertise bgp
+   advertise connected
+   advertise static
+  !
+  address-family ipv6
+   advertise bgp
+   advertise connected
+   advertise static
+  !
+ !
+!
+licensing config enable false
+licensing config privacy hostname false
+licensing config privacy version false
+licensing config utility utility-enable false
+bfd color lte
+ hello-interval 1000
+ no pmtu-discovery
+ multiplier     1
+!
+bfd app-route multiplier 2
+bfd app-route poll-interval 123400
+security
+ ipsec
+  rekey               86400
+  replay-window       512
+  authentication-type ah-sha1-hmac sha1-hmac
+ !
+!
+sslproxy
+ no enable
+ rsa-key-modulus      2048
+ certificate-lifetime 730
+ eckey-type           P256
+ ca-tp-label          PROXY-SIGNING-CA
+ settings expired-certificate  drop
+ settings untrusted-certificate drop
+ settings unknown-status       drop
+ settings certificate-revocation-check none
+ settings unsupported-protocol-versions drop
+ settings unsupported-cipher-suites drop
+ settings failure-mode         close
+ settings minimum-tls-ver      TLSv1
+!
+policy
+ no app-visibility
+ no flow-visibility
+ no implicit-acl-logging
+ log-frequency        1000
+!

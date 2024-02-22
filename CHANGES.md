@@ -4,6 +4,12 @@
 - Summary:
     - Insert something here
 
+## Version: 0.6.5
+
+- Released: 2024-02-22
+- Summary:
+    - Add missing configuration
+
 ## Version: 0.6.4
 
 - Released: 2024-02-22
