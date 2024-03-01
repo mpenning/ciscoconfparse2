@@ -3124,40 +3124,56 @@ def testValues_IOSCfgLine_ioscfg01(parse_c02):
 
 
 def testValues_CiscoPassword_decrypt_7_01():
+    """Test that we can decode a type 7 password hash"""
     ep = "04480E051A33490E"
     test_result_01 = CiscoPassword(ep).decrypt_type_7()
     test_result_02 = CiscoPassword().decrypt_type_7(ep)
 
-    correct_result = cisco_type7(0).decode(ep)
+    correct_result = cisco_type7(salt=0).decode(ep)
     assert correct_result == test_result_01
     assert correct_result == test_result_02
+
+def testValues_CiscoPassword_encrypt_7_01():
+    """Test that we can encrypt a type 7 password hash"""
+    test_result_01 = CiscoPassword().encrypt_type_7("cisco")
+
+    assert cisco_type7.verify("cisco", test_result_01) is True
 
 def testValues_CiscoPassword_encrypt_5_01():
     """Test that we can build a type 5 password hash"""
     test_result_01 = CiscoPassword().encrypt_type_5("cisco")
 
     one_correct_result = "$1$pFgG$bUkwuomK10T9JcYmDCOJv1"
+
     assert len(one_correct_result) == len(test_result_01)
     # We can only compare the first three characters...
-    #    the rest are basically random
+    #    the rest are basically random.  This test just ensures
+    #    that the encryption function produces something with no
+    #    errors
     assert one_correct_result[0:3] == test_result_01[0:3]
 
 def testValues_CiscoPassword_encrypt_8_01():
-    """Test that we can build a type 8 password hash"""
+    """Test that we can build a type 8 password pbkdf2 sha256 hash"""
     test_result_01 = CiscoPassword().encrypt_type_8("cisco")
 
     one_correct_result = "$8$5VnMVRhw7Wf./D$Bpkgb2i4FgTxRwjCKafdtvO7rw2cVLSM2NlhrpdDUCo"
+
     assert len(one_correct_result) == len(test_result_01)
     # We can only compare the first three characters...
-    #    the rest are basically random
+    #    the rest are basically random.  This test just ensures
+    #    that the encryption function produces something with no
+    #    errors
     assert one_correct_result[0:3] == test_result_01[0:3]
 
 def testValues_CiscoPassword_encrypt_9_01():
-    """Test that we can build a type 9 password hash"""
+    """Test that we can build a type 9 password scrypt hash"""
     test_result_01 = CiscoPassword().encrypt_type_9("cisco")
 
     one_correct_result = "$9$5etsgfGnB46s.8$5.haZUvlChIWsYPyAT8E7hxUZX8LNWireAy40LsdxVA"
+
     assert len(one_correct_result) == len(test_result_01)
     # We can only compare the first three characters...
-    #    the rest are basically random
+    #    the rest are basically random.  This test just ensures
+    #    that the encryption function produces something with no
+    #    errors
     assert one_correct_result[0:3] == test_result_01[0:3]

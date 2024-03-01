@@ -4,6 +4,15 @@
 Installation
 ============
 
+MacOS Prerequisites
+-------------------
+
+Tests pass on the latest OSX without doing this, but to get ``scrypt`` to install on MacOS you might need to run this prior to installing ciscoconfparse2:
+
+``export CFLAGS="-I$(brew --prefix openssl)/include"``
+
+``export LDFLAGS="-L$(brew --prefix openssl)/lib"``
+
 pip
 ---
 
@@ -25,7 +34,7 @@ requirements.txt: github
 
 If you need a direct ``git`` dependency entry in your ``requirements.txt``
 file, you can include an entry like this (where ``0.6.7`` is a specific
-``git tag`` that you want to reference.
+``git tag`` that you want to reference).
 
 ``git+https://github.com/mpenning/ciscoconfparse2.git@0.6.7``
 

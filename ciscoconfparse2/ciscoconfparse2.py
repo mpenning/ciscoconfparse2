@@ -3763,8 +3763,8 @@ class CiscoPassword(object):
     def pwd_check(self, pwd):
         """
         Checks cleartext password for invalid characters
+
         :param pwd: Clear text password
-        :raises InvalidPassword: If the password contains invalid characters not supported by Cisco
         :return: None
         """
         invalid_chars = r"?\""
@@ -3777,18 +3777,32 @@ class CiscoPassword(object):
     def encrypt_type_7(self, pwd):
         """
         Hashes cleartext password to Cisco type 7
+
+        .. note::
+           This class implements the “Type 7” password encoding used by
+           Cisco IOS. This is not actually a true hash, but a
+           reversible XOR Cipher encoding the plaintext password. Type 7
+           strings are (and were designed to be) nearly equivalent to plaintext;
+           the goal was to protect from “over the shoulder” eavesdropping,
+           and little else. They can be trivially decoded.
+
         :param pwd: Clear text password to be hashed
-        :raises InvalidPassword: If the password contains invalid characters not supported by Cisco
         :return: Hashed password
         """
         self.pwd_check(pwd)
+
+        # Use a random salt to hash the password...
         return cisco_type7.hash(pwd)
 
     @logger.catch(reraise=True)
     def decrypt_type_7(self, ep=""):
         """Cisco Type 7 password decryption.  Converted from perl code that was
         written by jbash [~at~] cisco.com; enhancements suggested by
-        rucjain [~at~] cisco.com"""
+        rucjain [~at~] cisco.com
+
+        :param ep: The encrypted Type 7 password hash to be decrypted
+        :return: Clear-text password
+        """
 
         xlat = (
             0x64,
@@ -3877,8 +3891,8 @@ class CiscoPassword(object):
     def encrypt_type_5(self, pwd):
         """
         Hashes cleartext password to Cisco type 5
+
         :param pwd: Clear text password to be hashed
-        :raises InvalidPassword: If the password contains invalid characters not supported by Cisco
         :return: Hashed password
         """
         self.pwd_check(pwd)
@@ -3891,8 +3905,8 @@ class CiscoPassword(object):
     def encrypt_type_8(self, pwd):
         """
         Hashes cleartext password to Cisco type 8
+
         :param pwd: Clear text password to be hashed
-        :raises InvalidPassword: If the password contains invalid characters not supported by Cisco
         :return: Hashed password
         """
         # See https://stackoverflow.com/a/73867774/667301
@@ -3917,8 +3931,8 @@ class CiscoPassword(object):
     def encrypt_type_9(self, pwd):
         """
         Hashes password to Cisco type 9
+
         :param pwd: Clear text password
-        :raises InvalidPassword: If the password contains invalid characters not supported by Cisco
         :return: Hashed password
         """
         self.pwd_check(pwd)

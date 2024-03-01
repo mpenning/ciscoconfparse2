@@ -4,6 +4,13 @@
 - Summary:
     - Insert something here
 
+## Version: 0.6.8
+
+- Released: 2024-03-01
+- Summary:
+    - Update scrypt to version 0.8.24
+    - More documentation updates
+
 ## Version: 0.6.7
 
 - Released: 2024-02-22
