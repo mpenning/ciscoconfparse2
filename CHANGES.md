@@ -4,6 +4,12 @@
 - Summary:
     - Insert something here
 
+## Version: 0.7.2
+
+- Released: 2024-03-02
+- Summary:
+    - Fix github workflows after upgrading to hatch
+
 ## Version: 0.7.0
 
 - Released: 2024-03-02
