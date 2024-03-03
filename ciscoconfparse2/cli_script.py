@@ -248,7 +248,7 @@ class ArgParser:
         parser_optional.add_argument(
             "-o", "--output",
             required=False,
-            choices=['raw_text', 'json', 'yaml',],
+            choices=['raw_text', 'json',],
             default='raw_text',
             type=str,
             help="Output format, defaults to raw_text")
@@ -291,7 +291,7 @@ class ArgParser:
         parser_optional.add_argument(
             "-o", "--output",
             required=False,
-            choices=['raw_text', 'json', 'yaml',],
+            choices=['raw_text', 'json',],
             default='raw_text',
             type=str,
             help="Output format, defaults to raw_text")
@@ -320,7 +320,7 @@ class ArgParser:
         parser_optional.add_argument(
             "-s", "--syntax",
             required=False,
-            choices=['ios', 'nxos', 'iosxr', 'asa', 'junos'],
+            choices=['ios', 'nxos', 'iosxr', 'asa',],
             default='ios',
             help="Configuration file syntax, defaults to 'ios'")
 
@@ -329,12 +329,12 @@ class ArgParser:
             required=False,
             default=',',
             type=str,
-            help="Child field separator, defaults to a comma")
+            help="Branch field separator, defaults to a comma")
 
         parser_optional.add_argument(
             "-o", "--output",
             required=False,
-            choices=['raw_text', 'json', 'yaml',],
+            choices=['raw_text', 'json',],
             default='raw_text',
             type=str,
             help="Output format, defaults to raw_text")
