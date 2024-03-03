@@ -4,11 +4,18 @@
 - Summary:
     - Insert something here
 
+## Version: 0.7.6
+
+- Released: 2024-03-03
+- Summary:
+    - Add `ccp branch -s junos` CLI option
+    - More documentation updates
+
 ## Version: 0.7.5
 
 - Released: 2024-03-03
 - Summary:
-    - Add `ccp branch -o natural` CLI option
+    - Add `ccp branch -o original` CLI option
     - More documentation updates
 
 ## Version: 0.7.4

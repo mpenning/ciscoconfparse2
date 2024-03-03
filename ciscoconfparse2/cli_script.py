@@ -343,7 +343,7 @@ class ArgParser:
         parser_optional.add_argument(
             "-s", "--syntax",
             required=False,
-            choices=['ios', 'nxos', 'iosxr', 'asa',],
+            choices=['ios', 'nxos', 'iosxr', 'asa', 'junos'],
             default='ios',
             help="Configuration file syntax, defaults to 'ios'")
 

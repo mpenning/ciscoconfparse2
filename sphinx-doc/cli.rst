@@ -87,8 +87,8 @@ That CLI command is the equivalent of running this
    ...     print(obj.text)
    >>>
 
-Example 3: Find branches
-------------------------
+Example 3: Find branches as lists
+---------------------------------
 
 A branch is just a list of all parents and the child text.  To find the branch
 for 'default-information originate'...
@@ -123,3 +123,38 @@ That CLI command is the equivalent of running this
    ...     print([obj.text for obj in branch])
    ...     
    >>>
+
+Example 4: Find branches as the original configuration
+------------------------------------------------------
+
+You can also find branches as shown in the original configuration... just use:
+
+.. code-block:: none
+
+   $ ccp branch -a 'router bgp' -o original conf/path/or/file/glob.conf
+
+This will print...
+
+.. code-block:: none
+
+   Syntax      : ios
+   Returing    : branch text
+   Ouput as    : original
+     parent: router bgp
+   ---------- file: conf/path/or/file/glob.conf ----------
+   router bgp 65111
+    bgp router-id 192.0.2.200
+    neighbor 192.0.2.1 remote-as 64000
+    address-family ipv4 unicast
+     default-information originate
+     neighbor 192.0.2.1 activate
+
+It should be noted that searching ``ccp branch -a 'router bgp'`` is a special
+case that is local to the CLI script.
+
+.. note::
+
+   When searching with only one term, this is a special case of the CLI
+   script.  If you only use one branch search term, all configuration children
+   matching the configuation parent will be shown (the parent is included as well).
+
