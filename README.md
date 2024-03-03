@@ -324,8 +324,7 @@ This uses the example of editing the package on a git branch called `develop`...
 Building the ciscoconfparse2 documentation tarball comes down to this one wierd trick:
 
 - `cd sphinx-doc/`
-- `pip install -r ./requirements.txt;  # install Sphinx dependencies`
-- `pip install -r ../requirements.txt; # install ccp dependencies`
+- `pip install ciscoconfparse`
 - `make html`
 
 ## License and Copyright
