@@ -2725,7 +2725,6 @@ debug={debug},
                 error = "find_object_branches(): branchspec must have at least two elements"
                 logger.error(error)
                 raise ValueError(error)
-
         else:
             error = "find_object_branches(): Please enclose the branchspec regular expressions in a Python tuple"
             logger.error(error)

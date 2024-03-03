@@ -34,6 +34,7 @@ class CliApplication:
     output_format: str
     file_list: List[str]
     diff_method: str
+    all_children: bool
 
     @logger.catch(reraise=True)
     @typechecked
@@ -48,16 +49,8 @@ class CliApplication:
             args.separator = ","
             args.output = "raw_text"
 
-        try:
-            if isinstance(args.method, str):
-                self.diff_method = args.method
-            else:
-                error = f"diff method must be a string"
-                logger.critical(error)
-                raise ValueError(error)
-
-        except AttributeError:
-            self.diff_method = "diff"
+        self.diff_method = getattr(args, 'diff_method', "diff")
+        self.all_children = getattr(args, 'all_children', False)
 
         self.console = RichConsole()
         self.args = args.args.split(args.separator)
@@ -97,9 +90,32 @@ class CliApplication:
                     raise NotImplementedError(error)
 
             elif self.subparser_name == "branch":
+
                 if self.output_format == "raw_text":
                     for branch in parse.find_object_branches(self.args):
                         print([obj.text for obj in branch])
+
+                elif self.output_format == "original":
+                    retval = set([])
+                    if len(self.args) == 1:
+                        # Special case for the CLI script... if there is
+                        # only one search term, find all children of it
+                        for ii in parse.find_parent_objects([self.args[0]]):
+                            retval.add(ii)
+                            for jj in ii.all_children:
+                                retval.add(jj)
+
+                    elif len(self.args) > 1:
+                        # There are multiple search terms... limit results to the
+                        # matching arguments...
+                        for branch in parse.find_object_branches(self.args):
+                            for obj in branch:
+                                retval.add(obj)
+
+                    # Dump all results to stdout...
+                    for obj in sorted(retval):
+                        print(obj.text)
+
                 else:
                     error = f"--output {self.output_format} is not supported"
                     logger.critical(error)
@@ -253,6 +269,13 @@ class ArgParser:
             type=str,
             help="Output format, defaults to raw_text")
 
+        parser_optional.add_argument(
+            "-A", "--all_children",
+            required=False,
+            action='store_true',
+            default=False,
+            help="Find all children")
+
     @logger.catch(reraise=True)
     def build_command_child(self) -> None:
         """Build the child command as a subparser"""
@@ -334,7 +357,7 @@ class ArgParser:
         parser_optional.add_argument(
             "-o", "--output",
             required=False,
-            choices=['raw_text', 'json',],
+            choices=['raw_text', 'original', 'json',],
             default='raw_text',
             type=str,
             help="Output format, defaults to raw_text")
