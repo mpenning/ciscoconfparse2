@@ -4,6 +4,13 @@
 - Summary:
     - Insert something here
 
+## Version: 0.7.3
+
+- Released: 2024-03-03
+- Summary:
+    - Fix hatch changelog github url
+    - Fix `ccp` commands when the search term only contains one element
+
 ## Version: 0.7.2
 
 - Released: 2024-03-02

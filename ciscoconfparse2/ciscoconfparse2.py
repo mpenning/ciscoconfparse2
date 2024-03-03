@@ -2721,8 +2721,8 @@ debug={debug},
             branchspec = tuple(branchspec)
 
         if isinstance(branchspec, tuple):
-            if branchspec == ():
-                error = "find_object_branches(): branchspec must not be empty"
+            if len(branchspec) <= 1:
+                error = "find_object_branches(): branchspec must have at least two elements"
                 logger.error(error)
                 raise ValueError(error)
 
@@ -3044,6 +3044,14 @@ debug={debug},
         elif isinstance(parentspec, str):
             pass
         elif isinstance(parentspec, (list, tuple)):
+            if len(parentspec) == 0:
+                error = f"The parentspec list must have at least one element"
+                logger.critical(error)
+                raise ValueError(error)
+
+            elif len(parentspec) == 1:
+                return self.find_objects(parentspec[0])
+
             _result = set()
             _tmp = self.find_object_branches(
                 parentspec,
@@ -3337,8 +3345,17 @@ debug={debug},
             parentspec = parentspec.text
         elif isinstance(parentspec, str):
             pass
+
         elif isinstance(parentspec, (list, tuple)):
-            if len(parentspec) > 0:
+            if len(parentspec) == 0:
+                error = f"The parentspec list must have at least one element"
+                logger.critical(error)
+                raise ValueError(error)
+
+            elif len(parentspec) == 1:
+                return self.find_objects(parentspec[0])
+
+            elif len(parentspec) > 1:
                 _result = set()
                 _tmp = self.find_object_branches(
                     parentspec,

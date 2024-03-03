@@ -2,7 +2,7 @@
 
 [project]
 name = "ciscoconfparse2"
-version = "0.7.2"
+version = "0.7.3"
 description = "Parse, Audit, Query, Build, and Modify Cisco IOS-style and JunOS-style configs"
 readme = "README.md"
 license = "GPL-3.0-only"
@@ -87,6 +87,7 @@ build-backend = "hatchling.build"
 [tool.hatch.build.targets.sdist]
 exclude = [
   "/.github",
+  "/.git",
   "/dev_tools",
   "/dist",
 ]
@@ -99,7 +100,7 @@ packages = [
 
 [project.urls]
 homepage = "http://github.com/mpenning/ciscoconfparse2"
-changelog = "https://github.com/mpenning/ciscoconfparse2/CHANGES.md"
+changelog = "https://github.com/mpenning/ciscoconfparse2/blob/main/CHANGES.md"
 repository = "https://github.com/mpenning/ciscoconfparse2"
 documentation = "http://www.pennington.net/py/ciscoconfparse2/"
 

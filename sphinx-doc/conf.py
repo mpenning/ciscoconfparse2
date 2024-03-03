@@ -115,7 +115,7 @@ copyright = u"2007-%s, %s" % (
 #
 # The short X.Y version.
 with open("../pyproject.toml") as fh:
-    long_version = toml.load(fh)["tool"]["poetry"].get("version", "0.0")
+    long_version = toml.load(fh)["project"].get("version", "0.0")
     version = ".".join(long_version.split(".")[0:2])
 # The full version, including alpha/beta/rc tags.
 release = long_version
