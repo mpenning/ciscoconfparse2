@@ -10,6 +10,7 @@
 - Summary:
     - Fix hatch changelog github url
     - Adjust `ccp branch` command commands 
+    - More documentation updates
 
 ## Version: 0.7.3
 

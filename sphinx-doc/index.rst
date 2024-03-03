@@ -8,6 +8,7 @@ Welcome to ciscoconfparse2's documentation!
 
    intro
    installation
+   cli
    tutorial
    legacy_syntax
    syntax_factory_intro
