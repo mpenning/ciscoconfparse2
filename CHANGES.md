@@ -4,6 +4,13 @@
 - Summary:
     - Insert something here
 
+## Version: 0.7.0
+
+- Released: 2024-03-02
+- Summary:
+    - Migrate from poetry builds to hatch builds
+    - Add new ccp CLI script, installed by hatch
+
 ## Version: 0.6.8
 
 - Released: 2024-03-01

@@ -30,10 +30,20 @@ COL_END=\033[0;0m
 dep:
 	@echo "$(COL_GREEN)>> getting ciscoconfparse2 pypi artifacts (wheel and tar.gz)$(COL_END)"
 	pip install -U pip
-	pip install -r requirements/requirements.txt
-	pip install -r requirements/requirements-dev.txt
 	# Delete bogus files... see https://stackoverflow.com/a/73992288/667301
 	perl -e 'unlink( grep { /^\W\d*\.*\d*/ && !-d } glob( "*" ) );'
+
+.PHONY: build
+build:
+	# Build a new wheel / src_dist from scratch
+	-rm -rf dist/
+	hatch build
+
+.PHONY: install_build
+install_build:
+	make build
+	# Install the newly-built package
+	pip install --force-reinstall dist/*.tar.gz
 
 .PHONY: pypi
 pypi:
@@ -44,8 +54,7 @@ pypi:
 	# tag the repo with $$VERSION and push to origin
 	git tag $$VERSION
 	git push origin $$VERSION
-	poetry lock --no-update
-	poetry build
+	make build
 	# twine is the simplest pypi package uploader...
 	python -m twine upload dist/*
 
@@ -203,7 +212,6 @@ clean:
 	-find ./* -name '*.key' -exec rm {} \;
 	-rm .pip_dependency
 	-rm -rf .mypy_cache/
-	-rm -rf poetry.lock
 	-rm -rf .pytest_cache/
 	-rm -rf .eggs/
 	-rm -rf .cache/

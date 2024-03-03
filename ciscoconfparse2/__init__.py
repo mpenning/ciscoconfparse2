@@ -23,6 +23,8 @@ import sys
 
 from loguru import logger
 
+from ciscoconfparse2.cli_script import ccp_script_entry
+
 from ciscoconfparse2.ccp_util import PythonOptimizeCheck
 from ciscoconfparse2.ciscoconfparse2 import *
 from ciscoconfparse2.ccp_util import IPv4Obj
@@ -48,13 +50,9 @@ from ciscoconfparse2.ccp_util import DNSResponse
 from ciscoconfparse2.ccp_util import dns_query
 from ciscoconfparse2.ccp_util import check_valid_ipaddress
 
+
 from dns.resolver import Resolver
 from dns.exception import DNSException
-
-if sys.version_info < (3, 7):
-    error = "python < Python 3.7 is not supported"
-    logger.error(error)
-    raise NotImplementedError(error)
 
 # Throw errors for PYTHONOPTIMIZE and `python -O ...` by executing
 #     PythonOptimizeCheck()...

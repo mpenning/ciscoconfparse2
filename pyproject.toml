@@ -1,98 +1,105 @@
 # pyproject.toml format -> See PEP 621
 
-[build-system]
-# See -> PEP 517
-requires = ["poetry>=1.5.1", "poetry-core>=1.6.1", "wheel>=0.38.4", "packaging>=23.0"]
-build-backend = "poetry.core.masonry.api"
-requires-python = ">=3.8"
-
-##############################################################################
-#
-# IMPORTANT:
-# pyproject.toml has several different formats (such as a [project] section);
-# however, pip will NOT install unless I base pyproject.toml on the
-# [tool.poetry] section below.
-#
-# Maybe it's my fault, but I have not had success trying to migrate to
-# a [project] section with pip installs.  I have stopped trying because
-# the problem is too complicated to continue throwing cycles at making a
-# [project] section work with 'pip install ciscoconfparse2'.
-#
-##############################################################################
-#[project]
-
-[tool.poetry]
+[project]
 name = "ciscoconfparse2"
-version = "0.6.8"
+version = "0.7.0"
 description = "Parse, Audit, Query, Build, and Modify Cisco IOS-style and JunOS-style configs"
-license = "GPL-3.0-only"
-authors = [
-    # Poetry only accepts a string here (no braces)
-    "Mike Pennington <mike@pennington.net>",
-]
-maintainers = [
-    # Poetry only accepts a string here (no braces)
-    "Mike Pennington <mike@pennington.net>",
-]
 readme = "README.md"
-packages = [
-    # Syntax -> https://python-poetry.org/docs/pyproject/#packages
-    { include = "ciscoconfparse2/*" },
-    { include = "tests/*" },
+license = "GPL-3.0-only"
+requires-python = ">= 3.8"
+dependencies = [
+  "attrs==23.2.0",
+  "passlib==1.7.4",
+  "scrypt==0.8.24",
+  "dnspython==2.4.2",
+  "macaddress==2.0.2",
+  "loguru==0.7.2",
+  "tomlkit==0.12.3",
+  "pyyaml==6.0.1",
+  "hier_config==2.2.3",
+  "pyparsing==3.1.1",
+  "typeguard==4.1.5",
+  "rich>=13.6.0",
 ]
-# See -> https://python-poetry.org/docs/pyproject/#include-and-exclude
-include = [
-    #"configs/",
-    #"tests/",
-    #"dev_tools/",
-    #"CHANGES.md",
-    #"CONTRIBUTING.md",
-    #"LICENSE",
-    #"Makefile",
-    #"requirements.txt",
-    #"requirements-dev.txt",
-    #"README_git_workflow.md"
+authors = [
+  { name = "Mike Pennington", email = "mike@pennington.net" },
 ]
-exclude = [
-    "coverage.json"
+keywords = [
+  "Parse",
+  "audit",
+  "query",
+  "modify",
+  "Cisco IOS",
+  "Cisco",
+  "NXOS",
+  "ASA",
+  "Juniper",
 ]
-keywords = ["Parse", "audit", "query", "modify", "Cisco IOS", "Cisco", "NXOS", "ASA", "Juniper"]
 classifiers=[
-    "Development Status :: 5 - Production/Stable",
-    "Environment :: Plugins",
-    "Intended Audience :: Developers",
-    "Intended Audience :: System Administrators",
-    "Intended Audience :: Information Technology",
-    "Intended Audience :: Telecommunications Industry",
-    "License :: OSI Approved :: GNU General Public License (GPL)",
-    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
-    "Natural Language :: English",
-    "Operating System :: OS Independent",
-    "Programming Language :: Python",
-    "Topic :: Communications",
-    "Topic :: Internet",
-    "Topic :: System :: Networking",
-    "Topic :: System :: Networking :: Monitoring",
+  "Development Status :: 5 - Production/Stable",
+  "Environment :: Plugins",
+  "Intended Audience :: Developers",
+  "Intended Audience :: System Administrators",
+  "Intended Audience :: Information Technology",
+  "Intended Audience :: Telecommunications Industry",
+  "License :: OSI Approved :: GNU General Public License (GPL)",
+  "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+  "Natural Language :: English",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python",
+  "Topic :: Communications",
+  "Topic :: Internet",
+  "Topic :: System :: Networking",
+  "Topic :: System :: Networking :: Monitoring",
 ]
 
-# Do NOT remove this... requirements.txt is not sufficient for dependencies
-[tool.poetry.dependencies]
-python = ">=3.8,<4.0.0"
-attrs = "23.2.0"
-passlib = "^1.7.4"
-scrypt = "0.8.20"
-dnspython = "^2.4.2"
-macaddress = "^2.0.2"
-loguru = "0.7.2"
-tomlkit = ">=0.12.3"
-pyyaml = "6.0.1"
-hier_config = ">=2.2.3"
-pyparsing = ">=3.1.1"
-typeguard = ">=4.1.5"
+[project.optional-dependencies]
+# Ensure wheel is upgraded... ref Github Issue #257
+dev = [
+  "wheel>=0.38.4",
+  "twine>=4.0.2",
+  "pytest>=7.4.3",
+  "pylama==8.4.1",
+  "pylint==3.0.3",
+  "coverage>=7.3.2",
+  "pytest-cov>=4.1.0",
+  "pyroma==4.2",
+  "invoke==2.1.3",
+  "fabric==3.0.0",
+  "commitizen>=2.40.0",
+  "Sphinx==6.1.3",
+  "sphinx-rtd-theme>=2.0.0",
+  "numpydoc==1.5.0",
+  "pydocstyle==6.3.0",
+  "python-lsp-server==1.9.0",
+  "tox==4.11.3",
+]
 
-[tool.poetry.urls]
-source = "https://github.com/mpenning/ciscoconfparse2"
+[project.scripts]
+ccp = "ciscoconfparse2.cli_script:ccp_script_entry"
+
+[build-system]
+requires = [
+  "hatchling>=1.21.0",
+]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.sdist]
+exclude = [
+  "/.github",
+  "/dev_tools",
+  "/dist",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = [
+    "ciscoconfparse2/",
+    "tests/",
+]
+
+[project.urls]
 homepage = "http://github.com/mpenning/ciscoconfparse2"
+changelog = "https://github.com/mpenning/ciscoconfparse2/CHANGES.md"
 repository = "https://github.com/mpenning/ciscoconfparse2"
 documentation = "http://www.pennington.net/py/ciscoconfparse2/"
 

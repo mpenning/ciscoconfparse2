@@ -181,7 +181,7 @@ def get_version_number() -> str:
         toml_values = {}
         with open(pyproject_toml_path, encoding=ENCODING) as fh:
             toml_values = tomlkit.load(fh)
-            version = toml_values["tool"]["poetry"].get("version", -1.0)
+            version = toml_values["project"].get("version", -1.0)
 
         if not isinstance(version, str):
             raise ValueError("The version parameter must be a string.")
