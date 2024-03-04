@@ -18,9 +18,12 @@ from ciscoconfparse2.ccp_util import IPv4Obj, IPv6Obj
 @logger.catch(reraise=True)
 def ccp_script_entry():
     """The ccp script entry point"""
+
+    # Configure the CLI argument parser...
     parser = ArgParser()
     args = parser.parse()
 
+    # Run the application...
     CliApplication(args)
 
 
@@ -30,21 +33,21 @@ class CliApplication:
     console: RichConsole
     subparser_name: str
     args: Namespace
+
     syntax: str
     output_format: str
     file_list: List[str]
     diff_method: str
     all_children: bool
-    parse: CiscoConfParse
     ipgrep_file: Any
     subnet: str
+    parse: CiscoConfParse
 
     @logger.catch(reraise=True)
     @typechecked
     def __init__(self, args: Namespace):
         try:
-            if isinstance(args.args, Namespace):
-                pass
+            args.args
         except AttributeError:
             # If args.args doesn't exist, fake several of the
             # argparse.Namespace attributes for the diff command
@@ -52,21 +55,24 @@ class CliApplication:
             args.separator = ","
             args.output = "raw_text"
 
-        self.diff_method = getattr(args, 'diff_method', "diff")
-        self.all_children = getattr(args, 'all_children', False)
+        self.console = RichConsole()
+        self.subparser_name = args.command
+        self.args = args.args.split(args.separator)
+
+        # Provide default values for args when the ArgumentParser config
+        # could not do it upon initialization... such as the arg is not
+        # valid for the specific CliApplication()
         self.syntax = getattr(args, 'syntax', "ios")
         self.output_format = getattr(args, 'output', "")
         self.file_list = getattr(args, 'file', [""])
+        self.diff_method = getattr(args, 'diff_method', "diff")
+        self.all_children = getattr(args, 'all_children', False)
         self.ipgrep_file = getattr(args, 'ipgrep_file', None)
         self.subnet = getattr(args, 'subnet', "0.0.0.0/32")
 
-        # file_list will be None if ipgrep is called with STDIN
+        # file_list will be None when using ipgrep...
         if self.file_list is None:
             self.file_list = [""]
-
-        self.console = RichConsole()
-        self.args = args.args.split(args.separator)
-        self.subparser_name = args.command
 
         if self.subparser_name != "ipgrep":
             self.print_command_header()
@@ -146,7 +152,7 @@ class CliApplication:
         if self.output_format == "raw_text":
 
             if len(self.args) == 1:
-                error = f"'ccp branch -o raw_text' requires at least two -a args.  Use 'ccp -o original' if calling with only one 'ccp branch -a' term"
+                error = "'ccp branch -o raw_text' requires at least two -a args.  Use 'ccp -o original' if calling with only one 'ccp branch -a' term"
                 logger.critical(error)
                 raise NotImplementedError(error)
 
@@ -206,39 +212,24 @@ class CliApplication:
     def ipgrep_command(self,
                        subnet: str,
                        text: str,
-                       version: int = 0,
                        resplit: Optional[str] = None) -> bool:
         """grep for a subnet in the text"""
 
-        if not int(version) in set([0, 4, 6]):
-            error = f"version: {version} must be one of: 0, 4, 6"
-            logger.critical(error)
-            raise ValueError(error)
-
         mode = -1
-        if int(version) == 0:
-            try:
-                mode = 4
-                _subnet = IPv4Obj(subnet)
-            except:
-                mode = 6
-                _subnet = IPv6Obj(subnet)
-
-            if mode == -1:
-                error = f"subnet: {subnet} is not a valid IPv4 or IPv6 subnet"
-                logger.critical(error)
-                raise ValueError(error)
-
-        elif int(version) == 4:
-            mode = 4
+        try:
             _subnet = IPv4Obj(subnet)
+            mode = 4
+        except Exception:
+            pass
 
-        elif int(version) == 6:
-            mode = 6
+        try:
             _subnet = IPv6Obj(subnet)
+            mode = 6
+        except Exception:
+            pass
 
-        else:
-            error = f"version: {version} is not a valid version"
+        if mode == -1:
+            error = f"subnet: {subnet} is not a valid IPv4 or IPv6 subnet"
             logger.critical(error)
             raise ValueError(error)
 
@@ -255,14 +246,14 @@ class CliApplication:
                 # Multiple IP address mode...
                 found = False
                 for addr in retval:
-                    if addr in _subnet:
+                    if (addr.version == _subnet.version) and (addr in _subnet):
                         found = True
                         print(addr.ip)
                 return found
 
             elif isinstance(retval, str):
                 # First match IP address mode...
-                if retval in _subnet:
+                if retval.version == _subnet.version and retval in _subnet:
                     print(retval.ip)
                     return True
                 else:
@@ -282,14 +273,14 @@ class CliApplication:
                 # Multiple IP address mode...
                 found = False
                 for addr in retval:
-                    if addr in _subnet:
+                    if (addr.version == _subnet.version) and (addr in _subnet):
                         found = True
                         print(addr.ip)
                 return found
 
             elif isinstance(retval, str):
                 # First match IP address mode...
-                if retval in _subnet:
+                if (retval.version == _subnet.version) and (retval in _subnet):
                     print(retval.ip)
                     return True
                 else:
@@ -321,7 +312,7 @@ class CliApplication:
                 retval.append(addr)
                 if multiple_match is False:
                     return retval[0]
-            except:
+            except Exception:
                 pass
 
         return retval
@@ -347,7 +338,7 @@ class CliApplication:
                 retval.append(addr)
                 if multiple_match is False:
                     return retval[0]
-            except:
+            except Exception:
                 pass
 
         return retval
@@ -385,11 +376,10 @@ class ArgParser:
     :param input_str: String list of arguments
     :type input_str: str
     """
-    input_str: str = ""
-
-    argv: List = None
-    parser: ArgumentParser = None
-    subparsers: _SubParsersAction = None
+    input_str: str
+    argv: List
+    parser: ArgumentParser
+    subparsers: _SubParsersAction
 
     @logger.catch(reraise=True)
     @typechecked
@@ -599,7 +589,7 @@ class ArgParser:
 
         parser = self.subparsers.add_parser(
             "ipgrep",
-            help="grep for an IPv4 / IPv6 addresses in a subnet")
+            help="grep for IPv4 / IPv6 addresses contained in an IP subnet")
 
         parser_required = parser.add_argument_group("required")
 

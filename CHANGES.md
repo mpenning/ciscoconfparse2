@@ -4,6 +4,21 @@
 - Summary:
     - Insert something here
 
+## Version: 0.7.8
+
+- Released: 2024-03-04
+- Summary:
+    - Fix problem with `echo '172.16.1.1' | ccp ipgrep -s feed:beef::/64'` (i.e. grepping for different IP versions)
+    - Adjust code to address SonarCloud issues introduced in version 0.7.7
+    - Raise an `AddressValueError()` if `IPv6Obj()` initialization fails (to be consistent with `IPv4Obj()` behavior).  This could be a breaking change if someone uses `IPv6Obj()` in a try / except
+    - Other misc code refactoring
+
+## Version: 0.7.7
+
+- Released: 2024-03-03
+- Summary:
+    - Misc code refactoring
+
 ## Version: 0.7.6
 
 - Released: 2024-03-03

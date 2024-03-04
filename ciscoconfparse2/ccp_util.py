@@ -1808,7 +1808,11 @@ class IPv6Obj(object):
             v6_str_rgx = _RGX_IPV6ADDR.search(v6input.strip())
             # Example 'v6_groupdict'
             #     v6_groupdict = {'addr': '2b00:cd80:14:10::1', 'opt1': None, 'opt2': None, 'opt3': None, 'opt4': None, 'opt5': '2b00:cd80:14:10::1', 'opt6': None, 'opt7': None, 'opt8': None, 'opt9': None, 'opt10': None, 'masklen': '64'}
-            v6_groupdict = v6_str_rgx.groupdict()
+            try:
+                v6_groupdict = v6_str_rgx.groupdict()
+            except Exception:
+                raise AddressValueError(f"Could not parse '{v6input}' {type(v6input)} into an IPv6 Address")
+
             for key in ["addr", "opt1", "opt2", "opt3", "opt4", "opt5", "opt6", "opt7", "opt8", "opt9", "opt10", "opt11"]:
                 _ipv6 = v6_groupdict[key]
                 if _ipv6 is not None:
