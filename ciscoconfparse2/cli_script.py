@@ -1,8 +1,7 @@
-from argparse import ArgumentParser, Namespace
+from argparse import ArgumentParser, Namespace, FileType
 from argparse import _SubParsersAction
-from typing import List, Any
+from typing import List, Any, Optional
 import shlex
-import glob
 import sys
 
 from rich.console import Console as RichConsole
@@ -12,6 +11,7 @@ import attrs
 
 from ciscoconfparse2.ciscoconfparse2 import CiscoConfParse
 from ciscoconfparse2.ciscoconfparse2 import Diff
+from ciscoconfparse2.ccp_util import IPv4Obj, IPv6Obj
 
 """This file should not be used anywhere other than the hatch build system and pytest"""
 
@@ -35,6 +35,9 @@ class CliApplication:
     file_list: List[str]
     diff_method: str
     all_children: bool
+    parse: CiscoConfParse
+    ipgrep_file: Any
+    subnet: str
 
     @logger.catch(reraise=True)
     @typechecked
@@ -51,108 +54,305 @@ class CliApplication:
 
         self.diff_method = getattr(args, 'diff_method', "diff")
         self.all_children = getattr(args, 'all_children', False)
+        self.syntax = getattr(args, 'syntax', "ios")
+        self.output_format = getattr(args, 'output', "")
+        self.file_list = getattr(args, 'file', [""])
+        self.ipgrep_file = getattr(args, 'ipgrep_file', None)
+        self.subnet = getattr(args, 'subnet', "0.0.0.0/32")
+
+        # file_list will be None if ipgrep is called with STDIN
+        if self.file_list is None:
+            self.file_list = [""]
 
         self.console = RichConsole()
         self.args = args.args.split(args.separator)
         self.subparser_name = args.command
-        self.syntax = args.syntax
-        self.output_format = args.output
-        self.file_list = args.file
 
-        self.print_command_header()
+        if self.subparser_name != "ipgrep":
+            self.print_command_header()
 
         for filename in self.file_list:
 
-            if self.subparser_name != "diff":
+            # The default parse, empty configuration...
+            self.parse = CiscoConfParse([""])
+
+            # Conditionally print the file name header...
+            if self.subparser_name != "diff" and self.subparser_name != "ipgrep":
                 self.print_file_name_centered(filename)
 
-            parse = CiscoConfParse(
-                        config=filename,
-                        syntax=self.syntax,
-                    )
 
             if self.subparser_name == "parent":
-                if self.output_format == "raw_text":
-                    for obj in parse.find_parent_objects(self.args):
-                        print(obj.text)
-                else:
-                    error = f"--output {self.output_format} is not supported"
-                    logger.critical(error)
-                    raise NotImplementedError(error)
+                self.parse = CiscoConfParse(
+                            config=filename,
+                            syntax=self.syntax,
+                        )
+                self.parent_command()
 
             elif self.subparser_name == "child":
-                if self.output_format == "raw_text":
-                    for obj in parse.find_child_objects(self.args):
-                        print(obj.text)
-                else:
-                    error = f"--output {self.output_format} is not supported"
-                    logger.critical(error)
-                    raise NotImplementedError(error)
+                self.parse = CiscoConfParse(
+                            config=filename,
+                            syntax=self.syntax,
+                        )
+                self.child_command()
 
             elif self.subparser_name == "branch":
-
-                if self.output_format == "raw_text":
-                    for branch in parse.find_object_branches(self.args):
-                        print([obj.text for obj in branch])
-
-                elif self.output_format == "original":
-                    retval = set([])
-                    if len(self.args) == 1:
-                        # Special case for the CLI script... if there is
-                        # only one search term, find all children of it
-                        for ii in parse.find_parent_objects([self.args[0]]):
-                            retval.add(ii)
-                            for jj in ii.all_children:
-                                retval.add(jj)
-
-                    elif len(self.args) > 1:
-                        # There are multiple search terms... limit results to the
-                        # matching arguments...
-                        for branch in parse.find_object_branches(self.args):
-                            for obj in branch:
-                                retval.add(obj)
-
-                    # Dump all results to stdout...
-                    for obj in sorted(retval):
-                        print(obj.text)
-
-                else:
-                    error = f"--output {self.output_format} is not supported"
-                    logger.critical(error)
-                    raise NotImplementedError(error)
+                self.parse = CiscoConfParse(
+                            config=filename,
+                            syntax=self.syntax,
+                        )
+                self.branch_command()
 
             elif self.subparser_name == "diff":
                 # See the if clause, outdented one-level
                 pass
+
+            elif self.subparser_name == "ipgrep":
+
+                # See the if clause, outdented one-level
+                self.ipgrep_command(subnet = self.subnet,
+                                    text = self.ipgrep_file.read())
 
             else:
                 error = f"Unexpected subparser name: {self.subparser_name}"
                 logger.critical(error)
                 raise ValueError(error)
 
-            print()
-
         if self.subparser_name == "diff":
-            diff = Diff(
-                       open(self.file_list[0]).read(),
-                       open(self.file_list[1]).read()
-                   )
+            self.diff_command()
 
-            if self.diff_method == "diff":
+    @logger.catch(reraise=True)
+    def parent_command(self) -> None:
+        if self.output_format == "raw_text":
+            for obj in self.parse.find_parent_objects(self.args):
+                print(obj.text)
+        else:
+            error = f"--output {self.output_format} is not supported"
+            logger.critical(error)
+            raise NotImplementedError(error)
 
-                for line in diff.get_diff():
-                    print(line)
+    @logger.catch(reraise=True)
+    def child_command(self) -> None:
+        if self.output_format == "raw_text":
+            for obj in self.parse.find_child_objects(self.args):
+                print(obj.text)
+        else:
+            error = f"--output {self.output_format} is not supported"
+            logger.critical(error)
+            raise NotImplementedError(error)
 
-            elif self.diff_method == "rollback":
+    @logger.catch(reraise=True)
+    def branch_command(self) -> None:
 
-                for line in diff.get_rollback():
-                    print(line)
+        if self.output_format == "raw_text":
 
-            else:
-                error = f"Unsupported diff method: {self.diff_method}"
+            if len(self.args) == 1:
+                error = f"'ccp branch -o raw_text' requires at least two -a args.  Use 'ccp -o original' if calling with only one 'ccp branch -a' term"
+                logger.critical(error)
+                raise NotImplementedError(error)
+
+            for branch in self.parse.find_object_branches(self.args):
+                print([obj.text for obj in branch])
+
+        elif self.output_format == "original":
+            retval = set([])
+            if len(self.args) == 1:
+                # Special case for the CLI script... if there is
+                # only one search term, find all children of it
+                for ii in self.parse.find_parent_objects([self.args[0]]):
+                    retval.add(ii)
+                    for jj in ii.all_children:
+                        retval.add(jj)
+
+            elif len(self.args) > 1:
+                # There are multiple search terms... limit results to the
+                # matching arguments...
+                for branch in self.parse.find_object_branches(self.args):
+                    for obj in branch:
+                        retval.add(obj)
+
+            # Dump all results to stdout...
+            for obj in sorted(retval):
+                print(obj.text)
+
+        else:
+            error = f"--output {self.output_format} is not supported"
+            logger.critical(error)
+            raise NotImplementedError(error)
+
+    @logger.catch(reraise=True)
+    def diff_command(self) -> None:
+        diff = Diff(
+                   open(self.file_list[0]).read(),
+                   open(self.file_list[1]).read()
+               )
+
+        if self.diff_method == "diff":
+
+            for line in diff.get_diff():
+                print(line)
+
+        elif self.diff_method == "rollback":
+
+            for line in diff.get_rollback():
+                print(line)
+
+        else:
+            error = f"Unsupported diff method: {self.diff_method}"
+            logger.critical(error)
+            raise ValueError(error)
+
+    @logger.catch(reraise=True)
+    @typechecked
+    def ipgrep_command(self,
+                       subnet: str,
+                       text: str,
+                       version: int = 0,
+                       resplit: Optional[str] = None) -> bool:
+        """grep for a subnet in the text"""
+
+        if not int(version) in set([0, 4, 6]):
+            error = f"version: {version} must be one of: 0, 4, 6"
+            logger.critical(error)
+            raise ValueError(error)
+
+        mode = -1
+        if int(version) == 0:
+            try:
+                mode = 4
+                _subnet = IPv4Obj(subnet)
+            except:
+                mode = 6
+                _subnet = IPv6Obj(subnet)
+
+            if mode == -1:
+                error = f"subnet: {subnet} is not a valid IPv4 or IPv6 subnet"
                 logger.critical(error)
                 raise ValueError(error)
 
+        elif int(version) == 4:
+            mode = 4
+            _subnet = IPv4Obj(subnet)
+
+        elif int(version) == 6:
+            mode = 6
+            _subnet = IPv6Obj(subnet)
+
+        else:
+            error = f"version: {version} is not a valid version"
+            logger.critical(error)
+            raise ValueError(error)
+
+        if mode == 4:
+            retval = self.search_for_ipv4_addr(text = text,
+                                               resplit = resplit,
+                                               multiple_match = True)
+            if retval == []:
+                # retval == [] is a special case where the text
+                # had an invalid ip address like 172.16.355555
+                return False
+
+            elif isinstance(retval, list):
+                # Multiple IP address mode...
+                found = False
+                for addr in retval:
+                    if addr in _subnet:
+                        found = True
+                        print(addr.ip)
+                return found
+
+            elif isinstance(retval, str):
+                # First match IP address mode...
+                if retval in _subnet:
+                    print(retval.ip)
+                    return True
+                else:
+                    return False
+
+        elif mode == 6:
+            retval = self.search_for_ipv6_addr(text = text,
+                                               resplit = resplit,
+                                               multiple_match = True)
+
+            if retval == []:
+                # retval == [] is a special case where the text
+                # had an invalid ip address like 172.16.355555
+                return False
+
+            elif isinstance(retval, list):
+                # Multiple IP address mode...
+                found = False
+                for addr in retval:
+                    if addr in _subnet:
+                        found = True
+                        print(addr.ip)
+                return found
+
+            elif isinstance(retval, str):
+                # First match IP address mode...
+                if retval in _subnet:
+                    print(retval.ip)
+                    return True
+                else:
+                    return False
+
+        else:
+            error = f"mode: {mode} is invalid"
+            logger.critical(error)
+            raise ValueError(error)
+
+    @logger.catch(reraise=True)
+    @typechecked
+    def search_for_ipv4_addr(self,
+                             text: str,
+                             resplit: Optional[str] = None,
+                             multiple_match: bool = False):
+        """grep for an IPv4 address in text, optionally splitting on a regex string in resplit"""
+        retval = list()
+
+        if resplit is None:
+            # split on spaces
+            words = text.split()
+        else:
+            words = re.split(resplit, text)
+
+        for word in words:
+            try:
+                addr = IPv4Obj(word)
+                retval.append(addr)
+                if multiple_match is False:
+                    return retval[0]
+            except:
+                pass
+
+        return retval
+
+    @logger.catch(reraise=True)
+    @typechecked
+    def search_for_ipv6_addr(self,
+                             text: str,
+                             resplit: Optional[str] = None,
+                             multiple_match: bool = False):
+        """grep for an IPv6 address in text, optionally splitting on a regex string in resplit"""
+        retval = list()
+
+        if resplit is None:
+            # split on spaces
+            words = text.split()
+        else:
+            words = re.split(resplit, text)
+
+        for word in words:
+            try:
+                addr = IPv6Obj(word)
+                retval.append(addr)
+                if multiple_match is False:
+                    return retval[0]
+            except:
+                pass
+
+        return retval
+
+    @logger.catch(reraise=True)
     def print_command_header(self) -> None:
         """Print the command header including what is searched and the search terms"""
 
@@ -170,7 +370,7 @@ class CliApplication:
     @logger.catch(reraise=True)
     @typechecked
     def print_file_name_centered(self,
-                                  filename: str) -> None:
+                                 filename: str) -> None:
         """Print the filename colored and centered"""
 
         _width = self.console.width
@@ -218,6 +418,7 @@ class ArgParser:
         self.build_command_child()
         self.build_command_branch()
         self.build_command_diff()
+        self.build_command_ipgrep()
 
     def __repr__(self) -> str:
         return f"""<ArgParser '{" ".join(self.argv)}'>"""
@@ -391,6 +592,32 @@ class ArgParser:
             choices=['ios', 'nxos', 'iosxr', 'asa', 'junos'],
             default='ios',
             help="Configuration file syntax, defaults to 'ios'")
+
+    @logger.catch(reraise=True)
+    def build_command_ipgrep(self) -> None:
+        """An IPv4 / IPv6 address in subnet grep command"""
+
+        parser = self.subparsers.add_parser(
+            "ipgrep",
+            help="grep for an IPv4 / IPv6 addresses in a subnet")
+
+        parser_required = parser.add_argument_group("required")
+
+        # Accept either a file or STDIN
+        # https://stackoverflow.com/a/11038508/667301
+        parser_required.add_argument(
+            "ipgrep_file",
+            nargs = '?',
+            type = FileType('r'),
+            # Optionally handle stdin if no file is specified...
+            # https://stackoverflow.com/a/61512890/667301
+            default=(None if sys.stdin.isatty() else sys.stdin),
+            help = "Grep for IPs in these files, defaults to STDIN.")
+
+        parser_required.add_argument(
+            "-s", "--subnet",
+            type=str,
+            help="Subnet address / mask")
 
 if __name__ == "__main__":
     print(args)
