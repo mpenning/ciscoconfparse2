@@ -4,6 +4,19 @@
 - Summary:
     - Insert something here
 
+## Version: 0.7.9
+
+- Released: 2024-03-05
+- Summary:
+    - Add `--unique` flag to `ccp ipgrep`
+    - Add `--line` flag to `ccp ipgrep`
+    - Add `--word_delimiter` argument to `ccp ipgrep`
+    - Prevent `--subnet` from being used more than once with `ccp ipgrep`
+    - Add tests for `ccp` utility
+    - Bump `dnspython` and `tomlkit` dependency versions to the latest
+    - Misc code refactoring
+    - More documentation updates
+
 ## Version: 0.7.8
 
 - Released: 2024-03-04

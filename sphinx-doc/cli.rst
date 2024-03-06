@@ -10,7 +10,7 @@ Overview
 ciscoconfparse2 adds a CLI command to search and diff configurations.  The
 syntax follows the API.
 
-All CLI examples will use this example configuration...
+All CLI examples will use this configuration...
 
 .. code-block:: none
 
@@ -26,20 +26,21 @@ All CLI examples will use this example configuration...
 Example 1: Find parent lines
 ----------------------------
 
-If you want to find ``router bgp 65111``, use this CLI command
+If you want to find ``router bgp 65111`` (which has the child: ``bgp router-id 192.0.2.200``) , use this CLI command...
 
 .. code-block:: none
 
-   $ ccp parent -a 'router bgp' conf/path/or/file/glob.conf
+   $ ccp parent -a 'router bgp,router-id' conf/path/or/file/glob.conf
 
-The output will be:
+The parent will be printed, and you should see:
 
 .. code-block:: none
 
    Syntax      : ios
    Returing    : parent text
-   Ouput as    : raw_text
+   Output as   : raw_text
      parent: router bgp
+     child : router-id
    ---------- file: conf/path/or/file/glob.conf ----------
    router bgp 65111
 
@@ -63,14 +64,16 @@ If you want to find ``default-information originate``, use this CLI command
 
    $ ccp child -a 'router bgp,address-family,default-information' conf/path/or/file/glob.conf
 
-The output will be:
+The last child will be printed, and you should see:
 
 .. code-block:: none
 
    Syntax      : ios
    Returing    : child text
-   Ouput as    : raw_text
+   Output as   : raw_text
      parent: router bgp
+     child : address-family
+     child : default-information
    ---------- file: conf/path/or/file/glob.conf ----------
    default-information originate
 
@@ -90,7 +93,7 @@ That CLI command is the equivalent of running this
 Example 3: Find branches as lists
 ---------------------------------
 
-A branch is just a list of all parents and the child text.  To find the branch
+A branch is just a list of all matching parent and child text lines.  To find the branch
 for 'default-information originate'...
 
 .. code-block:: none
@@ -103,10 +106,10 @@ The output will be:
 
    Syntax      : ios
    Returing    : branch text
-   Ouput as    : raw_text
+   Output as   : raw_text
      parent: router bgp
-     child : address-family ipv4 unicast
-     child : default-information originate
+     child : address-family
+     child : default-information
    ---------- file: conf/path/or/file/glob.conf ----------
    ['router bgp 65111', ' address-family ipv4 unicast', '  default-information originate']
 
@@ -139,7 +142,7 @@ This will print...
 
    Syntax      : ios
    Returing    : branch text
-   Ouput as    : original
+   Output as   : original
      parent: router bgp
    ---------- file: conf/path/or/file/glob.conf ----------
    router bgp 65111

@@ -2,7 +2,7 @@
 
 [project]
 name = "ciscoconfparse2"
-version = "0.7.8"
+version = "0.7.9"
 description = "Parse, Audit, Query, Build, and Modify Cisco IOS-style and JunOS-style configs"
 readme = "README.md"
 license = "GPL-3.0-only"
@@ -11,10 +11,10 @@ dependencies = [
   "attrs==23.2.0",
   "passlib==1.7.4",
   "scrypt==0.8.24",
-  "dnspython==2.4.2",
+  "dnspython==2.6.1",
   "macaddress==2.0.2",
   "loguru==0.7.2",
-  "tomlkit==0.12.3",
+  "tomlkit==0.12.4",
   "pyyaml==6.0.1",
   "hier_config==2.2.3",
   "pyparsing==3.1.1",

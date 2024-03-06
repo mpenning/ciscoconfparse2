@@ -1702,69 +1702,103 @@ class BaseCfgLine(object):
             logger.info(f"{self}.re_list_iter_typed(`regex`={regex}, `group`={group}, `result_type`={result_type}, `recurse`={recurse}, `groupdict`={groupdict}, `debug`={debug}) was called")
 
         retval = list()
+
         if groupdict is None:
-            if debug is True:
-                logger.debug(f"    {self}.re_list_iter_typed() is checking with `groupdict`=None")
-
-            # Append to return values if the parent line matches the regex...
-            mm = re.search(regex, self.text)
-            if isinstance(mm, re.Match):
-                retval.append(result_type(mm.group(group)))
-
-            if recurse is False:
-                for cobj in self.children:
-                    if debug is True:
-                        logger.debug(f"    {self}.re_list_iter_typed() is checking match of r'''{regex}''' on -->{cobj}<--")
-                    mm = re.search(regex, cobj.text)
-                    if isinstance(mm, re.Match):
-                        retval.append(result_type(mm.group(group)))
-            else:
-                for cobj in self.all_children:
-                    if debug is True:
-                        logger.debug(f"    {self}.re_list_iter_typed() is checking match of r'''{regex}''' on -->{cobj}<--")
-                    mm = re.search(regex, cobj.text)
-                    if isinstance(mm, re.Match):
-                        retval.append(result_type(mm.group(group)))
-            return retval
+            return self.re_list_iter_typed_groupdict_none(regex = regex,
+                                                          group = group,
+                                                          result_type = result_type,
+                                                          groupdict = groupdict,
+                                                          recurse = recurse,
+                                                          debug = debug)
         elif isinstance(groupdict, dict) is True:
-            if debug is True:
-                logger.debug(f"    {self}.re_list_iter_typed() is checking with `groupdict`={groupdict}")
+            return self.re_list_iter_typed_groupdict_dict(regex = regex,
+                                                          group = group,
+                                                          result_type = result_type,
+                                                          groupdict = groupdict,
+                                                          recurse = recurse,
+                                                          debug = debug)
+        else:
+            error = f"`groupdict` must be None or a `dict`, but we got {type(groupdict)}."
+            logger.critical(error)
+            raise ValueError(error)
 
-            # Return the result if the parent line matches the regex...
-            mm = re.search(regex, self.text)
-            if isinstance(mm, re.Match):
+    @logger.catch(reraise=True)
+    def re_list_iter_typed_groupdict_none(self,
+                                          regex: Union[str, re.Pattern],
+                                          group: int=1,
+                                          result_type: type=str,
+                                          groupdict: dict=None,
+                                          recurse: bool=True,
+                                          debug: bool=False,):
+        if debug is True:
+            logger.debug(f"    {self}.re_list_iter_typed_groupdict_none() is checking with `groupdict`=None")
+
+        retval = list()
+
+        # Append to return values if the parent line matches the regex...
+        mm = re.search(regex, self.text)
+        if isinstance(mm, re.Match):
+            retval.append(result_type(mm.group(group)))
+
+        if recurse is False:
+            for cobj in self.children:
+                if debug is True:
+                    logger.debug(f"    {self}.re_list_iter_typed() is checking match of r'''{regex}''' on -->{cobj}<--")
+                mm = re.search(regex, cobj.text)
+                if isinstance(mm, re.Match):
+                    retval.append(result_type(mm.group(group)))
+        else:
+            for cobj in self.all_children:
+                if debug is True:
+                    logger.debug(f"    {self}.re_list_iter_typed() is checking match of r'''{regex}''' on -->{cobj}<--")
+                mm = re.search(regex, cobj.text)
+                if isinstance(mm, re.Match):
+                    retval.append(result_type(mm.group(group)))
+        return retval
+
+    @logger.catch(reraise=True)
+    def re_list_iter_typed_groupdict_dict(self,
+                                          regex: Union[str, re.Pattern],
+                                          group: int=1,
+                                          result_type: type=str,
+                                          groupdict: dict=None,
+                                          recurse: bool=True,
+                                          debug: bool=False,):
+        if debug is True:
+            logger.debug(f"    {self}.re_list_iter_typed() is checking with `groupdict`={groupdict}")
+
+        # Return the result if the parent line matches the regex...
+        mm = re.search(regex, self.text)
+        if isinstance(mm, re.Match):
+            tmp = self.get_regex_typed_dict(
+                regex=mm,
+                type_dict=groupdict,
+                debug=debug,
+            )
+            retval.append(tmp)
+
+        if recurse is False:
+            for cobj in self.children:
+                mm = re.search(regex, cobj.text)
                 tmp = self.get_regex_typed_dict(
                     regex=mm,
                     type_dict=groupdict,
                     debug=debug,
                 )
                 retval.append(tmp)
+            return retval
 
-            if recurse is False:
-                for cobj in self.children:
-                    mm = re.search(regex, cobj.text)
+        else:
+            for cobj in self.all_children:
+                mm = re.search(regex, cobj.text)
+                if isinstance(mm, re.Match):
                     tmp = self.get_regex_typed_dict(
                         regex=mm,
                         type_dict=groupdict,
                         debug=debug,
                     )
                     retval.append(tmp)
-                return retval
-            else:
-                for cobj in self.all_children:
-                    mm = re.search(regex, cobj.text)
-                    if isinstance(mm, re.Match):
-                        tmp = self.get_regex_typed_dict(
-                            regex=mm,
-                            type_dict=groupdict,
-                            debug=debug,
-                        )
-                        retval.append(tmp)
-                return retval
-        else:
-            error = f"`groupdict` must be None or a `dict`, but we got {type(groupdict)}."
-            logger.critical(error)
-            raise ValueError(error)
+            return retval
 
     # On BaseCfgLine()
     @property

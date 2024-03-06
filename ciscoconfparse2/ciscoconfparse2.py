@@ -2619,16 +2619,16 @@ debug={debug},
     #   List[List[BaseCfgLine]]
     def find_object_branches(self,
                              branchspec: Union[tuple[str, ...], List[str]] = (),
-                             regex_flags: Union[re.RegexFlag,int] = 0,
+                             regex_flags: Union[re.RegexFlag, int] = 0,
                              regex_groups: bool = False,
                              empty_branches: bool = False,
                              reverse: bool = False,
                              debug: int = 0,) -> List[Any]:
-        r"""Iterate over a tuple of regular expression strings in `branchspec` and return matching objects in a list of lists (consider it similar to a table of matching config objects). `branchspec` expects to start at some ancestor and walk through the nested object hierarchy (with no limit on depth).
+        r"""A branch is just a list of all matching parent and child text lines.  This method iterates over a tuple of regular expression strings in `branchspec` and returns matching objects in a list of lists (consider it similar to a table of matching config objects). `branchspec` expects to start at a parent line and walk through the nested child lines below it (with no limit on depth).
 
         Previous CiscoConfParse() methods only handled a single parent regex and single child regex (such as :func:`~ciscoconfparse2.CiscoConfParse.find_objects`).
 
-        Transcend past one-level of parent-child relationship parsing to include multiple nested 'branches' of a single family (i.e. parents, children, grand-children, great-grand-children, etc).  The result of handling longer regex chains is that it flattens what would otherwise be nested loops in your scripts; this makes parsing heavily-nested configuratations like Juniper, Palo-Alto, and F5 much simpler.  Of course, there are plenty of applications for "flatter" config formats like IOS.
+        Use this method to transcend past one-level of parent-child relationship parsing to include nested 'branches' statements in a single family (i.e. parents, children, grand-children, great-grand-children, etc).  The result of handling longer regex chains is that it flattens what would otherwise be nested loops in your scripts; this makes parsing heavily-nested configuratations like Juniper, Palo-Alto, and F5 much simpler.  Of course, there are plenty of applications for normally "flatter" config formats like IOS.
 
         Return a list of lists (of object 'branches') which are nested to the same depth required in `branchspec`.  However, unlike most other CiscoConfParse() methods, return an explicit `None` if there is no object match.  Returning `None` allows a single search over configs that may not be uniformly nested in every branch.
 
@@ -3265,7 +3265,7 @@ debug={debug},
 
            Do not set ``childspec`` if searching with a tuple of strings or list of strings.
 
-        This example finds the object for "ge-0/0/0" under "interfaces" in the
+        This example finds the object for "ge-0/0/1" under "interfaces" in the
         following config...
 
         .. parsed-literal::
@@ -3296,9 +3296,9 @@ debug={debug},
 
             <IOSCfgLine # 7 '    ge-0/0/1' (parent is # 0)>
 
-        We do this by quering `find_child_objects()`; we set our
-        parent as `^\s*interface` and set the child as
-        `^\s+ge-0/0/1`.
+        We do this by quering ``find_child_objects()``; we set our
+        parent as ``^\s*interface`` and set the child as
+        ``^\s+ge-0/0/1``.
 
         .. code-block:: python
            :emphasize-lines: 22,23
