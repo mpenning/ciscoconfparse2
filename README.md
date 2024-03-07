@@ -16,9 +16,16 @@ Juniper, Palo Alto, etc); it is the next generation of
 [ciscoconfparse][64], which was the primary development package
 from 2007 until 2023.
 
-### Simple Usage
+### CLI Tool
 
-The following code will parse a configuration stored in
+[ciscoconfparse2][17] distributes a [CLI tool][67] that will diff and grep various
+network configuration or text files.
+
+### Simple Python API Usage
+
+[ciscoconfparse2][17] also offers a Python API.
+
+This example code will parse a configuration stored in
 `tests/fixtures/configs/sample_02.ios` and select interfaces that are shutdown.
 
 In this case, the parent is a line containing `interface` and the child is a
@@ -65,7 +72,7 @@ Shutdown: FastEthernet0/22
 Shutdown: VLAN1
 ```
 
-### Complex Example
+### Complex Python API Example
 
 The following code will parse a configuration stored in
 `tests/fixtures/configs/sample_08.ios` and will find the
@@ -406,3 +413,4 @@ The word \"Cisco\" is a registered trademark of [Cisco Systems][27].
   [64]: https://github.com/mpenning/ciscoconfparse
   [65]: https://pypi.org/project/ciscoconfparse/1.9.41/
   [66]: https://raw.githubusercontent.com/mpenning/ciscoconfparse2/main/sphinx-doc/_static/ciscoconfparse_logo_bw_01.png
+  [67]: http://www.pennington.net/py/ciscoconfparse2/cli.html
