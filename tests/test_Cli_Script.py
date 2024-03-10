@@ -37,11 +37,11 @@ def testValues_ccp_script_entry_cliapplication_args_01():
     assert cliapp.args == ['']
 
 def testValues_ccp_script_entry_cliapplication_ipgrep_01():
-    """Ensure that CliApplication() ipgrep with the unique flag set is a list of six IP addresses"""
+    """Ensure that CliApplication() ipgrep with the unique flag clear is a list of six IP addresses"""
     cliapp = ccp_script_entry("ccp_faked ipgrep -s 172.16.1.5/32 fixtures/configs/sample_01.ios")
     assert len(cliapp.stdout) == 6
     assert cliapp.unique is False
-    assert cliapp.subnet == '172.16.1.5/32'
+    assert cliapp.subnets == '172.16.1.5/32'
     assert cliapp.stdout == ['172.16.1.5',
                              '172.16.1.5',
                              '172.16.1.5',
@@ -50,12 +50,61 @@ def testValues_ccp_script_entry_cliapplication_ipgrep_01():
                              '172.16.1.5',]
 
 def testValues_ccp_script_entry_cliapplication_ipgrep_02():
+    """Ensure that CliApplication() ipgrep with the unique flag clear is a list of seven IP addresses"""
+    cliapp = ccp_script_entry("ccp_faked ipgrep -s 172.16.1.5,172.16.1.50 fixtures/configs/sample_01.ios")
+    assert len(cliapp.stdout) == 7
+    assert cliapp.unique is False
+    assert cliapp.subnets == '172.16.1.5,172.16.1.50'
+    assert cliapp.stdout == ['172.16.1.50',
+                             '172.16.1.5',
+                             '172.16.1.5',
+                             '172.16.1.5',
+                             '172.16.1.5',
+                             '172.16.1.5',
+                             '172.16.1.5',]
+
+def testValues_ccp_script_entry_cliapplication_ipgrep_03():
+    """Ensure that CliApplication() ipgrep with the unique flag clear is a list of eight IPv6 addresses"""
+    cliapp = ccp_script_entry("ccp_faked ipgrep -s fd01::/16 fixtures/configs/sample_08.ios")
+    assert len(cliapp.stdout) == 8
+    assert cliapp.unique is False
+    assert cliapp.subnets == 'fd01::/16'
+    assert cliapp.stdout == ['fd01:ab00::',
+                             'fd01:abff::1:1',
+                             'fd01:dead:beef::1',
+                             'fd01:ab00::',
+                             'fd01:ab01::',
+                             'fd01:ab01::',
+                             'fd01:ab10::',
+                             'fd01:ab10::',]
+
+def testValues_ccp_script_entry_cliapplication_ipgrep_04():
     """Ensure that CliApplication() ipgrep with the unique flag set is a list of one IP address"""
     cliapp = ccp_script_entry("ccp_faked ipgrep -u -s 172.16.1.5/32 fixtures/configs/sample_01.ios")
     assert len(cliapp.stdout) == 1
     assert cliapp.unique is True
-    assert cliapp.subnet == '172.16.1.5/32'
+    assert cliapp.subnets == '172.16.1.5/32'
     assert cliapp.stdout == ['172.16.1.5',]
+
+def testValues_ccp_script_entry_cliapplication_ipgrep_05():
+    """Ensure that CliApplication() ipgrep with the unique flag set is a list of two IP addresses"""
+    cliapp = ccp_script_entry("ccp_faked ipgrep -u -s 172.16.1.5,172.16.1.50 fixtures/configs/sample_01.ios")
+    assert len(cliapp.stdout) == 2
+    assert cliapp.unique is True
+    assert cliapp.subnets == '172.16.1.5,172.16.1.50'
+    assert cliapp.stdout == ['172.16.1.50', '172.16.1.5']
+
+def testValues_ccp_script_entry_cliapplication_ipgrep_06():
+    """Ensure that CliApplication() ipgrep with the unique flag set is a list of six IPv6 addresses"""
+    cliapp = ccp_script_entry("ccp_faked ipgrep -u -s fd01::/16 fixtures/configs/sample_08.ios")
+    assert len(cliapp.stdout) == 5
+    assert cliapp.unique is True
+    assert cliapp.subnets == 'fd01::/16'
+    assert cliapp.stdout == ['fd01:ab00::',
+                             'fd01:abff::1:1',
+                             'fd01:dead:beef::1',
+                             'fd01:ab01::',
+                             'fd01:ab10::',]
 
 def testValues_ccp_script_entry_cliapplication_branch_01():
     """Ensure that CliApplication() branch as original output flag set is a list of one IP address"""

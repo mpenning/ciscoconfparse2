@@ -157,7 +157,65 @@ case that is local to the CLI script.
 
 .. note::
 
-   When searching with only one term, this is a special case of the CLI
-   script.  If you only use one branch search term, all configuration children
-   matching the configuation parent will be shown (the parent is included as well).
+   When searching with only one branch  search term, this is a special case of 
+   the CLI script.  If you only use one branch search term, all configuration 
+   children matching the configuation parent will be shown (the parent is 
+   included as well).
 
+
+Example 5: Find IP addresses within a CIDR range
+------------------------------------------------
+
+``ccp ipgrep`` can find IP addresses in a CIDR range.  By default, 
+``ccp ipgrep`` splits words on whitespace and checks whether a word is an IP
+address and that it falls within the requested CIDR range.
+
+For instance, assume we have the following file contents:
+
+.. code-block:: none
+
+   This file contains the addresses: 172.16.1.1 172.16.1.1 and 172.16.1.2
+
+If you run this command, you'll get both IP addresses printed to
+STDOUT: ``ccp ipgrep -s 172.16.1.0/24 path/to/file.txt``.
+
+.. code-block:: none
+
+   $ ccp ipgrep -s 172.16.1.0/24 path/to/file.txt
+   172.16.1.1
+   172.16.1.1
+   172.16.1.2
+   $
+
+As you see, you can get duplicate IP addresses unless you
+use ``ccp ipgrep -u -s 172.16.1.0/24 path/to/file.txt``.  The
+``-u`` option stands for ``--unique``.
+
+The default mode is just listing the IP addresses, but you can also
+get matching lines
+with ``ccp ipgrep -l -s 172.16.1.0/24 path/to/file.txt``.
+
+All the options for ``ccp ipgrep`` are:
+
+
+.. code-block:: none
+
+   $ ccp ipgrep -h
+   usage: ccp ipgrep [-h] [-s SUBNETS] [-w WORD_DELIMITER] [-l | -u] [ipgrep_file]
+
+   options:
+     -h, --help            show this help message and exit
+
+   required:
+     ipgrep_file           Grep for IPs in these files, defaults to STDIN.
+       -s SUBNETS, --subnets SUBNETS
+                           Comma-separated IPv4 and/or IPv6 addresses or prefixes, 
+                           such as '192.0.2.1,2001:db8::/32'. If the mask is not 
+                           specified, a host-mask assumed.
+
+   optional:
+     -w WORD_DELIMITER, --word_delimiter WORD_DELIMITER
+                           Word delimiter regular expression, defaults to all whitespace. 
+                           Join multiple regex delimiters with a pipe character.
+     -l, --line            Enable line mode (return lines instead of only returning the IP)
+     -u, --unique          Only print unique IPs (remove duplicates)

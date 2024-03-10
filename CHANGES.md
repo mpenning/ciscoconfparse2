@@ -4,6 +4,14 @@
 - Summary:
     - Insert something here
 
+## Version: 0.7.10
+
+- Released: 2024-03-10
+- Summary:
+    - Modify `ccp ipgrep` to support multiple subnets
+    - Add more `ccp ipgrep` tests to cover multiple subnets
+    - More documentation updates
+
 ## Version: 0.7.9
 
 - Released: 2024-03-05

@@ -21,14 +21,8 @@ from ciscoconfparse2.ccp_util import IPv4Obj, IPv6Obj
 def ccp_script_entry(cli_args: str = ""):
     """The ccp script entry point.  CLI args MUST include the actual ccp command"""
 
-    #if cli_args[-3:] == 'ccp':
-    if cli_args == "":
-        return_retval = False
-        # handle the normal ccp CLI application
-        parser = ArgParser()
-
-    elif cli_args[0:9] == 'ccp_faked':
-        # ccp_faked is what I use in pytest to fake a CLI call to ccp...
+    if cli_args[0:9] == 'ccp_faked':
+        # Return retval only for pytest calls...
         return_retval = True
 
         # The first element of sys.argv is a string list of arguments
@@ -43,8 +37,11 @@ def ccp_script_entry(cli_args: str = ""):
         # The ccp_fake test cases fall through here...
         parser = ArgParser()
     else:
-        # We got an unexpected input...
-        raise ValueError(cli_args)
+        # Return retval only for pytest calls...
+        return_retval = False
+
+        # handle the normal ccp CLI application
+        parser = ArgParser()
 
     args = parser.parse()
 
@@ -292,10 +289,10 @@ class ArgParser:
             help = "Grep for IPs in these files, defaults to STDIN.")
 
         parser_required.add_argument(
-            "-s", "--subnet",
+            "-s", "--subnets",
             type=str,
             action=OnlyOneArgument,
-            help="Subnet address / mask")
+            help="Comma-separated IPv4 and/or IPv6 addresses or prefixes, such as '192.0.2.1,2001:db8::/32'.  If the mask is not specified, a host-mask assumed.")
 
         parser_optional = parser.add_argument_group("optional")
 
@@ -336,7 +333,7 @@ class CliApplication:
     line: bool
     word_delimiter: str
     ipgrep_file: Any
-    subnet: str
+    subnets: str
     parse: CiscoConfParse
 
     @logger.catch(reraise=True)
@@ -369,7 +366,7 @@ class CliApplication:
         self.all_children = getattr(args, 'all_children', False)
         self.unique = getattr(args, 'unique', False)
         self.ipgrep_file = getattr(args, 'ipgrep_file', None)
-        self.subnet = getattr(args, 'subnet', "0.0.0.0/32")
+        self.subnets = getattr(args, 'subnets', "0.0.0.0/32,::0/0")
         self.line = getattr(args, 'line', False)
         self.word_delimiter = getattr(args, 'word_delimiter', r"\s+")
 
@@ -416,7 +413,7 @@ class CliApplication:
                     self.arg_parser.parser.error(error)
 
                 # See the if clause, outdented one-level
-                self.ipgrep_command(subnet = self.subnet,
+                self.ipgrep_command(subnets = self.subnets,
                                     text = self.ipgrep_file.read())
 
             else:
@@ -518,44 +515,49 @@ class CliApplication:
     @logger.catch(reraise=True)
     @typechecked
     def ipgrep_command(self,
-                       subnet: Union[str, None],
+                       subnets: Union[str, None],
                        text: str,) -> bool:
         """grep for a subnet in the text"""
 
         # Throw an error if ccp ipgrep -s is missing
-        if subnet is None:
+        if subnets is None:
             error = "The -s argument is required"
             self.arg_parser.parser.error(error)
 
         retval = []
 
-        mode = -1
-        try:
-            _subnet = IPv4Obj(subnet)
-            mode = 4
-        except Exception:
-            pass
+        _subnets = set([])
 
-        try:
-            _subnet = IPv6Obj(subnet)
-            mode = 6
-        except Exception as eee:
-            pass
-            
+        for subnet in subnets.split(","):
+            mode = -1
+            try:
+                _subnet = IPv4Obj(subnet)
+                mode = 4
+            except Exception:
+                pass
 
-        if mode == -1:
-            error = f"subnet: {subnet} is not a valid IPv4 or IPv6 subnet"
-            logger.critical(error)
-            raise ValueError(error)
+            try:
+                _subnet = IPv6Obj(subnet)
+                mode = 6
+            except Exception as eee:
+                pass
+                
+
+            if mode == -1:
+                error = f"subnet: {subnet} is not a valid IPv4 or IPv6 subnet"
+                logger.critical(error)
+                raise ValueError(error)
+            else:
+                _subnets.add(_subnet)
 
         if not self.line:
             words = re.split(self.word_delimiter, text)
-            retval = self.find_ip46_addr_matches(_subnet,
+            retval = self.find_ip46_addr_matches(_subnets,
                                                  potential_matches = words,
                                                  unique_matches = self.unique)
         else:
             lines = text.splitlines()
-            retval = self.find_ip46_line_matches(subnet = _subnet,
+            retval = self.find_ip46_line_matches(subnets = _subnets,
                                                  potential_matches = lines,
                                                  unique_matches = self.unique)
         if retval == []:
@@ -578,7 +580,7 @@ class CliApplication:
     @logger.catch(reraise=True)
     @typechecked
     def find_ip46_addr_matches(self,
-                               subnet: Union[IPv4Obj, IPv6Obj],
+                               subnets: set[Union[IPv4Obj, IPv6Obj]],
                                potential_matches: List[str],
                                unique_matches: bool) -> List:
         """Walk the IPv4 / IPv6 instances in potential_matches, return the list of addrs matching subnet"""
@@ -586,29 +588,30 @@ class CliApplication:
         retval = []
 
         for tmp in potential_matches:
-            try:
-                if subnet.version == 4:
-                    addr = IPv4Obj(tmp)
-                else:
-                    addr = IPv6Obj(tmp)
-            except Exception:
-                # We didn't get a proper address... bail on this iteration
-                continue
-            if (addr.version == subnet.version) and (addr in subnet):
-                found = True
-                if unique_matches:
-                    # Append if not already in retval...
-                    if str(addr.ip) not in retval:
+            for subnet in subnets:
+                try:
+                    if subnet.version == 4:
+                        addr = IPv4Obj(tmp)
+                    else:
+                        addr = IPv6Obj(tmp)
+                except Exception:
+                    # We didn't get a proper address... bail on this iteration
+                    continue
+                if (addr.version == subnet.version) and (addr in subnet):
+                    found = True
+                    if unique_matches:
+                        # Append if not already in retval...
+                        if str(addr.ip) not in retval:
+                            retval.append(str(addr.ip))
+                    else:
+                        # Append unconditionally
                         retval.append(str(addr.ip))
-                else:
-                    # Append unconditionally
-                    retval.append(str(addr.ip))
         return retval
 
     @logger.catch(reraise=True)
     @typechecked
     def find_ip46_line_matches(self,
-                               subnet: Union[IPv4Obj, IPv6Obj],
+                               subnets: set[Union[IPv4Obj, IPv6Obj]],
                                potential_matches: List[str],
                                unique_matches: bool) -> List:
         """Walk the IPv4 / IPv6 instances in potential_matches, return the list of lines with a word matching subnet"""
@@ -616,22 +619,28 @@ class CliApplication:
         retval = []
 
         for line in potential_matches:
+            line_appended = False
             # Split words on whitespace...
             words = re.split(self.word_delimiter, line)
             for word in words:
-                try:
-                    if subnet.version == 4:
-                        addr = IPv4Obj(word)
-                    else:
-                        addr = IPv6Obj(word)
-                except Exception:
-                    # We didn't get a proper address... bail on this iteration
-                    continue
+                for subnet in subnets:
+                    try:
+                        if subnet.version == 4:
+                            addr = IPv4Obj(word)
+                        else:
+                            addr = IPv6Obj(word)
+                    except Exception:
+                        # We didn't get a proper address... bail on this iteration
+                        continue
 
-                if (addr.version == subnet.version) and (addr in subnet):
-                    found = True
-                    retval.append(line)
-                    break
+                    if (addr.version == subnet.version) and (addr in subnet):
+                        found = True
+                        # append the line with the matching text.  This appends on
+                        # the first match and breaks out of the loop
+                        if not line_appended:
+                            retval.append(line)
+                            line_appended = True
+                            break
         return retval
 
     @logger.catch(reraise=True)
