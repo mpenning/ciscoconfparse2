@@ -38,7 +38,7 @@ from ipaddress import IPv4Network, IPv6Network, IPv4Address, IPv6Address
 from loguru import logger
 import pytest
 
-from macaddress import OUI
+from macaddress import OUI, MAC, EUI48, EUI64
 
 from ciscoconfparse2.ccp_util import CiscoRange
 from ciscoconfparse2.ccp_util import CiscoIOSInterface, CiscoIOSXRInterface
@@ -625,6 +625,11 @@ def testIPv6Obj_IPv4_embedded_in_IPv6_04():
     """Test IPv6Obj with an IPv4 address (192.0.2.4) embedded in an IPv6 address"""
     assert IPv6Obj("::ffff:192.0.2.4") == IPv6Obj("::ffff:c000:204")
 
+def testIPv6Obj_IPv6_error_01():
+    """Test IPv6Obj with an invalid address"""
+    with pytest.raises(ValueError):
+        IPv6Obj("hello,2001:db8::1/127")
+
 def testMACObj_int_01():
     assert int(MACObj("0001.dead.beef")) == 8030895855
 
@@ -657,11 +662,41 @@ def testMACObj_invalid_02():
     with pytest.raises(ValueError):
         assert MACObj("0001.dead.dead.dead.dead.dead.beef")
 
+def testMACObj_equality_01():
+    assert MACObj("dead.beef.0001") == MACObj("dead.beef.0001")
+
+def testMACObj_equality_02():
+    assert MACObj("dead.beef.0001") == MACObj("de-ad-be-ef-00-01")
+
+def testMACObj_equality_03():
+    assert MACObj("dead.beef.0001") == MACObj("de-ad-BE-EF-00-01")
+
+def testMACObj_equality_04():
+    assert MACObj("dead.beef.0001") == EUI48("de-ad-be-ef-00-01")
+    assert MACObj("dead.beef.0001") != EUI48("ff-ff-ff-ff-ff-ff")
+
+def testMACObj_equality_05():
+    assert MACObj("dead.beef.0001") == MAC("de-ad-be-ef-00-01")
+    assert MACObj("dead.beef.0001") != MAC("ff-ff-ff-ff-ff-ff")
+
 def testEUI64Obj_dash_01():
     assert EUI64Obj("0001.dead.beef.0001").dash == "00-01-de-ad-be-ef-00-01"
 
 def testEUI64Obj_colon_01():
     assert EUI64Obj("0001.dead.beef.0001").colon == "00:01:de:ad:be:ef:00:01"
+
+def testEUI64Obj_equality_01():
+    assert EUI64Obj("0001.dead.beef.0001") == EUI64Obj("0001.dead.beef.0001")
+
+def testEUI64Obj_equality_02():
+    assert EUI64Obj("0001.dead.beef.0001") == EUI64Obj("00-01-de-ad-be-ef-00-01")
+
+def testEUI64Obj_equality_03():
+    assert EUI64Obj("0001.dead.beef.0001") == EUI64Obj("00-01-de-ad-BE-EF-00-01")
+
+def testEUI64Obj_equality_04():
+    assert EUI64Obj("0001.dead.beef.0001") == EUI64("00-01-de-ad-be-ef-00-01")
+    assert EUI64Obj("0001.dead.beef.0001") != EUI64("ff-ff-ff-ff-ff-ff-ff-ff")
 
 def test_collapse_addresses_01():
 

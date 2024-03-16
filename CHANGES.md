@@ -4,6 +4,23 @@
 - Summary:
     - Insert something here
 
+## Version: 0.7.11
+
+- Released: 2024-03-16
+- Summary:
+    - Add `ccp macgrep` command
+    - Add `cisco` to the valid `EUI64Obj` formats
+    - Add equality methods to `MACObj` and `EUI64Obj`
+    - Modify `ccp parent` command, `-S` (`--separator`) to be `-d` (`--delimiter`)
+    - Modify `ccp child` command, `-S` (`--separator`) to be `-d` (`--delimiter`)
+    - Modify `ccp branch` command, `-S` (`--separator`) to be `-d` (`--delimiter`)
+    - Add a `tests/fixtures/plain_text/` directory for things like generic `ccp ipgrep` tests
+    - Fix bug in `IPv6Obj()` which silently allowed non-IPv6 characters
+    - Temporarily remove IPv6 route factory parsing (needs reimplementation in `models_cisco.py` after the `IPv6Obj()` fix above)
+    - Skip `pytest.mark.skip()` tests for `ipv6 route` factory parsing after the `IPv6Obj()` fix
+    - Update `hatch` installer configuration in `pyproject.toml`: ref [hatch github issue 1328](https://github.com/pypa/hatch/issues/1328)
+    - Expand test cases
+
 ## Version: 0.7.10
 
 - Released: 2024-03-10

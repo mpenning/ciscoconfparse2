@@ -52,7 +52,7 @@ from ipaddress import IPv4Network, IPv6Network, IPv4Address, IPv6Address
 from ipaddress import collapse_addresses as ipaddr_collapse_addresses
 from ipaddress import AddressValueError
 
-from macaddress import EUI48, EUI64
+from macaddress import MAC, EUI48, EUI64
 
 from dns.exception import DNSException
 from dns.resolver import Resolver
@@ -94,7 +94,7 @@ _CISCO_RANGE_STR = r"""^(?P<intf_prefix>[a-zA-Z\s]*)(?P<slot_prefix>[\d\/]*\d+\/
 _RGX_CISCO_RANGE = re.compile(_CISCO_RANGE_STR)
 
 ####################### Begin IPv6 #############################
-_IPV6_REGEX_STR = r"""(?!:::\S+?$)             # Negative Lookahead for 3 colons
+_IPV6_REGEX_STR = r"""^(?!:::\S+?$)             # Negative Lookahead for 3 colons
  (?P<addr>                                     # Begin a group named 'addr'
  (?P<opt1>{0}(?::{0}){{7}})                    # no double colons, option 1
 |(?P<opt2>[0-9a-fA-F\:]+?\d+\.\d+\.\d+\.\d+)   # ipv4 embedded in an ipv6 address
@@ -110,11 +110,11 @@ _IPV6_REGEX_STR = r"""(?!:::\S+?$)             # Negative Lookahead for 3 colons
 )([/\s](?P<masklen>\d+))*                      # match 'masklen' and end 'addr' group
 """.format(_IPV6_RGX_CLS)
 
-_IPV6_REGEX_STR_COMPRESSED1 = r"""(?!:::\S+?$)(?P<addr1>(?P<opt1_1>{0}(?::{0}){{7}})|(?P<opt1_2>(?:{0}:){{1}}(?::{0}){{1,6}})|(?P<opt1_3>(?:{0}:){{2}}(?::{0}){{1,5}})|(?P<opt1_4>(?:{0}:){{3}}(?::{0}){{1,4}})|(?P<opt1_5>(?:{0}:){{4}}(?::{0}){{1,3}})|(?P<opt1_6>(?:{0}:){{5}}(?::{0}){{1,2}})|(?P<opt1_7>(?:{0}:){{6}}(?::{0}){{1,1}})|(?P<opt1_8>:(?::{0}){{1,7}})|(?P<opt1_9>(?:{0}:){{1,7}}:)|(?P<opt1_10>(?:::)))""".format(_IPV6_RGX_CLS)
+_IPV6_REGEX_STR_COMPRESSED1 = r"""^(?!:::\S+?$)(?P<addr1>(?P<opt1_1>{0}(?::{0}){{7}})|(?P<opt1_2>(?:{0}:){{1}}(?::{0}){{1,6}})|(?P<opt1_3>(?:{0}:){{2}}(?::{0}){{1,5}})|(?P<opt1_4>(?:{0}:){{3}}(?::{0}){{1,4}})|(?P<opt1_5>(?:{0}:){{4}}(?::{0}){{1,3}})|(?P<opt1_6>(?:{0}:){{5}}(?::{0}){{1,2}})|(?P<opt1_7>(?:{0}:){{6}}(?::{0}){{1,1}})|(?P<opt1_8>:(?::{0}){{1,7}})|(?P<opt1_9>(?:{0}:){{1,7}}:)|(?P<opt1_10>(?:::)))""".format(_IPV6_RGX_CLS)
 
-_IPV6_REGEX_STR_COMPRESSED2 = r"""(?!:::\S+?$)(?P<addr2>(?P<opt2_1>{0}(?::{0}){{7}})|(?P<opt2_2>(?:{0}:){{1}}(?::{0}){{1,6}})|(?P<opt2_3>(?:{0}:){{2}}(?::{0}){{1,5}})|(?P<opt2_4>(?:{0}:){{3}}(?::{0}){{1,4}})|(?P<opt2_5>(?:{0}:){{4}}(?::{0}){{1,3}})|(?P<opt2_6>(?:{0}:){{5}}(?::{0}){{1,2}})|(?P<opt2_7>(?:{0}:){{6}}(?::{0}){{1,1}})|(?P<opt2_8>:(?::{0}){{1,7}})|(?P<opt2_9>(?:{0}:){{1,7}}:)|(?P<opt2_10>(?:::)))""".format(_IPV6_RGX_CLS)
+_IPV6_REGEX_STR_COMPRESSED2 = r"""^(?!:::\S+?$)(?P<addr2>(?P<opt2_1>{0}(?::{0}){{7}})|(?P<opt2_2>(?:{0}:){{1}}(?::{0}){{1,6}})|(?P<opt2_3>(?:{0}:){{2}}(?::{0}){{1,5}})|(?P<opt2_4>(?:{0}:){{3}}(?::{0}){{1,4}})|(?P<opt2_5>(?:{0}:){{4}}(?::{0}){{1,3}})|(?P<opt2_6>(?:{0}:){{5}}(?::{0}){{1,2}})|(?P<opt2_7>(?:{0}:){{6}}(?::{0}){{1,1}})|(?P<opt2_8>:(?::{0}){{1,7}})|(?P<opt2_9>(?:{0}:){{1,7}}:)|(?P<opt2_10>(?:::)))""".format(_IPV6_RGX_CLS)
 
-_IPV6_REGEX_STR_COMPRESSED3 = r"""(?!:::\S+?$)(?P<addr3>(?P<opt3_1>{0}(?::{0}){{7}})|(?P<opt3_2>(?:{0}:){{1}}(?::{0}){{1,6}})|(?P<opt3_3>(?:{0}:){{2}}(?::{0}){{1,5}})|(?P<opt3_4>(?:{0}:){{3}}(?::{0}){{1,4}})|(?P<opt3_5>(?:{0}:){{4}}(?::{0}){{1,3}})|(?P<opt3_6>(?:{0}:){{5}}(?::{0}){{1,2}})|(?P<opt3_7>(?:{0}:){{6}}(?::{0}){{1,1}})|(?P<opt3_8>:(?::{0}){{1,7}})|(?P<opt3_9>(?:{0}:){{1,7}}:)|(?P<opt3_10>(?:::)))""".format(_IPV6_RGX_CLS)
+_IPV6_REGEX_STR_COMPRESSED3 = r"""^(?!:::\S+?$)(?P<addr3>(?P<opt3_1>{0}(?::{0}){{7}})|(?P<opt3_2>(?:{0}:){{1}}(?::{0}){{1,6}})|(?P<opt3_3>(?:{0}:){{2}}(?::{0}){{1,5}})|(?P<opt3_4>(?:{0}:){{3}}(?::{0}){{1,4}})|(?P<opt3_5>(?:{0}:){{4}}(?::{0}){{1,3}})|(?P<opt3_6>(?:{0}:){{5}}(?::{0}){{1,2}})|(?P<opt3_7>(?:{0}:){{6}}(?::{0}){{1,1}})|(?P<opt3_8>:(?::{0}){{1,7}})|(?P<opt3_9>(?:{0}:){{1,7}}:)|(?P<opt3_10>(?:::)))""".format(_IPV6_RGX_CLS)
 
 _RGX_IPV6ADDR = re.compile(_IPV6_REGEX_STR, re.VERBOSE)
 ####################### End IPv6 #############################
@@ -1808,9 +1808,9 @@ class IPv6Obj(object):
             v6_str_rgx = _RGX_IPV6ADDR.search(v6input.strip())
             # Example 'v6_groupdict'
             #     v6_groupdict = {'addr': '2b00:cd80:14:10::1', 'opt1': None, 'opt2': None, 'opt3': None, 'opt4': None, 'opt5': '2b00:cd80:14:10::1', 'opt6': None, 'opt7': None, 'opt8': None, 'opt9': None, 'opt10': None, 'masklen': '64'}
-            try:
+            if v6_str_rgx is not None:
                 v6_groupdict = v6_str_rgx.groupdict()
-            except Exception:
+            else:
                 raise AddressValueError(f"Could not parse '{v6input}' {type(v6input)} into an IPv6 Address")
 
             for key in ["addr", "opt1", "opt2", "opt3", "opt4", "opt5", "opt6", "opt7", "opt8", "opt9", "opt10", "opt11"]:
@@ -2382,7 +2382,11 @@ class MACObj(EUI48):
 
     @logger.catch(reraise=True)
     def __init__(self, value: str):
-        self.mac = EUI48(value)
+        try:
+            self.mac = EUI48(value)
+        except ValueError as eee:
+            raise eee
+
         self._address = self.mac._address
 
     @property
@@ -2429,6 +2433,17 @@ class MACObj(EUI48):
         colon_mac = f"{mb[0]}:{mb[1]}:{mb[2]}:{mb[3]}:{mb[4]}:{mb[5]}"
         return colon_mac
 
+    @logger.catch(reraise=True)
+    def __eq__(self, other) -> bool:
+        if isinstance(other, MACObj):
+            return str(self.dash).lower() == str(other.dash).lower()
+        elif isinstance(other, EUI48):
+            return str(self.mac).lower() == str(other).lower()
+        elif isinstance(other, MAC):
+            return str(self.mac).lower() == str(other).lower()
+        else:
+            return False
+
     def __str__(self) -> str:
         return self.__repr__()
 
@@ -2446,7 +2461,11 @@ class EUI64Obj(EUI64):
 
     @logger.catch(reraise=True)
     def __init__(self, value: str):
-        self.eui64 = EUI64(value)
+        try:
+            self.eui64 = EUI64(value)
+        except ValueError as eee:
+            raise eee
+
         self._address = self.eui64._address
 
     @property
@@ -2470,6 +2489,26 @@ class EUI64Obj(EUI64):
         mb = str(self.eui64).lower().split("-")
         colon_eui64 = f"{mb[0]}:{mb[1]}:{mb[2]}:{mb[3]}:{mb[4]}:{mb[5]}:{mb[6]}:{mb[7]}"
         return colon_eui64
+
+    @property
+    @logger.catch(reraise=True)
+    def cisco(self) -> str:
+        """
+        Render a cisco delimited EUI64 format
+        """
+        # get basic bytes
+        mb = str(self.eui64).lower().split("-")
+        colon_eui64 = f"{mb[0]}{mb[1]}.{mb[2]}{mb[3]}.{mb[4]}{mb[5]}.{mb[6]}{mb[7]}"
+        return colon_eui64
+
+    @logger.catch(reraise=True)
+    def __eq__(self, other) -> bool:
+        if isinstance(other, EUI64Obj):
+            return str(self.dash).lower() == str(other.dash).lower()
+        elif isinstance(other, EUI64):
+            return str(self.eui64).lower() == str(other).lower()
+        else:
+            return False
 
     def __str__(self) -> str:
         return self.__repr__()

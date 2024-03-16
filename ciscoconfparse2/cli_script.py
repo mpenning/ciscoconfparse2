@@ -1,6 +1,6 @@
 from argparse import ArgumentParser, Namespace, FileType, Action
 from argparse import _SubParsersAction
-from typing import List, Any, Union, Optional
+from typing import List, Set, Any, Union, Optional
 import shlex
 import sys
 import re
@@ -10,9 +10,12 @@ from loguru import logger
 from typeguard import typechecked
 import attrs
 
+import macaddress
+
 from ciscoconfparse2.ciscoconfparse2 import CiscoConfParse
 from ciscoconfparse2.ciscoconfparse2 import Diff
 from ciscoconfparse2.ccp_util import IPv4Obj, IPv6Obj
+from ciscoconfparse2.ccp_util import MACObj, EUI64Obj
 
 """This file should not be used anywhere other than the hatch build system and pytest"""
 
@@ -88,11 +91,12 @@ class ArgParser:
             required=True,
             dest="command")
 
-        self.build_command_parent()
-        self.build_command_child()
-        self.build_command_branch()
-        self.build_command_diff()
-        self.build_command_ipgrep()
+        self.build_command_args_parent()
+        self.build_command_args_child()
+        self.build_command_args_branch()
+        self.build_command_args_diff()
+        self.build_command_args_ipgrep()
+        self.build_command_args_macgrep()
 
     def __repr__(self) -> str:
         return f"""<ArgParser '{" ".join(self.argv)}'>"""
@@ -102,7 +106,7 @@ class ArgParser:
         return self.parser.parse_args()
 
     @logger.catch(reraise=True)
-    def build_command_parent(self) -> None:
+    def build_command_args_parent(self) -> None:
         """Build the parent command as a subparser"""
         parser = self.subparsers.add_parser(
             "parent",
@@ -130,11 +134,11 @@ class ArgParser:
             help="Configuration file syntax, defaults to 'ios'")
 
         parser_optional.add_argument(
-            "-S", "--separator",
+            "-d", "--delimiter",
             required=False,
             default=',',
             type=str,
-            help="-a Parent field separator, defaults to a comma")
+            help="-a Parent field delimiter, defaults to a comma")
 
         parser_optional.add_argument(
             "-o", "--output",
@@ -152,7 +156,7 @@ class ArgParser:
             help="Find all children")
 
     @logger.catch(reraise=True)
-    def build_command_child(self) -> None:
+    def build_command_args_child(self) -> None:
         """Build the child command as a subparser"""
         parser = self.subparsers.add_parser(
             "child",
@@ -180,11 +184,11 @@ class ArgParser:
             help="Configuration file syntax, defaults to 'ios'")
 
         parser_optional.add_argument(
-            "-S", "--separator",
+            "-d", "--delimiter",
             required=False,
             default=',',
             type=str,
-            help="Child field separator, defaults to a comma")
+            help="Child field delimiter, defaults to a comma")
 
         parser_optional.add_argument(
             "-o", "--output",
@@ -195,7 +199,7 @@ class ArgParser:
             help="Output format, defaults to raw_text")
 
     @logger.catch(reraise=True)
-    def build_command_branch(self) -> None:
+    def build_command_args_branch(self) -> None:
         """Build the branch command as a subparser"""
         parser = self.subparsers.add_parser(
             "branch",
@@ -223,11 +227,11 @@ class ArgParser:
             help="Configuration file syntax, defaults to 'ios'")
 
         parser_optional.add_argument(
-            "-S", "--separator",
+            "-d", "--delimiter",
             required=False,
             default=',',
             type=str,
-            help="Branch field separator, defaults to a comma")
+            help="Branch field delimiter, defaults to a comma")
 
         parser_optional.add_argument(
             "-o", "--output",
@@ -238,11 +242,11 @@ class ArgParser:
             help="Output format, defaults to raw_text")
 
     @logger.catch(reraise=True)
-    def build_command_diff(self) -> None:
+    def build_command_args_diff(self) -> None:
         """Build the diff (of a config) command as a subparser"""
         parser = self.subparsers.add_parser(
             "diff",
-            help="Show a diff")
+            help="Show a Cisco IOS-style diff")
 
         parser_required = parser.add_argument_group("required")
         parser_required.add_argument(
@@ -268,7 +272,7 @@ class ArgParser:
             help="Configuration file syntax, defaults to 'ios'")
 
     @logger.catch(reraise=True)
-    def build_command_ipgrep(self) -> None:
+    def build_command_args_ipgrep(self) -> None:
         """An IPv4 / IPv6 address in subnet grep command"""
 
         parser = self.subparsers.add_parser(
@@ -279,7 +283,7 @@ class ArgParser:
 
         # Accept either a file or STDIN
         # https://stackoverflow.com/a/11038508/667301
-        parser_required.add_argument(
+        parser.add_argument(
             "ipgrep_file",
             nargs = '?',
             type = FileType('r'),
@@ -288,13 +292,100 @@ class ArgParser:
             default=(None if sys.stdin.isatty() else sys.stdin),
             help = "Grep for IPs in these files, defaults to STDIN.")
 
-        parser_required.add_argument(
+        parser_optional = parser.add_argument_group("optional")
+
+        parser_optional.add_argument(
             "-s", "--subnets",
             type=str,
             action=OnlyOneArgument,
+            default=None,
             help="Comma-separated IPv4 and/or IPv6 addresses or prefixes, such as '192.0.2.1,2001:db8::/32'.  If the mask is not specified, a host-mask assumed.")
 
+        parser_optional.add_argument(
+            "-4", "--ipv4",
+            default=False,
+            action='store_true',
+            help="Find all IPv4 addresses (cannot use with the --subnet argument)")
+
+        parser_optional.add_argument(
+            "-6", "--ipv6",
+            default=False,
+            action='store_true',
+            help="Find all IPv6 addresses (cannot use with the --subnet argument)")
+
+        parser_optional.add_argument(
+            "-w", "--word_delimiter",
+            default=r"\s+",
+            help="Word delimiter regular expression, defaults to all whitespace.  Join multiple regex delimiters with a pipe character")
+
+        parser_optional.add_argument(
+            "-c", "--show-cidr",
+            default=False,
+            action='store_true',
+            help="Print the network / host mask in CIDR notation")
+
+        parser_optional.add_argument(
+            "-n", "--show-networks",
+            default=False,
+            action='store_true',
+            help="Only print the network portion of subnets instead of IP hosts (implies --show-cidr).  Host-networks (i.e. IPv4 /32 and IPv6 /128 are included by default).")
+
+        parser_optional.add_argument(
+            "-H", "--exclude-hosts",
+            default=False,
+            action='store_true',
+            help="Exclude all hosts from output (should be used with --show-networks).")
+
+        parser_optional.add_argument(
+            "-X", "--exclude-networks",
+            default=False,
+            action='store_true',
+            help="Exclude all network addresses from output (i.e. only hosts are shown).")
+
+        parser_optional_exclusive = parser_optional.add_mutually_exclusive_group()
+
+        parser_optional_exclusive.add_argument(
+            "-l", "--line",
+            action='store_true',
+            default=False,
+            help="Enable line mode (return lines instead of only returning the IP)")
+
+        parser_optional_exclusive.add_argument(
+            "-u", "--unique",
+            action='store_true',
+            default=False,
+            help="Only print unique IPs (remove duplicates).  Not used in --line mode.")
+
+    @logger.catch(reraise=True)
+    def build_command_args_macgrep(self) -> None:
+        """A mac address / EUI address grep command"""
+
+        parser = self.subparsers.add_parser(
+            "macgrep",
+            help="grep for MAC / EUI addresses, optionally matching a regex")
+
+        parser_required = parser.add_argument_group("required")
+
+        # Accept either a file or STDIN
+        # https://stackoverflow.com/a/11038508/667301
+        parser_required.add_argument(
+            "macgrep_file",
+            nargs = '?',
+            type = FileType('r'),
+            # Optionally handle stdin if no file is specified...
+            # https://stackoverflow.com/a/61512890/667301
+            default=(None if sys.stdin.isatty() else sys.stdin),
+            help = "Grep for macs in these files, defaults to STDIN.")
+
+
         parser_optional = parser.add_argument_group("optional")
+
+        parser_optional.add_argument(
+            "-r", "--regex",
+            type=str,
+            action=OnlyOneArgument,
+            default = '.',
+            help="Comma-separated mac / EUI64 address regex, such as '^dead.beef', defaults to '.'.  Regular expressions match any valid format (i.e. dashes, commas, or periods in the address).")
 
         parser_optional.add_argument(
             "-w", "--word_delimiter",
@@ -313,7 +404,7 @@ class ArgParser:
             "-u", "--unique",
             action='store_true',
             default=False,
-            help="Only print unique IPs (remove duplicates)")
+            help="Only print unique Macs (remove duplicates).  Not used in --line mode")
 
 @attrs.define(repr=False)
 class CliApplication:
@@ -333,7 +424,15 @@ class CliApplication:
     line: bool
     word_delimiter: str
     ipgrep_file: Any
+    macgrep_file: Any
     subnets: str
+    ipv4: bool
+    ipv6: bool
+    show_cidr: bool
+    show_networks: bool
+    exclude_hosts: bool
+    exclude_networks: bool
+    mac_regex: str
     parse: CiscoConfParse
 
     @logger.catch(reraise=True)
@@ -345,13 +444,13 @@ class CliApplication:
             # If args.args doesn't exist, fake several of the
             # argparse.Namespace attributes for the diff command
             args.args = ""
-            args.separator = ","
+            args.delimiter = ","
             args.output = "raw_text"
 
         self.arg_parser = arg_parser
         self.console = RichConsole()
         self.subparser_name = args.command
-        self.args = args.args.split(args.separator)
+        self.args = args.args.split(args.delimiter)
 
         # stdout is a list of output lines we will print to stdout...
         self.stdout = []
@@ -366,15 +465,27 @@ class CliApplication:
         self.all_children = getattr(args, 'all_children', False)
         self.unique = getattr(args, 'unique', False)
         self.ipgrep_file = getattr(args, 'ipgrep_file', None)
-        self.subnets = getattr(args, 'subnets', "0.0.0.0/32,::0/0")
+        self.macgrep_file = getattr(args, 'macgrep_file', None)
+        self.subnets = getattr(args, 'subnets', "")
+        self.ipv4 = getattr(args, 'ipv4', False)
+        self.ipv6 = getattr(args, 'ipv6', False)
+        self.show_cidr = getattr(args, 'show_cidr', False)
+        self.show_networks = getattr(args, 'show_networks', False)
+        self.exclude_hosts = getattr(args, 'exclude_hosts', False)
+        self.exclude_networks = getattr(args, 'exclude_networks', False)
+        self.mac_regex = getattr(args, 'regex', ".")
         self.line = getattr(args, 'line', False)
         self.word_delimiter = getattr(args, 'word_delimiter', r"\s+")
+
+        if self.show_networks:
+            # --show-networks implies --show-cidr
+            self.show_cidr = True
 
         # file_list will be None when using ipgrep...
         if self.file_list is None:
             self.file_list = [""]
 
-        if self.subparser_name != "ipgrep":
+        if self.subparser_name != "ipgrep" and self.subparser_name != "macgrep":
             self.print_command_header()
 
         for filename in self.file_list:
@@ -383,7 +494,7 @@ class CliApplication:
             self.parse = CiscoConfParse([""])
 
             # Conditionally print the file name header...
-            if self.subparser_name != "diff" and self.subparser_name != "ipgrep":
+            if self.subparser_name != "diff" and self.subparser_name != "ipgrep" and self.subparser_name != "macgrep":
                 self.print_file_name_centered(filename)
 
 
@@ -412,12 +523,40 @@ class CliApplication:
                     error = "The ipgrep_file argument is required"
                     self.arg_parser.parser.error(error)
 
+                # Overwrite the --subnets argument if --ipv4 or --ipv6 is used
+                if self.subnets is None:
+                    if self.ipv4 is True and self.ipv6 is False:
+                        self.subnets = '0.0.0.0/0'
+                    elif self.ipv4 is False and self.ipv6 is True:
+                        self.subnets = '::/0'
+                    elif self.ipv4 is True and self.ipv6 is True:
+                        self.subnets = '0.0.0.0/0,::/0'
+                else:
+                    if self.ipv4 is True or self.ipv6 is True:
+                        error = "--ipv4 and --ipv6 cannot be used with --subnets"
+                        self.arg_parser.parser.error(error)
+
+                # Ensure that we did not get an empty --subnets argument...
+                if self.subnets == "":
+                    error = "--subnets requires an IPv4 or IPv6 network and mask"
+                    self.arg_parser.parser.error(error)
+
                 # See the if clause, outdented one-level
-                self.ipgrep_command(subnets = self.subnets,
-                                    text = self.ipgrep_file.read())
+                self.ipgrep_command(subnets=self.subnets,
+                                    text=self.ipgrep_file.read())
+
+            elif self.subparser_name == "macgrep":
+
+                if self.macgrep_file is None:
+                    error = "The macgrep_file argument is required"
+                    self.arg_parser.parser.error(error)
+
+                # See the if clause, outdented one-level
+                self.macgrep_command(mac_regex = self.mac_regex,
+                                     text = self.macgrep_file.read())
 
             else:
-                error = f"Unexpected subparser name: {self.subparser_name}"
+                error = f"This ccp subparser name is missing an if-clause: {self.subparser_name}"
                 logger.critical(error)
                 raise ValueError(error)
 
@@ -521,7 +660,7 @@ class CliApplication:
 
         # Throw an error if ccp ipgrep -s is missing
         if subnets is None:
-            error = "The -s argument is required"
+            error = "The -s, -4 or -6 argument is required"
             self.arg_parser.parser.error(error)
 
         retval = []
@@ -556,6 +695,10 @@ class CliApplication:
                                                  potential_matches = words,
                                                  unique_matches = self.unique)
         else:
+            if self.show_cidr or self.show_networks:
+                error = "The --show_cidr and --show_networks args are not supported with --line"
+                self.arg_parser.parser.error(error)
+
             lines = text.splitlines()
             retval = self.find_ip46_line_matches(subnets = _subnets,
                                                  potential_matches = lines,
@@ -597,16 +740,109 @@ class CliApplication:
                 except Exception:
                     # We didn't get a proper address... bail on this iteration
                     continue
+
                 if (addr.version == subnet.version) and (addr in subnet):
-                    found = True
+
                     if unique_matches:
+                        append_addr = False
+
+                        if self.show_cidr is False:
+                            if self.show_networks is False and str(addr.ip) not in retval:
+                                append_addr = True
+                            elif self.show_networks is True and str(addr.as_cidr_net) not in retval:
+                                append_addr = True
+                        else:
+                            if self.show_networks is False and str(addr.as_cidr_addr) not in retval:
+                                append_addr = True
+                            elif self.show_networks is True and str(addr.as_cidr_net) not in retval:
+                                append_addr = True
+
                         # Append if not already in retval...
-                        if str(addr.ip) not in retval:
-                            retval.append(str(addr.ip))
+                        if append_addr:
+                            if self.show_networks:
+                                if self.check_ip46_host_exclusion_args(addr):
+                                    continue
+                                if self.check_ip46_net_exclusion_args(addr):
+                                    continue
+                                retval.append(addr.as_cidr_net)
+                            elif not self.show_cidr and not self.show_networks:
+                                if self.check_ip46_host_exclusion_args(addr):
+                                    continue
+                                if self.check_ip46_net_exclusion_args(addr):
+                                    continue
+                                retval.append(str(addr.ip))
+                            elif not self.show_networks and self.show_cidr:
+                                if self.check_ip46_host_exclusion_args(addr):
+                                    continue
+                                if self.check_ip46_net_exclusion_args(addr):
+                                    continue
+                                retval.append(addr.as_cidr_addr)
                     else:
-                        # Append unconditionally
-                        retval.append(str(addr.ip))
+                        # Append unconditionally...
+                        if self.show_networks:
+                            if self.check_ip46_net_exclusion_args(addr):
+                                continue
+                            if self.check_ip46_host_exclusion_args(addr):
+                                continue
+                            retval.append(addr.as_cidr_net)
+                        elif not self.show_cidr and not self.show_networks:
+                            if self.check_ip46_net_exclusion_args(addr):
+                                continue
+                            if self.check_ip46_host_exclusion_args(addr):
+                                continue
+                            retval.append(str(addr.ip))
+                        elif not self.show_networks and self.show_cidr:
+                            if self.check_ip46_net_exclusion_args(addr):
+                                continue
+                            if self.check_ip46_host_exclusion_args(addr):
+                                continue
+                            retval.append(addr.as_cidr_addr)
         return retval
+
+    @logger.catch(reraise=True)
+    @typechecked
+    def check_ip46_host_exclusion_args(self, addr: Union[IPv4Obj, IPv6Obj]) -> bool:
+        """Return True if addr is a host excluded by --exclude-hosts"""
+
+        if self.exclude_hosts:
+            if addr.version == 4 and addr.prefixlength == 32:
+                # IPv4 Host, --exclude-hosts applies
+                return True
+            elif addr.version == 6 and addr.prefixlength == 128:
+                # IPv6 Host, --exclude-hosts applies
+                return True
+
+            # Only do if we are not explicitly showing networks (instead of hosts)...
+            elif not self.show_networks:
+                # it's also a host if the network address not equal the ip address
+                if str(addr.as_cidr_net) != str(addr.as_cidr_addr):
+                    return True
+
+        return False
+
+    @logger.catch(reraise=True)
+    @typechecked
+    def check_ip46_net_exclusion_args(self, addr: Union[IPv4Obj, IPv6Obj]) -> bool:
+        """Return True if addr is a network excluded by --exclude-networks"""
+
+        if self.exclude_networks:
+
+            if addr.version == 4 and addr.prefixlength == 32:
+                # IPv4 Host, --exclude-networks does not apply
+                # (even though technically a /32 is also a network)
+                return False
+
+            elif addr.version == 6 and addr.prefixlength == 128:
+                # IPv6 Host, --exclude-networks does not apply
+                # (even though technically a /128 is also a network)
+                return False
+
+            # it's a network if the network address equals the ip address
+            elif str(addr.as_cidr_net) == str(addr.as_cidr_addr):
+                return True
+
+        return False
+
 
     @logger.catch(reraise=True)
     @typechecked
@@ -615,11 +851,12 @@ class CliApplication:
                                potential_matches: List[str],
                                unique_matches: bool) -> List:
         """Walk the IPv4 / IPv6 instances in potential_matches, return the list of lines with a word matching subnet"""
-        found = False
         retval = []
 
         for line in potential_matches:
-            line_appended = False
+            append_line = False
+            exclude_line = False
+
             # Split words on whitespace...
             words = re.split(self.word_delimiter, line)
             for word in words:
@@ -629,18 +866,112 @@ class CliApplication:
                             addr = IPv4Obj(word)
                         else:
                             addr = IPv6Obj(word)
+
+
                     except Exception:
                         # We didn't get a proper address... bail on this iteration
                         continue
 
+                    if exclude_line:
+                        continue
+
                     if (addr.version == subnet.version) and (addr in subnet):
-                        found = True
-                        # append the line with the matching text.  This appends on
-                        # the first match and breaks out of the loop
-                        if not line_appended:
-                            retval.append(line)
-                            line_appended = True
-                            break
+                        if self.check_ip46_net_exclusion_args(addr):
+                            exclude_line = True
+                            append_line = False
+                        elif self.check_ip46_host_exclusion_args(addr):
+                            exclude_line = True
+                            append_line = False
+                        else:
+                            # append the line with the matching text.  This appends on
+                            # the first match and breaks out of the loop
+                            append_line = True
+
+            if append_line:
+                retval.append(line)
+        return retval
+
+    @logger.catch(reraise=True)
+    @typechecked
+    def macgrep_command(self,
+                        mac_regex: Union[str, None],
+                        text: str,) -> bool:
+        """grep for a mac / EUI addresses in the text"""
+
+        retval = []
+
+        mac_regex_strs = set([])
+
+        for mac_regex in mac_regex.split(","):
+            mac_regex_strs.add(mac_regex)
+
+        if not self.line:
+            words = re.split(self.word_delimiter, text)
+            retval = self.find_maceui_addr_matches(mac_regex_strs,
+                                                   potential_matches = words,
+                                                   unique_matches = self.unique)
+        else:
+            lines = text.splitlines()
+            retval = self.find_maceui_line_matches(mac_regex_strs,
+                                                   potential_matches = lines,
+                                                   unique_matches = self.unique)
+
+        if retval == []:
+            # potential_matches == [] is a special case where the text
+            # had an invalid ip address like 172.16.355555
+            return False
+
+        elif isinstance(retval, list):
+            # Multiple IP address mode...
+            for match in retval:
+                self.stdout.append(match)
+
+            return True
+
+        else:
+            error = f"Something unexpected happened.  Please file this bug on github.com/mpenning/ciscoconfparse2"
+            logger.critical(error)
+            raise ValueError(error)
+
+    @logger.catch(reraise=True)
+    def find_maceui_addr_matches(self,
+                                 mac_regex_strs: set[str],
+                                 potential_matches: List[str],
+                                 unique_matches: bool) -> List:
+        """Walk the MAC / EUI64 instances in potential_matches, return the list of addrs matching mac_regex_strs"""
+        found = False
+        retval = []
+
+        for word in potential_matches:
+            search = MACEUISearch(word)
+            if search.mac_retval is not None:
+                if search.search_all_formats(mac_regex_strs = mac_regex_strs):
+                    mac_str = word
+                    if unique_matches:
+                        if mac_str not in retval:
+                            retval.append(mac_str)
+                    else:
+                        retval.append(mac_str)
+        return retval
+
+    @logger.catch(reraise=True)
+    def find_maceui_line_matches(self,
+                                 mac_regex_strs: set[str],
+                                 potential_matches: List[str],
+                                 unique_matches: bool = False) -> List:
+        """Walk the MAC / EUI64 instances in potential_matches, return the list of lines matching mac_regex_strs"""
+        retval = []
+        for line in potential_matches:
+            line_appended = False
+            for word in re.split(self.word_delimiter, line):
+                if line_appended:
+                    continue
+                search = MACEUISearch(word)
+                if search.mac_retval is not None:
+                    if search.search_all_formats(mac_regex_strs = mac_regex_strs):
+                        retval.append(line)
+                        line_appended = True
+
         return retval
 
     @logger.catch(reraise=True)
@@ -668,6 +999,70 @@ class CliApplication:
         prefix = "file:"
         _var_line = int((_width - len(prefix) - len(filename) - 3)/2.0) * "-"
         self.console.print(f"[green1]{_var_line}[/green1] file: [turquoise2]{filename}[/turquoise2] [green1]{_var_line}[/green1]")
+
+@attrs.define(repr=False)
+class MACEUISearch:
+    """Accept one string word, and search it for all mac regex strings.  If there is a match, classify as matching a MAC / EUI64 word or not.  If a mac-address is found, store the resulting MACObj() or EUI64Obj() instance in mac_retval."""
+    word: str
+    mac_regex_strs: Set[str]
+    mac_retval: Union[None, MACObj, EUI64Obj]
+
+    @logger.catch(reraise=True)
+    @typechecked
+    def __init__(self, word: str, mac_regex_strs: Union[None, Set[str]] = None):
+        self.word = word
+        self.mac_regex_strs = mac_regex_strs
+        self.mac_retval = None
+
+        tmp = None
+        # Find the longest MAC / EUI64 class for the word
+        #
+        # NOTE To handle the macaddress module ValueError, I have
+        # to parse the words first as the macaddress module, then I
+        # can re-parse as MACObj or EUI64Obj
+        try:
+            tmp = macaddress.parse(word, macaddress.MAC, macaddress.EUI64)
+            if isinstance(tmp, macaddress.MAC):
+                self.mac_retval = MACObj(word)
+            elif isinstance(tmp, macaddress.EUI64):
+                self.mac_retval = EUI64Obj(word)
+        except ValueError:
+            # There was an invalid MAC / EUI64 address in the word string
+            self.mac_retval = None
+
+    @logger.catch(reraise=True)
+    @typechecked
+    def search_all_formats(self,
+                           mac_regex_strs: Set[str]) -> bool:
+        """Search self.word for a mac addresses matching any of the strings in the mac_regex_strs set"""
+
+        if self.mac_retval is None:
+            return False
+
+        # Search through all valid mac formats for a regex match (contained
+        #    in the mac_regex_strs set of regex strings...)
+        for rgx in mac_regex_strs:
+            if re.search(rgx, self.mac_retval.dash, re.I):
+                return True
+            elif re.search(rgx, self.mac_retval.colon, re.I):
+                return True
+            elif re.search(rgx, self.mac_retval.cisco, re.I):
+                return True
+            elif re.search(rgx, self.mac_retval.dash.replace('-', ''), re.I):
+                return True
+        # return False if there was no match above...
+        return False
+
+    def __str__(self):
+        if isinstance(self.mac_retval, MACObj):
+            return f"""<MACEUISearch word: {self.word}, found: MAC {self.mac_retval.cisco}>"""
+        elif isinstance(self.mac_retval, EUI64Obj):
+            return f"""<MACEUISearch word: {self.word}, found: EUI64 {self.mac_retval.cisco}>"""
+        else:
+            return f"""<MACEUISearch word: {self.word}, found: None>"""
+
+    def __repr__(self):
+        return str(self)
 
 class OnlyOneArgument(Action):
     """A custom argparse action to only allow one instance of a CLI flag argument"""

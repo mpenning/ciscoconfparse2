@@ -1,0 +1,9 @@
+hello,2001:db8::3/127 2001:db8::1/127 goodbye,2001:db8::3 2001:db8::1
+zowwwwwwww
+lunch,2001:db8::4
+2001:db8::1
+192.0.2.3/24 192.0.2.3
+2001:db8::/64
+2001:db8::/64 food
+0001.dead.beef 0002.dead.beef 0001.dead.beef
+0001.dead.beef

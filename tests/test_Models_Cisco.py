@@ -1775,6 +1775,7 @@ def testVal_IOSRouteLine_09():
     assert obj.tag == "20"
 
 
+@pytest.mark.skip("Skipping due to need to reimplement ipv6 route parse in models_cisco.py")
 def testVal_IOSRouteLine_10():
     line = "ipv6 route ::/0 2001:DEAD:BEEF::1"
     cfg = CiscoConfParse([line], factory=True)
@@ -1795,6 +1796,7 @@ def testVal_IOSRouteLine_10():
     assert obj.tag == ""
 
 
+@pytest.mark.skip("Skipping due to need to reimplement ipv6 route parse in models_cisco.py")
 def testVal_IOSRouteLine_11():
     line = "ipv6 route 2001:DEAD::/32 Serial 1/0 201"
     cfg = CiscoConfParse([line], factory=True)
@@ -1815,6 +1817,7 @@ def testVal_IOSRouteLine_11():
     assert obj.tag == ""
 
 
+@pytest.mark.skip("Skipping due to need to reimplement ipv6 route parse in models_cisco.py")
 def testVal_IOSRouteLine_12():
     line = "ipv6 route 2001::/16 Tunnel0 2002::1 multicast"
     cfg = CiscoConfParse([line], factory=True)

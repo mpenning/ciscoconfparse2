@@ -174,6 +174,7 @@ What do you do?  Upgrade to [ciscoconfparse2][17]!
 
 Here's why, it:
 
+- Includes a handy CLI command (including greps for IPv4 / IPv6 subnets)
 - Streamlines the API towards a simpler user interface.
 - Removes legacy and flawed methods from the original (this could be a breaking change for old scripts).
 - Adds string methods to `BaseCfgLine()` objects
