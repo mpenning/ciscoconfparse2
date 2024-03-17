@@ -57,8 +57,7 @@ pypi:
 	git checkout main
 	git merge develop
 	git push origin main
-	sleep 5
-	# push tag to github origin 
+	# push tag to github origin, which triggers a github CICD action
 	git push origin $$VERSION
 	git checkout develop
 	git pull origin main

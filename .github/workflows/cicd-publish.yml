@@ -32,7 +32,7 @@ jobs:
 
   pypi-publish:
     name: Upload release to PyPI
-    if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags')
+    #if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags')
     needs:
     - python-artifacts-job
     runs-on: ubuntu-latest
