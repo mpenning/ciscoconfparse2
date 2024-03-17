@@ -3703,7 +3703,7 @@ class Diff(object):
         # _ represents ios options as a dict... for now we use an empty
         # dict below...
         try:
-            _ = yaml.load(open('./options_ios.yml'), Loader=yaml.SafeLoader)
+            _ = yaml.load(open('./options_ios.hier_config.yml'), Loader=yaml.SafeLoader)
         except FileNotFoundError:
             pass
 
