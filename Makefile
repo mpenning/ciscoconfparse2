@@ -47,19 +47,19 @@ install_build:
 
 .PHONY: pypi
 pypi:
-	@echo "$(COL_CYAN)>> uploading ciscoconfparse2 pypi artifacts to pypi$(COL_END)"
+	@echo "$(COL_CYAN)>> Use CI/CD to publish ciscoconfparse2 pypi artifacts$(COL_END)"
 	make clean
 	# upgrade packaging infra and ciscoconfparse2 dependencies...
 	make dep
 	# tag the repo with $$VERSION and push to origin
+	git commit --all -m "Version $$VERSION"
 	git tag $$VERSION
 	git checkout main
 	git merge develop
-	git push origin $$VERSION
 	git push origin main
+	git push origin $$VERSION
 	git checkout develop
 	git pull origin main
-	# twine is the simplest pypi package uploader...
 
 .PHONY: bump-version-patch
 bump-version-patch:
