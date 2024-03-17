@@ -25,7 +25,7 @@ network configuration or text files.
 
 [ciscoconfparse2][17] also offers a Python API.
 
-This example code will parse a configuration stored in
+This example code parses a configuration stored in
 `tests/fixtures/configs/sample_02.ios` and select interfaces that are shutdown.
 
 In this case, the parent is a line containing `interface` and the child is a
