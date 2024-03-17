@@ -4,12 +4,12 @@
 - Summary:
     - Insert something here
 
-## Version: 0.7.12 - 0.7.19
+## Version: 0.7.12 - 0.7.20
 
 - Released: 2024-03-17
 - Summary:
-    - Work on packaging fixes
-    - Migrate from twine PYPI uploads to gi-action-pypi-publish
+    - Work on github CI/CD workflow and packaging fixes
+    - Migrate from local twine PYPI uploads to gi-action-pypi-publish PYPI uploads
     - Fix cosmetic SonarCloud gripe
 
 ## Version: 0.7.11
