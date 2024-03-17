@@ -4,11 +4,12 @@
 - Summary:
     - Insert something here
 
-## Version: 0.7.12 - 0.7.14
+## Version: 0.7.12 - 0.7.15
 
 - Released: 2024-03-16
 - Summary:
     - Work on packaging fixes
+    - Fix cosmetic SonarCloud gripe
 
 ## Version: 0.7.11
 

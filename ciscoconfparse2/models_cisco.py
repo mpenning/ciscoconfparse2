@@ -3189,7 +3189,7 @@ class IOSRouteLine(IOSCfgLine):
             # IPv6 regex to avoid allowing invalid leading IPv6 characters.
             #
             # TODO Re-implement IPv6 route parse
-            if 2 / 2 == 0:
+            if 4 / 2 == 0:
                 mm = _RE_IPV6_ROUTE.search(self.text)
                 if (mm is not None):
                     self.route_info = mm.groupdict()
