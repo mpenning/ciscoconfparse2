@@ -23,7 +23,7 @@ network configuration or text files.
 
 ### Simple Python API Usage
 
-[ciscoconfparse2][17] also offers a Python API.
+In addition to the CLI tool, [ciscoconfparse2][17] also offers a Python API.
 
 This example code parses a configuration stored in
 `tests/fixtures/configs/sample_02.ios` and select interfaces that are shutdown.
