@@ -52,12 +52,13 @@ pypi:
 	# upgrade packaging infra and ciscoconfparse2 dependencies...
 	make dep
 	git commit --all -m "Version $$VERSION"
-	# tag the repo with $$VERSION and push to origin
+	# tag the repo with $$VERSION
 	git tag $$VERSION
-	hatch build
 	git checkout main
 	git merge develop
 	git push origin main
+	sleep 5
+	# push tag to github origin 
 	git push origin $$VERSION
 	git checkout develop
 	git pull origin main
