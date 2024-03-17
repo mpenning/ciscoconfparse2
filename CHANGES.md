@@ -4,6 +4,12 @@
 - Summary:
     - Insert something here
 
+## Version: 0.7.12
+
+- Released: 2024-03-16
+- Summary:
+    - Work on packaging fixes
+
 ## Version: 0.7.11
 
 - Released: 2024-03-16
