@@ -53,10 +53,13 @@ pypi:
 	make dep
 	# tag the repo with $$VERSION and push to origin
 	git tag $$VERSION
+	git checkout main
+	git merge develop
 	git push origin $$VERSION
-	make build
+	git push origin main
+	git checkout develop
+	git pull origin main
 	# twine is the simplest pypi package uploader...
-	python -m twine upload dist/*
 
 .PHONY: bump-version-patch
 bump-version-patch:
