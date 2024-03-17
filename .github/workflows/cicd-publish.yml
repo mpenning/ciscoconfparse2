@@ -13,8 +13,8 @@ defaults:
     shell: bash
 
 jobs:
-  build:
-    name: Build wheel and source distribution files
+  python-artifacts:
+    name: Job to build wheel and source distribution files
     runs-on: ubuntu-latest
     environment: release
     steps:
@@ -32,7 +32,7 @@ jobs:
     - name: Upload package artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: python-artifacts-job
+        name: python-artifacts
         path: dist/*
         if-no-files-found: error
 
@@ -40,7 +40,7 @@ jobs:
     name: Upload release to PyPI
     if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags')
     needs:
-    - python-artifacts-job
+    - python-artifacts
     runs-on: ubuntu-latest
 
     permissions:
@@ -54,9 +54,9 @@ jobs:
     steps:
     - name: Retrieve package artifacts from build job
       uses: actions/download-artifact@v4
-      #with:
-      #  name: python-artifacts-job
-      #  path: dist
+      with:
+        name: python-artifacts
+        path: dist
 
     - name: Upload packages to PYPI
       uses: pypa/gh-action-pypi-publish@v1.8.14
