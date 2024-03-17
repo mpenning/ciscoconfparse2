@@ -1,8 +1,8 @@
 # pyproject.toml format -> See PEP 621
 
 [project]
-Name = "ciscoconfparse2"
-Version = "0.7.13"
+name = "ciscoconfparse2"
+version = "0.7.13"
 description = "Parse, Audit, Query, Build, and Modify Cisco IOS-style and JunOS-style configs"
 readme = "README.md"
 license = "GPL-3.0-only"
