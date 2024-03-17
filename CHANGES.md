@@ -6,9 +6,10 @@
 
 ## Version: 0.7.12 - 0.7.16
 
-- Released: 2024-03-16
+- Released: 2024-03-17
 - Summary:
     - Work on packaging fixes
+    - Migrate from twine PYPI uploads to gi-action-pypi-publish
     - Fix cosmetic SonarCloud gripe
 
 ## Version: 0.7.11
