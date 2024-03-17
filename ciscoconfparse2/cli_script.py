@@ -328,19 +328,13 @@ class ArgParser:
             "-n", "--show-networks",
             default=False,
             action='store_true',
-            help="Only print the network portion of subnets instead of IP hosts (implies --show-cidr).  Host-networks (i.e. IPv4 /32 and IPv6 /128 are included by default).")
+            help="Only print the network portion of subnets instead of IP hosts (implies --show-cidr).  Hosts (i.e. IPv4 /32 and IPv6 /128 networks) are also included by default.")
 
         parser_optional.add_argument(
             "-H", "--exclude-hosts",
             default=False,
             action='store_true',
             help="Exclude all hosts from output (should be used with --show-networks).")
-
-        parser_optional.add_argument(
-            "-X", "--exclude-networks",
-            default=False,
-            action='store_true',
-            help="Exclude all network addresses from output (i.e. only hosts are shown).")
 
         parser_optional_exclusive = parser_optional.add_mutually_exclusive_group()
 
@@ -759,43 +753,30 @@ class CliApplication:
 
                         # Append if not already in retval...
                         if append_addr:
+                            if self.check_ip46_host_exclusion_args(addr):
+                                continue
+                            if self.check_ip46_net_exclusion_args(addr):
+                                continue
+
                             if self.show_networks:
-                                if self.check_ip46_host_exclusion_args(addr):
-                                    continue
-                                if self.check_ip46_net_exclusion_args(addr):
-                                    continue
                                 retval.append(addr.as_cidr_net)
                             elif not self.show_cidr and not self.show_networks:
-                                if self.check_ip46_host_exclusion_args(addr):
-                                    continue
-                                if self.check_ip46_net_exclusion_args(addr):
-                                    continue
                                 retval.append(str(addr.ip))
                             elif not self.show_networks and self.show_cidr:
-                                if self.check_ip46_host_exclusion_args(addr):
-                                    continue
-                                if self.check_ip46_net_exclusion_args(addr):
-                                    continue
                                 retval.append(addr.as_cidr_addr)
+
                     else:
+                        if self.check_ip46_net_exclusion_args(addr):
+                            continue
+                        if self.check_ip46_host_exclusion_args(addr):
+                            continue
+
                         # Append unconditionally...
                         if self.show_networks:
-                            if self.check_ip46_net_exclusion_args(addr):
-                                continue
-                            if self.check_ip46_host_exclusion_args(addr):
-                                continue
                             retval.append(addr.as_cidr_net)
                         elif not self.show_cidr and not self.show_networks:
-                            if self.check_ip46_net_exclusion_args(addr):
-                                continue
-                            if self.check_ip46_host_exclusion_args(addr):
-                                continue
                             retval.append(str(addr.ip))
                         elif not self.show_networks and self.show_cidr:
-                            if self.check_ip46_net_exclusion_args(addr):
-                                continue
-                            if self.check_ip46_host_exclusion_args(addr):
-                                continue
                             retval.append(addr.as_cidr_addr)
         return retval
 
@@ -837,8 +818,10 @@ class CliApplication:
                 # (even though technically a /128 is also a network)
                 return False
 
-            # it's a network if the network address equals the ip address
-            elif str(addr.as_cidr_net) == str(addr.as_cidr_addr):
+            else:
+                # Since we are showing networks, any address (on the 
+                # subnet number or not) should return True if the
+                # cases above did not match.
                 return True
 
         return False

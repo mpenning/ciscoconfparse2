@@ -45,19 +45,20 @@ install_build:
 	# Install the newly-built package
 	pip install --force-reinstall dist/*.tar.gz
 
-.PHONY: pypi
-pypi:
+.PHONY: cicd
+cicd:
 	@echo "$(COL_CYAN)>> Use CI/CD to publish ciscoconfparse2 pypi artifacts$(COL_END)"
 	make clean
 	# upgrade packaging infra and ciscoconfparse2 dependencies...
 	make dep
 	git commit --all -m "Version $$VERSION"
-	# tag the repo with $$VERSION
+	# tag the repo with $$VERSION, upon git tag push,
+	# this triggers .github/workflows/cicd-publish.yml
 	git tag $$VERSION
 	git checkout main
 	git merge develop
 	git push origin main
-	# push tag to github origin, which triggers a github CICD action
+	# push tag to github origin, which triggers a github CICD action (see above)
 	git push origin $$VERSION
 	git checkout develop
 	git pull origin main
@@ -225,7 +226,7 @@ clean:
 help:
 	@# An @ sign prevents outputting the command itself to stdout
 	@echo "help                 : You figured that out ;-)"
-	@echo "pypi                 : Build the project and push to pypi"
+	@echo "cicd                 : Git commit, build the project w/ CICD, and push to pypi"
 	@echo "repo-push            : Build the project and push to github"
 	@echo "test                 : Run all doctests and unit tests"
 	@echo "dev                  : Get all dependencies for the dev environment"

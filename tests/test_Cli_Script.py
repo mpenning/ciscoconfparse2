@@ -253,7 +253,7 @@ def testValues_ccp_script_entry_cliapplication_ipgrep_14():
     assert cliapp.subnets == '0.0.0.0/0'
     assert cliapp.stdout == ['192.0.2.0/24',]
 
-def testValues_ccp_script_entry_cliapplication_ipgrep_14():
+def testValues_ccp_script_entry_cliapplication_ipgrep_15():
     """Ensure that CliApplication() ipgrep with --show-networks --exclude-hosts and --show-cidr is three IPv6 networks from sample_01.txt"""
     cliapp = ccp_script_entry("ccp_faked ipgrep --show-networks --exclude-hosts -6 fixtures/plain_text/sample_01.txt")
     assert len(cliapp.stdout) == 3
@@ -261,6 +261,26 @@ def testValues_ccp_script_entry_cliapplication_ipgrep_14():
     assert cliapp.subnets == '::/0'
     assert cliapp.stdout == ['2001:db8::/127',
                              '2001:db8::/64',
+                             '2001:db8::/64',]
+
+def testValues_ccp_script_entry_cliapplication_ipgrep_16():
+    """Ensure that CliApplication() ipgrep with --show-networks --exclude-hosts is no IPv6 networks from sample_01.txt"""
+    cliapp = ccp_script_entry("ccp_faked ipgrep --exclude-hosts --show-networks -6 fixtures/plain_text/sample_01.txt")
+    assert len(cliapp.stdout) == 0
+    assert cliapp.unique is False
+    assert cliapp.subnets == '::/0'
+    assert cliapp.stdout == []
+
+def testValues_ccp_script_entry_cliapplication_ipgrep_16():
+    """Ensure that CliApplication() ipgrep with --unique --show-networks -ipv4 -ipv6 is no IPv6 networks from sample_01.txt"""
+    cliapp = ccp_script_entry("ccp_faked ipgrep --unique --show-networks -4 -6 fixtures/plain_text/sample_01.txt")
+    assert len(cliapp.stdout) == 5
+    assert cliapp.unique is True
+    assert cliapp.subnets == '0.0.0.0/0,::/0'
+    assert cliapp.stdout == ['2001:db8::/127',
+                             '2001:db8::1/128',
+                             '192.0.2.0/24',
+                             '192.0.2.3/32',
                              '2001:db8::/64',]
 
 def testValues_ccp_script_entry_cliapplication_branch_01():
