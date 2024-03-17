@@ -2,7 +2,7 @@
 
 [project]
 name = "ciscoconfparse2"
-version = "0.7.25"
+version = "0.7.26"
 description = "Parse, Audit, Query, Build, and Modify Cisco IOS-style and JunOS-style configs"
 readme = "README.md"
 license = "GPL-3.0-only"
