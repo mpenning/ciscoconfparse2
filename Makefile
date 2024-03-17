@@ -6,7 +6,7 @@ DOCHOST ?= $(shell bash -c 'read -p "documentation host: " dochost; echo $$docho
 #   - open './pyproject.toml' as $pyproject
 #   - loop over each line, assigned to $line
 #   - If we see the version string in a line, print it and end
-export VERSION := $(shell perl -e 'open my $$pyproject, "pyproject.toml"; while (my $$line = <$$pyproject>) { if ( $$line =~ s/version.+?(\d+.\d+.\d+)\D\s*/$$1/g ) { print "$$line"; exit 0; } }' )
+export VERSION := $(shell perl -e 'open my $$pyproject, "pyproject.toml"; while (my $$line = <$$pyproject>) { if ( $$line =~ s/Version.+?(\d+.\d+.\d+)\D\s*/$$1/g ) { print "$$line"; exit 0; } }' )
 
 
 # We must escape Makefile dollar signs as $$foo...
