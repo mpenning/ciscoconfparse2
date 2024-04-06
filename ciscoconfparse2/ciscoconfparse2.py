@@ -3678,7 +3678,7 @@ class Diff(object):
             new_config = []
         elif isinstance(new_config, str) and len(new_config.splitlines()) == 1 and os.path.isfile(new_config):
             # load the new config from a file as a list...
-            new_config = open(new_config).read().splitlines()
+            new_config = open(new_config).read()
         elif isinstance(new_config, str):
             pass
         elif isinstance(new_config, (list, tuple)):
@@ -3703,7 +3703,7 @@ class Diff(object):
         # _ represents ios options as a dict... for now we use an empty
         # dict below...
         try:
-            _ = yaml.load(open('./options_ios.hier_config.yml'), Loader=yaml.SafeLoader)
+            _ = yaml.load(open('./misc/options_ios.hier_config.yml'), Loader=yaml.SafeLoader)
         except FileNotFoundError:
             pass
 

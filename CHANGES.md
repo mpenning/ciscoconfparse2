@@ -4,6 +4,12 @@
 - Summary:
     - Insert something here
 
+## Version: 0.7.34
+
+- Released: 2024-04-06
+- Summary:
+    - Fix bug in `Diff()` for filename inputs
+
 ## Version: 0.7.33
 
 - Released: 2024-03-17
