@@ -4,6 +4,12 @@
 - Summary:
     - Insert something here
 
+## Version: 0.7.36
+
+- Released: 2024-04-06
+- Summary:
+    - Enhance Makefile to be more resilient for unexpected workflows
+
 ## Version: 0.7.35
 
 - Released: 2024-04-06

@@ -51,7 +51,7 @@ cicd:
 	make clean
 	# upgrade packaging infra and ciscoconfparse2 dependencies...
 	make dep
-	git commit --all -m "Version $$VERSION"
+	-git commit --all -m "Version $$VERSION"
 	# tag the repo with $$VERSION, upon git tag push,
 	# this triggers .github/workflows/cicd-publish.yml
 	git tag $$VERSION
