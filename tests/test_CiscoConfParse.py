@@ -2233,6 +2233,13 @@ def testValues_Diff_11():
     uut = Diff(old_config=before_config, new_config=after_config)
     assert uut.get_diff() == correct_result
 
+def testValues_Diff_12():
+    """Test that file diffs correctly show no diffs for the same file"""
+
+    uut = Diff(old_config='fixtures/configs/sample_01.ios',
+               new_config='fixtures/configs/sample_01.ios')
+    assert uut.get_diff() == []
+
 def testValues_ignore_ws():
     config = ["set snmp community read-only     myreadonlystring"]
     correct_result = config

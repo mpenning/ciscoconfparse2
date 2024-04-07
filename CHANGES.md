@@ -4,6 +4,13 @@
 - Summary:
     - Insert something here
 
+## Version: 0.7.37
+
+- Released: 2024-04-07
+- Summary:
+    - Add a file `Diff()` unit test
+    - Update documentation
+
 ## Version: 0.7.36
 
 - Released: 2024-04-06

@@ -1387,8 +1387,8 @@ def parse_fixture_j03(request):
 def brace_fixture_j03(request):
     """Preparsed j03"""
     brace_fixture_j03 = BraceParse('fixtures/configs/sample_03.junos',
-                               comment_delimiters=["#"],
-                               ignore_blank_lines=True,)
+                                   comment_delimiters=["#"],
+                                   ignore_blank_lines=True,)
 
     yield brace_fixture_j03
 
