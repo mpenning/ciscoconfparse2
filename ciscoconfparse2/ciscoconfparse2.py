@@ -2081,7 +2081,9 @@ class CiscoConfParse(object):
         :type auto_commit: bool
         :param factory: Control whether CiscoConfParse should enable the
                         beta-quality configuration parameter parser,
-                        default to False.
+                        default to False.  factory parsing is only useful
+                        on IOS configs.  Do not use factory to parse
+                        NXOS, IOS-XR, or Cisco ASA configurations.
         :type factory: bool
         :param debug: Control CiscoConfParse debug output, default is 0.
         :type debug: int

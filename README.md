@@ -137,7 +137,9 @@ Dialer1,not_shutdown,0.0.0.1/32,not_switched,,,[IPv4 and IPv6 OSPF Transit via W
 
 ### Cisco IOS Factory Usage
 
-CiscoConfParse has a special feature that abstracts common IOS / NXOS / ASA / IOS XR fields; at this time, it is only supported on those configuration types. You will see factory parsing in CiscoConfParse code as parsing the configuration with `factory=True`.
+CiscoConfParse has a special feature that abstracts common IOS / NXOS / ASA / IOS XR fields; at this time, it is only useful on IOS configurations. You will see factory parsing in CiscoConfParse code as parsing the configuration with `factory=True`.
+
+Factory parsing is still beta-quality and should be used at your own risk.
 
 ## Why
 
