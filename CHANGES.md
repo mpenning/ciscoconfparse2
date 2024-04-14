@@ -4,6 +4,12 @@
 - Summary:
     - Insert something here
 
+## Version: 0.7.41
+
+- Released: 2024-04-14
+- Summary:
+    - Fix `Makefile` versioning to use the hatch backend
+
 ## Version: 0.7.40
 
 - Released: 2024-04-14
