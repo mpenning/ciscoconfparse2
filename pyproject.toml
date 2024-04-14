@@ -2,11 +2,11 @@
 
 [project]
 name = "ciscoconfparse2"
-version = "0.7.39"
 description = "Parse, Audit, Query, Build, and Modify Cisco IOS-style and JunOS-style configs"
 readme = "README.md"
 license = "GPL-3.0-only"
 requires-python = ">= 3.8"
+dynamie = ["version"]
 dependencies = [
   "attrs==23.2.0",
   "passlib==1.7.4",
@@ -81,6 +81,10 @@ ccp = "ciscoconfparse2.cli_script:ccp_script_entry"
 [build-system]
 requires = ["hatchling>=1.22.2"]
 build-backend = "hatchling.build"
+
+[tool.hatch.version]
+path = "ciscoconfparse2/__about__.py"
+scheme = "standard"
 
 [tool.hatch.build.targets.sdist]
 exclude = [

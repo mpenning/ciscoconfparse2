@@ -4,6 +4,12 @@
 - Summary:
     - Insert something here
 
+## Version: 0.7.40
+
+- Released: 2024-04-14
+- Summary:
+    - Migrate to hatch dynamic versioning (i.e. `hatch version 0.7.40` bumps the version in `ciscoconfparse2/__about__.py`)
+
 ## Version: 0.7.39
 
 - Released: 2024-04-14
