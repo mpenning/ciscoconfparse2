@@ -58,6 +58,7 @@ project.
 After many years of updates, `ciscoconfparse`_ grew too large. `ciscoconfparse2`_:
 
 - Is tested against Python3.9+ (limited to Python 3.9+ due to python type annotation dynamics before 3.9)
+- Includes a `CLI tool`_ to grep / search for a variety of things from the CLI
 - Streamlines the API on a simpler user interface.
 - Removes legacy and flawed methods from the original (*this could be a breaking change for old scripts*).
 - Defaults ``ignore_blank_lines=False`` (*this could be a breaking change for old scripts*).
@@ -194,6 +195,7 @@ You can also parse `brace-delimited configurations`_ into a Cisco IOS style, whi
 .. _CiscoConfParse: https://github.com/mpenning/ciscoconfparse
 .. _ciscoconfparse: https://github.com/mpenning/ciscoconfparse
 .. _ciscoconfparse2: https://github.com/mpenning/ciscoconfparse2
+.. _`CLI tool`: http://www.pennington.net/py/ciscoconfparse2/cli.html
 
 .. |br| raw:: html
 
