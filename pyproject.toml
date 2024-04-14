@@ -6,7 +6,7 @@ description = "Parse, Audit, Query, Build, and Modify Cisco IOS-style and JunOS-
 readme = "README.md"
 license = "GPL-3.0-only"
 requires-python = ">= 3.8"
-dynamie = ["version"]
+dynamic = ["version"]
 dependencies = [
   "attrs==23.2.0",
   "passlib==1.7.4",

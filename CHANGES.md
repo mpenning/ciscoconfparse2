@@ -4,6 +4,12 @@
 - Summary:
     - Insert something here
 
+## Version: 0.7.42
+
+- Released: 2024-04-14
+- Summary:
+    - Fix `pyproject.toml` dynamic versioning typo
+
 ## Version: 0.7.41
 
 - Released: 2024-04-14
