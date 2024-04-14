@@ -215,7 +215,7 @@ CiscoConfParse also handles anything that has a Cisco IOS style of configuration
 
 ## Installation and Downloads
 
--   Use `poetry` for Python3.x\... :
+-   Use `pip` for Python3.x\... :
 
         python -m pip install ciscoconfparse2
 
