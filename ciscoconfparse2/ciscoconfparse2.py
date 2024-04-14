@@ -90,6 +90,8 @@ from ciscoconfparse2.errors import RequirementFailure
 from ciscoconfparse2.errors import InvalidParameters
 from ciscoconfparse2.errors import InvalidPassword
 
+from ciscoconfparse2.__about__ import __version__ as _version
+
 if sys.version_info < (3, 9):
     error = f"CiscoConfParse2 requires Python 3.9 or higher"
     logger.critical(error)
@@ -170,28 +172,14 @@ def get_version_number() -> str:
     # Docstring props: http://stackoverflow.com/a/1523456/667301
     # version: if-else below fixes Github issue #123
 
-    version = "0.0.0"  # version read failed
-
-    pyproject_toml_path = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)),
-        "../pyproject.toml",
-    )
-    if os.path.isfile(pyproject_toml_path):
-        # Retrieve the version number from pyproject.toml...
-        toml_values = {}
-        with open(pyproject_toml_path, encoding=ENCODING) as fh:
-            toml_values = tomlkit.load(fh)
-            version = toml_values["project"].get("version", -1.0)
-
-        if not isinstance(version, str):
-            raise ValueError("The version parameter must be a string.")
-
-    else:
-        # This is required for importing from a zipfile... Github issue #123
-        version = "0.0.0"  # __version__ read failed
+    try:
+        # Get the hatch-supported version from ciscoconfparse2/__about__.py
+        version = _version
+    except Exception:
+        # This may be required for importing from a zipfile... Github issue #123
+        version = "0.0.0"
 
     return version
-
 
 ENCODING = None
 ACTIVE_LOGURU_HANDLERS = None
