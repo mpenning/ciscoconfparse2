@@ -4,6 +4,12 @@
 - Summary:
     - Insert something here
 
+## Version: 0.7.43
+
+- Released: 2024-04-14
+- Summary:
+    - More hatch versioning fixes
+
 ## Version: 0.7.42
 
 - Released: 2024-04-14
