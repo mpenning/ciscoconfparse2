@@ -90,7 +90,7 @@ from ciscoconfparse2.errors import RequirementFailure
 from ciscoconfparse2.errors import InvalidParameters
 from ciscoconfparse2.errors import InvalidPassword
 
-from ciscoconfparse2.__about__ import __version__ as _version
+from ciscoconfparse2.__about__ import __version__
 
 if sys.version_info < (3, 9):
     error = f"CiscoConfParse2 requires Python 3.9 or higher"
@@ -162,25 +162,6 @@ ALL_BRACE_SYNTAX = {
 }
 
 
-@logger.catch(reraise=True)
-def get_version_number() -> str:
-    """Read the version number from 'pyproject.toml', or use version 0.0.0 in odd circumstances.
-
-    :return: The version
-    :rtype: str
-    """
-    # Docstring props: http://stackoverflow.com/a/1523456/667301
-    # version: if-else below fixes Github issue #123
-
-    try:
-        # Get the hatch-supported version from ciscoconfparse2/__about__.py
-        version = _version
-    except Exception:
-        # This may be required for importing from a zipfile... Github issue #123
-        version = "0.0.0"
-
-    return version
-
 ENCODING = None
 ACTIVE_LOGURU_HANDLERS = None
 __author_email__ = r"mike /at\ pennington [dot] net"
@@ -201,7 +182,6 @@ def initialize_globals():
     global __copyright__
     global __license__
     global __status__
-    global __version__
 
     ENCODING = locale.getpreferredencoding()
 
@@ -210,13 +190,7 @@ def initialize_globals():
     __copyright__ = f'2007-{time.strftime("%Y")}, {__author__}'
     __license__ = "GPLv3"
     __status__ = "Production"
-    try:
-        __version__ = get_version_number()
-    except BaseException as eee:
-        __version__ = "0.0.0"
-        error = f"{eee}: could not determine the ciscoconfparse2 version via get_version_number()."
-        logger.critical(error)
-        raise ValueError(error)
+    # __version__ is imported from __about__.py
 
     # These are all the 'dunder variables' required...
     globals_dict = {
