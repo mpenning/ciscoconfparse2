@@ -46,6 +46,18 @@ import os
 
 THIS_TEST_PATH = os.path.dirname(os.path.abspath(__file__))
 
+def testValues_save_as_01():
+    """Ensure that save_as() accepts a string input and saves a file"""
+
+    config = ["!", "banner motd ^   trivial banner here ^", "end"]
+    parse = CiscoConfParse(config)
+
+    # Save to disk and then delete the config
+    filename = "fixtures/plain_text/_that.txt"
+    parse.save_as(filename)
+    os.remove(filename)
+
+
 def testValues_find_objects_list_01():
     """Ensure that find_objects() accepts a list input"""
     # Test banner delimiter on the same lines

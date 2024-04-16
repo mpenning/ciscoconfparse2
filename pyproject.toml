@@ -82,6 +82,12 @@ ccp = "ciscoconfparse2.cli_script:ccp_script_entry"
 requires = ["hatchling>=1.22.2"]
 build-backend = "hatchling.build"
 
+[project.urls]
+homepage = "http://github.com/mpenning/ciscoconfparse2"
+changelog = "https://github.com/mpenning/ciscoconfparse2/blob/main/CHANGES.md"
+repository = "https://github.com/mpenning/ciscoconfparse2"
+documentation = "http://www.pennington.net/py/ciscoconfparse2/"
+
 [tool.hatch.version]
 path = "ciscoconfparse2/__about__.py"
 scheme = "standard"
@@ -100,9 +106,6 @@ packages = [
     "tests/",
 ]
 
-[project.urls]
-homepage = "http://github.com/mpenning/ciscoconfparse2"
-changelog = "https://github.com/mpenning/ciscoconfparse2/blob/main/CHANGES.md"
-repository = "https://github.com/mpenning/ciscoconfparse2"
-documentation = "http://www.pennington.net/py/ciscoconfparse2/"
+[tool.hatch.envs.default.scripts]
+pytest = "cd tests && pytest ."
 

@@ -4,6 +4,12 @@
 - Summary:
     - Insert something here
 
+## Version: 0.7.45
+
+- Released: 2024-04-16
+- Summary:
+    - Fix [github issue #9](https://github.com/mpenning/ciscoconfparse2/issues/9) - broken `save_as()`
+
 ## Version: 0.7.44
 
 - Released: 2024-04-15

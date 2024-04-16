@@ -3518,7 +3518,7 @@ debug={debug},
         ``\\r\\n`` in Windows)."""
         try:
             with open(filepath, "w", encoding=self.encoding) as newconf:
-                for line in self.as_text:
+                for line in self.get_text():
                     newconf.write(line + "\n")
             return True
         except BaseException as ee:
