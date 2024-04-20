@@ -4,6 +4,12 @@
 - Summary:
     - Insert something here
 
+## Version: 0.7.46
+
+- Released: 2024-04-20
+- Summary:
+    - Dynamic version rendering in the sphinx installation documentation
+
 ## Version: 0.7.45
 
 - Released: 2024-04-16

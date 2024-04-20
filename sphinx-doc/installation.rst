@@ -7,7 +7,7 @@ Installation
 pip
 ---
 
-``pip install -U ciscoconfparse2 >= 0.7.39``
+|my_pip_install_version|
 
 requirements.txt: pypi
 ----------------------
@@ -15,19 +15,22 @@ requirements.txt: pypi
 If you need a direct ``pypi`` dependency entry in your ``requirements.txt``
 file, you can include an entry like this.
 
-``ciscoconfparse2 == 0.7.39``
+``ciscoconfparse2 ==`` |my_monospace_version|
 
-``0.7.39`` is used only as a reference; choose the correct release for your
+|version| is used only as a reference; choose the correct release for your
 project.
 
 requirements.txt: github
 ------------------------
 
 If you need a direct ``git`` dependency entry in your ``requirements.txt``
-file, you can include an entry like this (where ``0.7.39`` is a specific
+file, you can include an entry like this (where |version| is a specific
 ``git tag`` that you want to reference).
 
-``git+https://github.com/mpenning/ciscoconfparse2.git@0.7.39``
+|my_git_url_version|
 
-``0.7.39`` is used only as a reference; choose the correct release for your
-project.
+Footnote
+--------
+
+Throughout this installation document, |version| is used only as a
+reference; choose the correct release for your project.
