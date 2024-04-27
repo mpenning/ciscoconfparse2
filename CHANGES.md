@@ -4,6 +4,12 @@
 - Summary:
     - Insert something here
 
+## Version: 0.7.47
+
+- Released: 2024-04-27
+- Summary:
+    - Documentation updates
+
 ## Version: 0.7.46
 
 - Released: 2024-04-20
