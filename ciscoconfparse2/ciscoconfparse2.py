@@ -336,6 +336,7 @@ class BraceParse():
     @logger.catch(reraise=True)
     def parse_braces_to_nested_list(self,
                                     config_txt: str):
+        """Parse the brace-delimted configuration and return a nested list (via pyparsing)"""
         # Define valid pyparsing characters for the JunOS lines... use all
         # non-brace printable characters, except curly-braces plus whitespace
         valid_chars = Combine(OneOrMore(Word(printables, exclude_chars="{}") | White(' ')))
@@ -344,6 +345,7 @@ class BraceParse():
         # a nested list is appended for every JunOS indent level
         pyparsing_list = parseobj.parse_string("{" + config_txt + "}").as_list()[0]
 
+        # pyparsing_list is a simple nested-list of text strings...
         return pyparsing_list
 
     @logger.catch(reraise=True)
