@@ -2,7 +2,7 @@
 
 # ciscoconfparse2
 
-[![git commits][41]][42] [![Version][2]][3] [![Downloads][6]][7] [![License][8]][9] [![Hatch project](https://img.shields.io/badge/%F0%9F%A5%9A-Hatch-4051b5.svg)](https://github.com/pypa/hatch)
+[![git commits][41]][42] [![Version][2]][3] [![Downloads][6]][7] [![License][8]][9] [![Hatch project][68]][69]
 
 [![SonarCloud][51]][52] [![SonarCloud Maintainability Rating][53]][54] [![SonarCloud Lines of Code][55]][56] [![SonarCloud Bugs][59]][60] [![SonarCloud Code Smells][57]][58] [![SonarCloud Tech Debt][61]][62]
 
@@ -271,7 +271,23 @@ I will not. however, if it's truly a problem for your company, there are commerc
 - [loguru](https://github.com/Delgan/loguru)
 
 
-## Unit-Tests and Development
+## Build and Development
+
+I recommend that you use [`hatch`][69] to build and manage the package versions.
+
+Typical development workflow looks like this:
+
+- git clone this repo
+- make changes
+- git commit your code changes
+- `hatch run pytest`
+- Edit `CHANGES.md` with your changes
+- Bump the `ciscoconfparse2` version number in `ciscoconfparse2/__about__.py` with `hatch version micro` or `hatch version minor`
+- Publish to github with `make cicd`
+- `cd sphinx-doc` and `make html`
+- publish documentation changes
+
+## Unit-Tests and SonarCloud
 
 - We are manually disabling some [SonarCloud](https://sonarcloud.io/) alerts with:
   - `#pragma warning disable S1313`
@@ -417,3 +433,5 @@ The word \"Cisco\" is a registered trademark of [Cisco Systems][27].
   [65]: https://pypi.org/project/ciscoconfparse/1.9.41/
   [66]: https://raw.githubusercontent.com/mpenning/ciscoconfparse2/main/sphinx-doc/_static/ciscoconfparse_logo_bw_01.png
   [67]: http://www.pennington.net/py/ciscoconfparse2/cli.html
+  [68]: https://img.shields.io/badge/%F0%9F%A5%9A-Hatch-4051b5.svg
+  [69]: https://github.com/pypa/hatch
