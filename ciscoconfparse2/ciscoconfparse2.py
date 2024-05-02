@@ -45,10 +45,8 @@ from passlib.hash import cisco_type7
 
 from pyparsing import Word, White, printables
 from pyparsing import OneOrMore, Combine
-from pyparsing import Word, printables
 from pyparsing import nested_expr
 import hier_config
-import tomlkit
 import yaml    # import for pyyaml
 
 from ciscoconfparse2.models_cisco import IOSRouteLine
@@ -80,9 +78,7 @@ from ciscoconfparse2.models_junos import JunosCfgLine
 
 from ciscoconfparse2.ccp_abc import BaseCfgLine
 
-from ciscoconfparse2.ccp_util import fix_repeated_words
 from ciscoconfparse2.ccp_util import enforce_valid_types
-from ciscoconfparse2.ccp_util import junos_unsupported
 from ciscoconfparse2.ccp_util import configure_loguru
 
 from ciscoconfparse2.errors import ConfigListItemDoesNotExist
@@ -93,7 +89,7 @@ from ciscoconfparse2.errors import InvalidPassword
 from ciscoconfparse2.__about__ import __version__
 
 if sys.version_info < (3, 9):
-    error = f"CiscoConfParse2 requires Python 3.9 or higher"
+    error = "CiscoConfParse2 requires Python 3.9 or higher"
     logger.critical(error)
     raise NotImplementedError(error)
 
@@ -169,7 +165,6 @@ __author__ = f"David Michael Pennington <{__author_email__}>"
 __copyright__ = f'2007-{time.strftime("%Y")}, {__author__}'
 __license__ = "GPLv3"
 __status__ = "Production"
-__version__ = None
 
 
 @logger.catch(reraise=True)
@@ -242,7 +237,7 @@ def get_comment_delimiters(syntax: Optional[str] = None) -> List[str]:
 
 @logger.catch(reraise=True)
 def initialize_ciscoconfparse2(read_only=False,
-                               debug=0) -> tuple[Dict[str,str], List[int]]:
+                               debug=0) -> tuple[Dict[str, str], List[int]]:
     """Initialize ciscoconfparse2 global variables and configure logging.
 
     :return: A tuple of the ciscoconfparse2 globals and active loguru handlers
@@ -271,6 +266,7 @@ def initialize_ciscoconfparse2(read_only=False,
 
 # ALL ciscoconfparse2 global variables initizalization happens here...
 _, ACTIVE_LOGURU_HANDLERS = initialize_ciscoconfparse2()
+
 
 @attrs.define(repr=False)
 class BraceParse():
@@ -362,10 +358,9 @@ class BraceParse():
                     elem = elem[:-1]
 
                 space_offset = indent * self.stop_width
-                obj = JunosCfgLine(
-                        indent=space_offset,
-                        linenum=self.current_linenum,
-                        text=" " * space_offset + elem.strip())
+                obj = JunosCfgLine(indent=space_offset,
+                                   linenum=self.current_linenum,
+                                   text=" " * space_offset + elem.strip())
                 self.config_objs.append(obj)
 
                 self.current_linenum += 1
@@ -382,6 +377,7 @@ class BraceParse():
 
     def __repr__(self) -> str:
         return f"""<BraceParse() config_txt: {len(self.config_txt)} lines, comment_delimiter: {self.comment_delimiters}, stop_width: {self.stop_width}>"""
+
 
 # This method was on ConfigList()
 @logger.catch(reraise=True)
@@ -501,6 +497,7 @@ def build_space_tolerant_regex(linespec: str,
 
     return linespec
 
+
 # This method was copied from the same method in git commit below...
 # https://raw.githubusercontent.com/mpenning/ciscoconfparse/bb3f77436023873da344377d3c839387f5131e7f/ciscoconfparse/ciscoconfparse2.py
 @logger.catch(reraise=True)
@@ -573,7 +570,7 @@ def convert_junos_to_ios(input_list: Optional[List[str]] = None,
 @attrs.define(repr=False)
 class ConfigList(UserList):
     """A custom list to hold :class:`~ciscoconfparse2.ccp_abc.BaseCfgLine` objects.  Most users will never need to use this class directly."""
-    initlist: Optional[Union[List[str],tuple[str, ...]]] = None
+    initlist: Optional[Union[List[str], tuple[str, ...]]] = None
     comment_delimiters: Optional[List[str]] = None
     factory: bool = None
     ignore_blank_lines: bool = None
@@ -591,7 +588,7 @@ class ConfigList(UserList):
     @typechecked
     def __init__(
         self,
-        initlist: Optional[Union[List[str],tuple[str, ...]]] = None,
+        initlist: Optional[Union[List[str], tuple[str, ...]]] = None,
         comment_delimiters: Optional[List[str]] = None,
         factory: bool = False,
         ignore_blank_lines: bool = False,
@@ -1187,7 +1184,7 @@ class ConfigList(UserList):
     # This method is on ConfigList()
     @logger.catch(reraise=True)
     def extend(self,
-               other: Union[List[BaseCfgLine],tuple[BaseCfgLine, ...]]) -> None:
+               other: Union[List[BaseCfgLine], tuple[BaseCfgLine, ...]]) -> None:
         """
         Extend the ConfigList with ``other``.
 
@@ -1195,7 +1192,7 @@ class ConfigList(UserList):
         """
         if isinstance(other, ConfigList):
             self.data.extend(other.data)
-        elif isinstance(other, (list,tuple)):
+        elif isinstance(other, (list, tuple)):
             self.data.extend(other)
         else:
             error = f"'other' must be a ConfigList, list or tuple, but we got {type(other)}"
@@ -1413,7 +1410,7 @@ class ConfigList(UserList):
     @logger.catch(reraise=True)
     def insert(self,
                index: int,
-               value: Union[BaseCfgLine,str]) -> None:
+               value: Union[BaseCfgLine, str]) -> None:
         """
         :param index: Index to insert ``value`` at
         :type index: int
@@ -1467,7 +1464,7 @@ class ConfigList(UserList):
 
     # This method is on ConfigList()
     @logger.catch(reraise=True)
-    def _banner_mark_regex(self, 
+    def _banner_mark_regex(self,
                            regex: Union[str, re.Pattern]) -> None:
         """
         :param regex: Find banner object children with `regex`` and build references
@@ -1568,7 +1565,6 @@ class ConfigList(UserList):
     @logger.catch(reraise=True)
     def _ciscoios_macro_mark_children(self,
                                       macro_parent_idx_list: List[BaseCfgLine]) -> None:
-                                                                   
         """
         Set the blank_line_keep attribute for all Cisco IOS banner parent / child objs.
 
@@ -1601,11 +1597,11 @@ class ConfigList(UserList):
     # This method is on ConfigList()
     @logger.catch(reraise=True)
     def _maintain_bootstrap_parent_cache(self,
-                                         parents_cache: Dict[int,BaseCfgLine],
+                                         parents_cache: Dict[int, BaseCfgLine],
                                          indent: int,
                                          max_indent: int,
                                          is_config_line: bool,
-                                         ) -> Tuple[Dict[int,BaseCfgLine],Union[BaseCfgLine,None]]:
+                                         ) -> Tuple[Dict[int, BaseCfgLine], Union[BaseCfgLine, None]]:
         """Use a family parent cache mapping to find the parent
         for a given indent level; maintain the cache mapping.
 
