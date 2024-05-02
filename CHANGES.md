@@ -4,6 +4,12 @@
 - Summary:
     - Insert something here
 
+## Version: 0.7.48
+
+- Released: 2024-05-02
+- Summary:
+    - Enhance `hier_config.Host()` call to use nxos, iosxr, and ios syntax natively when calling `Diff()`
+
 ## Version: 0.7.47
 
 - Released: 2024-04-27
