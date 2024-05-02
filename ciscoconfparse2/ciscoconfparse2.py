@@ -3670,7 +3670,13 @@ class Diff(object):
             pass
 
         # For now, we use {} instead of `options_ios.yml`
-        self.host = hier_config.Host('example_hostname', 'ios', {})
+        if syntax in {'ios', 'nxos', 'iosxr',}:
+            self.host = hier_config.Host('example_hostname', syntax, {})
+        elif syntax in {'asa', 'junos',}:
+            # for all other cases, default to 'ios' for now...
+            self.host = hier_config.Host('example_hostname', 'ios', {})
+        else:
+            raise ValueError(f"Diff(syntax='{syntax}') is an invalid syntax.")
 
         # Old configuration
         self.host.load_running_config(old_config)
