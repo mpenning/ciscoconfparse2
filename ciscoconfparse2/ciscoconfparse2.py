@@ -3653,7 +3653,7 @@ class Diff(object):
         ######################################################################
         # Handle syntax
         ######################################################################
-        if syntax != 'ios':
+        if syntax not in {'ios', 'nxos', 'iosxr', 'asa', 'junos'}:
             error = f"syntax='{syntax}' is not supported"
             logger.error(error)
             raise NotImplementedError(error)
