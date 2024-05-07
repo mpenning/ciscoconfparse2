@@ -4,6 +4,12 @@
 - Summary:
     - Insert something here
 
+## Version: 0.7.50
+
+- Released: 2024-05-07
+- Summary:
+    - Fix Github issue #11 'global spanning-tree portfast lines create errors', syntax error in `super()` call
+
 ## Version: 0.7.49
 
 - Released: 2024-05-05
