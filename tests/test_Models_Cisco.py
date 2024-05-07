@@ -63,6 +63,25 @@ def testVal_IOSCfgLine_dna(line):
     assert obj.dna == "IOSCfgLine"
 
 
+def testVal_Github_Issue_11():
+    """Test that the config in Github issue #11 passes"""
+
+    config = """
+    hostname Switch
+    spanning-tree portfast default
+    spanning-tree portfast bpduguard default
+    !
+    interface GigabitEthernet1/0/1
+     switchport mode access
+     switchport voice vlan 2
+     power inline never
+     speed 10
+    !
+    """
+    parse = CiscoConfParse(config.splitlines(), syntax='ios', factory=True)
+    assert isinstance(parse, CiscoConfParse)
+
+
 def testValues_IOSIntfLine(parse_c01_factory):
     """Test to check IOSIntfLine values"""
 
