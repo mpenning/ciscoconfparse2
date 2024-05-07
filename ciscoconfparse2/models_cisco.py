@@ -2886,7 +2886,7 @@ class IOSIntfGlobal(IOSCfgLine):
     # This method is on IOSIntGlobal()
     @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):
-        super(IOSIntfGlobal).__init__(*args, **kwargs)
+        super(IOSIntfGlobal, self).__init__(*args, **kwargs)
         self.feature = "interface global"
 
     @logger.catch(reraise=True)
