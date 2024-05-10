@@ -1,0 +1,11 @@
+[package]
+name = "deploy_docs"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+rexpect = "0.5.0"
+
+[[bin]]
+name = "deploy_docs"
+path = "src/deploy_docs.rs"
