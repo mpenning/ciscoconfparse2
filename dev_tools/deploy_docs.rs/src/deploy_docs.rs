@@ -6,26 +6,37 @@ fn copy_and_extract_tarball() -> Result<(), Error> {
     // initialize colog for the logger...
     colog::init();
 
+    ///////////////////////////////////////////////////////////////////////
     // scp the documentation file to remote webserver
+    ///////////////////////////////////////////////////////////////////////
     info!("Starting file copy to chestnut");
     let mut sess = spawn("scp /home/mpenning/ccp2.tar.gz chestnut.he.net:", Some(45_000))?;
     sess.exp_eof()?;
     info!("  Finished file copy to chestnut");
 
+    ///////////////////////////////////////////////////////////////////////
     // extract the tarball on the remote webserver with a 5-second timeout
+    ///////////////////////////////////////////////////////////////////////
     info!("Starting tarball extraction");
+
     let mut sess = spawn("ssh chestnut.he.net", Some(5_000))?;
-    sess.exp_regex("\\$")?;
+    let (_cmd_output, _matched_prompt) = sess.exp_regex("\\$")?;
+
     sess.send_line("cd public_html/py/ciscoconfparse2")?;
-    sess.exp_regex("\\$")?;
+    let (_cmd_output, _matched_prompt) = sess.exp_regex("\\$")?;
+
     sess.send_line("rm -rf *")?;
-    sess.exp_regex("\\$")?;
+    let (_cmd_output, _matched_prompt) = sess.exp_regex("\\$")?;
+
     sess.send_line("cp ~/ccp2.tar.gz .")?;
-    sess.exp_regex("\\$")?;
+    let (_cmd_output, _matched_prompt) = sess.exp_regex("\\$")?;
+
     sess.send_line("tar xvfz ccp2.tar.gz")?;
-    sess.exp_regex("\\$")?;
+    let (_cmd_output, _matched_prompt) = sess.exp_regex("\\$")?;
+
     sess.send_line("exit")?;
     sess.exp_eof()?;
+
     info!("  Finished tarball extraction");
 
     Ok(())
