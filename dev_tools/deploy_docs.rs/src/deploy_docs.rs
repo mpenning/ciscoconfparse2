@@ -1,14 +1,24 @@
+use log::info;
+use moe_logger::LogConfig;
 use rexpect::spawn;
 use rexpect::error::*;
 
 fn copy_and_extract_tarball() -> Result<(), Error> {
+    //colog::init();
+    let log_config = LogConfig::builder()
+        .env("MOE_LOG_LEVEL")
+        .output("deploy_docs.log")
+        .format("{t} {L} {T} > {M}\n")
+        .rotation(10000)
+        .finish();
+    moe_logger::init(log_config);
 
-    println!("Starting file copy to chestnut");
+    info!("Starting file copy to chestnut");
     let mut sess = spawn("scp /home/mpenning/ccp2.tar.gz chestnut.he.net:", Some(45_000))?;
     sess.exp_eof()?;
-    println!("  Finished file copy to chestnut");
+    info!("  Finished file copy to chestnut");
 
-    println!("Starting tarball extraction");
+    info!("Starting tarball extraction");
     let mut sess = spawn("ssh chestnut.he.net", Some(5_000))?;
     sess.exp_regex("\\$")?;
     sess.send_line("cd public_html/py/ciscoconfparse2")?;
@@ -21,7 +31,7 @@ fn copy_and_extract_tarball() -> Result<(), Error> {
     sess.exp_regex("\\$")?;
     sess.send_line("exit")?;
     sess.exp_eof()?;
-    println!("  Finished tarball extraction");
+    info!("  Finished tarball extraction");
 
     Ok(())
 

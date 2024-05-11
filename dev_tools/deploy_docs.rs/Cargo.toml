@@ -5,6 +5,8 @@ edition = "2021"
 
 [dependencies]
 rexpect = "0.5.0"
+log = "0.4.21"
+moe_logger = "0.2"
 
 [[bin]]
 name = "deploy_docs"
