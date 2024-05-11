@@ -4,6 +4,12 @@
 - Summary:
     - Insert something here
 
+## Version: 0.7.52
+
+- Released: 2024-05-11
+- Summary:
+    - Add `colog` logging implementation in `deploy_docs.rs` instead of `println!()`
+
 ## Version: 0.7.51
 
 - Released: 2024-05-10
