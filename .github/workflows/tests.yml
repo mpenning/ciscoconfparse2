@@ -47,9 +47,9 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
       - name: Display Python version
-        run: python -c "import sys; print(sys.version)"
+        run: python -c 'import sys; print(sys.version)'
       - name: Install dependencies on macos and fix scrypt install with CFLAGS / LDFLAGS
-        if: ${{ matrix.os == "macos-latest" }}
+        if: ${{ matrix.os == 'macos-latest' }}
         run: |
              true ###############################################################
              true # install pip, pytest, and python packages
@@ -66,7 +66,7 @@ jobs:
              export LDFLAGS="-L$(brew --prefix openssl)/lib"
              pip install -U .
       - name: Install dependencies on Ubuntu Linux
-        if: ${{ matrix.os == "ubuntu-latest" }}
+        if: ${{ matrix.os == 'ubuntu-latest' }}
         run: |
              true ###############################################################
              true # install pip, pytest, and python packages
@@ -80,7 +80,7 @@ jobs:
              true ###############################################################
              pip install -U .
       - name: Install dependencies on Windows
-        if: ${{ matrix.os == "windows-latest" }}
+        if: ${{ matrix.os == 'windows-latest' }}
         run: |
              true ###############################################################
              true # install pip, pytest, and python packages
