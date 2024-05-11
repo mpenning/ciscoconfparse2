@@ -65,22 +65,8 @@ jobs:
              export CFLAGS="-I$(brew --prefix openssl)/include"
              export LDFLAGS="-L$(brew --prefix openssl)/lib"
              pip install -U .
-      - name: Install dependencies on Ubuntu Linux
-        if: ${{ matrix.os == 'ubuntu-latest' }}
-        run: |
-             true ###############################################################
-             true # install pip, pytest, and python packages
-             true #     asterisk globbing is fragile, so don't use asterisk path
-             true #     globs.  Just call out individual files, below.
-             true ###############################################################
-             python -m pip install --upgrade pip
-             pip install -U pytest
-             true ###############################################################
-             true #     Install ourself
-             true ###############################################################
-             pip install -U .
-      - name: Install dependencies on Windows
-        if: ${{ matrix.os == 'windows-latest' }}
+      - name: Install dependencies on Ubuntu Linux / Windows
+        if: ${{ matrix.os != 'macos-latest' }}
         run: |
              true ###############################################################
              true # install pip, pytest, and python packages
