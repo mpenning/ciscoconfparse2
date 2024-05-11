@@ -4,6 +4,12 @@
 - Summary:
     - Insert something here
 
+## Version: 0.7.54
+
+- Released: 2024-05-11
+- Summary:
+    - Enhance github workflows test runner
+
 ## Version: 0.7.53
 
 - Released: 2024-05-11
