@@ -3654,7 +3654,7 @@ class Diff(object):
         # Handle syntax
         ######################################################################
         if syntax not in {'ios', 'nxos', 'iosxr', 'asa', 'junos'}:
-            error = f"syntax='{syntax}' is not supported"
+            error = f"Diff() does not support syntax='{syntax}'"
             logger.error(error)
             raise NotImplementedError(error)
 
