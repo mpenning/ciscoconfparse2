@@ -4,11 +4,17 @@
 - Summary:
     - Insert something here
 
+## Version: 0.7.55
+
+- Released: 2024-05-11
+- Summary:
+    - Update an error message
+
 ## Version: 0.7.54
 
 - Released: 2024-05-11
 - Summary:
-    - Enhance github workflows test runner
+    - Add code comments in `deploy_docs.rs`
 
 ## Version: 0.7.53
 
