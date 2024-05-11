@@ -48,7 +48,8 @@ jobs:
           python-version: ${{ matrix.python }}
       - name: Display Python version
         run: python -c "import sys; print(sys.version)"
-      - name: Install dependencies
+      - name: Install dependencies on macos
+        if: matrix.os == "macos-latest"
         run: |
              true ###############################################################
              true # install pip, pytest, and python packages
@@ -63,6 +64,20 @@ jobs:
              true # Fix macos scrypt imports manually because they throw errors otherwise
              export CFLAGS="-I$(brew --prefix openssl)/include"
              export LDFLAGS="-L$(brew --prefix openssl)/lib"
+             pip install -U .
+      - name: Install dependencies on non-macos
+        if: matrix.os != "macos-latest"
+        run: |
+             true ###############################################################
+             true # install pip, pytest, and python packages
+             true #     asterisk globbing is fragile, so don't use asterisk path
+             true #     globs.  Just call out individual files, below.
+             true ###############################################################
+             python -m pip install --upgrade pip
+             pip install -U pytest
+             true ###############################################################
+             true #     Install ourself
+             true ###############################################################
              pip install -U .
       - name: Run pytest
         run: |
