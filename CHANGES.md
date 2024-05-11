@@ -4,6 +4,12 @@
 - Summary:
     - Insert something here
 
+## Version: 0.7.60
+
+- Released: 2024-05-11
+- Summary:
+    - Make rust `deploy_docs.rs` return values explicit
+
 ## Version: 0.7.59
 
 - Released: 2024-05-11
