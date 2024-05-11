@@ -49,7 +49,7 @@ jobs:
       - name: Display Python version
         run: python -c "import sys; print(sys.version)"
       - name: Install dependencies on macos
-        if: matrix.os == "macos-latest"
+        if: runner.os == "macOS" || runner.os == "Linux"
         run: |
              true ###############################################################
              true # install pip, pytest, and python packages
@@ -66,7 +66,7 @@ jobs:
              export LDFLAGS="-L$(brew --prefix openssl)/lib"
              pip install -U .
       - name: Install dependencies on non-macos
-        if: matrix.os != "macos-latest"
+        if: runner.os == "Windows"
         run: |
              true ###############################################################
              true # install pip, pytest, and python packages
