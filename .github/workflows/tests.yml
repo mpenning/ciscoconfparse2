@@ -60,6 +60,9 @@ jobs:
              true ###############################################################
              true #     Install ourself
              true ###############################################################
+             true # Fix macos scrypt imports manually because they throw errors otherwise
+             export CFLAGS="-I$(brew --prefix openssl)/include"
+             export LDFLAGS="-L$(brew --prefix openssl)/lib"
              pip install -U .
       - name: Run pytest
         run: |
