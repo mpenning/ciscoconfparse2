@@ -4,6 +4,12 @@
 - Summary:
     - Insert something here
 
+## Version: 0.7.51
+
+- Released: 2024-05-10
+- Summary:
+    - Add a new `deploy_docs` executable in Rust
+
 ## Version: 0.7.50
 
 - Released: 2024-05-07
