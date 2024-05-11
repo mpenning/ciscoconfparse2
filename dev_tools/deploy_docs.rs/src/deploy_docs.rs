@@ -1,17 +1,9 @@
 use log::info;
-use moe_logger::LogConfig;
 use rexpect::spawn;
 use rexpect::error::*;
 
 fn copy_and_extract_tarball() -> Result<(), Error> {
-    //colog::init();
-    let log_config = LogConfig::builder()
-        .env("MOE_LOG_LEVEL")
-        .output("deploy_docs.log")
-        .format("{t} {L} {T} > {M}\n")
-        .rotation(10000)
-        .finish();
-    moe_logger::init(log_config);
+    colog::init();
 
     info!("Starting file copy to chestnut");
     let mut sess = spawn("scp /home/mpenning/ccp2.tar.gz chestnut.he.net:", Some(45_000))?;
