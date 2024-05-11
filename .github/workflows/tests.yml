@@ -48,8 +48,8 @@ jobs:
           python-version: ${{ matrix.python }}
       - name: Display Python version
         run: python -c "import sys; print(sys.version)"
-      - name: Install dependencies on macos
-        if: runner.os == "macOS" || runner.os == "Linux"
+      - name: Install dependencies on macos and fix scrypt install with CFLAGS / LDFLAGS
+        if: ${{ matrix.os == "macos-latest" }}
         run: |
              true ###############################################################
              true # install pip, pytest, and python packages
@@ -65,8 +65,22 @@ jobs:
              export CFLAGS="-I$(brew --prefix openssl)/include"
              export LDFLAGS="-L$(brew --prefix openssl)/lib"
              pip install -U .
-      - name: Install dependencies on non-macos
-        if: runner.os == "Windows"
+      - name: Install dependencies on Ubuntu Linux
+        if: ${{ matrix.os == "ubuntu-latest" }}
+        run: |
+             true ###############################################################
+             true # install pip, pytest, and python packages
+             true #     asterisk globbing is fragile, so don't use asterisk path
+             true #     globs.  Just call out individual files, below.
+             true ###############################################################
+             python -m pip install --upgrade pip
+             pip install -U pytest
+             true ###############################################################
+             true #     Install ourself
+             true ###############################################################
+             pip install -U .
+      - name: Install dependencies on Windows
+        if: ${{ matrix.os == "windows-latest" }}
         run: |
              true ###############################################################
              true # install pip, pytest, and python packages
