@@ -256,8 +256,17 @@ Method 3: :func:`~ciscoconfparse2.CiscoConfParse.find_parent_objects()`
    >>> parse = CiscoConfParse("/tftpboot/bucksnort.conf")
    >>> qos_intfs = parse.find_parent_objects([r"^interf", r"service-policy\soutput\sQOS_1"])
    ...
+   >>> # Note that `qos_intfs` is a list
    >>> qos_intfs
    [<IOSCfgLine # 18 'interface Serial1/1'>]
+   >>>
+   >>> # Use index number zero to get the first (and only) element
+   >>> qos_intfs[0]
+   <IOSCfgLine # 18 'interface Serial1/1'>
+   >>>
+   >>> # Use the `.text` property to get the actual command text
+   >>> qos_intfs[0].text
+   'interface Serial1/1'
 
 .. note::
 
