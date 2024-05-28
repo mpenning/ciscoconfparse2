@@ -343,7 +343,7 @@ This uses the example of editing the package on a git branch called `develop`...
 -   `git merge develop`
 -   `make test`
 -   `git push origin main`
--   `make pypi`
+-   `make cicd`
 
 ### Sphinx Documentation
 
