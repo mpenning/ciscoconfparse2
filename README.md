@@ -326,22 +326,6 @@ $ pytest --cov-report=term-missing --cov=ciscoconfparse2 ./
 ...
 ```
 
-
-### Editing the Package
-
-This uses the example of editing the package on a git branch called `develop`...  It also requires [`hatch`](https://pypi.org/project/hatch/)
-
--   `git clone https://github.com/mpenning/ciscoconfparse2`
--   `cd ciscoconfparse2`
--   `git branch develop`
--   `git checkout develop`
--   Add / modify / delete things on the `develop` branch
--   `make test`
--   If tests run clean, `git commit` all the pending changes on the `develop` branch
--   `hatch version micro`
--   Edit `CHANGES.md`
--   `make cicd`
-
 ### Sphinx Documentation
 
 Building the ciscoconfparse2 documentation tarball comes down to this one wierd trick:
