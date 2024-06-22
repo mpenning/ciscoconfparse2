@@ -4,6 +4,13 @@
 - Summary:
     - Insert something here
 
+## Version: 0.7.63
+
+- Released: 2024-06-22
+- Summary:
+    - chore: remove `/usr/bin/env` calls in `tests/`
+    - Update package editing instructions in the `README.md` file
+
 ## Version: 0.7.62
 
 - Released: 2024-05-28
