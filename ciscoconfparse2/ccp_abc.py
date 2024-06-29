@@ -184,6 +184,18 @@ class BaseCfgLine(object):
 
     # On BaseCfgLine()
     @logger.catch(reraise=True)
+    def __contains__(self, arg: str) -> bool:
+        """Implement 'arg in self' for this class"""
+        return arg in self.text
+
+    # On BaseCfgLine()
+    @logger.catch(reraise=True)
+    def __iter__(self) -> str:
+        for char in self.text:
+            yield char
+
+    # On BaseCfgLine()
+    @logger.catch(reraise=True)
     def __len__(self) -> int:
         return len(self._text)
 
