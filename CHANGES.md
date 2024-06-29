@@ -4,7 +4,13 @@
 - Summary:
     - Insert something here
 
-## Version: 0.7.68
+## Version: 0.7.65
+
+- Released: 2024-06-29
+- Summary:
+    - chore: More documentation updates
+
+## Version: 0.7.64
 
 - Released: 2024-06-29
 - Summary:
