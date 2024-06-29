@@ -11,8 +11,8 @@
 ### Summary
 
 [ciscoconfparse2][17] is similar to an advanced grep and diff that
-specializes in network configuration files (such as those from Cisco,
-Juniper, Palo Alto, etc); it is the next generation of
+handles **multi-vendor network configuration files** (such as those from
+Arista, Cisco, F5, Juniper, Palo Alto, etc); it is the next generation of
 [ciscoconfparse][64], which was the primary development package
 from 2007 until 2023.
 
@@ -21,131 +21,16 @@ from 2007 until 2023.
 [ciscoconfparse2][17] distributes a [CLI tool][67] that will diff and grep various
 network configuration or text files.
 
-### Simple Python API Usage
+## API Examples
 
-In addition to the CLI tool, [ciscoconfparse2][17] also offers a Python API.
-
-This example code parses a configuration stored in
-`tests/fixtures/configs/sample_02.ios` and select interfaces that are shutdown.
-
-In this case, the parent is a line containing `interface` and the child is a
-line containing the word `shutdown`.
-
-```python
-# filename: example.py
-from ciscoconfparse2 import CiscoConfParse
-
-##############################################################################
-# Find all Cisco IOS interface names that are shutdown
-##############################################################################
-#
-# Search for:
-#     !
-#     interface Foo
-#      description ignore-this-line
-#      shutdown
-#     !
-
-# Search a configuration in the test fixutres directory
-parse = CiscoConfParse('tests/fixtures/configs/sample_02.ios', syntax='ios')
-
-# Find a parent line containing 'interface' and child line with 'shutdown'
-for intf_obj in parse.find_parent_objects(['interface', 'shutdown']):
-    intf_name = " ".join(intf_obj.split()[1:])
-    print(f"Shutdown: {intf_name}")
-```
-
-That will print:
-
-```none
-$ python example.py
-Shutdown: FastEthernet0/7
-Shutdown: FastEthernet0/8
-Shutdown: FastEthernet0/9
-Shutdown: FastEthernet0/11
-Shutdown: FastEthernet0/13
-Shutdown: FastEthernet0/15
-Shutdown: FastEthernet0/17
-Shutdown: FastEthernet0/19
-Shutdown: FastEthernet0/20
-Shutdown: FastEthernet0/22
-Shutdown: VLAN1
-```
-
-### Complex Python API Example
-
-The following code will parse a configuration stored in
-`tests/fixtures/configs/sample_08.ios` and will find the
-IP address / switchport parameters assigned to interfaces.
-
-```python
-from ciscoconfparse2 import CiscoConfParse
-from ciscoconfparse2 import IPv4Obj
-
-def intf_csv(intf_obj: str) -> str:
-    """
-    :return: CSV for each interface object.
-    :rtype: str
-    """
-    intf_name = " ".join(intf_obj.split()[1:])    # Use a string split() method from the BaseCfgLine()
-    admin_status = intf_obj.re_match_iter_typed("^\s+(shutdown)", default="not_shutdown", result_type=str)
-    # Search children of all interfaces for a regex match and return
-    # the value matched in regex match group 1.  If there is no match,
-    # return a default value: 0.0.0.1/32
-    addr_netmask = intf_obj.re_match_iter_typed(
-        r"^\s+ip\saddress\s(\d+\.\d+\.\d+\.\d+\s\S+)", result_type=IPv4Obj,
-        group=1, default=IPv4Obj("0.0.0.1/32"))
-    # Find the description and replace all commas in it
-    description = intf_obj.re_match_iter_typed("description\s+(\S.*)").replace(",", "_")
-
-    switchport_status = intf_obj.re_match_iter_typed("(switchport)", default="not_switched")
-
-    # Return a csv based on whether this is a switchport
-    if switchport_status == "not_switched":
-        return f"{intf_name},{admin_status},{addr_netmask.as_cidr_addr},{switchport_status},,,{description}"
-
-    else:
-        # Only calculate switchport values if this is a switchport
-        trunk_access = intf_obj.re_match_iter_typed("switchport mode (trunk)", default="access", result_type=str)
-        access_vlan = intf_obj.re_match_iter_typed("switchport access vlan (\d+)", default=1, result_type=int)
-
-        return f"{intf_name},{admin_status},,{switchport_status},{trunk_access},{access_vlan},{description}"
-
-parse = CiscoConfParse('tests/fixtures/configs/sample_08.ios', syntax='ios')
-
-# Find interface BaseCfgLine() instances...
-for intf_obj in parse.find_objects('^interface'):
-    print(intf_csv(intf_obj))
-```
-
-That will print:
-
-```none
-$ python example.py
-Loopback0,not_shutdown,172.16.0.1/32,not_switched,,,SEE http://www.cymru.com/Documents/secure-ios-template.html
-Null0,not_shutdown,0.0.0.1/32,not_switched,,,
-ATM0/0,not_shutdown,0.0.0.1/32,not_switched,,,
-ATM0/0.32 point-to-point,not_shutdown,0.0.0.1/32,not_switched,,,
-FastEthernet0/0,not_shutdown,172.16.2.1/24,not_switched,,,[IPv4 and IPv6 desktop / laptop hosts on 2nd-floor North LAN]
-FastEthernet0/1,not_shutdown,172.16.3.1/30,not_switched,,,[IPv4 and IPv6 OSPF Transit via West side of building]
-FastEthernet1/0,not_shutdown,172.16.4.1/30,not_switched,,,[IPv4 and IPv6 OSPF Transit via North side of building]
-FastEtheret1/1,not_shutdown,,switchport,access,12,[switchport to the comptroller cube]
-FastEtheret1/2,not_shutdown,,switchport,access,12,[switchport to the IDF media converter]
-Virtual-Template1,not_shutdown,0.0.0.1/32,not_switched,,,
-Dialer1,not_shutdown,0.0.0.1/32,not_switched,,,[IPv4 and IPv6 OSPF Transit via WAN Dialer: NAT_ CBWFQ interface]
-```
-
-### Cisco IOS Factory Usage
-
-CiscoConfParse has a special feature that abstracts common IOS / NXOS / ASA / IOS XR fields; at this time, it is only useful on IOS configurations. You will see factory parsing in CiscoConfParse code as parsing the configuration with `factory=True`.
-
-Factory parsing is still beta-quality and should be used at your own risk.
+The API examples are [documented on the web][70]
 
 ## Why
 
 [ciscoconfparse2][17] is a [Python][10] library
-that helps you quickly answer questions like these about your
-Cisco configurations:
+that helps you quickly search for questions like these in your
+router / switch / firewall / load-balancer / wireless text
+configurations:
 
 - What interfaces are shutdown?
 - Which interfaces are in trunk mode?
@@ -188,26 +73,6 @@ Here's why, it:
 - Documents much more of the API
 - Intentionally requires a different import statement to minimize confusion between the original and [ciscoconfparse2][17]
 - Vasly improves Cisco IOS diffs
-
-## What if we don\'t use Cisco IOS?
-
-In many cases, you can parse [brace-delimited configurations][13] into a Cisco IOS style (see [original ciscoconfparse Github Issue \#17][14]), which means that CiscoConfParse may be able to parse these configurations:
-
-- Juniper Networks Junos OS
-- Palo Alto Networks Firewall configurations
-- F5 Networks configurations (known caveats)
-
-CiscoConfParse also handles anything that has a Cisco IOS style of configuration, which includes:
-
-- Cisco IOS, Cisco Nexus, Cisco IOS-XR, Cisco IOS-XE, Aironet OS, Cisco ASA, Cisco CatOS
-- Arista EOS
-- Brocade
-- HP Switches
-- Force 10 Switches
-- Dell PowerConnect Switches
-- Extreme Networks
-- Enterasys
-- Screenos
 
 ## Docs
 
@@ -416,3 +281,5 @@ The word \"Cisco\" is a registered trademark of [Cisco Systems][27].
   [67]: http://www.pennington.net/py/ciscoconfparse2/cli.html
   [68]: https://img.shields.io/badge/%F0%9F%A5%9A-Hatch-4051b5.svg
   [69]: https://github.com/pypa/hatch
+  [70]: http://www.pennington.net/py/ciscoconfparse2/examples.html
+
