@@ -21,7 +21,7 @@ from 2007 until 2023.
 [ciscoconfparse2][17] distributes a [CLI tool][67] that will diff and grep various
 network configuration or text files.
 
-## API Examples
+### API Examples
 
 The API examples are [documented on the web][70]
 
@@ -44,7 +44,7 @@ It can help you:
 - Modify existing configurations
 - Build new configurations
 
-Speaking generally, the library examines an IOS-style config and breaks
+Speaking generally, the library examines a text network config and breaks
 it into a set of linked parent / child relationships. You can perform
 complex queries about these relationships.
 
