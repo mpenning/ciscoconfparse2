@@ -9,7 +9,7 @@ Overview
 
 ciscoconfparse2_ is similar to an advanced grep and diff API for python_; it
 should be used with text network configuration files (such as those from
-Cisco, Juniper, Palo Alto, etc).  It is the next generation of ciscoconfparse_,
+Arista, Cisco, Juniper, Palo Alto, etc).  It is the next generation of ciscoconfparse_,
 which was the primary development vehicle from 2007 until 2023.
 
 ciscoconfparse2_ can:
