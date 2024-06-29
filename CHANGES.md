@@ -4,6 +4,12 @@
 - Summary:
     - Insert something here
 
+## Version: 0.7.68
+
+- Released: 2024-06-29
+- Summary:
+    - chore: Update documentation with examples
+
 ## Version: 0.7.63
 
 - Released: 2024-06-22
