@@ -4,6 +4,12 @@
 - Summary:
     - Insert something here
 
+## Version: 0.7.67
+
+- Released: 2024-06-29
+- Summary:
+    - fix: Make `BaseCfgLine().__str__()` return `BaseCfgLine().text`
+
 ## Version: 0.7.66
 
 - Released: 2024-06-29
