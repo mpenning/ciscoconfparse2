@@ -4,7 +4,7 @@
 :class:`~ciscoconfparse2.CiscoConfParse` Examples
 =================================================
 
-This tutorial will cover the features that most
+These examples will briefly cover the features that most
 :class:`~ciscoconfparse2.CiscoConfParse` users care about.  We make a couple
 of assumptions throughout this tutorial...
 
