@@ -13,8 +13,6 @@ import sys
 
 sys.path.insert(0, "..")
 
-
-
 r""" test_Ccp_Abc.py - Parse, Query, Build, and Modify IOS-style configs
 
      Copyright (C) 2023      David Michael Pennington
@@ -132,6 +130,18 @@ def testVal_BaseCfgLine_lt_01():
     obj02.linenum = 2
     assert obj01 < obj02
 
+def testVal_BaseCfgLine_contains_01():
+    """Test the __contains__() method of BaseCfgLine() objects"""
+    obj01 = BaseCfgLine(all_lines=None, line="hostname Foo")
+    obj01.linenum = 1
+    assert "Foo" in obj01
+    assert "Bar" not in obj01
+
+def testVal_BaseCfgLine_iter_01():
+    """Test the __iter__() method of BaseCfgLine() objects"""
+    obj01 = BaseCfgLine(all_lines=None, line="interface Vlan12")
+    obj01.linenum = 1
+    assert list(obj01) == ['i', 'n', 't', 'e', 'r', 'f', 'a', 'c', 'e', ' ', 'V', 'l', 'a', 'n', '1', '2']
 
 def testVal_BaseCfgLine_index_01():
     """Test BaseCfgLine().index"""
