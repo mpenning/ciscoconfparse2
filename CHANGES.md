@@ -4,6 +4,13 @@
 - Summary:
     - Insert something here
 
+## Version: 0.7.66
+
+- Released: 2024-06-29
+- Summary:
+    - feat: Add `__contains__()` and `__iter__()` support to `BaseCfgLine()`
+    - chore: add more tests
+
 ## Version: 0.7.65
 
 - Released: 2024-06-29
