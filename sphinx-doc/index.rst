@@ -9,6 +9,7 @@ Welcome to ciscoconfparse2's documentation!
    intro
    installation
    cli
+   examples
    tutorial
    legacy_syntax
    syntax_factory_intro
