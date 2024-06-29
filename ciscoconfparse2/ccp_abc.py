@@ -180,7 +180,7 @@ class BaseCfgLine(object):
     # On BaseCfgLine()
     @logger.catch(reraise=True)
     def __str__(self):
-        return self.__repr__()
+        return self.text
 
     # On BaseCfgLine()
     @logger.catch(reraise=True)
