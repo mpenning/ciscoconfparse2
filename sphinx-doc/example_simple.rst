@@ -6,7 +6,7 @@
 In addition to the CLI tool, ciscoconfparse2 also offers a Python API.
 
 This example code parses a configuration stored in
-``tests/fixtures/configs/sample_02.ios`` and select interfaces that are shutdown.
+``tests/fixtures/configs/sample_02.ios`` and selects interfaces that are shutdown.
 
 In this case, the parent is a line containing ``interface`` and the child is a
 line containing the word ``shutdown``.
