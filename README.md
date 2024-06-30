@@ -18,7 +18,7 @@ from 2007 until 2023.
 
 ### A ciscoconfparse2 example
 
-Assume you have a bunch of interfaces in a configuration.  How do you find which ones are shutdown.
+Assume you have a bunch of interfaces in a configuration.  How do you find which ones are shutdown?
 
 One way is manually reading the whole Cisco IOS-XE configuration.  Another option is [ciscoconfparse2][17]
 
@@ -38,7 +38,7 @@ One way is manually reading the whole Cisco IOS-XE configuration.  Another optio
 
 ### Another ciscoconfparse2 example
 
-Assume you have this IOS-XR bgp configuration
+Assume you have this IOS-XR bgp configuration:
 
 ```none
 router bgp 65534
@@ -96,7 +96,7 @@ EBGP NEIGHBOR 10.0.0.34
 $
 ```
 
-There is a lot more possible, see the [tutorial](http://www.pennington.net/py/ciscoconfparse2/tutorial.html)
+There is a lot more possible; hee the [tutorial](http://www.pennington.net/py/ciscoconfparse2/tutorial.html).
 
 ### CLI Tool
 
