@@ -96,7 +96,7 @@ EBGP NEIGHBOR 10.0.0.34
 $
 ```
 
-There is a lot more possible; hee the [tutorial](http://www.pennington.net/py/ciscoconfparse2/tutorial.html).
+There is a lot more possible; see the [tutorial](http://www.pennington.net/py/ciscoconfparse2/tutorial.html).
 
 ### CLI Tool
 
