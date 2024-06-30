@@ -6,9 +6,9 @@
 
 [![SonarCloud][51]][52] [![SonarCloud Maintainability Rating][53]][54] [![SonarCloud Lines of Code][55]][56] [![SonarCloud Bugs][59]][60] [![SonarCloud Code Smells][57]][58] [![SonarCloud Tech Debt][61]][62]
 
-## Introduction: What is ciscoconfparse2?
+# Introduction: What is ciscoconfparse2?
 
-### Summary
+## Summary
 
 [ciscoconfparse2][17] is similar to an advanced grep and diff that
 handles **multi-vendor network configuration files** (such as those from
@@ -16,7 +16,7 @@ Arista, Cisco, F5, Juniper, Palo Alto, etc); it is the next generation of
 [ciscoconfparse][64], which was the primary development package
 from 2007 until 2023.
 
-### A ciscoconfparse2 example
+## A ciscoconfparse2 example
 
 Assume you have a bunch of interfaces in a configuration.  How do you find which ones are shutdown?
 
@@ -36,7 +36,7 @@ One way is manually reading the whole Cisco IOS-XE configuration.  Another optio
 ```
 
 
-### Another ciscoconfparse2 example
+## Another ciscoconfparse2 example
 
 Assume you have this IOS-XR bgp configuration:
 
@@ -98,17 +98,17 @@ $
 
 There is a lot more possible; see the [tutorial](http://www.pennington.net/py/ciscoconfparse2/tutorial.html).
 
-### CLI Tool
+## CLI Tool
 
 [ciscoconfparse2][17] distributes a [CLI tool][67] that will diff and grep various
 network configuration or text files.
 
-### API Examples
+## API Examples
 
 The API examples are [documented on the web][70]
 
 
-## Why
+# Why
 
 [ciscoconfparse2][17] is a [Python][10] library
 that helps you quickly search for questions like these in your
@@ -133,7 +133,7 @@ complex queries about these relationships.
 
 [![Cisco IOS config: Parent / child][11]][11]
 
-### What changed in ciscoconfparse2?
+## What changed in ciscoconfparse2?
 
 In late 2023, I started a rewrite because [ciscoconfparse][64] is too large 
 and has some defaults that I wish it didn't have.  I froze
@@ -157,7 +157,7 @@ Here's why, it:
 - Intentionally requires a different import statement to minimize confusion between the original and [ciscoconfparse2][17]
 - Vasly improves Cisco IOS diffs
 
-## Docs
+# Docs, Installation, and Dependencies
 
 - The latest copy of the docs are [archived on the web][15]
 
@@ -166,44 +166,6 @@ Here's why, it:
 -   Use `pip` for Python3.x\... :
 
         python -m pip install ciscoconfparse2
-
-## What is the pythonic way of handling script credentials?
-
-1. Never hard-code credentials
-2. Use [python-dotenv](https://github.com/theskumar/python-dotenv)
-
-
-## Is this a tool, or is it artwork?
-
-That depends on who you ask.  Many companies use CiscoConfParse as part of their
-network engineering toolbox; others regard it as a form of artwork.
-
-## Pre-requisites
-
-[The ciscoconfparse2 python package][3] requires Python versions 3.7+.
-
-Type-hinting (work-in-progress) targets Python3.9+ due to the need for `tuple[str, ...]` hints.
-
-## Other Resources
-
-- [Dive into Python3](http://www.diveintopython3.net/) is a good way to learn Python
-- [Team CYMRU][30] has a [Secure IOS Template][29], which is especially useful for external-facing routers / switches
-- [Cisco\'s Guide to hardening IOS devices][31]
-- [Center for Internet Security Benchmarks][32] (An email address, cookies, and javascript are required)
-
-## Are you releasing licensing besides GPLv3?
-
-I will not. however, if it's truly a problem for your company, there are commercial solutions available (to include purchasing the project, or hiring me).
-
-## Bug Tracker and Support
-
-- Please report any suggestions, bug reports, or annoyances with a [github bug report][24].
-- If you\'re having problems with general python issues, consider searching for a solution on [Stack Overflow][33].  If you can\'t find a solution for your problem or need more help, you can [ask on Stack Overflow][34] or [reddit/r/Python][39].
-- If you\'re having problems with your Cisco devices, you can contact:
-  - [Cisco TAC][28]
-  - [reddit/r/Cisco][35]
-  - [reddit/r/networking][36]
-  - [NetworkEngineering.se][23]
 
 ## Dependencies
 
@@ -218,6 +180,38 @@ I will not. however, if it's truly a problem for your company, there are commerc
 - [typeguard](https://github.com/agronholm/typeguard)
 - [loguru](https://github.com/Delgan/loguru)
 
+
+## Pre-requisites
+
+[The ciscoconfparse2 python package][3] requires Python versions 3.7+.
+
+Type-hinting (work-in-progress) targets Python3.9+ due to the need for `tuple[str, ...]` hints.
+
+## What is the pythonic way of handling script credentials?
+
+1. Never hard-code credentials
+2. Use [python-dotenv](https://github.com/theskumar/python-dotenv)
+
+# Other Resources
+
+- [Dive into Python3](http://www.diveintopython3.net/) is a good way to learn Python
+- [Team CYMRU][30] has a [Secure IOS Template][29], which is especially useful for external-facing routers / switches
+- [Cisco\'s Guide to hardening IOS devices][31]
+- [Center for Internet Security Benchmarks][32] (An email address, cookies, and javascript are required)
+
+## Are you releasing licensing besides GPLv3?
+
+I will not. however, if it's truly a problem for your company, there are commercial solutions available (to include purchasing the project, or hiring me).
+
+# Bug Tracker and Support
+
+- Please report any suggestions, bug reports, or annoyances with a [github bug report][24].
+- If you\'re having problems with general python issues, consider searching for a solution on [Stack Overflow][33].  If you can\'t find a solution for your problem or need more help, you can [ask on Stack Overflow][34] or [reddit/r/Python][39].
+- If you\'re having problems with your Cisco devices, you can contact:
+  - [Cisco TAC][28]
+  - [reddit/r/Cisco][35]
+  - [reddit/r/networking][36]
+  - [NetworkEngineering.se][23]
 
 ## License and Copyright
 
