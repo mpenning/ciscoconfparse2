@@ -16,6 +16,88 @@ Arista, Cisco, F5, Juniper, Palo Alto, etc); it is the next generation of
 [ciscoconfparse][64], which was the primary development package
 from 2007 until 2023.
 
+### A ciscoconfparse2 example
+
+Assume you have a bunch of interfaces in a configuration.  How do you find which ones are shutdown.
+
+One way is manually reading the whole Cisco IOS-XE configuration.  Another option is [ciscoconfparse2][17]
+
+```python
+>>> from ciscoconfparse2 import CiscoConfParse
+>>>
+>>> parse = CiscoConfParse('/path/to/config/file')
+>>> intf_cmds = parse.find_parent_objects(['interface', 'shutdown'])
+>>>
+>>> shut_intf_names = [" ".join(cmd.split()[1:]) for cmd in intf_cmds]
+>>>
+>>> shut_intf_names
+['GigabitEthernet1/5', 'TenGigabitEthernet2/2', 'TenGigabitEthernet2/3']
+>>>
+```
+
+
+### Another ciscoconfparse2 example
+
+Assume you have this IOS-XR bgp configuration
+
+```none
+router bgp 65534
+  bgp router-id 10.0.0.100
+  address-family ipv4 unicast
+  !
+  neighbor 10.0.0.37
+    remote-as 64000
+    route-policy EBGP_IN in
+    route-policy EBGP_OUT out
+  !
+  neighbor 10.0.0.1
+    remote-as 65534
+    update-source Loopback0
+    route-policy MANGLE_IN in
+    route-policy MANGLE_OUT out
+      next-hop-self
+  !
+  neighbor 10.0.0.34
+    remote-as 64000
+    route-policy EBGP_IN in
+    route-policy EBGP_OUT out
+```
+
+You can generate the list of EBGP peers pretty quickly with this script:
+
+```python
+from ciscoconfparse2 import CiscoConfParse
+
+parse = CiscoConfParse('/path/to/config/file')   # Or read directly from a list of strings
+
+# Get all neighbor configuration branches
+branches = parse.find_object_branches(('router bgp',
+                                       'neighbor',
+                                       'remote-as'))
+
+# Get the local BGP ASN
+bgp_cmd = branches[0][0]
+local_asn = bgp_cmd.split()[-1]
+
+# Find EBGP neighbors for any number of peers
+for branch in branches:
+    neighbor_addr = branch[1].split()[-1]
+    remote_asn = branch[2].split()[-1]
+    if local_asn != remote_asn:
+        print("EBGP NEIGHBOR", neighbor_addr)
+```
+
+When you run that, you'll see:
+
+```none
+$ python example.py
+EBGP NEIGHBOR 10.0.0.37
+EBGP NEIGHBOR 10.0.0.34
+$
+```
+
+There is a lot more possible, see the [tutorial](http://www.pennington.net/py/ciscoconfparse2/tutorial.html)
+
 ### CLI Tool
 
 [ciscoconfparse2][17] distributes a [CLI tool][67] that will diff and grep various
@@ -24,6 +106,7 @@ network configuration or text files.
 ### API Examples
 
 The API examples are [documented on the web][70]
+
 
 ## Why
 
