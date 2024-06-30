@@ -10,7 +10,7 @@ First let's cover some details of how {class}`~ciscoconfparse2` represents confi
 
 ## Intro to {class}`~ciscoconfparse2.ccp_abc.BaseCfgLine`
 
-[ciscoconfparse2][ciscoconfparse2] uses {class}`~ciscoconfparse2.ccp_abc.BaseCfgLine` instances to represent configuration commands.  You can see that in the python interpreter.
+[ciscoconfparse2][ciscoconfparse2] uses {class}`~ciscoconfparse2.ccp_abc.BaseCfgLine` instances to represent all configuration commands.  You can see that in the python interpreter.
 
 ```{code-block} python
 :emphasize-lines: 9,12
@@ -35,6 +35,43 @@ We can see above that:
 * {class}`~ciscoconfparse2.models_cisco.IOSCfgLine` is a subclass of {class}`~ciscoconfparse2.ccp_abc.BaseCfgLine`
 
 That means all the things you can do with {class}`~ciscoconfparse2.ccp_abc.BaseCfgLine` can be done with {class}`~ciscoconfparse2.ccp_abc.IOSCfgLine`.
+
+### {class}`~ciscoconfparse2.ccp_abc.BaseCfgLine` has `.parent` and `.children` attributes
+
+{class}`~ciscoconfparse2.ccp_abc.BaseCfgLine` also keep information about command parents and children.  Consider this config:
+
+```{code-block} python
+:emphasize-lines: 14,16,23,25
+>>> from ciscoconfparse2 import CiscoConfParse
+>>>
+>>> config = """!
+... interface Ethernet1/1
+...   ip address 192.0.2.1 255.255.255.0
+...   shutdown
+... !"""
+>>>
+>>> parse = CiscoConfParse(config.splitlines())
+>>>
+>>> intf_cmd = parse.find_objects('interface Ethernet1/1')[0]
+>>> intf_cmd.linenum
+1
+>>> intf_cmd.parent
+<IOSCfgLine # 1 'interface Ethernet1/1'>
+>>> intf_cmd.children
+[<IOSCfgLine # 2 '  ip address 192.0.2.1 255.255.255.0' (parent is # 1)>, <IOSCfgLine # 3 '  shutdown' (parent is # 1)>]
+>>>
+>>>
+>>> addr_cmd = parse.find_objects('ip address 192.0.2.1')[0]
+>>> addr_cmd.linenum
+2
+>>> addr_cmd.parent
+<IOSCfgLine # 1 'interface Ethernet1/1'>
+>>> addr_cmd.children
+[]
+>>>
+```
+
+We see the `.parent` and `.children` attributes are linked to other {class}`~ciscoconfparse2.models_cisco.IOSCfgLine` instances in the configuration.
 
 ## String methods
 

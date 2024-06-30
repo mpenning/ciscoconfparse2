@@ -2,11 +2,11 @@
 
 ## IOS Parent-child relationships
 
-{class}`~ciscoconfparse2.CiscoConfParse()` reads an IOS configuration and breaks
-it into a list of parent-child relationships.  Used correctly, these
+As we saw in a previous section, {class}`~ciscoconfparse2.CiscoConfParse()` reads an 
+IOS configuration and breaks it into a list of parent-child relationships.  Used correctly, these
 relationships can reveal a lot of useful information.  The concept of IOS
-parent and child is pretty intuitive, but we'll go through a simple example
-for clarity.
+parent and child is pretty intuitive, but we'll go through a another example
+for in detail for clarity.
 
 ```{note}
 CiscoConfParse assumes the configuration is in the *exact format* rendered by Cisco IOS devices when you use `show runn` or `show start`.
@@ -68,24 +68,6 @@ to build queries.  For instance, you can find a list of all parents with or
 without a child; or you can find all the configuration elements that are
 required to reconfigure a certain class-map.
 
-## {class}`~ciscoconfparse2.models_cisco.IOSCfgLine` objects
-
-When {class}`~ciscoconfparse2.CiscoConfParse()` reads a configuration, it stores
-parent-child relationships as a special {class}`~ciscoconfparse2.models_cisco.IOSCfgLine`
-object.  These objects are very powerful.
-
-{class}`~ciscoconfparse2.models_cisco.IOSCfgLine` objects remember:
-
-- The original IOS configuration line
-- The parent configuration line
-- All child configuration lines
-
-{class}`~ciscoconfparse2.models_cisco.IOSCfgLine` objects also know about child indentation,
-and they keep special configuration query methods in the object itself.  For
-instance, if you found an {class}`~ciscoconfparse2.models_cisco.IOSCfgLine` object with
-children, you can search the children directly from the parent by using
-{func}`~ciscoconfparse2.models_cisco.IOSCfgLine.re_search_children()`.
-
 ### Example: Retrieving text from an {class}`~ciscoconfparse2.models_cisco.IOSCfgLine` object
 
 This example:
@@ -103,9 +85,9 @@ This example:
 ...     'interface Serial1/0',
 ...     ' ip address 1.1.1.5 255.255.255.252'
 ...     ])
->>> for obj in parse.find_objects(r"interface"):
-...     print("Object: " + str(obj))
-...     print("Config text: " + str(obj.text))
+>>> for cmd in parse.find_objects(r"interface"):
+...     print("Object: " + repr(cmd))
+...     print("Config text: " + cmd.text)
 ...
 Object: <IOSCfgLine # 1 'interface Serial1/0'>
 Config text: interface Serial1/0
@@ -113,8 +95,8 @@ Config text: interface Serial1/0
 >>> quit()
 ```
 
-In the example, `obj.text` refers to the {class}`~ciscoconfparse2.models_cisco.IOSCfgLine`
-`text` attribute, which retrieves the text of the original IOS configuration
+In the example, `cmd.text` refers to the {class}`~ciscoconfparse2.models_cisco.IOSCfgLine`
+`.text` attribute, which retrieves the text of the original IOS configuration
 statement.
 
 ## Baseline configuration for these examples
