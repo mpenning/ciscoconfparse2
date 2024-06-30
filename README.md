@@ -203,7 +203,7 @@ Type-hinting (work-in-progress) targets Python3.9+ due to the need for `tuple[st
 
 I will not. however, if it's truly a problem for your company, there are commercial solutions available (to include purchasing the project, or hiring me).
 
-# Bug Tracker and Support
+## Bug Tracker and Support
 
 - Please report any suggestions, bug reports, or annoyances with a [github bug report][24].
 - If you\'re having problems with general python issues, consider searching for a solution on [Stack Overflow][33].  If you can\'t find a solution for your problem or need more help, you can [ask on Stack Overflow][34] or [reddit/r/Python][39].
@@ -213,7 +213,7 @@ I will not. however, if it's truly a problem for your company, there are commerc
   - [reddit/r/networking][36]
   - [NetworkEngineering.se][23]
 
-## License and Copyright
+# License and Copyright
 
 [ciscoconfparse2][3] is licensed [GPLv3][21]
 
@@ -221,7 +221,7 @@ I will not. however, if it's truly a problem for your company, there are commerc
 
 The word \"Cisco\" is a registered trademark of [Cisco Systems][27].
 
-## Author
+# Author
 
 [ciscoconfparse2][3] was written by [David Michael Pennington][25].
 
