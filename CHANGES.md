@@ -4,6 +4,12 @@
 - Summary:
     - Insert something here
 
+## Version: 0.7.72
+
+- Released: 2024-06-30
+- Summary:
+    - Update Makefile such that version tags are optional
+
 ## Version: 0.7.71
 
 - Released: 2024-06-30
