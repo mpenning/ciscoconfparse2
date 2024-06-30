@@ -4,6 +4,16 @@
 - Summary:
     - Insert something here
 
+## Version: 0.7.68
+
+- Released: 2024-06-30
+- Summary:
+    - Add markdown support to documentation tree
+    - Simplify `README.md`
+    - Update Sphinx version to 6.2.1
+    - Add [`MyRST`](https://github.com/executablebooks/MyST-Parser/) as a dev dependency
+    - Add `requirements/requirements-dev.txt`
+
 ## Version: 0.7.67
 
 - Released: 2024-06-29

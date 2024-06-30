@@ -136,7 +136,6 @@ I will not. however, if it's truly a problem for your company, there are commerc
 - [loguru](https://github.com/Delgan/loguru)
 
 
-
 ## License and Copyright
 
 [ciscoconfparse2][3] is licensed [GPLv3][21]
