@@ -54,12 +54,12 @@ cicd:
 	-git commit --all -m "Version $$VERSION"
 	# tag the repo with $$VERSION, upon git tag push,
 	# this triggers .github/workflows/cicd-publish.yml
-	git tag $$VERSION
+	-git tag $$VERSION
 	git checkout main
 	git merge develop
 	git push origin main
 	# push tag to github origin, which triggers a github CICD action (see above)
-	git push origin $$VERSION
+	-git push origin $$VERSION
 	git checkout develop
 	git pull origin main
 
