@@ -21,15 +21,16 @@ sys.path.insert(0, os.path.join(os.path.abspath(os.path.dirname(__file__)), ".."
 #import sphinx_rtd_theme
 
 from sphinx.ext.autodoc import AttributeDocumenter, ClassLevelDocumenter
+
 import ciscoconfparse2.ciscoconfparse2
 import ciscoconfparse2.ccp_abc
 import ciscoconfparse2.ccp_util
-from loguru import logger
 
 from ciscoconfparse2.ciscoconfparse2 import __author_email__
 from ciscoconfparse2.ciscoconfparse2 import __author__
 from ciscoconfparse2.__about__ import __version__
 
+from loguru import logger
 import toml
 
 ## http://ericholscher.com/blog/2013/nov/4/new-theme-read-the-docs/
@@ -46,6 +47,7 @@ RTD_NEW_THEME = True
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = [
     "numpydoc",
+    "myst_parser",
     "sphinx.ext.autodoc",
     "sphinx.ext.doctest",
     "sphinx.ext.intersphinx",
@@ -95,8 +97,8 @@ intersphinx_mapping = {"python": ("https://docs.python.org/3", None)}
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
 
-# The suffix of source filenames.
-source_suffix = ".rst"
+# The suffix of source filenames.  This supports both .rst and .md
+source_suffix = [".rst", ".md"]
 
 # The encoding of source files.
 # source_encoding = 'utf-8'
