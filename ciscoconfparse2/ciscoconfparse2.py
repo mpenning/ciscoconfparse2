@@ -200,7 +200,7 @@ def initialize_globals():
 
 
 @logger.catch(reraise=True)
-def get_comment_delimiters(syntax: Optional[str] = None) -> List[str]:
+def get_syntax_comment_delimiters(syntax: Optional[str] = None) -> List[str]:
     """Return a list of comment delimiters for the 'syntax' string in question
 
     :return: A sequence of string comment delimiters
@@ -228,9 +228,28 @@ def get_comment_delimiters(syntax: Optional[str] = None) -> List[str]:
     elif syntax == "junos":
         comment_delimiters = ['#']
     else:
-        error = "Unexpected condition in get_comment_delimiters()"
+        error = "Unexpected condition in get_syntax_comment_delimiters()"
         logger.critical(error)
         raise NotImplementedError(error)
+
+    return comment_delimiters
+
+@logger.catch(reraise=True)
+def check_comment_delimiters(comment_delimiters: List) -> List[str]:
+    """Check that comment delimiters are strings and return a list of string comment delimiters
+
+    :return: A sequence of string comment delimiters
+    :rtype: List[str]
+    """
+    for comment_delimiter in comment_delimiters:
+        if not isinstance(comment_delimiter, str):
+            error = f"`{comment_delimiter}` is not a valid string comment_delimiters"
+            logger.critical(error)
+            raise InvalidParameters(error)
+        elif not len(comment_delimiter) == 1:
+            error = f"`{comment_delimiter}` must be a single string character."
+            logger.critical(error)
+            raise InvalidParameters(error)
 
     return comment_delimiters
 
@@ -2103,31 +2122,29 @@ class CiscoConfParse(object):
             raise InvalidParameters(error)
         self.syntax = syntax
 
+        ######################################################################
+        # Comment Delimiters
+        ######################################################################
         if comment_delimiters is None:
-            comment_delimiters = get_comment_delimiters(syntax=syntax)
+            comment_delimiters = get_syntax_comment_delimiters(syntax=syntax)
         elif isinstance(comment_delimiters, list):
-            for comment_delimiter in comment_delimiters:
-                if not isinstance(comment_delimiter, str):
-                    error = f"`{comment_delimiter}` is not a valid string comment_delimiters"
-                    logger.critical(error)
-                    raise InvalidParameters(error)
-                elif not len(comment_delimiter) == 1:
-                    error = f"`{comment_delimiter}` must be a single string character."
-                    logger.critical(error)
-                    raise InvalidParameters(error)
+            comment_delimiters = check_comment_delimiters(comment_delimiters)
         elif not isinstance(comment_delimiters, list):
             error = "'comment_delimiters' must be a list of string comment delimiters"
             logger.critical(error)
             raise InvalidParameters(error)
         self.comment_delimiters = comment_delimiters
 
+        ######################################################################
+        # Auto-indent width
+        ######################################################################
         if int(auto_indent_width) <= 0:
             auto_indent_width = int(self.get_auto_indent_from_syntax(syntax=syntax))
         self.auto_indent_width = int(auto_indent_width)
 
         ######################################################################
         # Log an error if parsing with `ignore_blank_lines=True` and
-        #     `factory=False` because it causes probles with indexing into the
+        #     `factory=True` because it causes probles with indexing into the
         #     ConfigList()
         ######################################################################
         if ignore_blank_lines is True and factory is True:
@@ -2145,11 +2162,13 @@ class CiscoConfParse(object):
             if debug > 0:
                 logger.warning(f"Disabled loguru enqueue because loguru={loguru}")
 
+        ######################################################################
+        # Check for valid syntax
+        ######################################################################
         if not (isinstance(syntax, str) and (syntax in ALL_VALID_SYNTAX)):
             error = f"'{syntax}' is an unknown syntax"
             logger.critical(error)
             raise ValueError(error)
-
 
         # all IOSCfgLine object instances...
         self.finished_config_parse = False
@@ -2158,46 +2177,12 @@ class CiscoConfParse(object):
         self.debug = int(debug)
         self.linesplit_rgx = linesplit_rgx
 
-        # Convert an None config into an empty list
-        if config is None:
-            config = []
+        tmp_lines = self.read_config(config)
 
-        if len(config) > 0:
-            try:
-                correct_element_types = []
-                for ii in config:
-                    # Check whether the elements are the correct types...
-                    if isinstance(ii, (str, BaseCfgLine)):
-                        correct_element_types.append(True)
-                    else:
-                        correct_element_types.append(False)
-
-                elements_have_len = all(correct_element_types)
-            except AttributeError:
-                elements_have_len = False
-            except TypeError:
-                elements_have_len = False
-        else:
-            elements_have_len = None
-
-        if elements_have_len is False:
-            error = "All ConfigList elements must have a length()"
-            logger.error(error)
-            raise InvalidParameters(error)
-
-        # Read the configuration lines and detect invalid inputs...
-        # tmp_lines = self._get_ccp_lines(config=config, logger=logger)
-        if isinstance(config, (str, pathlib.Path,)):
-            tmp_lines = self.read_config_file(filepath=config, linesplit_rgx=r"\r*\n")
-        elif isinstance(config, Sequence):
-            tmp_lines = config
-        else:
-            error = f"Cannot read config from {config}"
-            logger.critical(error)
-            raise ValueError(error)
-
+        ##################################################################
         # conditionally strip off junos-config braces and other syntax
         #     parsing issues...
+        ##################################################################
         config_lines = self.handle_ccp_brace_syntax(tmp_lines=tmp_lines, syntax=syntax)
         if self.check_ccp_input_good(config=config_lines, logger=logger) is False:
             error = f"Cannot parse config=`{tmp_lines}`"
@@ -2332,6 +2317,62 @@ class CiscoConfParse(object):
                 self.auto_commit,
             )
         )
+
+    # This method is on CiscoConfParse()
+    @logger.catch(reraise=True)
+    def read_config(self,
+                    config: Union[None, tuple[str, ...], List[str], str, pathlib.Path]) -> List[str]:
+        """
+        Read `config` as a string, list, tuple or `pathlib.Path`
+
+        :return: The output configuration
+        :rtype: List[str]
+        """
+        # Convert an None config into an empty list
+        if config is None:
+            config = []
+
+        if len(config) > 0:
+            try:
+                correct_element_types = []
+                for ii in config:
+                    # Check whether the elements are the correct types...
+                    if isinstance(ii, (str, BaseCfgLine)):
+                        correct_element_types.append(True)
+                    else:
+                        correct_element_types.append(False)
+
+                elements_have_len = all(correct_element_types)
+            except AttributeError:
+                elements_have_len = False
+            except TypeError:
+                elements_have_len = False
+        else:
+            elements_have_len = None
+
+        if elements_have_len is False:
+            error = "All ConfigList elements must have a length()"
+            logger.error(error)
+            raise InvalidParameters(error)
+
+        ##################################################################
+        # Read the configuration lines and detect invalid inputs...
+        ##################################################################
+        if isinstance(config, (str, pathlib.Path,)) and len(str(config).splitlines())==1:
+            # Detect filepath inputs and read the file into a configuration
+            config_lines = self.read_config_file(filepath=config, linesplit_rgx=r"\r*\n")
+        elif isinstance(config, str) and len(str(config).splitlines())>1:
+            # Automatically split the configuration lines
+            config_lines = config.splitlines()
+        elif isinstance(config, Sequence):
+            # Transparently pass tuples and lists into the config
+            config_lines = config
+        else:
+            error = f"Cannot read config from {type(config)}: {config}"
+            logger.critical(error)
+            raise ValueError(error)
+
+        return config_lines
 
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
@@ -3961,7 +4002,7 @@ def config_line_factory(all_lines: List[str]=None,
     if comment_delimiters is None:
         # Rewrite comment_delimiters based on the syntax...
         if syntax in ALL_VALID_SYNTAX:
-            comment_delimiters = get_comment_delimiters(syntax=syntax)
+            comment_delimiters = get_syntax_comment_delimiters(syntax=syntax)
         else:
             error = f"Invalid syntax: {syntax}"
             logger.critical(error)
