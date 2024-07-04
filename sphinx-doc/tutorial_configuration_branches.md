@@ -12,11 +12,11 @@ Let's look at an example of getting object branches with {func}`~ciscoconfparse2
 ...  neighbor 10.0.0.1
 ...   remote-as 65534
 ... """
->>> parse = CiscoConfParse(config.splitlines())
+>>> parse = CiscoConfParse(config)
 >>>
 >>> branches = parse.find_object_branches((r'router bgp', r'neighbor', r'remote-as'))
 >>> branches
-[[<IOSCfgLine # 1 'router bgp 65534'>, <IOSCfgLine # 2 ' neighbor 10.0.0.1' (parent is # 1)>, <IOSCfgLine # 3 '  remote-as 65534' (parent is # 2)>]]
+[Branch(['router bgp 65534', ' neighbor 10.0.0.1', '  remote-as 65534'])]
 >>>
 >>> branches[0][0]
 <IOSCfgLine # 1 'router bgp 65534'>
