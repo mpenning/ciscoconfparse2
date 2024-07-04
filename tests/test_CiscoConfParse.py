@@ -25,6 +25,7 @@ import pytest
 from ciscoconfparse2.ciscoconfparse2 import CiscoConfParse
 from ciscoconfparse2.ciscoconfparse2 import IOSCfgLine, IOSIntfLine
 from ciscoconfparse2.ciscoconfparse2 import CiscoPassword
+from ciscoconfparse2.ciscoconfparse2 import Branch
 from ciscoconfparse2.ciscoconfparse2 import Diff
 from ciscoconfparse2.models_junos import JunosCfgLine
 from ciscoconfparse2.ccp_util import IPv4Obj
@@ -156,6 +157,14 @@ def testParse_valid_filepath_nofactory_01_ios():
     """Test reading a cisco ios config-file on disk (from filename in the config parameter); ref github issue #262."""
     parse = CiscoConfParse(config=f"{THIS_TEST_PATH}/fixtures/configs/sample_01.ios")
     assert len(parse.get_text()) == 453
+
+def testParse_valid_multiline_str_nofactory_01_ios():
+    """Test reading a cisco ios config-file from a multiline string"""
+    config = """!
+hostname FooHostName
+!"""
+    parse = CiscoConfParse(config=config)
+    assert len(parse.get_text()) == 3
 
 
 def testParse_valid_filepath_01_f5():
@@ -1491,12 +1500,14 @@ def testValues_find_object_branches_02():
     assert len(test_result) == 2
 
     # Test first family branch result...
+    assert isinstance(test_result[0], Branch)
     assert test_result[0][0].text.strip() == "ltm pool FOO"
     assert test_result[0][1].text.strip() == "members"
     assert test_result[0][2].text.strip() == "k8s-05.localdomain:8443"
     assert test_result[0][3].text.strip() == "state up"
 
     # Test second family branch result...
+    assert isinstance(test_result[1], Branch)
     assert test_result[1][0].text.strip() == "ltm pool FOO"
     assert test_result[1][1].text.strip() == "members"
     assert test_result[1][2].text.strip() == "k8s-06.localdomain:8443"
@@ -1518,60 +1529,79 @@ def testValues_find_object_branches_03(parse_c01):
 
     assert len(test_result) == 19
 
+    assert isinstance(test_result[0], Branch)
     assert test_result[0][0].text.strip() == "interface Serial 1/0"
     assert test_result[0][1] is None  # Serial is not a switchport :)
 
+    assert isinstance(test_result[1], Branch)
     assert test_result[1][0].text.strip() == "interface GigabitEthernet4/1"
     assert test_result[1][1].text.strip() == "switchport"
 
+    assert isinstance(test_result[2], Branch)
     assert test_result[2][0].text.strip() == "interface GigabitEthernet4/1"
     assert test_result[2][1].text.strip() == "switchport access vlan 100"
 
+    assert isinstance(test_result[3], Branch)
     assert test_result[3][0].text.strip() == "interface GigabitEthernet4/1"
     assert test_result[3][1].text.strip() == "switchport voice vlan 150"
 
+    assert isinstance(test_result[4], Branch)
     assert test_result[4][0].text.strip() == "interface GigabitEthernet4/2"
     assert test_result[4][1].text.strip() == "switchport"
 
+    assert isinstance(test_result[5], Branch)
     assert test_result[5][0].text.strip() == "interface GigabitEthernet4/2"
     assert test_result[5][1].text.strip() == "switchport access vlan 100"
 
+    assert isinstance(test_result[6], Branch)
     assert test_result[6][0].text.strip() == "interface GigabitEthernet4/2"
     assert test_result[6][1].text.strip() == "switchport voice vlan 150"
 
+    assert isinstance(test_result[7], Branch)
     assert test_result[7][0].text.strip() == "interface GigabitEthernet4/3"
     assert test_result[7][1].text.strip() == "switchport"
 
+    assert isinstance(test_result[8], Branch)
     assert test_result[8][0].text.strip() == "interface GigabitEthernet4/3"
     assert test_result[8][1].text.strip() == "switchport access vlan 100"
 
+    assert isinstance(test_result[9], Branch)
     assert test_result[9][0].text.strip() == "interface GigabitEthernet4/3"
     assert test_result[9][1].text.strip() == "switchport voice vlan 150"
 
+    assert isinstance(test_result[10], Branch)
     assert test_result[10][0].text.strip() == "interface GigabitEthernet4/4"
     assert test_result[10][1] is None  # Gi4/4 isn't a switchport (ref regex term)
 
+    assert isinstance(test_result[11], Branch)
     assert test_result[11][0].text.strip() == "interface GigabitEthernet4/5"
     assert test_result[11][1].text.strip() == "switchport"
 
+    assert isinstance(test_result[12], Branch)
     assert test_result[12][0].text.strip() == "interface GigabitEthernet4/5"
     assert test_result[12][1].text.strip() == "switchport access vlan 110"
 
+    assert isinstance(test_result[13], Branch)
     assert test_result[13][0].text.strip() == "interface GigabitEthernet4/6"
     assert test_result[13][1].text.strip() == "switchport"
 
+    assert isinstance(test_result[14], Branch)
     assert test_result[14][0].text.strip() == "interface GigabitEthernet4/6"
     assert test_result[14][1].text.strip() == "switchport access vlan 110"
 
+    assert isinstance(test_result[15], Branch)
     assert test_result[15][0].text.strip() == "interface GigabitEthernet4/7"
     assert test_result[15][1].text.strip() == "switchport"
 
+    assert isinstance(test_result[16], Branch)
     assert test_result[16][0].text.strip() == "interface GigabitEthernet4/7"
     assert test_result[16][1].text.strip() == "switchport access vlan 110"
 
+    assert isinstance(test_result[17], Branch)
     assert test_result[17][0].text.strip() == "interface GigabitEthernet4/8"
     assert test_result[17][1].text.strip() == "switchport"
 
+    assert isinstance(test_result[18], Branch)
     assert test_result[18][0].text.strip() == "interface GigabitEthernet4/8"
     assert test_result[18][1].text.strip() == "switchport access vlan 110"
 
@@ -1584,7 +1614,7 @@ def testValues_find_object_branches_04(parse_c01):
     # matches...
     branchspec = (r"this", r"dont", "match", "at", "all")
     test_result = parse_c01.find_object_branches(branchspec=branchspec, empty_branches=True)
-    correct_result = [[None, None, None, None, None]]
+    correct_result = [Branch([None, None, None, None, None])]
     assert test_result == correct_result
 
 
