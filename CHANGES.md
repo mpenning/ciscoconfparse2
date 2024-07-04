@@ -4,6 +4,15 @@
 - Summary:
     - Insert something here
 
+## Version: 0.7.73
+
+- Released: 2024-07-04
+- Summary:
+    - Automatically parse multi-line string inputs into `CiscoConfParse()` instead of requiring a manual `str().splitlines()`
+    - Replace `list()` with an explicit `Branch()` object in `CiscoConfParse().find_object_branches()`
+    - Update tests
+    - Update documentation
+
 ## Version: 0.7.72
 
 - Released: 2024-06-30
