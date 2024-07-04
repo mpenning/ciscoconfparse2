@@ -2687,7 +2687,7 @@ debug={debug},
            ...     ]
            >>> parse = CiscoConfParse(config=config, syntax='junos', comment='#')
            >>>
-           >>> branchspec = (r'ltm\spool', r'members', r'\S+?:\d+', r'state\sup')
+           >>> branchspec = (r'ltm\spool', r'members', r'\S+?:\d+', r'state up')
            >>> branches = parse.find_object_branches(branchspec=branchspec)
            >>>
            >>> # We found three branches
@@ -2698,7 +2698,7 @@ debug={debug},
            4
            >>> # Print out one object 'branch'
            >>> branches[0]
-           [<IOSCfgLine # 0 'ltm pool FOO'>, <IOSCfgLine # 1 '    members' (parent is # 0)>, <IOSCfgLine # 2 '        k8s-05.localdomain:8443' (parent is # 1)>, <IOSCfgLine # 5 '            state up' (parent is # 2)>]
+           Branch(['ltm pool FOO', '    members', '        k8s-05.localdomain:8443', '            state up'])
            >>>
            >>> # Get the a list of text lines for this branch...
            >>> [ii.text for ii in branches[0]]
@@ -2710,10 +2710,11 @@ debug={debug},
            >>>
            >>> # Note: `None` in branches[1][-1] because of no regex match
            >>> branches[1]
-           [<IOSCfgLine # 0 'ltm pool FOO'>, <IOSCfgLine # 1 '    members' (parent is # 0)>, <IOSCfgLine # 6 '        k8s-06.localdomain:8443' (parent is # 1)>, None]
+           Branch(['ltm pool FOO', '    members', '        k8s-06.localdomain:8443', None])
            >>>
            >>> branches[2]
-           [<IOSCfgLine # 10 'ltm pool BAR'>, <IOSCfgLine # 11 '    members' (parent is # 10)>, <IOSCfgLine # 12 '        k8s-07.localdomain:8443' (parent is # 11)>, None]
+           Branch(['ltm pool BAR', '    members', '        k8s-07.localdomain:8443', None])
+           >>>
         """
         if self.config_objs.search_safe is False:
             error = "The configuration has changed since the last commit; a config search is not safe."
@@ -2747,7 +2748,7 @@ debug={debug},
                     debug=debug,
                 )
                 # Start growing branches from the segments we received...
-                branches = [[kid] for kid in next_kids]
+                branches = [Branch([kid]) for kid in next_kids]
 
             else:
                 new_branches = []
@@ -2812,7 +2813,7 @@ debug={debug},
                             # No regex capture groups b/c of no regex match...
                             return_row[idx] = [None,]
 
-                return_matrix.append(return_row)
+                return_matrix.append(Branch(return_row))
 
             branches = return_matrix
 
@@ -3628,6 +3629,57 @@ debug={debug},
         for obj in objectlist:
             retval.add(obj)
         return sorted(retval)
+
+class Branch(UserList):
+    """A Branch object for CiscoConfParse().find_object_branches()"""
+
+    # This method is on Branch()
+    @logger.catch(reraise=True)
+    def __init__(self, data: List):
+        super().__init__(data)
+        self.data = data
+
+        for idx, ii in enumerate(self.data):
+            if ii is not None and not isinstance(ii, (tuple, list)) and not isinstance(ii, BaseCfgLine):
+                raise ValueError(f"""Not an instance of BaseCfgLine(): {ii}""")
+
+            if isinstance(ii, list):
+                self.data[idx] = tuple(ii)
+
+    def __str__(self):
+        return self.__repr__()
+
+    def __repr__(self):
+        """Render the Branch() instance properly"""
+
+        branch_contents = list()
+        for entry in self.data:
+            if isinstance(entry, list):
+                for entry in self.data:
+                    if entry is not None:
+                        branch_contents.append(entry.text)
+                    else:
+                        branch_contents.append(entry)
+            else:
+                if entry is None:
+                    branch_contents.append(entry)
+                elif isinstance(entry, BaseCfgLine):
+                    branch_contents.append(entry.text)
+                elif isinstance(entry, tuple):
+                    item_list = list()
+                    for item in entry:
+                        try:
+                            item_list.append(item.text)
+                        except AttributeError:
+                            item_list.append(item)
+
+                    branch_contents.append(item_list)
+                    # Convert to a tuple
+                    branch_contents[-1] = tuple(branch_contents[-1])
+                else:
+                    raise ValueError(f"Modify Branch().__repr__() to handle entry type: {type(entry)}")
+
+        return f"""<Branch({branch_contents})>"""
 
 @attrs.define(repr=False)
 class Diff(object):
