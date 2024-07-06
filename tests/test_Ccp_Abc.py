@@ -83,7 +83,6 @@ def testVal_get_brace_termination_05():
     uut = get_brace_termination(line)
     assert uut == "{  }"
 
-
 def testVal_BaseCfgLine_obj_01():
     """Test the text and other attributes of ccp_abc.BaseCfgLine()"""
     obj01 = BaseCfgLine(all_lines=None, line="hostname Foo")
@@ -130,6 +129,14 @@ def testVal_BaseCfgLine_lt_01():
     obj02.linenum = 2
     assert obj01 < obj02
 
+
+def testVal_BaseCfgLine_split_01():
+    """Test the split() method of BaseCfgLine() objects"""
+    obj01 = BaseCfgLine(all_lines=None, line="hostname Foo")
+    obj01.linenum = 1
+    assert obj01.split() == ['hostname', 'Foo']
+
+
 def testVal_BaseCfgLine_contains_01():
     """Test the __contains__() method of BaseCfgLine() objects"""
     obj01 = BaseCfgLine(all_lines=None, line="hostname Foo")
@@ -137,11 +144,21 @@ def testVal_BaseCfgLine_contains_01():
     assert "Foo" in obj01
     assert "Bar" not in obj01
 
+
+def testVal_BaseCfgLine_getitem_01():
+    """Test the __getitem__() method of BaseCfgLine() objects"""
+    obj01 = BaseCfgLine(all_lines=None, line="hostname Foo")
+    obj01.linenum = 1
+    assert obj01[0:4] == "host"
+    assert obj01[-1] == "o"
+
+
 def testVal_BaseCfgLine_iter_01():
     """Test the __iter__() method of BaseCfgLine() objects"""
     obj01 = BaseCfgLine(all_lines=None, line="interface Vlan12")
     obj01.linenum = 1
     assert list(obj01) == ['i', 'n', 't', 'e', 'r', 'f', 'a', 'c', 'e', ' ', 'V', 'l', 'a', 'n', '1', '2']
+
 
 def testVal_BaseCfgLine_index_01():
     """Test BaseCfgLine().index"""
@@ -149,6 +166,7 @@ def testVal_BaseCfgLine_index_01():
     obj01.linenum = 1
     assert obj01.linenum == 1
     assert obj01.index == obj01.linenum
+
 
 def testVal_BaseCfgLine_safe_escape_curly_braces_01():
     """Test BaseCfgLine().safe_escape_curly_braces()"""
