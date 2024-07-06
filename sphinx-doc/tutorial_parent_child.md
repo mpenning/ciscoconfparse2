@@ -97,7 +97,7 @@ Config text: interface Serial1/0
 
 In the example, `cmd.text` refers to the {class}`~ciscoconfparse2.models_cisco.IOSCfgLine`
 `.text` attribute, which retrieves the text of the original IOS configuration
-statement.
+statement.  You can also use the python [str] function to the the configuration text.
 
 ## Baseline configuration for these examples
 
@@ -191,49 +191,16 @@ you would like to know more about regular expressions, O'Reilly's
 ## Example Usage: Finding parents with a specific child
 
 Suppose we need to find interfaces with the `QOS_1` service-policy applied
-outbound...
+outbound... we should use {func}`~ciscoconfparse2.CiscoConfParse.find_parent_objects()` because
+we want the interface name (which is the parent line).
 
-### Method 1: for-loop to iterate over objects and search children
-
-```{code-block} python
-:emphasize-lines: 2,5
-
->>> parse = CiscoConfParse("/tftpboot/bucksnort.conf")
->>> all_intfs = parse.find_objects(r"^interf")
->>> qos_intfs = list()
->>> for obj in all_intfs:
-...     if obj.re_search_children(r"service-policy\soutput\sQOS_1"):
-...         qos_intfs.append(obj)
-...
->>> qos_intfs
-[<IOSCfgLine # 18 'interface Serial1/1'>]
-```
-
-This script iterates over the interface objects, and searches the children for
-the qos policy.  It's worth mentioning that Python also has something called a
-[list-comprehension], which makes the script for this task a little more
-compact...
-
-### Method 2: [list-comprehension] to iterate over objects and search children
+### {func}`~ciscoconfparse2.CiscoConfParse.find_parent_objects()`
 
 ```{code-block} python
 :emphasize-lines: 2,3
 
 >>> parse = CiscoConfParse("/tftpboot/bucksnort.conf")
->>> qos_intfs = [obj for obj in parse.find_objects(r"^interf") \
-...     if obj.re_search_children(r"service-policy\soutput\sQOS_1")]
-...
->>> qos_intfs
-[<IOSCfgLine # 18 'interface Serial1/1'>]
-```
-
-### Method 3: {func}`~ciscoconfparse2.CiscoConfParse.find_parent_objects()`
-
-```{code-block} python
-:emphasize-lines: 2,3
-
->>> parse = CiscoConfParse("/tftpboot/bucksnort.conf")
->>> qos_intfs = parse.find_parent_objects([r"^interf", r"service-policy\soutput\sQOS_1"])
+>>> qos_intfs = parse.find_parent_objects([r"^interf", r"service-policy output QOS_1"])
 ...
 >>> # Note that `qos_intfs` is a list
 >>> qos_intfs
@@ -251,20 +218,6 @@ compact...
 ```{note}
 `find_parent_objects()` supports an arbitrary list of search terms; this makes searching multiple child levels very simple.
 ```
-
-You can choose any of these methods to accomplish your task...
-some might question why we cover the first two methods when
-{func}`~ciscoconfparse2.CiscoConfParse.find_parent_objects()` solves
-the problem completely.  In this case, they have a point; however,
-{func}`~ciscoconfparse2.CiscoConfParse.find_parent_objects()` is much slower
-when you have more than one child line to inspect per interface, because
-{func}`~ciscoconfparse2.CiscoConfParse.find_parent_objects()` performs a
-line-by-line search of the whole configuration line each time it is called.
-By contrast, Method 1 is more efficient because you could simply call
-{func}`~ciscoconfparse2.models_cisco.IOSCfgLine.re_search_children()` multiple times for each
-interface object.  {func}`~ciscoconfparse2.models_cisco.IOSCfgLine.re_search_children()`
-only searches the child lines of that {func}`~ciscoconfparse2.models_cisco.IOSCfgLine`
-interface object.
 
 ## Example Usage: Finding parents *without* a specific child
 
