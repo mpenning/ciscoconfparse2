@@ -4,6 +4,14 @@
 - Summary:
     - Insert something here
 
+## Version: 0.7.74
+
+- Released: 2024-07-06
+- Summary:
+    - Implement `BaseCfgLinne().__getitem__()` string slicing method
+    - Update tests
+    - Update documentation
+
 ## Version: 0.7.73
 
 - Released: 2024-07-04
