@@ -190,6 +190,19 @@ class BaseCfgLine(object):
 
     # On BaseCfgLine()
     @logger.catch(reraise=True)
+    def __getitem__(self, subscript) -> str:
+        """Implement string slicing on the object"""
+        if isinstance(subscript, slice):
+            # Use the subscript object from the slicing index
+            #     credit - https://stackoverflow.com/a/34372150/667301
+            #     i.e. obj[0:5]
+            return self.text[subscript.start:subscript.stop:subscript.step]
+        else:
+            #     i.e. obj[0]
+            return self.text[subscript]
+
+    # On BaseCfgLine()
+    @logger.catch(reraise=True)
     def __iter__(self) -> str:
         for char in self.text:
             yield char
