@@ -56,7 +56,7 @@ cicd:
 	# this triggers .github/workflows/cicd-publish.yml
 	-git tag $$VERSION
 	git checkout main
-	git merge develop
+	git merge @{-1}           # Merge the previous branch
 	git push origin main
 	# push tag to github origin, which triggers a github CICD action (see above)
 	-git push origin $$VERSION
