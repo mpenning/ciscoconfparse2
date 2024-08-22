@@ -79,7 +79,8 @@ def get_brace_termination(line: str) -> str:
 # -------------  Config Line ABC
 #
 
-@attrs.define(repr=False, kw_only=True)
+# Set slots False to ensure that BaseCfgLine() has a __dict__
+@attrs.define(repr=False, kw_only=True, slots=False)
 class BaseCfgLine(object):
     """Base configuration object for all configuration line instances; in most cases, the configuration line will be a subclass of this object."""
     all_text: Any = None
@@ -158,6 +159,7 @@ class BaseCfgLine(object):
         #   self._text, but currently children do not associate correctly if
         #   @text.setter is used as-is...
         # self.text = text
+
 
     # On BaseCfgLine()
     @logger.catch(reraise=True)

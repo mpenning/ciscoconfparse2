@@ -42,7 +42,7 @@ DEFAULT_IPV4_ADDR_OBJ = IPv4Obj("0.0.0.1/32", strict=False)
 ##-------------  Junos Configuration line object
 ##
 
-@attrs.define(repr=False)
+@attrs.define(repr=False, slots=False)
 class JunosCfgLine(BaseCfgLine):
     r"""An object for a parsed Junos-style configuration line.
     :class:`ciscoconfparse2.models_junos.JunosCfgLine` objects contain references to other
@@ -342,7 +342,7 @@ class JunosCfgLine(BaseCfgLine):
 #    default -> def
 
 
-@attrs.define(repr=False)
+@attrs.define(repr=False, slots=False)
 class BaseJunosIntfLine(JunosCfgLine):
 
     # This method is on BaseJunosIntfLine()
@@ -705,7 +705,7 @@ class BaseJunosIntfLine(JunosCfgLine):
 ##
 
 
-@attrs.define(repr=False)
+@attrs.define(repr=False, slots=False)
 class JunosIntfLine(BaseJunosIntfLine):
 
     # This method is on JunosIntfLine()
@@ -732,7 +732,7 @@ class JunosIntfLine(BaseJunosIntfLine):
 ##
 
 
-@attrs.define(repr=False)
+@attrs.define(repr=False, slots=False)
 class BaseJunosRouteLine(BaseCfgLine):
     @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):
@@ -808,7 +808,7 @@ class BaseJunosRouteLine(BaseCfgLine):
 ##
 
 
-@attrs.define(repr=False)
+@attrs.define(repr=False, slots=False)
 class JunosRouteLine(BaseJunosRouteLine):
     @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):

@@ -18,6 +18,16 @@ r""" test_CiscoConfParse.py - Parse, Query, Build, and Modify IOS-style configs
      If you need to contact the author, you can do so by emailing:
      mike [~at~] pennington [.dot.] net
 """
+from operator import attrgetter
+from itertools import repeat
+from copy import deepcopy
+import pickle
+try:
+    from unittest.mock import patch
+except ImportError:
+    from unittest.mock import patch
+import re
+import os
 
 from passlib.hash import cisco_type7
 import pytest
@@ -35,15 +45,6 @@ from ciscoconfparse2.errors import InvalidParameters
 
 from macaddress import EUI48, EUI64
 
-from operator import attrgetter
-from itertools import repeat
-from copy import deepcopy
-try:
-    from unittest.mock import patch
-except ImportError:
-    from unittest.mock import patch
-import re
-import os
 
 THIS_TEST_PATH = os.path.dirname(os.path.abspath(__file__))
 
@@ -56,6 +57,25 @@ def testValues_save_as_01():
     # Save to disk and then delete the config
     filename = "fixtures/plain_text/_that.txt"
     parse.save_as(filename)
+    os.remove(filename)
+
+def testValues_pickle_01():
+    """Ensure that pickle() accepts a CiscoConfParse() instance and saves a file"""
+
+    config = ["!", "hostname Foo", "!", "interface GigabitEthernet1/1", " switchport access vlan 10", "!", "end"]
+    parse = CiscoConfParse(config)
+
+    # Save to disk as a pickle
+    filename = "fixtures/plain_text/_test_01.pkl"
+    with open(filename, 'wb') as fh:
+        pickle.dump(parse, fh)
+
+    # Load pickle from disk...
+    pickle.load(open(filename, 'rb'))
+
+    assert isinstance(parse, CiscoConfParse)
+    assert len(parse.objs) == 7
+
     os.remove(filename)
 
 

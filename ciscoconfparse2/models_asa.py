@@ -47,7 +47,7 @@ from ciscoconfparse2.errors import InvalidParameters
 ##
 
 
-@attrs.define(repr=False)
+@attrs.define(repr=False, slots=False)
 class ASACfgLine(BaseCfgLine):
     """An object for a parsed ASA-style configuration line.
     :class:`~models_asa.ASACfgLine` objects contain references to other
@@ -587,7 +587,7 @@ _RE_NAMEOBJECT_STR = r"^name\s+(?P<addr>\d+\.\d+\.\d+\.\d+)\s(?P<name>\S+)"
 _RE_NAMEOBJECT = re.compile(_RE_NAMEOBJECT_STR, re.VERBOSE)
 
 
-@attrs.define(repr=False)
+@attrs.define(repr=False, slots=False)
 class ASAName(ASACfgLine):
     name: str = None
     addr: str = None
@@ -643,7 +643,7 @@ class ASAName(ASACfgLine):
 ##
 
 
-@attrs.define(repr=False)
+@attrs.define(repr=False, slots=False)
 class ASAObjNetwork(ASACfgLine):
     @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):
@@ -678,7 +678,7 @@ class ASAObjNetwork(ASACfgLine):
 ##
 
 
-@attrs.define(repr=False)
+@attrs.define(repr=False, slots=False)
 class ASAObjService(ASACfgLine):
     @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):
@@ -720,7 +720,7 @@ _RE_NETOBJECT_STR = r"""(?:                         # Non-capturing parenthesis
 _RE_NETOBJECT = re.compile(_RE_NETOBJECT_STR, re.VERBOSE)
 
 
-@attrs.define(repr=False)
+@attrs.define(repr=False, slots=False)
 class ASAObjGroupNetwork(ASACfgLine):
     name: str = None
 
@@ -857,7 +857,7 @@ _RE_PORTOBJ_STR = r"""(?:                            # Non-capturing parentesis
 _RE_PORTOBJECT = re.compile(_RE_PORTOBJ_STR, re.VERBOSE)
 
 
-@attrs.define(repr=False)
+@attrs.define(repr=False, slots=False)
 class ASAObjGroupService(ASACfgLine):
     name: str = None
     protocol_type: Any = None
@@ -996,7 +996,7 @@ class ASAObjGroupService(ASACfgLine):
 ##
 
 
-@attrs.define(repr=False)
+@attrs.define(repr=False, slots=False)
 class ASAIntfLine(BaseASAIntfLine):
     @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):
@@ -1032,7 +1032,7 @@ class ASAIntfLine(BaseASAIntfLine):
 ##
 
 
-@attrs.define(repr=False)
+@attrs.define(repr=False, slots=False)
 class ASAIntfGlobal(BaseCfgLine):
     @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):
@@ -1070,7 +1070,7 @@ class ASAIntfGlobal(BaseCfgLine):
 ##
 
 
-@attrs.define(repr=False)
+@attrs.define(repr=False, slots=False)
 class ASAHostnameLine(BaseCfgLine):
     @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):
@@ -1199,7 +1199,7 @@ class BaseASARouteLine(BaseCfgLine):
 ##
 
 
-@attrs.define(repr=False)
+@attrs.define(repr=False, slots=False)
 class ASARouteLine(BaseASARouteLine):
     @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):
@@ -1451,7 +1451,7 @@ _RE_ACLOBJECT_STR = r"""(?:                         # Non-capturing parenthesis
 _RE_ACLOBJECT = re.compile(_RE_ACLOBJECT_STR, re.VERBOSE)
 
 
-@attrs.define(repr=False)
+@attrs.define(repr=False, slots=False)
 class ASAAclLine(ASACfgLine):
     _mm_results: dict = None
 

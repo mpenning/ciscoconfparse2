@@ -63,7 +63,7 @@ MAX_VLAN = 4094
 ##
 
 
-@attrs.define(repr=False)
+@attrs.define(repr=False, slots=False)
 class TrackingInterface(BaseCfgLine):
     grp: int = None
     intf: BaseCfgLine = None
@@ -197,7 +197,7 @@ class TrackingInterface(BaseCfgLine):
 ##
 
 
-@attrs.define(repr=False)
+@attrs.define(repr=False, slots=False)
 class HSRPInterfaceGroup(BaseCfgLine):
     grp: int = 0
     parent_obj: BaseCfgLine = None
@@ -586,7 +586,7 @@ class HSRPInterfaceGroup(BaseCfgLine):
 ##
 
 
-@attrs.define(repr=False)
+@attrs.define(repr=False, slots=False)
 class IOSCfgLine(BaseFactoryLine):
     """An object for a parsed IOS-style configuration line.
     :class:`~ciscoconfparse2.models_cisco.IOSCfgLine` objects contain
@@ -963,7 +963,7 @@ class IOSCfgLine(BaseFactoryLine):
 #    default -> def
 
 
-@attrs.define(repr=False)
+@attrs.define(repr=False, slots=False)
 class BaseIOSIntfLine(IOSCfgLine, BaseFactoryInterfaceLine):
     ifindex: str = None
     default_ipv4_addr_object: Any = None
@@ -2842,7 +2842,7 @@ class BaseIOSIntfLine(IOSCfgLine, BaseFactoryInterfaceLine):
 ##
 
 
-@attrs.define(repr=False)
+@attrs.define(repr=False, slots=False)
 class IOSIntfLine(BaseIOSIntfLine):
 
     # This method is on IOSIntfLine()
@@ -2881,7 +2881,7 @@ class IOSIntfLine(BaseIOSIntfLine):
 ##
 
 
-@attrs.define(repr=False)
+@attrs.define(repr=False, slots=False)
 class IOSIntfGlobal(IOSCfgLine):
     # This method is on IOSIntGlobal()
     @logger.catch(reraise=True)
@@ -2952,7 +2952,7 @@ class IOSIntfGlobal(IOSCfgLine):
 #
 
 
-@attrs.define(repr=False)
+@attrs.define(repr=False, slots=False)
 class IOSAccessLine(IOSCfgLine):
     @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):
@@ -3045,7 +3045,7 @@ class IOSAccessLine(IOSCfgLine):
 ##
 
 
-@attrs.define(repr=False)
+@attrs.define(repr=False, slots=False)
 class BaseIOSRouteLine(IOSCfgLine):
     @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):
@@ -3164,7 +3164,7 @@ _RE_IPV6_ROUTE = re.compile(
 )
 
 
-@attrs.define(repr=False)
+@attrs.define(repr=False, slots=False)
 class IOSRouteLine(IOSCfgLine):
     _address_family: str = None
     route_info: dict = None

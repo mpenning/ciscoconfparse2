@@ -871,7 +871,7 @@ def collapse_addresses(network_list):
 # Build a wrapper around ipaddress classes to mimic the behavior of network
 # interfaces (such as persisting host-bits when the intf masklen changes) and
 # add custom @properties
-@attrs.define(repr=False)
+@attrs.define(repr=False, slots=False)
 class IPv4Obj(object):
     dna: str = "IPv4Obj"
     v4input: Optional[Union[str,int]] = None
@@ -1682,7 +1682,7 @@ class IPv4Obj(object):
 # Build a wrapper around ipaddress classes to mimic the behavior of network
 # interfaces (such as persisting host-bits when the intf masklen changes) and
 # add custom @properties
-@attrs.define(repr=False)
+@attrs.define(repr=False, slots=False)
 class IPv6Obj(object):
     dna: str = "IPv6Obj"
     v6input: Optional[Union[str, int]] = None
@@ -2371,7 +2371,7 @@ class IPv6Obj(object):
         return self.network_object.sixtofour
 
 
-@attrs.define(repr=False)
+@attrs.define(repr=False, slots=False)
 class MACObj(EUI48):
     """
     An object to represent a 48-bit mac-address in various formats.
@@ -2450,7 +2450,7 @@ class MACObj(EUI48):
     def __repr__(self) -> str:
         return f'<MACObj {str(self.mac)}>'
 
-@attrs.define(repr=False)
+@attrs.define(repr=False, slots=False)
 class EUI64Obj(EUI64):
     """
     An object to represent a 64-bit EUI64 address in various formats.
@@ -2923,7 +2923,7 @@ def check_valid_ipaddress(input_addr=None):
     return (input_addr, ipaddr_family)
 
 
-@attrs.define(repr=False)
+@attrs.define(repr=False, slots=False)
 class CiscoIOSInterface(object):
     interface_name: str = None
     interface_dict: dict = None
@@ -3802,7 +3802,7 @@ class CiscoIOSInterface(object):
             raise ValueError(error)
 
 
-@attrs.define(repr=False)
+@attrs.define(repr=False, slots=False)
 class CiscoIOSXRInterface(object):
     ##########################################################################
     ### FIXME CiscoIOSXRInterface() is fundamentally broken.
@@ -4725,7 +4725,7 @@ class CiscoIOSXRInterface(object):
             raise ValueError(error)
 
 
-@attrs.define(repr=False)
+@attrs.define(repr=False, slots=False)
 class CiscoRange(UserList):
     # Set up default attributes on the object...
     data: Any = None

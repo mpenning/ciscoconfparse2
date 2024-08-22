@@ -62,7 +62,7 @@ MAX_VLAN = 4094
 ##
 
 
-@attrs.define(repr=False)
+@attrs.define(repr=False, slots=False)
 class IOSXRCfgLine(BaseFactoryLine):
     """An object for a parsed IOSXR-style configuration line.
     :class:`ciscoconfparse2.models_iosxr.IOSXRCfgLine` objects contain references to other
@@ -449,7 +449,7 @@ class IOSXRCfgLine(BaseFactoryLine):
 #    default -> def
 
 
-@attrs.define(repr=False)
+@attrs.define(repr=False, slots=False)
 class BaseIOSXRIntfLine(IOSXRCfgLine, BaseFactoryInterfaceLine):
     ifindex: str = None
     default_ipv4_addr_object: Any = None
@@ -2325,7 +2325,7 @@ class BaseIOSXRIntfLine(IOSXRCfgLine, BaseFactoryInterfaceLine):
 ##
 
 
-@attrs.define(repr=False)
+@attrs.define(repr=False, slots=False)
 class IOSXRIntfLine(BaseIOSXRIntfLine):
 
     # This method is on IOSXRIntfLine()
@@ -2364,7 +2364,7 @@ class IOSXRIntfLine(BaseIOSXRIntfLine):
 ##
 
 
-@attrs.define(repr=False)
+@attrs.define(repr=False, slots=False)
 class IOSXRIntfGlobal(IOSXRCfgLine):
     # This method is on IOSXRIntGlobal()
     @logger.catch(reraise=True)
@@ -2432,7 +2432,7 @@ class IOSXRIntfGlobal(IOSXRCfgLine):
 ##
 ##-------------  IOSXR vPC line
 ##
-@attrs.define(repr=False)
+@attrs.define(repr=False, slots=False)
 class IOSXRvPCLine(BaseCfgLine):
     def __init__(self, *args, **kwargs):
         super(IOSXRvPCLine, self).__init__(*args, **kwargs)
@@ -2593,7 +2593,7 @@ class IOSXRvPCLine(BaseCfgLine):
 #
 
 
-@attrs.define(repr=False)
+@attrs.define(repr=False, slots=False)
 class IOSXRAccessLine(IOSXRCfgLine):
     @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):
@@ -2686,7 +2686,7 @@ class IOSXRAccessLine(IOSXRCfgLine):
 ##
 
 
-@attrs.define(repr=False)
+@attrs.define(repr=False, slots=False)
 class BaseIOSXRRouteLine(IOSXRCfgLine):
     @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):
@@ -2805,7 +2805,7 @@ _RE_IPV6_ROUTE = re.compile(
 )
 
 
-@attrs.define(repr=False)
+@attrs.define(repr=False, slots=False)
 class IOSXRRouteLine(IOSXRCfgLine):
     _address_family: str = None
     route_info: dict = None

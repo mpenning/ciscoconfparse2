@@ -62,7 +62,7 @@ MAX_VLAN = 4094
 ##
 
 
-@attrs.define(repr=False)
+@attrs.define(repr=False, slots=False)
 class NXOSCfgLine(BaseFactoryLine):
     """An object for a parsed NXOS-style configuration line.
     :class:`ciscoconfparse2.models_nxos.NXOSCfgLine` objects contain references to other
@@ -438,7 +438,7 @@ class NXOSCfgLine(BaseFactoryLine):
 #    default -> def
 
 
-@attrs.define(repr=False)
+@attrs.define(repr=False, slots=False)
 class BaseNXOSIntfLine(NXOSCfgLine, BaseFactoryInterfaceLine):
     ifindex: str = None
     default_ipv4_addr_object: Any = None
@@ -2314,7 +2314,7 @@ class BaseNXOSIntfLine(NXOSCfgLine, BaseFactoryInterfaceLine):
 ##
 
 
-@attrs.define(repr=False)
+@attrs.define(repr=False, slots=False)
 class NXOSIntfLine(BaseNXOSIntfLine):
 
     # This method is on NXOSIntfLine()
@@ -2353,7 +2353,7 @@ class NXOSIntfLine(BaseNXOSIntfLine):
 ##
 
 
-@attrs.define(repr=False)
+@attrs.define(repr=False, slots=False)
 class NXOSIntfGlobal(NXOSCfgLine):
     # This method is on NXOSIntGlobal()
     @logger.catch(reraise=True)
@@ -2421,7 +2421,7 @@ class NXOSIntfGlobal(NXOSCfgLine):
 ##
 ##-------------  NXOS vPC line
 ##
-@attrs.define(repr=False)
+@attrs.define(repr=False, slots=False)
 class NXOSvPCLine(BaseCfgLine):
     def __init__(self, *args, **kwargs):
         super(NXOSvPCLine, self).__init__(*args, **kwargs)
@@ -2583,7 +2583,7 @@ class NXOSvPCLine(BaseCfgLine):
 #
 
 
-@attrs.define(repr=False)
+@attrs.define(repr=False, slots=False)
 class NXOSAccessLine(NXOSCfgLine):
     @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):
@@ -2676,7 +2676,7 @@ class NXOSAccessLine(NXOSCfgLine):
 ##
 
 
-@attrs.define(repr=False)
+@attrs.define(repr=False, slots=False)
 class BaseNXOSRouteLine(NXOSCfgLine):
     @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):
@@ -2795,7 +2795,7 @@ _RE_IPV6_ROUTE = re.compile(
 )
 
 
-@attrs.define(repr=False)
+@attrs.define(repr=False, slots=False)
 class NXOSRouteLine(NXOSCfgLine):
     _address_family: str = None
     route_info: dict = None

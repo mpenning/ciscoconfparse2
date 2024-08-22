@@ -65,7 +65,7 @@ _VIRTUAL_INTF_REGEX = re.compile(_VIRTUAL_INTF_REGEX_STR, re.I)
 ##
 
 
-@attrs.define(repr=False)
+@attrs.define(repr=False, slots=False)
 class BaseFactoryLine(BaseCfgLine):
     """A base class for all factory class implementations.
 
@@ -260,7 +260,7 @@ class BaseFactoryLine(BaseCfgLine):
 #    default -> def
 
 
-@attrs.define(repr=False)
+@attrs.define(repr=False, slots=False)
 class BaseFactoryInterfaceLine(BaseFactoryLine):
     ifindex: str = None
     default_ipv4_addr_object: Any = None
@@ -1251,7 +1251,7 @@ class BaseFactoryInterfaceLine(BaseFactoryLine):
 ##
 
 
-@attrs.define(repr=False)
+@attrs.define(repr=False, slots=False)
 class IOSIntfLine(BaseFactoryInterfaceLine):
 
     # This method is on IOSIntfLine()
@@ -1293,7 +1293,7 @@ class IOSIntfLine(BaseFactoryInterfaceLine):
 ##
 
 
-@attrs.define(repr=False)
+@attrs.define(repr=False, slots=False)
 class IOSIntfGlobal(BaseFactoryLine):
     # This method is on IOSIntGlobal()
     @logger.catch(reraise=True)
@@ -1357,7 +1357,7 @@ class IOSIntfGlobal(BaseFactoryLine):
 #
 
 
-@attrs.define(repr=False)
+@attrs.define(repr=False, slots=False)
 class IOSAccessLine(BaseFactoryLine):
 
     # This method is on IOSAccessLine()
@@ -1442,7 +1442,7 @@ class IOSAccessLine(BaseFactoryLine):
 ##
 
 
-@attrs.define(repr=False)
+@attrs.define(repr=False, slots=False)
 class BaseIOSRouteLine(BaseFactoryLine):
     # This method is on BaseIOSRouteLine()
     @logger.catch(reraise=True)
@@ -1563,7 +1563,7 @@ _RE_IPV6_ROUTE = re.compile(
 )
 
 
-@attrs.define(repr=False)
+@attrs.define(repr=False, slots=False)
 class IOSRouteLine(BaseFactoryLine):
     _address_family: str = None
     route_info: dict = None

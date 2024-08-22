@@ -287,7 +287,7 @@ def initialize_ciscoconfparse2(read_only=False,
 _, ACTIVE_LOGURU_HANDLERS = initialize_ciscoconfparse2()
 
 
-@attrs.define(repr=False)
+@attrs.define(repr=False, slots=False)
 class BraceParse():
     config_txt: str = None
     comment_delimiters: list = None
@@ -586,6 +586,7 @@ def convert_junos_to_ios(input_list: Optional[List[str]] = None,
     return [ii.text for ii in braceobj.get_junoscfgline_list()]
 
 
+# ConfigList() breaks unless @attrs.define(slots=True) (which is the default)
 @attrs.define(repr=False)
 class ConfigList(UserList):
     """A custom list to hold :class:`~ciscoconfparse2.ccp_abc.BaseCfgLine` objects.  Most users will never need to use this class directly."""
@@ -597,6 +598,7 @@ class ConfigList(UserList):
     auto_commit: bool = False
     debug: int = None
 
+    data: BaseCfgLine = None
     ccp_ref: Any = None
     dna: str = "ConfigList"
     current_checkpoint: int = 0
@@ -1984,10 +1986,10 @@ class ConfigList(UserList):
         return retval
 
 
-@attrs.define(repr=False)
+@attrs.define(repr=False, slots=False)
 class CiscoConfParse(object):
     """Parse Cisco IOS configurations and answer queries about the configs."""
-    config: Optional[Union[str,List[str]]] = None
+    #config: Optional[Union[str,List[str]]] = None
     syntax: str = "ios"
     encoding: str = locale.getpreferredencoding()
     loguru: bool = True
@@ -3681,7 +3683,7 @@ class Branch(UserList):
 
         return f"""<Branch({branch_contents})>"""
 
-@attrs.define(repr=False)
+@attrs.define(repr=False, slots=False)
 class Diff(object):
     host: str = None
 
