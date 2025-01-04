@@ -2277,7 +2277,7 @@ class IPv6Obj(object):
     @property
     def as_decimal(self):
         """Returns the IP address as a decimal integer"""
-        num_strings = str(self.ip.exploded).split(":")
+        num_strings = str(self.ip.exploded).split("/")[0].split(":")
 
 
         ########################################################################

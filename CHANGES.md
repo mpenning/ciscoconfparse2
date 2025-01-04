@@ -4,6 +4,12 @@
 - Summary:
     - Insert something here
 
+## Version: 0.7.81
+
+- Released: 2025-01-04
+- Summary:
+    - Tweak algorithm to get a decimal representation of an IPv6Obj()
+
 ## Version: 0.7.80
 
 - Released: 2025-01-04
