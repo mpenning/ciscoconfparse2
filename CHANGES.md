@@ -4,6 +4,15 @@
 - Summary:
     - Insert something here
 
+
+## Version: 0.7.78
+
+- Released: 2025-01-04
+- Summary:
+    - Make explicit comments about the source reference for Cisco Type 8 and 9 hashes
+    - Add Python3.13 to the test matrix
+    - Deprecate support for Python3.8 (it went end of life in October 2024)
+
 ## Version: 0.7.77
 
 - Released: 2025-01-04

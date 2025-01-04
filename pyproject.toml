@@ -5,7 +5,7 @@ name = "ciscoconfparse2"
 description = "Parse, Audit, Query, Build, and Modify Cisco IOS-style and JunOS-style configs"
 readme = "README.md"
 license = "GPL-3.0-only"
-requires-python = ">= 3.8"
+requires-python = ">= 3.9"
 dynamic = ["version"]
 dependencies = [
   # NOTE changing attrs versions may require code / test changes

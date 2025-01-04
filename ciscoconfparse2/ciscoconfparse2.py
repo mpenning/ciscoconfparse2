@@ -3994,6 +3994,9 @@ class CiscoPassword(object):
         """
         Hashes cleartext password to Cisco type 8
 
+        Cisco Encryption type 8 code inspired by this MIT-licensed repo:
+            https://github.com/BrettVerney/ciscoPWDhasher/
+
         :param pwd: Clear text password to be hashed
         :return: Hashed password
         """
@@ -4019,6 +4022,9 @@ class CiscoPassword(object):
     def encrypt_type_9(self, pwd):
         """
         Hashes password to Cisco type 9
+
+        Cisco Encryption type 9 code inspired by this MIT-licensed repo:
+            https://github.com/BrettVerney/ciscoPWDhasher/
 
         :param pwd: Clear text password
         :return: Hashed password
