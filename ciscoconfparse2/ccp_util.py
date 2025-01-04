@@ -2279,13 +2279,27 @@ class IPv6Obj(object):
         """Returns the IP address as a decimal integer"""
         num_strings = str(self.ip.exploded).split(":")
 
-        # Handle IPv4 embeddded in IPv6 strings (such as ':ffff:192.0.2.4')
+
+        ########################################################################
+        # Handle IPv4 embeddded in IPv6 strings (such as '::ffff:192.0.2.4')
+        # in Python 3.13 and higher...
+        ########################################################################
+        replacements = list()
         for index, part in enumerate(num_strings):
             try:
                 obj = IPv4Obj(part)
-                num_strings[index] = hex(obj.as_decimal).lstrip('0x')
+                replacements.append((index, hex(obj.as_decimal).lstrip('0x')))
             except AddressValueError:
                 pass
+
+        # There must not be more than one ipv4 embedded in an IPv6 address
+        if len(replacements) > 1:
+            raise ValueError(str(self.ip))
+
+        for replacement in replacements:
+            index = replacement[0]
+            value = replacement[1]
+            num_strings[index] = value
 
         num_strings.reverse()  # reverse the order
 
