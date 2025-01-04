@@ -33,8 +33,11 @@ r""" test_Ccp_Util.py - Parse, Query, Build, and Modify IOS-style configs
 #pragma warning disable S6395
 
 
-import ipaddress
 from ipaddress import IPv4Network, IPv6Network, IPv4Address, IPv6Address
+import ipaddress
+import pickle
+import os
+
 from loguru import logger
 import pytest
 
@@ -51,6 +54,23 @@ import sys
 sys.path.insert(0, "..")
 
 
+def testValues_pickle_01():
+    """Ensure that pickle() accepts an IPv4Obj() instance and saves a file"""
+
+
+    addr = IPv4Obj("192.0.2.1/24")
+
+    # Save to disk as a pickle
+    filename = "fixtures/plain_text/_test_01.pkl"
+    with open(filename, 'wb') as fh:
+        pickle.dump(addr, fh)
+
+    # Load pickle from disk...
+    addr = pickle.load(open(filename, 'rb'))
+
+    assert isinstance(addr, IPv4Obj)
+
+    os.remove(filename)
 
 
 @pytest.mark.parametrize(
