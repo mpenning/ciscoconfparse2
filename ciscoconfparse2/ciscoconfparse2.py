@@ -41,7 +41,10 @@ from loguru import logger
 import attrs
 
 # passlib requires crypt, which is deprecated in Python3.13+
-if sys.version_info > (3, 12):
+#
+# 2025-01-04 Removing crypt_r for now since it's not available
+# for use in pyproject.toml in python3.10 and lower.
+if False and sys.version_info > (3, 12):
     # substitute third-party crypt_r for crypt...
     import crypt_r as crypt
 

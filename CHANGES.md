@@ -4,6 +4,12 @@
 - Summary:
     - Insert something here
 
+## Version: 0.7.76
+
+- Released: 2025-01-04
+- Summary:
+    - Remove crypt-r due to it missing in python 3.10 and lower
+
 ## Version: 0.7.75
 
 - Released: 2025-01-04
