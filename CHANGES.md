@@ -4,6 +4,11 @@
 - Summary:
     - Insert something here
 
+## Version: 0.7.79
+
+- Released: 2025-01-04
+- Summary:
+    - Attempt to fix problems with IPv4 addresses embedded in IPv6Obj (such as ':ffff:192.0.2.4')
 
 ## Version: 0.7.78
 

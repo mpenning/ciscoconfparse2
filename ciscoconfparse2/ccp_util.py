@@ -2278,7 +2278,17 @@ class IPv6Obj(object):
     def as_decimal(self):
         """Returns the IP address as a decimal integer"""
         num_strings = str(self.ip.exploded).split(":")
+
+        # Handle IPv4 embeddded in IPv6 strings (such as ':ffff:192.0.2.4')
+        for index, part in enumerate(num_strings):
+            try:
+                obj = IPv4Obj(part)
+                num_strings[index] = hex(obj.as_decimal).lstrip('0x')
+            except AddressValueError:
+                pass
+
         num_strings.reverse()  # reverse the order
+
         return sum(
             int(num, 16) * (65536**idx) for idx, num in enumerate(num_strings)
         )
