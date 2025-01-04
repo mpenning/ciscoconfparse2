@@ -20,13 +20,6 @@ If you need to contact the author, you can do so by emailing:
 mike [~at~] pennington [.dot.] net
 """
 
-from typing import Optional, Any, Callable, Union, List, Tuple, Dict
-from collections.abc import Sequence
-from collections import UserList
-import hashlib
-import inspect
-import pathlib
-import scrypt
 import base64
 import random
 import locale
@@ -36,12 +29,25 @@ import sys
 import re
 import os
 
+from typing import Optional, Any, Callable, Union, List, Tuple, Dict
+from collections.abc import Sequence
+from collections import UserList
+import hashlib
+import inspect
+import pathlib
+
 from typeguard import typechecked
 from loguru import logger
 import attrs
 
+# passlib requires crypt, which is deprecated in Python3.13+
+if sys.version_info > (3, 12):
+    # substitute third-party crypt_r for crypt...
+    import crypt_r as crypt
+
 from passlib.hash import md5_crypt
 from passlib.hash import cisco_type7
+import scrypt
 
 from pyparsing import Word, White, printables
 from pyparsing import OneOrMore, Combine

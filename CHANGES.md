@@ -4,6 +4,17 @@
 - Summary:
     - Insert something here
 
+## Version: 0.7.75
+
+- Released: 2025-01-04
+- Summary:
+    - Fix [Github issue #12](https://github.com/mpenning/ciscoconfparse2/issues/12) related to ciscoconfparse2 pickling
+    - Update for [Github issue #15](https://github.com/mpenning/ciscoconfparse2/issues/15) related to ciscoconfparse2 pyyaml dependency conflict with netmiko 4.5.0
+    - Fix missing dunder methods in `models_junos.py`
+    - Change several version dependencies in `pyproject.toml` to be more flexible (ref: github issue #15)
+    - Update tests
+
+
 ## Version: 0.7.74
 
 - Released: 2024-07-06
