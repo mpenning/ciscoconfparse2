@@ -98,6 +98,18 @@ class JunosCfgLine(BaseCfgLine):
         return False
 
     @logger.catch(reraise=True)
+    def __eq__(self, other) -> bool:
+        if other is None:
+            return False
+        return self.get_unique_identifier() == other.get_unique_identifier()
+
+    @logger.catch(reraise=True)
+    def __ne__(self, other) -> bool:
+        if other is None:
+            return True
+        return self.get_unique_identifier() != other.get_unique_identifier()
+
+    @logger.catch(reraise=True)
     def __hash__(self):
         return self.get_unique_identifier()
 
