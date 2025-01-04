@@ -4,6 +4,12 @@
 - Summary:
     - Insert something here
 
+## Version: 0.7.77
+
+- Released: 2025-01-04
+- Summary:
+    - Attempt to fix version publishing due to changes in `gh-action-pypi-publish`
+
 ## Version: 0.7.76
 
 - Released: 2025-01-04
