@@ -71,7 +71,7 @@ def testValues_pickle_01():
         pickle.dump(parse, fh)
 
     # Load pickle from disk...
-    pickle.load(open(filename, 'rb'))
+    parse = pickle.load(open(filename, 'rb'))
 
     assert isinstance(parse, CiscoConfParse)
     assert len(parse.objs) == 7
