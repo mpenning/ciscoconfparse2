@@ -2282,7 +2282,8 @@ class IPv6Obj(object):
 
         ########################################################################
         # Handle IPv4 embeddded in IPv6 strings (such as '::ffff:192.0.2.4')
-        # in Python 3.13 and higher...
+        # in Python 3.13 and higher... Python 3.13 IPv6Address() changed how
+        # it represents '::ffff:192.0.2.4' in exploded format
         ########################################################################
         replacements = list()
         for index, part in enumerate(num_strings):
