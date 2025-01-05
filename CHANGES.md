@@ -4,6 +4,12 @@
 - Summary:
     - Insert something here
 
+## Version: 0.7.82
+
+- Released: 2025-01-04
+- Summary:
+    - Tweak comment in IPv6Obj()
+
 ## Version: 0.7.81
 
 - Released: 2025-01-04
