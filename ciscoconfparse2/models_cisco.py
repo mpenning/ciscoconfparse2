@@ -1471,7 +1471,7 @@ class BaseIOSIntfLine(IOSCfgLine, BaseFactoryInterfaceLine):
         :rtype: IPv4Obj
         """
         retval = self.re_match_iter_typed(
-            r"^\s+ip\s+address\s+(?P<v4addr>\S+)\s+(?P<v4netmask>\d+\.\d+\.\d+\.\d+)",
+            r"^\s+ip\s+address\s+(?P<v4addr>\S+)\s+(?P<v4netmask>\d+\.\d+\.\d+\.\d+\s*$)",
             groupdict={"v4addr": str, "v4netmask": str},
             default="",
         )
