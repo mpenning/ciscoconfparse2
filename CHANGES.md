@@ -4,6 +4,12 @@
 - Summary:
     - Insert something here
 
+## Version: 0.7.83
+
+- Released: 2025-02-09
+- Summary:
+    - Relax `attrs` version requirements in `pyproject.toml`
+
 ## Version: 0.7.82
 
 - Released: 2025-01-04
