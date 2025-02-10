@@ -943,7 +943,7 @@ class BaseNXOSIntfLine(NXOSCfgLine, BaseFactoryInterfaceLine):
         :rtype: IPv4Obj
         """
         retval = self.re_match_iter_typed(
-            r"^\s+ip\s+address\s+(?P<v4addr>\S+)\s+(?P<v4netmask>\d+\.\d+\.\d+\.\d+)",
+            r"^\s+ip\s+address\s+(?P<v4addr>\S+)\/(?P<v4netmask>\d+)\s*$",
             groupdict={"v4addr": str, "v4netmask": str},
             default="",
         )
@@ -983,7 +983,7 @@ class BaseNXOSIntfLine(NXOSCfgLine, BaseFactoryInterfaceLine):
         retval = set()
         for obj in self.parent.all_children:
             _gg = obj.re_match_iter_typed(
-                r"^\s*ip\s+address\s+(?P<secondary>\S+\s+\S+)\s+secondary\s*$",
+                r"^\s*ip\s+address\s+(?P<secondary>\S+\/\S+)\s+secondary\s*$",
                 groupdict={"secondary": IPv4Obj},
                 default=False
             )
@@ -1248,7 +1248,7 @@ class BaseNXOSIntfLine(NXOSCfgLine, BaseFactoryInterfaceLine):
         :rtype: str
         """
         retval = self.re_match_iter_typed(
-            r"^\s*(ip\s+)*vrf\sforwarding\s(\S+)$", result_type=str, group=2, default=""
+            r"^\s*vrf\smember\s(\S+)$", result_type=str, group=1, default=""
         )
         return retval
 
@@ -1271,7 +1271,7 @@ class BaseNXOSIntfLine(NXOSCfgLine, BaseFactoryInterfaceLine):
         :rtype: str
         """
         retval = self.re_match_iter_typed(
-            r"^\s+ip\s+address\s+(\d+\.\d+\.\d+\.\d+)\s+\d+\.\d+\.\d+\.\d+\s*$",
+            r"^\s+ip\s+address\s+(\d+\.\d+\.\d+\.\d+)\/\d+\s*$",
             result_type=str,
             default="",
         )
@@ -1297,7 +1297,7 @@ class BaseNXOSIntfLine(NXOSCfgLine, BaseFactoryInterfaceLine):
         :rtype: str
         """
         retval = self.re_match_iter_typed(
-            r"^\s+ip\s+address\s+\d+\.\d+\.\d+\.\d+\s+(\d+\.\d+\.\d+\.\d+)\s*$",
+            r"^\s+ip\s+address\s+\d+\.\d+\.\d+\.\d+\/(\d+)\s*$",
             result_type=str,
             default="",
         )
