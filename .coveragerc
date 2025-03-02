@@ -1,5 +1,5 @@
 [run]
-source = ciscoconfparse
+source = ciscoconfparse2
 branch = True
 
 [report]
@@ -12,4 +12,4 @@ exclude_lines =
     if __name__ == .__main__.:
 
 omit =
-    ciscoconfparse/dev_tools/*
+    ciscoconfparse2/dev_tools/*
