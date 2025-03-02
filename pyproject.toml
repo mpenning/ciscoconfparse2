@@ -87,7 +87,7 @@ dev = [
 ccp = "ciscoconfparse2.cli_script:ccp_script_entry"
 
 [build-system]
-requires = ["hatchling>=1.22.2"]
+requires = ["hatchling>=1.26.3"]
 build-backend = "hatchling.build"
 
 [project.urls]
