@@ -4,6 +4,12 @@
 - Summary:
     - Insert something here
 
+## Version: 0.8.3
+
+- Released: 2025-03-02
+- Summary:
+    - Remove strings which annoy SonarQube
+
 ## Version: 0.8.2
 
 - Released: 2025-03-02

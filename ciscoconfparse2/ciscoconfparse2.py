@@ -4047,9 +4047,9 @@ class CiscoPassword:
         # Convert the hash from Standard Base64 to Cisco Base64
         chash = base64.b64encode(_hash).decode().translate(self.b64table)[:-1]
         # Print the hash in the Cisco IOS CLI format
-        password_string = f"$8${salt}${chash}"
+        hash_string = f"$8${salt}${chash}"
 
-        return password_string
+        return hash_string
 
     def decrypt_type_9(self, pwd):
         """
@@ -4078,8 +4078,8 @@ class CiscoPassword:
         # Convert the hash from Standard Base64 to Cisco Base64
         hash_c64 = base64.b64encode(_hash).decode().translate(self.b64table)[:-1]
         # Print the hash in the Cisco IOS CLI format
-        password_string = f"$9${salt}${hash_c64}"
-        return password_string
+        hash_string = f"$9${salt}${hash_c64}"
+        return hash_string
 
 
 @logger.catch(reraise=True)
