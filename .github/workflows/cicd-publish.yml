@@ -59,6 +59,6 @@ jobs:
         path: dist
 
     - name: Upload packages to PYPI
-      uses: pypa/gh-action-pypi-publish@v1.12.3
+      uses: pypa/gh-action-pypi-publish@v1.12.4
 
 
