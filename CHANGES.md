@@ -4,6 +4,12 @@
 - Summary:
     - Insert something here
 
+## Version: 0.8.1
+
+- Released: 2025-03-02
+- Summary:
+    - Bump `gh-action-pypi-publish` version
+
 ## Version: 0.8.0
 
 - Released: 2025-03-02
