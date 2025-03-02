@@ -7,7 +7,6 @@ version: 1
 sources:
   #Files or Directories to be Excluded are mentioned in exclusions
   exclusions:
-    - 'ciscoconfparse2/ciscoconfparse2.py.0'
     - 'ciscoconfparse2/models_asa.py'
     - 'ciscoconfparse2/models_cisco.py'
     - 'ciscoconfparse2/models_nxos.py'
@@ -21,13 +20,16 @@ sources:
     - '.github/'
 
 # Specify the languages you would like to Scan. Default is all Detected
-#languages: 'JAVA,CPP'
+languages: 'Python'
 
 
 # Define modules one would like to run or disable. This is enough for Basic Users
 # Get List of Modules (Which are Default Enabled/Disabled) at the documentation link above
 modules:
   - name: pmd
-    enabled: true
-  - name: gamma_cxx
     enabled: false
+  - name: Pylint
+    enabled: true
+    rules:
+      - key: 'E0401-unableToImportModule'
+        enabled: false
