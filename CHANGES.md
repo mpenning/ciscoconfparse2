@@ -4,6 +4,14 @@
 - Summary:
     - Insert something here
 
+## Version: 0.8.0
+
+- Released: 2025-03-02
+- Summary:
+    - Bump hatchling requirement at least 1.26.3
+    - Modify `embold.yaml` to explicitly scan as Python
+    - Aggregate changes since version 0.7.0 warrant a minor version change at this point
+
 ## Version: 0.7.83
 
 - Released: 2025-02-09
