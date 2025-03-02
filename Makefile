@@ -51,9 +51,7 @@ cicd:
 	make clean
 	# upgrade packaging infra and ciscoconfparse2 dependencies...
 	make dep
-	cd tests
-	coverage xml -o coverage.xml --rcfile ../.coveragerc *py
-	cd ..
+	cd tests && coverage xml -o coverage.xml --rcfile ../.coveragerc *py
 	-git commit --all -m "Version $$VERSION"
 	# tag the repo with $$VERSION, upon git tag push,
 	# this triggers .github/workflows/cicd-publish.yml
