@@ -35,7 +35,7 @@ from ciscoconfparse2.models_cisco import HSRPInterfaceGroup
 ###   Use models_iosxr.py at your own risk.  You have been warned :-)
 r""" models_iosxr.py - Parse, Query, Build, and Modify IOS-style configurations
 
-     Copyright (C) 2023-2024 David Michael Pennington
+     Copyright (C) 2023-2025 David Michael Pennington
 
      This program is free software: you can redistribute it and/or modify
      it under the terms of the GNU General Public License as published by

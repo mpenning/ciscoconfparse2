@@ -1,6 +1,6 @@
 r""" test_CiscoConfParse.py - Parse, Query, Build, and Modify IOS-style configs
 
-     Copyright (C) 2023      David Michael Pennington
+     Copyright (C) 2023-2025      David Michael Pennington
 
      This program is free software: you can redistribute it and/or modify
      it under the terms of the GNU General Public License as published by
@@ -18,10 +18,12 @@ r""" test_CiscoConfParse.py - Parse, Query, Build, and Modify IOS-style configs
      If you need to contact the author, you can do so by emailing:
      mike [~at~] pennington [.dot.] net
 """
+
 from operator import attrgetter
 from itertools import repeat
 from copy import deepcopy
 import pickle
+
 try:
     from unittest.mock import patch
 except ImportError:
@@ -48,6 +50,7 @@ from macaddress import EUI48, EUI64
 
 THIS_TEST_PATH = os.path.dirname(os.path.abspath(__file__))
 
+
 def testValues_save_as_01():
     """Ensure that save_as() accepts a string input and saves a file"""
 
@@ -59,19 +62,28 @@ def testValues_save_as_01():
     parse.save_as(filename)
     os.remove(filename)
 
+
 def testValues_pickle_01():
     """Ensure that pickle() accepts a CiscoConfParse() instance and saves a file"""
 
-    config = ["!", "hostname Foo", "!", "interface GigabitEthernet1/1", " switchport access vlan 10", "!", "end"]
+    config = [
+        "!",
+        "hostname Foo",
+        "!",
+        "interface GigabitEthernet1/1",
+        " switchport access vlan 10",
+        "!",
+        "end",
+    ]
     parse = CiscoConfParse(config)
 
     # Save to disk as a pickle
     filename = "fixtures/plain_text/_test_01.pkl"
-    with open(filename, 'wb') as fh:
+    with open(filename, "wb") as fh:
         pickle.dump(parse, fh)
 
     # Load pickle from disk...
-    parse = pickle.load(open(filename, 'rb'))
+    parse = pickle.load(open(filename, "rb"))
 
     assert isinstance(parse, CiscoConfParse)
     assert len(parse.objs) == 7
@@ -90,6 +102,7 @@ def testValues_find_objects_list_01():
     for obj in bannerobj.children:
         assert obj.parent.linenum == BANNER_LINE_NUMBER
 
+
 def testValues_find_objects_list_02():
     """Ensure that find_objects() rejects a list input that is too long"""
     # Test banner delimiter on the same lines
@@ -98,6 +111,7 @@ def testValues_find_objects_list_02():
     with pytest.raises(InvalidParameters):
         bannerobj = parse.find_objects(["banner", "trivial"])[0]
 
+
 def testValues_find_object_branches_list_01():
     """Ensure that find_object_branches() accepts a list input of arbitrary length"""
     # Test banner delimiter on the same lines
@@ -105,12 +119,14 @@ def testValues_find_object_branches_list_01():
     parse = CiscoConfParse(config)
     bannerobj = parse.find_object_branches(["banner", "trivial", "intentional-fail"])
 
+
 def testValues_find_object_branches_list_02():
     """Ensure that find_object_branches() accepts a list input of arbitrary length and can identify a Cisco IOS banner"""
     # Test banner delimiter on the same lines
     config = ["!", "banner motd ^", "trivial banner here ^", "end"]
     parse = CiscoConfParse(config)
     bannerobj = parse.find_object_branches(["banner", "trivial"])[0][0]
+
 
 def testValues_find_object_branches_list_03():
     """Ensure that find_object_branches() accepts a list input of arbitrary length and do not match on a missing child element"""
@@ -120,13 +136,20 @@ def testValues_find_object_branches_list_03():
     bannerobjs = parse.find_object_branches(["banner", "trivial", "intentional-fail"])
     assert len(bannerobjs) == 0
 
+
 def testValues_find_parent_objects_list_01():
     """Ensure that find_parent_objects() accepts a list input of arbitrary length"""
     # Test banner delimiter on the same lines
     config = ["!", "banner motd ^", "trivial banner here ^", "end"]
     parse = CiscoConfParse(config)
-    bannerobjs = parse.find_parent_objects(["banner", "trivial",])
+    bannerobjs = parse.find_parent_objects(
+        [
+            "banner",
+            "trivial",
+        ]
+    )
     assert len(bannerobjs) == 1
+
 
 def testValues_find_parent_objects_list_02():
     """Ensure that find_parent_objects() accepts a list input of arbitrary length"""
@@ -137,13 +160,20 @@ def testValues_find_parent_objects_list_02():
     assert isinstance(bannerobjs, list) is True
     assert len(bannerobjs) == 0
 
+
 def testValues_find_parent_objects_wo_child_list_01():
     """Ensure that find_parent_objects_wo_child() accepts a list input of arbitrary length"""
     # Test banner delimiter on the same lines
     config = ["!", "banner motd ^", "trivial banner here ^", "end"]
     parse = CiscoConfParse(config)
-    bannerobjs = parse.find_parent_objects_wo_child(["banner", "that",])
+    bannerobjs = parse.find_parent_objects_wo_child(
+        [
+            "banner",
+            "that",
+        ]
+    )
     assert len(bannerobjs) == 1
+
 
 def testValues_find_parent_objects_wo_child_list_02():
     """Ensure that find_parent_objects_wo_child() rejects a list longer than 2"""
@@ -151,15 +181,24 @@ def testValues_find_parent_objects_wo_child_list_02():
     config = ["!", "banner motd ^", "trivial banner here ^", "end"]
     parse = CiscoConfParse(config)
     with pytest.raises(InvalidParameters):
-        bannerobjs = parse.find_parent_objects_wo_child(["banner", "that", "intentional-fail"])
+        bannerobjs = parse.find_parent_objects_wo_child(
+            ["banner", "that", "intentional-fail"]
+        )
+
 
 def testValues_find_child_objects_list_01():
     """Ensure that find_child_objects() accepts a list input of arbitrary length"""
     # Test banner delimiter on the same lines
     config = ["!", "banner motd ^", "trivial banner here ^", "end"]
     parse = CiscoConfParse(config)
-    bannerobjs = parse.find_child_objects(["banner", "trivial",])
+    bannerobjs = parse.find_child_objects(
+        [
+            "banner",
+            "trivial",
+        ]
+    )
     assert len(bannerobjs) == 1
+
 
 def testValues_find_child_objects_list_02():
     """Ensure that find_child_objects() accepts a list input of arbitrary length"""
@@ -169,14 +208,17 @@ def testValues_find_child_objects_list_02():
     bannerobjs = parse.find_child_objects(["banner", "trivial", "intentional-fail"])
     assert len(bannerobjs) == 0
 
+
 def testParse_valid_config_blanklines_01(parse_n01_w_blanklines):
     """Test reading a config with blank lines"""
     assert len(parse_n01_w_blanklines.get_text()) == 126
+
 
 def testParse_valid_filepath_nofactory_01_ios():
     """Test reading a cisco ios config-file on disk (from filename in the config parameter); ref github issue #262."""
     parse = CiscoConfParse(config=f"{THIS_TEST_PATH}/fixtures/configs/sample_01.ios")
     assert len(parse.get_text()) == 453
+
 
 def testParse_valid_multiline_str_nofactory_01_ios():
     """Test reading a cisco ios config-file from a multiline string"""
@@ -190,18 +232,20 @@ hostname FooHostName
 def testParse_valid_filepath_01_f5():
     """Test reading an f5 config-file on disk (from filename in the config parameter); ref github issue #262."""
     parse = CiscoConfParse(
-            config=f"{THIS_TEST_PATH}/fixtures/configs/sample_01.f5",
-            comment_delimiters=["#"],
-            syntax="junos",
-            )
+        config=f"{THIS_TEST_PATH}/fixtures/configs/sample_01.f5",
+        comment_delimiters=["#"],
+        syntax="junos",
+    )
     assert len(parse.get_text()) == 16
+
 
 def testParse_valid_filepath_01_junos():
     """Test reading a junos config-file on disk (without the config keyword); ref github issue #262."""
     parse = CiscoConfParse(
-            f"{THIS_TEST_PATH}/fixtures/configs/sample_01.junos",
-            comment_delimiters=["#"],
-            syntax="junos")
+        f"{THIS_TEST_PATH}/fixtures/configs/sample_01.junos",
+        comment_delimiters=["#"],
+        syntax="junos",
+    )
     assert len(parse.get_text()) == 79
 
 
@@ -300,26 +344,32 @@ def testParse_syntax_asa_factory_01():
 
 def testParse_ios_is_comment_01():
     """Ensure that a comment is detected"""
-    parse = CiscoConfParse(["!"], syntax='ios')
+    parse = CiscoConfParse(["!"], syntax="ios")
     assert len(parse.objs) == 1
     assert parse.objs[0].is_comment is True
 
+
 def testParse_ios_is_comment_02():
     """Ensure that a command is not detected as a comment"""
-    parse = CiscoConfParse(["!", "hostname Foo"], syntax='ios')
+    parse = CiscoConfParse(["!", "hostname Foo"], syntax="ios")
     assert len(parse.objs) == 2
     assert parse.objs[0].is_comment is True
     assert parse.objs[1].is_comment is False
 
+
 def testParse_ios_is_comment_03():
     """Ensure that a commented command is detected as a comment"""
-    parse = CiscoConfParse(["!", "!hostname Foo"], syntax='ios')
+    parse = CiscoConfParse(["!", "!hostname Foo"], syntax="ios")
     assert len(parse.objs) == 2
     assert parse.objs[0].is_comment is True
     assert parse.objs[1].is_comment is True
 
+
 def testParse_ios_parent_01():
-    parse = CiscoConfParse(["!", "interface GigabitEthernet1/1", " ip address 192.0.2.1 255.255.255.0"], syntax='ios')
+    parse = CiscoConfParse(
+        ["!", "interface GigabitEthernet1/1", " ip address 192.0.2.1 255.255.255.0"],
+        syntax="ios",
+    )
     assert len(parse.objs) == 3
     assert parse.objs[0].is_comment is True
     assert parse.objs[1].is_comment is False
@@ -331,6 +381,7 @@ def testParse_ios_parent_01():
     assert parse.objs[1].parent == parse.objs[1]
     # Check the parent of ' ip address 192.0.2.1 255.255.255.0'
     assert parse.objs[2].parent == parse.objs[1]
+
 
 def testParse_parse_syntax_f5_as_junos_nofactory_ioscfg_01():
     """Parse fixtures/configs/sample_01.f5 as `syntax='junos'`, `factory=False` and test rendering as Cisco-IOS"""
@@ -366,6 +417,7 @@ def testParse_parse_syntax_f5_as_junos_nofactory_ioscfg_01():
     # check parent of ip-protocol tcp
     assert parse.objs[2].parent == parse.objs[0]
 
+
 def testParse_parse_syntax_f5_as_junos_01():
     """Parse fixtures/configs/sample_03.f5 as `syntax='junos'`, `factory=False` and test multiple child searches"""
     parse = CiscoConfParse(
@@ -376,6 +428,7 @@ def testParse_parse_syntax_f5_as_junos_01():
         comment_delimiters=["#"],
         factory=False,
     )
+
 
 def testParse_parse_syntax_junos_as_junos_nofactory_ioscfg_01():
     config = """## Last commit: 2015-06-28 13:00:59 CST by mpenning
@@ -479,73 +532,73 @@ routing-options {
 """
 
     result_correct_ioscfg = [
-        '## Last commit: 2015-06-28 13:00:59 CST by mpenning',
-        'system',
-        '    host-name TEST01_EX',
-        '    domain-name pennington.net',
-        '    domain-search [ pennington.net lab.pennington.net ]',
-        '    location',
-        '        country-code 001',
-        '        building HQ_005',
-        '        floor 1',
-        '    root-authentication',
+        "## Last commit: 2015-06-28 13:00:59 CST by mpenning",
+        "system",
+        "    host-name TEST01_EX",
+        "    domain-name pennington.net",
+        "    domain-search [ pennington.net lab.pennington.net ]",
+        "    location",
+        "        country-code 001",
+        "        building HQ_005",
+        "        floor 1",
+        "    root-authentication",
         '        encrypted-password "$1$y7ArHxKU$zUbdeLfBirgkCsKiOJ5Qa0"; ## '
-        'SECRET-DATA',
-        '    name-server',
-        '        172.16.3.222',
-        '    login',
+        "SECRET-DATA",
+        "    name-server",
+        "        172.16.3.222",
+        "    login",
         '        announcement "Test Lab Switch"',
         '        message "Unauthorized access is prohibited"',
-        '        user mpenning',
+        "        user mpenning",
         '            full-name "Mike Pennington"',
-        '            uid 1000',
-        '            class super-user',
-        '            authentication',
+        "            uid 1000",
+        "            class super-user",
+        "            authentication",
         '                encrypted-password "$1$y7ArHxKU$zUbdeLfBirgkCsKiOJ5Qa0"; ## '
-        'SECRET-DATA',
-        '    services',
-        '        ssh',
-        '            root-login allow',
-        '    syslog',
-        '        user *',
-        '            any emergency',
-        '        file messages',
-        '            any notice',
-        '            authorization info',
-        '        file interactive-commands',
-        '            interactive-commands any',
-        '    ntp',
-        '        server 172.16.8.3',
-        'vlans',
-        '    Management',
-        '        vlan-id 1',
-        '        interface',
-        '            ge-0/0/0.0',
-        '    VLAN_FOO',
-        '        vlan-id 5',
-        'interfaces',
-        '    ge-0/0/0',
-        '        unit 0',
-        '            family ethernet-switching',
-        '                port-mode access',
-        '                vlan',
-        '                    members VLAN_FOO',
-        '    ge-0/0/1',
-        '        unit 0',
-        '            family ethernet-switching',
-        '                port-mode access',
-        '                vlan',
-        '                    members VLAN_FOO',
-        '    ge-0/0/2',
-        '        unit 0',
-        '            family ethernet-switching',
-        '                port-mode access',
-        '                vlan',
-        '                    members VLAN_FOO',
-        'routing-options',
-        '    static',
-        '        route 0.0.0.0/0 next-hop 172.16.12.1',
-        '        route 192.168.36.0/25 next-hop 172.16.12.1',
+        "SECRET-DATA",
+        "    services",
+        "        ssh",
+        "            root-login allow",
+        "    syslog",
+        "        user *",
+        "            any emergency",
+        "        file messages",
+        "            any notice",
+        "            authorization info",
+        "        file interactive-commands",
+        "            interactive-commands any",
+        "    ntp",
+        "        server 172.16.8.3",
+        "vlans",
+        "    Management",
+        "        vlan-id 1",
+        "        interface",
+        "            ge-0/0/0.0",
+        "    VLAN_FOO",
+        "        vlan-id 5",
+        "interfaces",
+        "    ge-0/0/0",
+        "        unit 0",
+        "            family ethernet-switching",
+        "                port-mode access",
+        "                vlan",
+        "                    members VLAN_FOO",
+        "    ge-0/0/1",
+        "        unit 0",
+        "            family ethernet-switching",
+        "                port-mode access",
+        "                vlan",
+        "                    members VLAN_FOO",
+        "    ge-0/0/2",
+        "        unit 0",
+        "            family ethernet-switching",
+        "                port-mode access",
+        "                vlan",
+        "                    members VLAN_FOO",
+        "routing-options",
+        "    static",
+        "        route 0.0.0.0/0 next-hop 172.16.12.1",
+        "        route 192.168.36.0/25 next-hop 172.16.12.1",
     ]
 
     # Test with ignore_blank_lines...
@@ -557,9 +610,17 @@ routing-options {
         factory=False,
     )
     assert uut.get_text() == result_correct_ioscfg
-    assert uut.find_child_objects("interfaces", "ge-0/0/1",)[0].text == "    ge-0/0/1"
+    assert (
+        uut.find_child_objects(
+            "interfaces",
+            "ge-0/0/1",
+        )[0].text
+        == "    ge-0/0/1"
+    )
     assert uut.find_parent_objects("interfaces", "ge-0/0/1")[0].text == "interfaces"
-    assert len(uut.find_parent_objects_wo_child("interfaces", "vlan", recurse=True)) == 0
+    assert (
+        len(uut.find_parent_objects_wo_child("interfaces", "vlan", recurse=True)) == 0
+    )
 
 
 def testParse_invalid_filepath_01():
@@ -670,12 +731,12 @@ def testParse_f5_as_ios_02(parse_f02_junos_01):
         32: "sys state-mirroring",
         33: "sys syslog",
         34: '    include "',
-        35: '    template t_remotetmpl',
-        36: '        template (\"<$PRI>$STAMP $HOST $FACILITY[$PID]: $MSGONLY\"); template_escape(no)',
+        35: "    template t_remotetmpl",
+        36: '        template ("<$PRI>$STAMP $HOST $FACILITY[$PID]: $MSGONLY"); template_escape(no)',
         37: "    filter f_remote_loghost",
         38: "        level(info..emerg)",
         39: "    destination d_remote_loghost",
-        40: "        udp(\"102.223.51.181\" port(519) template(t_remotetmpl))",
+        40: '        udp("102.223.51.181" port(519) template(t_remotetmpl))',
         41: "    log",
         42: "        source(s_syslog_pipe)",
         43: "        filter(f_remote_loghost)",
@@ -688,56 +749,56 @@ def testParse_f5_as_ios_02(parse_f02_junos_01):
     }
     # Close curly-braces should be assigned as children of the open curly-brace
     linenums = {
-        0: {'linenum': 0, 'parent': 0},
-        1: {'linenum': 1, 'parent': 0},
-        2: {'linenum': 2, 'parent': 0},
-        3: {'linenum': 3, 'parent': 0},
-        4: {'linenum': 4, 'parent': 4},
-        5: {'linenum': 5, 'parent': 4},
-        6: {'linenum': 6, 'parent': 5},
-        7: {'linenum': 7, 'parent': 6},
-        8: {'linenum': 8, 'parent': 6},
-        9: {'linenum': 9, 'parent': 9},
-        10: {'linenum': 10, 'parent': 9},
-        11: {'linenum': 11, 'parent': 10},
-        12: {'linenum': 12, 'parent': 11},
-        13: {'linenum': 13, 'parent': 11},
-        14: {'linenum': 14, 'parent': 14},
-        15: {'linenum': 15, 'parent': 14},
-        16: {'linenum': 16, 'parent': 16},
-        17: {'linenum': 17, 'parent': 16},
-        18: {'linenum': 18, 'parent': 16},
-        19: {'linenum': 19, 'parent': 16},
-        20: {'linenum': 20, 'parent': 16},
-        21: {'linenum': 21, 'parent': 16},
-        22: {'linenum': 22, 'parent': 21},
-        23: {'linenum': 23, 'parent': 21},
-        24: {'linenum': 24, 'parent': 16},
-        25: {'linenum': 25, 'parent': 24},
-        26: {'linenum': 26, 'parent': 16},
-        27: {'linenum': 27, 'parent': 16},
-        28: {'linenum': 28, 'parent': 27},
-        29: {'linenum': 29, 'parent': 16},
-        30: {'linenum': 30, 'parent': 16},
-        31: {'linenum': 31, 'parent': 16},
-        32: {'linenum': 32, 'parent': 32},
-        33: {'linenum': 33, 'parent': 33},
-        34: {'linenum': 34, 'parent': 33},
-        35: {'linenum': 35, 'parent': 33},
-        36: {'linenum': 36, 'parent': 35},
-        37: {'linenum': 37, 'parent': 33},
-        38: {'linenum': 38, 'parent': 37},
-        39: {'linenum': 39, 'parent': 33},
-        40: {'linenum': 40, 'parent': 39},
-        41: {'linenum': 41, 'parent': 33},
-        42: {'linenum': 42, 'parent': 41},
-        43: {'linenum': 43, 'parent': 41},
-        44: {'linenum': 44, 'parent': 41},
-        45: {'linenum': 45, 'parent': 33},
-        46: {'linenum': 46, 'parent': 33},
-        47: {'linenum': 47, 'parent': 46},
-        48: {'linenum': 48, 'parent': 47},
-        49: {'linenum': 49, 'parent': 49},
+        0: {"linenum": 0, "parent": 0},
+        1: {"linenum": 1, "parent": 0},
+        2: {"linenum": 2, "parent": 0},
+        3: {"linenum": 3, "parent": 0},
+        4: {"linenum": 4, "parent": 4},
+        5: {"linenum": 5, "parent": 4},
+        6: {"linenum": 6, "parent": 5},
+        7: {"linenum": 7, "parent": 6},
+        8: {"linenum": 8, "parent": 6},
+        9: {"linenum": 9, "parent": 9},
+        10: {"linenum": 10, "parent": 9},
+        11: {"linenum": 11, "parent": 10},
+        12: {"linenum": 12, "parent": 11},
+        13: {"linenum": 13, "parent": 11},
+        14: {"linenum": 14, "parent": 14},
+        15: {"linenum": 15, "parent": 14},
+        16: {"linenum": 16, "parent": 16},
+        17: {"linenum": 17, "parent": 16},
+        18: {"linenum": 18, "parent": 16},
+        19: {"linenum": 19, "parent": 16},
+        20: {"linenum": 20, "parent": 16},
+        21: {"linenum": 21, "parent": 16},
+        22: {"linenum": 22, "parent": 21},
+        23: {"linenum": 23, "parent": 21},
+        24: {"linenum": 24, "parent": 16},
+        25: {"linenum": 25, "parent": 24},
+        26: {"linenum": 26, "parent": 16},
+        27: {"linenum": 27, "parent": 16},
+        28: {"linenum": 28, "parent": 27},
+        29: {"linenum": 29, "parent": 16},
+        30: {"linenum": 30, "parent": 16},
+        31: {"linenum": 31, "parent": 16},
+        32: {"linenum": 32, "parent": 32},
+        33: {"linenum": 33, "parent": 33},
+        34: {"linenum": 34, "parent": 33},
+        35: {"linenum": 35, "parent": 33},
+        36: {"linenum": 36, "parent": 35},
+        37: {"linenum": 37, "parent": 33},
+        38: {"linenum": 38, "parent": 37},
+        39: {"linenum": 39, "parent": 33},
+        40: {"linenum": 40, "parent": 39},
+        41: {"linenum": 41, "parent": 33},
+        42: {"linenum": 42, "parent": 41},
+        43: {"linenum": 43, "parent": 41},
+        44: {"linenum": 44, "parent": 41},
+        45: {"linenum": 45, "parent": 33},
+        46: {"linenum": 46, "parent": 33},
+        47: {"linenum": 47, "parent": 46},
+        48: {"linenum": 48, "parent": 47},
+        49: {"linenum": 49, "parent": 49},
     }
     assert len(parse_f02_junos_01.objs) == 50
     for idx, obj in enumerate(parse_f02_junos_01.objs):
@@ -746,8 +807,8 @@ def testParse_f5_as_ios_02(parse_f02_junos_01):
         assert correct_text[idx] == obj.text
         assert idx == obj.linenum
 
-        correct_linenum = linenums[idx]['linenum']
-        correct_parent = linenums[idx]['parent']
+        correct_linenum = linenums[idx]["linenum"]
+        correct_parent = linenums[idx]["parent"]
         assert (correct_linenum, correct_parent) == (obj.linenum, obj.parent.linenum)
 
 
@@ -759,12 +820,12 @@ def testParse_f5_as_junos(parse_f01_junos_01):
 def testParse_asa_as_ios(config_a02):
     """Test for Github issue #42 parse asa banner with ios syntax"""
     parse = CiscoConfParse(config_a02, syntax="ios", factory=False)
-    assert (parse is not None)
+    assert parse is not None
 
 
 def testParse_asa_as_asa(config_a02):
     parse = CiscoConfParse(config_a02, syntax="asa", factory=False)
-    assert (parse is not None)
+    assert parse is not None
 
 
 def testValues_find_objects_dna(parse_c01_factory):
@@ -1091,7 +1152,7 @@ router bgp 1
   neighbor 2600::1 remote-as 1
 !
 end""".splitlines()
-    parse = CiscoConfParse(CONFIG, syntax='ios')
+    parse = CiscoConfParse(CONFIG, syntax="ios")
 
     tls_heads = parse.find_objects(r"crypto pki certificate", reverse=True)
     for obj in tls_heads:
@@ -1240,7 +1301,6 @@ end"""
         ## Does this object parent's line number match?
         assert correct_result == test_result
 
-
     # Dictionary of parent linenumber assignments below...
     parent_after_dict = {
         # dictionary format...
@@ -1307,8 +1367,8 @@ def testValues_obj_insert_before_01():
     ]
     parse = CiscoConfParse(c01, syntax="ios")
     obj = parse.find_objects("b")[0]
-    obj.insert_before('a')
-    assert parse.config_objs[0].text == 'a'
+    obj.insert_before("a")
+    assert parse.config_objs[0].text == "a"
 
 
 def testValues_obj_insert_01():
@@ -1320,10 +1380,10 @@ def testValues_obj_insert_01():
         "e",
     ]
     parse = CiscoConfParse(c01, syntax="ios")
-    parse.find_objects('b')[0].insert_before('a')
-    parse.find_objects('e')[0].insert_after('f')
-    assert parse.config_objs[0].text == 'a'
-    assert parse.config_objs[-1].text == 'f'
+    parse.find_objects("b")[0].insert_before("a")
+    parse.find_objects("e")[0].insert_after("f")
+    assert parse.config_objs[0].text == "a"
+    assert parse.config_objs[-1].text == "f"
 
 
 def testValues_obj_insert_02():
@@ -1335,30 +1395,35 @@ def testValues_obj_insert_02():
         "e",
     ]
     parse = CiscoConfParse(c01, syntax="ios")
-    parse.find_objects('b')[0].insert_before('a')
-    parse.find_objects('e')[0].insert_after('f')
+    parse.find_objects("b")[0].insert_before("a")
+    parse.find_objects("e")[0].insert_after("f")
     parse.commit()
 
     all_objs = parse.find_objects(r"^e")
     assert len(all_objs) == 1
     assert all_objs[0].text == "e"
 
-    assert parse.config_objs[0].text == 'a'
-    assert parse.config_objs[-1].text == 'f'
+    assert parse.config_objs[0].text == "a"
+    assert parse.config_objs[-1].text == "f"
 
 
 def testValues_obj_insert_03():
     """test whether we can insert a new child list element"""
-    c01 = ["b", "c", "d", "e",]
+    c01 = [
+        "b",
+        "c",
+        "d",
+        "e",
+    ]
     parse = CiscoConfParse(c01, syntax="ios")
 
     # ' f' is the new child of 'e'...
-    parse.find_objects('e')[0].insert_after(' f')
+    parse.find_objects("e")[0].insert_after(" f")
     parse.commit()
-    assert parse.config_objs[-1].text == ' f'
+    assert parse.config_objs[-1].text == " f"
 
     obj = parse.find_objects(r"^e")[0]
-    assert obj.all_children[0].text == ' f'
+    assert obj.all_children[0].text == " f"
 
 
 def testValues_obj_insert_04():
@@ -1371,8 +1436,8 @@ def testValues_obj_insert_04():
      no ip address"""
 
     parse = CiscoConfParse(config.splitlines(), syntax=this_syntax)
-    obj = parse.find_objects(r'^interface\s+GigabitEthernet0/6\s*$')[0]
-    obj.insert_after('interface GigabitEthernet0/6.30')
+    obj = parse.find_objects(r"^interface\s+GigabitEthernet0/6\s*$")[0]
+    obj.insert_after("interface GigabitEthernet0/6.30")
     parse.commit()
     assert parse.config_objs[0].text == "interface GigabitEthernet0/6"
     assert parse.config_objs[1].text == "interface GigabitEthernet0/6.30"
@@ -1392,11 +1457,11 @@ def testValues_obj_insert_05():
 
     parse = CiscoConfParse(
         config.splitlines(),
-        syntax='nxos',
+        syntax="nxos",
         ignore_blank_lines=False,
     )
-    obj = parse.find_objects(r'^interface\s+GigabitEthernet0/6\s*$')[0]
-    obj.insert_after('interface GigabitEthernet0/6.30')
+    obj = parse.find_objects(r"^interface\s+GigabitEthernet0/6\s*$")[0]
+    obj.insert_after("interface GigabitEthernet0/6.30")
     parse.commit()
     assert parse.config_objs[0].text == "interface GigabitEthernet0/6"
     assert parse.config_objs[1].text == "interface GigabitEthernet0/6.30"
@@ -1416,8 +1481,8 @@ def testValues_list_insert_06():
      no ip address"""
 
     parse = CiscoConfParse(config.splitlines(), syntax=this_syntax)
-    obj = parse.find_objects(r'^interface\s+GigabitEthernet0/6\s*$')[0]
-    obj.insert_after('interface GigabitEthernet0/6.30')
+    obj = parse.find_objects(r"^interface\s+GigabitEthernet0/6\s*$")[0]
+    obj.insert_after("interface GigabitEthernet0/6.30")
     parse.commit()
     assert parse.config_objs[0].text == "interface GigabitEthernet0/6"
     assert parse.config_objs[1].text == "interface GigabitEthernet0/6.30"
@@ -1455,11 +1520,14 @@ def testValues_find_object_branches_01():
         "}",
     ]
     parse = CiscoConfParse(config, syntax="junos", comment_delimiters=["#"])
-    branchspec = (r"^ltm\spool\s+(\S+)", r"(members)", r"(\S+?):(\d+)", r"state\s(up|down)")
+    branchspec = (
+        r"^ltm\spool\s+(\S+)",
+        r"(members)",
+        r"(\S+?):(\d+)",
+        r"state\s(up|down)",
+    )
     test_result = parse.find_object_branches(
-        branchspec=branchspec,
-        regex_groups=True,
-        empty_branches=True
+        branchspec=branchspec, regex_groups=True, empty_branches=True
     )
 
     assert len(test_result) == 3
@@ -1467,19 +1535,28 @@ def testValues_find_object_branches_01():
     # Test first family branch result...
     assert test_result[0][0] == ("FOO",)
     assert test_result[0][1] == ("members",)
-    assert test_result[0][2] == ("k8s-05.localdomain", "8443",)
+    assert test_result[0][2] == (
+        "k8s-05.localdomain",
+        "8443",
+    )
     assert test_result[0][3] == ("up",)
 
     # Test second family branch result...
     assert test_result[1][0] == ("FOO",)
     assert test_result[1][1] == ("members",)
-    assert test_result[1][2] == ("k8s-06.localdomain", "8443",)
+    assert test_result[1][2] == (
+        "k8s-06.localdomain",
+        "8443",
+    )
     assert test_result[1][3] == ("down",)  # 'state down' != 'state up'
 
     # Test third family branch result...
     assert test_result[2][0] == ("BAR",)
     assert test_result[2][1] == ("members",)
-    assert test_result[2][2] == ("k8s-07.localdomain", "8443",)
+    assert test_result[2][2] == (
+        "k8s-07.localdomain",
+        "8443",
+    )
     assert test_result[2][3] == ("down",)  # 'state down' != 'state up'
 
 
@@ -1545,7 +1622,9 @@ def testValues_find_object_branches_03(parse_c01):
         r"^interface",
         r"switchport",
     )
-    test_result = parse_c01.find_object_branches(branchspec=branchspec, empty_branches=True)
+    test_result = parse_c01.find_object_branches(
+        branchspec=branchspec, empty_branches=True
+    )
 
     assert len(test_result) == 19
 
@@ -1633,19 +1712,23 @@ def testValues_find_object_branches_04(parse_c01):
     # negative testing to ensure we get the right matches for NO regex
     # matches...
     branchspec = (r"this", r"dont", "match", "at", "all")
-    test_result = parse_c01.find_object_branches(branchspec=branchspec, empty_branches=True)
+    test_result = parse_c01.find_object_branches(
+        branchspec=branchspec, empty_branches=True
+    )
     correct_result = [Branch([None, None, None, None, None])]
     assert test_result == correct_result
 
 
 def testValues_find_object_branches_05():
     """Basic test: find_object_branches() - Test that non-existent regex child levels are returned if allow_none=True (see Github Issue #178)"""
-    test_data = ['thisis',
-                 '    atest',
-                 '        ofbranchsearch',
-                 'thisis',
-                 '    atest',
-                 '        matchthis']
+    test_data = [
+        "thisis",
+        "    atest",
+        "        ofbranchsearch",
+        "thisis",
+        "    atest",
+        "        matchthis",
+    ]
 
     parse = CiscoConfParse(test_data)
 
@@ -1665,27 +1748,29 @@ def testValues_find_object_branches_06():
     """Basic test: find_object_branches() - Test with empty_branches=False and no match"""
 
     config = [
-        'ltm pool FOO',
-        '  members',
-        '    breakfast.localdomain:8443',
-        '      address 192.0.2.5',
-        '      session monitor-enabled',
-        '      state up',
-        '    lunch.localdomain:8443',
-        '      address 192.0.2.6',
-        '      session monitor-enabled',
-        '      state down',
-        'ltm pool BAR',
-        '  members',
-        '    dinner.localdomain:8443',
-        '      address 192.0.2.7',
-        '      session monitor-enabled',
-        '      state down',
+        "ltm pool FOO",
+        "  members",
+        "    breakfast.localdomain:8443",
+        "      address 192.0.2.5",
+        "      session monitor-enabled",
+        "      state up",
+        "    lunch.localdomain:8443",
+        "      address 192.0.2.6",
+        "      session monitor-enabled",
+        "      state down",
+        "ltm pool BAR",
+        "  members",
+        "    dinner.localdomain:8443",
+        "      address 192.0.2.7",
+        "      session monitor-enabled",
+        "      state down",
     ]
 
     retval = list()
     parse = CiscoConfParse(config)
-    branches = parse.find_object_branches([r'pool', r'members', r'snack', 'address|session'])
+    branches = parse.find_object_branches(
+        [r"pool", r"members", r"snack", "address|session"]
+    )
     for branch in branches:
         retval.append([ii.text for ii in branch])
     assert retval == []
@@ -1695,62 +1780,84 @@ def testValues_find_object_branches_07():
     """Basic test: find_object_branches() - Test with empty_branches=False and match on a regex or-condition"""
 
     config = [
-        'ltm pool FOO',
-        '  members',
-        '    breakfast.localdomain:8443',
-        '      address 192.0.2.5',
-        '      session monitor-enabled',
-        '      state up',
-        '    lunch.localdomain:8443',
-        '      address 192.0.2.6',
-        '      session monitor-enabled',
-        '      state down',
-        'ltm pool BAR',
-        '  members',
-        '    dinner.localdomain:8443',
-        '      address 192.0.2.7',
-        '      session monitor-enabled',
-        '      state down',
+        "ltm pool FOO",
+        "  members",
+        "    breakfast.localdomain:8443",
+        "      address 192.0.2.5",
+        "      session monitor-enabled",
+        "      state up",
+        "    lunch.localdomain:8443",
+        "      address 192.0.2.6",
+        "      session monitor-enabled",
+        "      state down",
+        "ltm pool BAR",
+        "  members",
+        "    dinner.localdomain:8443",
+        "      address 192.0.2.7",
+        "      session monitor-enabled",
+        "      state down",
     ]
 
     retval = list()
     parse = CiscoConfParse(config)
-    branches = parse.find_object_branches([r'pool', r'members', r'lunch', 'address|session'])
+    branches = parse.find_object_branches(
+        [r"pool", r"members", r"lunch", "address|session"]
+    )
     for branch in branches:
         retval.append([ii.text for ii in branch])
-    assert retval[0] == ['ltm pool FOO', '  members', '    lunch.localdomain:8443', '      address 192.0.2.6']
-    assert retval[1] == ['ltm pool FOO', '  members', '    lunch.localdomain:8443', '      session monitor-enabled']
+    assert retval[0] == [
+        "ltm pool FOO",
+        "  members",
+        "    lunch.localdomain:8443",
+        "      address 192.0.2.6",
+    ]
+    assert retval[1] == [
+        "ltm pool FOO",
+        "  members",
+        "    lunch.localdomain:8443",
+        "      session monitor-enabled",
+    ]
 
 
 def testValues_find_object_branches_08():
     """Basic test: find_object_branches() - Test with empty_branches=False and match on a regex or-condition"""
 
     config = [
-        'ltm pool FOO',
-        '  members',
-        '    breakfast.localdomain:8443',
-        '      address 192.0.2.5',
-        '      session monitor-enabled',
-        '      state up',
-        '    lunch.localdomain:8443',
-        '      address 192.0.2.6',
-        '      session monitor-enabled',
-        '      state down',
-        'ltm pool BAR',
-        '  members',
-        '    dinner.localdomain:8443',
-        '      address 192.0.2.7',
-        '      session monitor-enabled',
-        '      state down',
+        "ltm pool FOO",
+        "  members",
+        "    breakfast.localdomain:8443",
+        "      address 192.0.2.5",
+        "      session monitor-enabled",
+        "      state up",
+        "    lunch.localdomain:8443",
+        "      address 192.0.2.6",
+        "      session monitor-enabled",
+        "      state down",
+        "ltm pool BAR",
+        "  members",
+        "    dinner.localdomain:8443",
+        "      address 192.0.2.7",
+        "      session monitor-enabled",
+        "      state down",
     ]
 
     retval = list()
     parse = CiscoConfParse(config)
-    branches = parse.find_object_branches([r'pool', r'', r'lunch', 'address|session'])
+    branches = parse.find_object_branches([r"pool", r"", r"lunch", "address|session"])
     for branch in branches:
         retval.append([ii.text for ii in branch])
-    assert retval[0] == ['ltm pool FOO', '  members', '    lunch.localdomain:8443', '      address 192.0.2.6']
-    assert retval[1] == ['ltm pool FOO', '  members', '    lunch.localdomain:8443', '      session monitor-enabled']
+    assert retval[0] == [
+        "ltm pool FOO",
+        "  members",
+        "    lunch.localdomain:8443",
+        "      address 192.0.2.6",
+    ]
+    assert retval[1] == [
+        "ltm pool FOO",
+        "  members",
+        "    lunch.localdomain:8443",
+        "      session monitor-enabled",
+    ]
 
 
 def testValues_find_objects_w_parents(parse_c01):
@@ -1760,16 +1867,19 @@ def testValues_find_objects_w_parents(parse_c01):
         " switchport voice vlan 150",
     ]
     # test find_children_w_parents
-    test_result = [ii.text for ii in parse_c01.find_child_objects("interface GigabitEthernet4/1", "switchport")]
+    test_result = [
+        ii.text
+        for ii in parse_c01.find_child_objects(
+            "interface GigabitEthernet4/1", "switchport"
+        )
+    ]
     assert correct_result == test_result
 
 
 def testValues_find_objects_w_all_children(parse_c01):
     """Find the parent interface objects which have 'switchport voice' or 'power inline'"""
     correct_result = parse_c01.find_objects(r"^interface GigabitEthernet4/[123]")
-    uut = parse_c01.find_parent_objects(
-        ["^interface", "switchport voice|power inline"]
-    )
+    uut = parse_c01.find_parent_objects(["^interface", "switchport voice|power inline"])
     assert uut == correct_result
 
 
@@ -1797,7 +1907,9 @@ def testValues_delete_objects_01():
     ]
 
     parse = CiscoConfParse(config, syntax="ios")
-    objs = parse.find_child_objects(parentspec="interface FastEthernet0/2", childspec="port-security")
+    objs = parse.find_child_objects(
+        parentspec="interface FastEthernet0/2", childspec="port-security"
+    )
     objs.reverse()
     for obj in objs:
         obj.delete()
@@ -1924,7 +2036,9 @@ def testValues_replace_children_01(parse_c01):
     ]
 
     uut = list()
-    for obj in parse_c01.find_child_objects("GigabitEthernet4/", "power inline static max 7000"):
+    for obj in parse_c01.find_child_objects(
+        "GigabitEthernet4/", "power inline static max 7000"
+    ):
         obj.re_sub("max 7000", "max 30000")
         uut.append(obj.text)
 
@@ -1974,10 +2088,7 @@ def testValues_Diff_01():
         "  no shutdown",
     ]
 
-    uut = Diff(
-        old_config=config_01,
-        new_config=required_config,
-        syntax='ios')
+    uut = Diff(old_config=config_01, new_config=required_config, syntax="ios")
     assert uut.get_diff() == correct_result
 
 
@@ -2025,10 +2136,7 @@ def testValues_Diff_02():
         "  no shutdown",
     ]
 
-    uut = Diff(
-        old_config=config_01,
-        new_config=required_config,
-        syntax='ios')
+    uut = Diff(old_config=config_01, new_config=required_config, syntax="ios")
     assert uut.get_diff() == correct_result
 
 
@@ -2055,10 +2163,7 @@ def testValues_Diff_03():
         "  state active",
     ]
 
-    uut = Diff(
-        old_config=config_01,
-        new_config=required_config,
-        syntax='ios')
+    uut = Diff(old_config=config_01, new_config=required_config, syntax="ios")
     assert uut.get_diff() == correct_result
 
 
@@ -2093,10 +2198,7 @@ def testValues_Diff_04():
         "  state active",
     ]
 
-    uut = Diff(
-        old_config=config_01,
-        new_config=required_config,
-        syntax='ios')
+    uut = Diff(old_config=config_01, new_config=required_config, syntax="ios")
     assert uut.get_diff() == correct_result
 
 
@@ -2133,10 +2235,7 @@ def testValues_Diff_05():
         "  state active",
     ]
 
-    uut = Diff(
-        old_config=config_01,
-        new_config=required_config,
-        syntax='ios')
+    uut = Diff(old_config=config_01, new_config=required_config, syntax="ios")
     assert uut.get_diff() == correct_result
 
 
@@ -2173,10 +2272,7 @@ def testValues_Diff_06():
         "  name SOME-VLAN",
     ]
 
-    uut = Diff(
-        old_config=config_01,
-        new_config=required_config,
-        syntax='ios')
+    uut = Diff(old_config=config_01, new_config=required_config, syntax="ios")
     assert uut.get_diff() == correct_result
 
 
@@ -2213,37 +2309,45 @@ def testValues_Diff_07():
         "  state active",
     ]
 
-    uut = Diff(
-        old_config=config_01,
-        new_config=required_config,
-        syntax='ios')
+    uut = Diff(old_config=config_01, new_config=required_config, syntax="ios")
     assert uut.get_diff() == correct_result
 
 
 def testValues_Diff_08():
     """Test Diff() output for matching input configurations"""
-    before_config = ["logging 1.1.3.4", "logging 1.1.3.5", "logging 1.1.3.6",]
-    after_config = ["logging 1.1.3.4", "logging 1.1.3.5", "logging 1.1.3.6",]
-    uut = Diff(
-        old_config=before_config,
-        new_config=after_config,
-        syntax='ios')
+    before_config = [
+        "logging 1.1.3.4",
+        "logging 1.1.3.5",
+        "logging 1.1.3.6",
+    ]
+    after_config = [
+        "logging 1.1.3.4",
+        "logging 1.1.3.5",
+        "logging 1.1.3.6",
+    ]
+    uut = Diff(old_config=before_config, new_config=after_config, syntax="ios")
     assert uut.get_diff() == []
 
 
 def testValues_Diff_09():
     """Test Diff() output for different input global configurations"""
 
-    before_config = ["logging 1.1.3.4", "logging 1.1.3.5", "logging 1.1.3.6",]
-    after_config = ["logging 1.1.3.255", "logging 1.1.3.5", "logging 1.1.3.6",]
+    before_config = [
+        "logging 1.1.3.4",
+        "logging 1.1.3.5",
+        "logging 1.1.3.6",
+    ]
+    after_config = [
+        "logging 1.1.3.255",
+        "logging 1.1.3.5",
+        "logging 1.1.3.6",
+    ]
 
-    uut = Diff(
-        old_config=before_config,
-        new_config=after_config,
-        syntax='ios')
-    correct_result = ['no logging 1.1.3.4', 'logging 1.1.3.255']
+    uut = Diff(old_config=before_config, new_config=after_config, syntax="ios")
+    correct_result = ["no logging 1.1.3.4", "logging 1.1.3.255"]
 
     assert uut.get_diff() == correct_result
+
 
 def testValues_Diff_10():
     """Get multi-level configuration diffs"""
@@ -2267,6 +2371,7 @@ def testValues_Diff_10():
 
     uut = Diff(old_config=before_config, new_config=after_config)
     assert uut.get_diff() == correct_result
+
 
 def testValues_Diff_11():
     """Get multi-level configuration diffs"""
@@ -2295,12 +2400,16 @@ def testValues_Diff_11():
     uut = Diff(old_config=before_config, new_config=after_config)
     assert uut.get_diff() == correct_result
 
+
 def testValues_Diff_12():
     """Test that file diffs correctly show no diffs for the same file"""
 
-    uut = Diff(old_config='fixtures/configs/sample_01.ios',
-               new_config='fixtures/configs/sample_01.ios')
+    uut = Diff(
+        old_config="fixtures/configs/sample_01.ios",
+        new_config="fixtures/configs/sample_01.ios",
+    )
     assert uut.get_diff() == []
+
 
 def testValues_ignore_ws():
     config = ["set snmp community read-only     myreadonlystring"]
@@ -2357,7 +2466,9 @@ base_hello {
     }
 }
 """
-    parse = CiscoConfParse(config.splitlines(), syntax="junos", comment_delimiters=["#"])
+    parse = CiscoConfParse(
+        config.splitlines(), syntax="junos", comment_delimiters=["#"]
+    )
 
     #################################
     # test the .geneology attribute
@@ -2374,12 +2485,12 @@ base_hello {
     assert isinstance(geneology[2], JunosCfgLine)
 
     # test individual geneology .text fields
-    correct_result = 'base_hello'
+    correct_result = "base_hello"
     assert geneology[0].text.lstrip() == correct_result
-    correct_result = 'that_thing'
+    correct_result = "that_thing"
     assert geneology[1].text.lstrip() == correct_result
 
-    correct_result = 'parameter_03'
+    correct_result = "parameter_03"
     assert geneology[2].text.lstrip() == correct_result
 
 
@@ -2393,7 +2504,9 @@ base_hello {
     }
 }
 """
-    parse = CiscoConfParse(config.splitlines(), syntax="junos", comment_delimiters=["#"])
+    parse = CiscoConfParse(
+        config.splitlines(), syntax="junos", comment_delimiters=["#"]
+    )
 
     #####################################
     # test the .geneology_text attribute
@@ -2411,13 +2524,13 @@ base_hello {
     assert isinstance(geneology_text[2], correct_result)
 
     # test individual geneology .text fields
-    correct_result = 'base_hello'
+    correct_result = "base_hello"
     assert geneology_text[0].lstrip() == correct_result
 
-    correct_result = 'that_thing'
+    correct_result = "that_thing"
     assert geneology_text[1].lstrip() == correct_result
 
-    correct_result = 'parameter_03'
+    correct_result = "parameter_03"
     assert geneology_text[2].lstrip() == correct_result
 
 
@@ -2447,13 +2560,13 @@ base_hello
     assert isinstance(geneology[2], result_kindof_correct)
 
     # test individual geneology .text fields
-    correct_result = 'base_hello'
+    correct_result = "base_hello"
     assert geneology[0].text.lstrip() == correct_result
 
-    correct_result = 'that_thing'
+    correct_result = "that_thing"
     assert geneology[1].text.lstrip() == correct_result
 
-    correct_result = 'parameter_03'
+    correct_result = "parameter_03"
     assert geneology[2].text.lstrip() == correct_result
 
 
@@ -2481,13 +2594,13 @@ base_hello
     assert isinstance(geneology_text[2], correct_result)
 
     # test individual geneology .text fields
-    correct_result = 'base_hello'
+    correct_result = "base_hello"
     assert geneology_text[0].lstrip() == correct_result
 
-    correct_result = 'that_thing'
+    correct_result = "that_thing"
     assert geneology_text[1].lstrip() == correct_result
 
-    correct_result = 'parameter_03'
+    correct_result = "parameter_03"
     assert geneology_text[2].lstrip() == correct_result
 
 
@@ -2524,14 +2637,18 @@ def test_nxos_blank_line_01():
 
 feature lldp"""
 
-    for test_syntax in ["nxos",]:
+    for test_syntax in [
+        "nxos",
+    ]:
         if test_syntax == "nxos":
             ignore_blank_lines = False
         else:
             ignore_blank_lines = True
-        parse = CiscoConfParse(config.splitlines(),
-                               syntax=test_syntax,
-                               ignore_blank_lines=ignore_blank_lines)
+        parse = CiscoConfParse(
+            config.splitlines(),
+            syntax=test_syntax,
+            ignore_blank_lines=ignore_blank_lines,
+        )
         ####################################################################
         # Legacy bug in NXOS parser...
         ####################################################################
@@ -2572,15 +2689,19 @@ scheduler schedule name 8hr_checkpoint_VCC_NW_Cisco
 job name VCC_NW_Cisco_auto_checkpoint
 time start 2017:06:01:17:42 repeat 0:8:0"""
 
-    for test_syntax in ["nxos",]:
+    for test_syntax in [
+        "nxos",
+    ]:
 
         if test_syntax == "nxos":
             ignore_blank_lines = False
         else:
             ignore_blank_lines = True
-        _ = CiscoConfParse(config.splitlines(),
-                           syntax=test_syntax,
-                           ignore_blank_lines=ignore_blank_lines)
+        _ = CiscoConfParse(
+            config.splitlines(),
+            syntax=test_syntax,
+            ignore_blank_lines=ignore_blank_lines,
+        )
 
 
 def test_nxos_blank_line_03():
@@ -2614,7 +2735,12 @@ interface Ethernet109/1/4
 
     # Demonstrate that nxos config blank lines exist at these baseline and
     # test_result indexes...
-    for idx in [5, 11, 16, 21,]:
+    for idx in [
+        5,
+        11,
+        16,
+        21,
+    ]:
 
         correct_result = BASELINE[idx]
         test_result = parse.objs[idx].text
@@ -2658,7 +2784,12 @@ interface Ethernet109/1/4
 
     # parse the baseline config with all parsers... **ignore** all blank
     #     lines...
-    for syntax in ["ios", "nxos", "asa", "junos",]:
+    for syntax in [
+        "ios",
+        "nxos",
+        "asa",
+        "junos",
+    ]:
         parse = CiscoConfParse(
             BASELINE,
             syntax=syntax,
@@ -2704,7 +2835,11 @@ interface Ethernet109/1/4
 
     # parse the baseline config with all parsers... **keep** all
     #     four blank lines...
-    for syntax in ["ios", "nxos", "asa",]:
+    for syntax in [
+        "ios",
+        "nxos",
+        "asa",
+    ]:
         parse = CiscoConfParse(
             BASELINE,
             syntax=syntax,
@@ -2853,9 +2988,10 @@ def testValues_insert_after_commit_factory_01(parse_c01_factory):
         " switchport voice vlan 150",
         " power inline static max 7000",
     ]
-    test_result02 = [ii.text for ii in parse_c01_factory.find_objects(linespec)[0].children]
+    test_result02 = [
+        ii.text for ii in parse_c01_factory.find_objects(linespec)[0].children
+    ]
     assert correct_result02 == test_result02
-
 
 
 c01_default_gigabitethernets = """policy-map QOS_1
@@ -3015,7 +3151,9 @@ def testValues_IOSIntfLine_find_objects_factory_02(
         uut = parse_c01_factory.find_objects("default interface Serial 1/0")[0]
         assert uut.text == "default interface Serial 1/0"
 
-        parse_c01_factory.find_objects("^interface Serial 1/0")[0].re_sub("Serial 1/0", "Serial 2/0")
+        parse_c01_factory.find_objects("^interface Serial 1/0")[0].re_sub(
+            "Serial 1/0", "Serial 2/0"
+        )
         uut = parse_c01_factory.find_objects("^interface Serial")[0]
         assert uut.text == "interface Serial 2/0"
 
@@ -3034,72 +3172,73 @@ def testValues_IOSIntfLine_find_objects_factory_02(
 
         # Ensure the text configs are exactly what we wanted
         assert test_result02 == [
-            'policy-map QOS_1',
-            ' class GOLD',
-            '  priority percent 10',
-            ' !',
-            ' class SILVER',
-            '  bandwidth 30',
-            '  random-detect',
-            ' !',
-            ' class BRONZE',
-            '  random-detect',
-            '!',
+            "policy-map QOS_1",
+            " class GOLD",
+            "  priority percent 10",
+            " !",
+            " class SILVER",
+            "  bandwidth 30",
+            "  random-detect",
+            " !",
+            " class BRONZE",
+            "  random-detect",
+            "!",
             # I intended to default Serial 1/0
-            'default interface Serial 1/0',
-            'interface Serial 2/0',
-            ' encapsulation ppp',
-            ' ip address 1.1.1.1 255.255.255.252',
-            '!',
-            'interface GigabitEthernet4/1',
-            ' switchport',
-            ' switchport access vlan 100',
-            ' switchport voice vlan 150',
-            ' power inline static max 7000',
-            '!',
-            'interface GigabitEthernet4/2',
-            ' switchport',
-            ' switchport access vlan 100',
-            ' switchport voice vlan 150',
-            ' power inline static max 7000',
-            '!',
-            'interface GigabitEthernet4/3',
-            ' switchport',
-            ' switchport access vlan 100',
-            ' switchport voice vlan 150',
-            '!',
-            'interface GigabitEthernet4/4',
-            ' shutdown',
-            '!',
-            'interface GigabitEthernet4/5',
-            ' switchport',
-            ' switchport access vlan 110',
-            '!',
-            'interface GigabitEthernet4/6',
-            ' switchport',
-            ' switchport access vlan 110',
-            '!',
-            'interface GigabitEthernet4/7',
-            ' switchport',
-            ' switchport access vlan 110',
-            '!',
-            'interface GigabitEthernet4/8',
-            ' switchport',
-            ' switchport access vlan 110',
-            '!',
-            'access-list 101 deny tcp any any eq 25 log',
-            'access-list 101 permit ip any any',
-            '!',
-            '!',
-            'logging 1.1.3.5',
-            'logging 1.1.3.17',
-            '!',
-            'banner login ^C',
-            'This is a router, and you cannot have it.',
-            'Log off now while you still can type. I break the fingers',
-            'of all tresspassers.',
-            '^C',
-            'alias exec showthang show ip route vrf THANG']
+            "default interface Serial 1/0",
+            "interface Serial 2/0",
+            " encapsulation ppp",
+            " ip address 1.1.1.1 255.255.255.252",
+            "!",
+            "interface GigabitEthernet4/1",
+            " switchport",
+            " switchport access vlan 100",
+            " switchport voice vlan 150",
+            " power inline static max 7000",
+            "!",
+            "interface GigabitEthernet4/2",
+            " switchport",
+            " switchport access vlan 100",
+            " switchport voice vlan 150",
+            " power inline static max 7000",
+            "!",
+            "interface GigabitEthernet4/3",
+            " switchport",
+            " switchport access vlan 100",
+            " switchport voice vlan 150",
+            "!",
+            "interface GigabitEthernet4/4",
+            " shutdown",
+            "!",
+            "interface GigabitEthernet4/5",
+            " switchport",
+            " switchport access vlan 110",
+            "!",
+            "interface GigabitEthernet4/6",
+            " switchport",
+            " switchport access vlan 110",
+            "!",
+            "interface GigabitEthernet4/7",
+            " switchport",
+            " switchport access vlan 110",
+            "!",
+            "interface GigabitEthernet4/8",
+            " switchport",
+            " switchport access vlan 110",
+            "!",
+            "access-list 101 deny tcp any any eq 25 log",
+            "access-list 101 permit ip any any",
+            "!",
+            "!",
+            "logging 1.1.3.5",
+            "logging 1.1.3.17",
+            "!",
+            "banner login ^C",
+            "This is a router, and you cannot have it.",
+            "Log off now while you still can type. I break the fingers",
+            "of all tresspassers.",
+            "^C",
+            "alias exec showthang show ip route vrf THANG",
+        ]
 
 
 def testValues_ConfigList_insert01(parse_c02):
@@ -3164,11 +3303,11 @@ def testValues_ConfigList_insert02(parse_c02):
 
 def test_BaseCfgLine_has_child_with(parse_c03):
     correct_result = [
-        'interface GigabitEthernet4/1',
-        'interface GigabitEthernet4/2',
-        'interface GigabitEthernet4/3',
-        'interface GigabitEthernet4/5',
-        'interface GigabitEthernet4/6',
+        "interface GigabitEthernet4/1",
+        "interface GigabitEthernet4/2",
+        "interface GigabitEthernet4/3",
+        "interface GigabitEthernet4/5",
+        "interface GigabitEthernet4/6",
     ]
     test_output = list()
     for intf in parse_c03.find_objects(r"^interface\s+\w+?thernet"):
@@ -3202,11 +3341,13 @@ def testValues_CiscoPassword_decrypt_7_01():
     assert correct_result == test_result_01
     assert correct_result == test_result_02
 
+
 def testValues_CiscoPassword_encrypt_7_01():
     """Test that we can encrypt a type 7 password hash"""
     test_result_01 = CiscoPassword().encrypt_type_7("cisco")
 
     assert cisco_type7.verify("cisco", test_result_01) is True
+
 
 def testValues_CiscoPassword_encrypt_5_01():
     """Test that we can build a type 5 password hash"""
@@ -3221,6 +3362,7 @@ def testValues_CiscoPassword_encrypt_5_01():
     #    errors
     assert one_correct_result[0:3] == test_result_01[0:3]
 
+
 def testValues_CiscoPassword_encrypt_8_01():
     """Test that we can build a type 8 password pbkdf2 sha256 hash"""
     test_result_01 = CiscoPassword().encrypt_type_8("cisco")
@@ -3233,6 +3375,7 @@ def testValues_CiscoPassword_encrypt_8_01():
     #    that the encryption function produces something with no
     #    errors
     assert one_correct_result[0:3] == test_result_01[0:3]
+
 
 def testValues_CiscoPassword_encrypt_9_01():
     """Test that we can build a type 9 password scrypt hash"""

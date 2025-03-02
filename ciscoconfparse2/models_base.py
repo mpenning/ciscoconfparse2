@@ -32,7 +32,7 @@ from ciscoconfparse2.ccp_abc import BaseCfgLine
 ###   Use models_cisco.py at your own risk.  You have been warned :-)
 r""" models_base.py - Parse, Query, Build, and Modify IOS-style configurations
 
-     Copyright (C) 2021-2024 David Michael Pennington
+     Copyright (C) 2021-2025 David Michael Pennington
      Copyright (C) 2020-2021 David Michael Pennington at Cisco Systems
      Copyright (C) 2019      David Michael Pennington at ThousandEyes
      Copyright (C) 2014-2019 David Michael Pennington at Samsung Data Services

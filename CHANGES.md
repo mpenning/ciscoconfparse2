@@ -4,6 +4,19 @@
 - Summary:
     - Insert something here
 
+## Version: 0.8.2
+
+- Released: 2025-03-02
+- Summary:
+    - Bump copyrights to include 2025
+    - run `black` on some files
+    - Fix many pylint flags
+    - Fix `CiscoRange().insert()` and add tests for it
+    - Improve `CiscoRange().member_type`
+    - Improve `CiscoRange().text`
+    - Remove `CiscoRange().parse_floats()`
+    - Fix `repr(CiscoRange())` 
+
 ## Version: 0.8.1
 
 - Released: 2025-03-02

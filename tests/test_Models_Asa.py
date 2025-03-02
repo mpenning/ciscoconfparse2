@@ -1,6 +1,6 @@
 """ test_Models_Asa.py - Parse, Query, Build, and Modify IOS-style configs
 
-     Copyright (C) 2023      David Michael Pennington at Cisco Systems
+     Copyright (C) 2023-2025      David Michael Pennington at Cisco Systems
 
      This program is free software: you can redistribute it and/or modify
      it under the terms of the GNU General Public License as published by
@@ -43,8 +43,6 @@ else:
 from loguru import logger
 
 
-
-
 def testVal_Access_List(parse_a01_factory):
     result_correct = {}
     assert len(parse_a01_factory.objs.asa_access_list["INSIDE_in"]) == 4
@@ -52,7 +50,7 @@ def testVal_Access_List(parse_a01_factory):
 
 def testParse_asa_factory(config_a02):
     parse = CiscoConfParse(config_a02, syntax="asa", factory=True)
-    assert (parse is not None)
+    assert parse is not None
 
 
 def testVal_Asa_Object_Group_Names(parse_a01, parse_a01_factory):
@@ -170,6 +168,7 @@ def testVal_ipv4_addr_01():
     obj = cfg_factory.find_objects(r"^interface\sEthernet0\/1$")[0]
     assert obj.ipv4_addr == "192.0.2.254"
 
+
 def testVal_ipv6_addr_01():
     conf = [
         "hostname MYASA",
@@ -207,6 +206,7 @@ def testVal_ipv6_addr_01():
     assert obj.ipv6_standby_addr == ""
     assert obj.ipv6_masklength == 0
 
+
 def testVal_interface_name_01():
     conf = [
         "hostname MYASA",
@@ -231,6 +231,7 @@ def testVal_interface_name_01():
 
     obj = cfg_factory.find_objects(r"^interface\sEthernet0\/0$")[0]
     assert obj.name == "Ethernet0/0"
+
 
 def testVal_object_group_service_01():
     ## This can only be configured as protocol object-group
@@ -392,12 +393,21 @@ def testVal_ASAAclLine_DNA_negative():
 
     # Ensure that parsing the bogus ACL line in a config list raises a ValueError
     #     but ValueError triggers a SystemExit
-    broken_config_list = ["access-list TESTME_01 extended VpAAmit987 ip any any log deactivate"]
+    broken_config_list = [
+        "access-list TESTME_01 extended VpAAmit987 ip any any log deactivate"
+    ]
     broken_config_list = ["access-list TESTME_01 extended VpAAmit987 ip any any log"]
     broken_filepath = "/%s" % str(uuid.uuid4())
 
     try:
-        if isinstance(broken_config_list, (MutableSequence, tuple, list,)):
+        if isinstance(
+            broken_config_list,
+            (
+                MutableSequence,
+                tuple,
+                list,
+            ),
+        ):
             parse = CiscoConfParse(broken_config_list, factory=True, syntax="asa")
 
         # Ensure that parsing the bogus filepath string raises OSError

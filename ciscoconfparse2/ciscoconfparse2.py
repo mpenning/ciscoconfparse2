@@ -1,7 +1,7 @@
 """
 ciscoconfparse2.py - Parse, Query, Build, and Modify IOS-style configs.
 
-Copyright (C) 2023-2024 David Michael Pennington
+Copyright (C) 2023-2025 David Michael Pennington
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -21,86 +21,53 @@ mike [~at~] pennington [.dot.] net
 """
 
 import base64
-import random
-import locale
-import time
 import copy
-import sys
-import re
-import os
-
-from typing import Optional, Any, Callable, Union, List, Tuple, Dict
-from collections.abc import Sequence
-from collections import UserList
 import hashlib
 import inspect
+import locale
+import os
 import pathlib
+import random
+import re
+import sys
+import time
+from collections import UserList
+from collections.abc import Sequence
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
-from typeguard import typechecked
-from loguru import logger
 import attrs
-
-# passlib requires crypt, which is deprecated in Python3.13+
-#
-# 2025-01-04 Removing crypt_r for now since it's not available
-# for use in pyproject.toml in python3.10 and lower.
-if False and sys.version_info > (3, 12):
-    # substitute third-party crypt_r for crypt...
-    import crypt_r as crypt
-
-from passlib.hash import md5_crypt
-from passlib.hash import cisco_type7
-import scrypt
-
-from pyparsing import Word, White, printables
-from pyparsing import OneOrMore, Combine
-from pyparsing import nested_expr
 import hier_config
-import yaml    # import for pyyaml
-
-from ciscoconfparse2.models_cisco import IOSRouteLine
-from ciscoconfparse2.models_cisco import IOSIntfLine
-from ciscoconfparse2.models_cisco import IOSAccessLine, IOSIntfGlobal
-from ciscoconfparse2.models_cisco import IOSCfgLine
-
-if False:
-    from ciscoconfparse2.models_nxos import NXOSHostnameLine, NXOSRouteLine
-from ciscoconfparse2.models_nxos import NXOSAccessLine, NXOSIntfGlobal
-from ciscoconfparse2.models_nxos import NXOSCfgLine, NXOSIntfLine
-from ciscoconfparse2.models_nxos import NXOSvPCLine
-
-from ciscoconfparse2.models_iosxr import IOSXRCfgLine, IOSXRIntfLine
-
-from ciscoconfparse2.models_asa import ASAObjGroupNetwork
-from ciscoconfparse2.models_asa import ASAObjGroupService
-from ciscoconfparse2.models_asa import ASAHostnameLine
-from ciscoconfparse2.models_asa import ASAObjNetwork
-from ciscoconfparse2.models_asa import ASAObjService
-from ciscoconfparse2.models_asa import ASAIntfGlobal
-from ciscoconfparse2.models_asa import ASAIntfLine
-from ciscoconfparse2.models_asa import ASACfgLine
-from ciscoconfparse2.models_asa import ASAName
-from ciscoconfparse2.models_asa import ASAAclLine
-
-from ciscoconfparse2.models_junos import JunosIntfLine
-from ciscoconfparse2.models_junos import JunosCfgLine
-
-from ciscoconfparse2.ccp_abc import BaseCfgLine
-
-from ciscoconfparse2.ccp_util import enforce_valid_types
-from ciscoconfparse2.ccp_util import configure_loguru
-
-from ciscoconfparse2.errors import ConfigListItemDoesNotExist
-from ciscoconfparse2.errors import RequirementFailure
-from ciscoconfparse2.errors import InvalidParameters
-from ciscoconfparse2.errors import InvalidPassword
+import scrypt
+import yaml  # import for pyyaml
+from loguru import logger
+from passlib.hash import cisco_type7, md5_crypt
+from pyparsing import Combine, OneOrMore, White, Word, nested_expr, printables
+from typeguard import typechecked
 
 from ciscoconfparse2.__about__ import __version__
+from ciscoconfparse2.ccp_abc import BaseCfgLine
+from ciscoconfparse2.ccp_util import configure_loguru, enforce_valid_types
+from ciscoconfparse2.errors import (ConfigListItemDoesNotExist,
+                                    InvalidParameters, InvalidPassword,
+                                    RequirementFailure)
+from ciscoconfparse2.models_asa import (ASAAclLine, ASACfgLine,
+                                        ASAHostnameLine, ASAIntfGlobal,
+                                        ASAIntfLine, ASAName,
+                                        ASAObjGroupNetwork, ASAObjGroupService,
+                                        ASAObjNetwork, ASAObjService)
+from ciscoconfparse2.models_cisco import (IOSAccessLine, IOSCfgLine,
+                                          IOSIntfGlobal, IOSIntfLine,
+                                          IOSRouteLine)
+from ciscoconfparse2.models_iosxr import IOSXRCfgLine, IOSXRIntfLine
+from ciscoconfparse2.models_junos import JunosCfgLine, JunosIntfLine
+from ciscoconfparse2.models_nxos import (NXOSAccessLine, NXOSCfgLine,
+                                         NXOSIntfGlobal, NXOSIntfLine,
+                                         NXOSvPCLine)
 
 if sys.version_info < (3, 9):
-    error = "CiscoConfParse2 requires Python 3.9 or higher"
-    logger.critical(error)
-    raise NotImplementedError(error)
+    version_error = "CiscoConfParse2 requires Python 3.9 or higher"
+    logger.critical(version_error)
+    raise NotImplementedError(version_error)
 
 # Not using ccp_re yet... still a work in progress
 # from ciscoconfparse2.ccp_util import ccp_re
@@ -110,16 +77,16 @@ ALL_IOS_FACTORY_CLASSES = [
     IOSRouteLine,
     IOSAccessLine,
     IOSIntfGlobal,
-    IOSCfgLine,        # IOSCfgLine MUST be last
+    IOSCfgLine,  # IOSCfgLine MUST be last
 ]
 ALL_NXOS_FACTORY_CLASSES = [
     NXOSIntfLine,
-    #NXOSRouteLine,
+    # NXOSRouteLine,
     NXOSvPCLine,
-    #NXOSHostnameLine,
+    # NXOSHostnameLine,
     NXOSAccessLine,
     NXOSIntfGlobal,
-    NXOSCfgLine,        # NXOSCfgLine MUST be last
+    NXOSCfgLine,  # NXOSCfgLine MUST be last
 ]
 ALL_IOSXR_FACTORY_CLASSES = [
     IOSXRIntfLine,
@@ -135,14 +102,14 @@ ALL_ASA_FACTORY_CLASSES = [
     ASAIntfGlobal,
     ASAHostnameLine,
     ASAAclLine,
-    ASACfgLine,        # ASACfgLine MUST be last
+    ASACfgLine,  # ASACfgLine MUST be last
 ]
 ALL_JUNOS_FACTORY_CLASSES = [
     ##########################################################################
     # JunosIntfLine is rather broken; JunosCfgLine should be enough
     ##########################################################################
     JunosIntfLine,
-    JunosCfgLine,      # JunosCfgLine MUST be last
+    JunosCfgLine,  # JunosCfgLine MUST be last
 ]
 
 # Indexing into CFGLINE is normally faster than serial if-statements...
@@ -180,7 +147,7 @@ __status__ = "Production"
 def initialize_globals():
     """Initialize ciscoconfparse2 global dunder-variables and a couple others."""
     global ENCODING
-    #global ACTIVE_LOGURU_HANDLERS
+    # global ACTIVE_LOGURU_HANDLERS
     global __author_email__
     global __author__
     global __copyright__
@@ -227,21 +194,22 @@ def get_syntax_comment_delimiters(syntax: Optional[str] = None) -> List[str]:
 
     comment_delimiters = []
     if syntax == "ios":
-        comment_delimiters = ['!']
+        comment_delimiters = ["!"]
     elif syntax == "asa":
-        comment_delimiters = ['!']
+        comment_delimiters = ["!"]
     elif syntax == "iosxr":
-        comment_delimiters = ['!']
+        comment_delimiters = ["!"]
     elif syntax == "nxos":
-        comment_delimiters = ['!']
+        comment_delimiters = ["!"]
     elif syntax == "junos":
-        comment_delimiters = ['#']
+        comment_delimiters = ["#"]
     else:
         error = "Unexpected condition in get_syntax_comment_delimiters()"
         logger.critical(error)
         raise NotImplementedError(error)
 
     return comment_delimiters
+
 
 @logger.catch(reraise=True)
 def check_comment_delimiters(comment_delimiters: List) -> List[str]:
@@ -251,11 +219,13 @@ def check_comment_delimiters(comment_delimiters: List) -> List[str]:
     :rtype: List[str]
     """
     for comment_delimiter in comment_delimiters:
+
         if not isinstance(comment_delimiter, str):
             error = f"`{comment_delimiter}` is not a valid string comment_delimiters"
             logger.critical(error)
             raise InvalidParameters(error)
-        elif not len(comment_delimiter) == 1:
+
+        if not len(comment_delimiter) == 1:
             error = f"`{comment_delimiter}` must be a single string character."
             logger.critical(error)
             raise InvalidParameters(error)
@@ -264,8 +234,9 @@ def check_comment_delimiters(comment_delimiters: List) -> List[str]:
 
 
 @logger.catch(reraise=True)
-def initialize_ciscoconfparse2(read_only=False,
-                               debug=0) -> tuple[Dict[str, str], List[int]]:
+def initialize_ciscoconfparse2(
+    read_only=False, debug=0
+) -> tuple[Dict[str, str], List[int]]:
     """Initialize ciscoconfparse2 global variables and configure logging.
 
     :return: A tuple of the ciscoconfparse2 globals and active loguru handlers
@@ -280,9 +251,15 @@ def initialize_ciscoconfparse2(read_only=False,
     # Re-configure loguru... not a perfect solution, but this should be good enough
     #     Ref Github Issue #281
     if globals_dict.get("ACTIVE_LOGURU_HANDLERS", None) is None:
-        active_loguru_handlers = configure_loguru(read_only=read_only, active_handlers=None, debug=debug)
+        active_loguru_handlers = configure_loguru(
+            read_only=read_only, active_handlers=None, debug=debug
+        )
     else:
-        active_loguru_handlers = configure_loguru(read_only=read_only, active_handlers=globals_dict["ACTIVE_LOGURU_HANDLERS"], debug=debug)
+        active_loguru_handlers = configure_loguru(
+            read_only=read_only,
+            active_handlers=globals_dict["ACTIVE_LOGURU_HANDLERS"],
+            debug=debug,
+        )
 
     globals()["ACTIVE_LOGURU_HANDLERS"] = active_loguru_handlers
 
@@ -297,7 +274,11 @@ _, ACTIVE_LOGURU_HANDLERS = initialize_ciscoconfparse2()
 
 
 @attrs.define(repr=False, slots=False)
-class BraceParse():
+class BraceParse:
+    """
+    Parse brace-delimited configurations.
+    """
+
     config_txt: str = None
     comment_delimiters: list = None
     stop_width: int = 4
@@ -307,12 +288,13 @@ class BraceParse():
 
     @logger.catch(reraise=True)
     @typechecked
-    def __init__(self,
-                 config_txt: Optional[str] = None,
-                 comment_delimiters: Optional[list] = None,
-                 stop_width: int = 4,
-                 semicolon_end: bool = False,
-                 ) -> None:
+    def __init__(
+        self,
+        config_txt: Optional[str] = None,
+        comment_delimiters: Optional[list] = None,
+        stop_width: int = 4,
+        semicolon_end: bool = False,
+    ) -> None:
         """
         :param config_txt: Brace-delimited configuration lines to be parsed
         :type config_txt: str
@@ -331,17 +313,17 @@ class BraceParse():
         if comment_delimiters is None:
             comment_delimiters = ["#"]
 
-        enforce_valid_types(config_txt, (str,), "config_txt parameter must be a string.")
+        enforce_valid_types(
+            config_txt, (str,), "config_txt parameter must be a string."
+        )
         enforce_valid_types(
             comment_delimiters, (list,), "comment_delimiters parameter must be a list."
         )
-        enforce_valid_types(
-            stop_width, (int,), "stop_width parameter must be an int."
-        )
+        enforce_valid_types(stop_width, (int,), "stop_width parameter must be an int.")
 
         # Flag the config invalid if it starts with a curly-brace...
         if len(config_txt) > 0:
-            if config_txt[0] == '{' or config_txt[0] == '}':
+            if config_txt[0] == "{" or config_txt[0] == "}":
                 error = "Invalid JunOS configuration"
                 logger.critical(error)
                 raise ValueError(error)
@@ -352,18 +334,19 @@ class BraceParse():
         self.semicolon_end = semicolon_end
 
         self.current_linenum = 0
-        self.config_objs = list()
+        self.config_objs = []
 
         pyparsing_list = self.parse_braces_to_nested_list(config_txt)
         self.unpack_nested_list_to_config_objs(-1, pyparsing_list)
 
     @logger.catch(reraise=True)
-    def parse_braces_to_nested_list(self,
-                                    config_txt: str):
+    def parse_braces_to_nested_list(self, config_txt: str):
         """Parse the brace-delimted configuration and return a nested list (via pyparsing)"""
         # Define valid pyparsing characters for the JunOS lines... use all
         # non-brace printable characters, except curly-braces plus whitespace
-        valid_chars = Combine(OneOrMore(Word(printables, exclude_chars="{}") | White(' ')))
+        valid_chars = Combine(
+            OneOrMore(Word(printables, exclude_chars="{}") | White(" "))
+        )
         parseobj = nested_expr(opener="{", closer="}", content=valid_chars)
         # pyparsing_list is a nested-list of configuration statements where
         # a nested list is appended for every JunOS indent level
@@ -373,22 +356,22 @@ class BraceParse():
         return pyparsing_list
 
     @logger.catch(reraise=True)
-    def unpack_nested_list_to_config_objs(self,
-                                          indent: int,
-                                          nested_list: list) -> int:
+    def unpack_nested_list_to_config_objs(self, indent: int, nested_list: list) -> int:
         """Unpack the nested pyparsing results"""
         indent += 1
         for elem in nested_list:
 
             if isinstance(elem, str):
-                if not self.semicolon_end and elem[-1] == ';':
+                if not self.semicolon_end and elem[-1] == ";":
                     # Delete the trailing semicolon
                     elem = elem[:-1]
 
                 space_offset = indent * self.stop_width
-                obj = JunosCfgLine(indent=space_offset,
-                                   linenum=self.current_linenum,
-                                   text=" " * space_offset + elem.strip())
+                obj = JunosCfgLine(
+                    indent=space_offset,
+                    linenum=self.current_linenum,
+                    text=" " * space_offset + elem.strip(),
+                )
                 self.config_objs.append(obj)
 
                 self.current_linenum += 1
@@ -401,6 +384,9 @@ class BraceParse():
 
     @logger.catch(reraise=True)
     def get_junoscfgline_list(self) -> List[JunosCfgLine]:
+        """
+        Return a list of JunosCfgLine instances.
+        """
         return self.config_objs
 
     def __repr__(self) -> str:
@@ -415,7 +401,7 @@ def cfgobj_from_text(
     idx: int,
     syntax: Optional[str] = None,
     comment_delimiters: Optional[List[str]] = None,
-    factory: Optional[bool] = None
+    factory: Optional[bool] = None,
 ) -> BaseCfgLine:
     """Build a configuration object from configuration text, syntax, and factory inputs.
 
@@ -486,9 +472,7 @@ def cfgobj_from_text(
             raise ValueError(error)
 
     else:
-        err_txt = (
-            f"Cannot classify config list item `{txt}` into a proper configuration object line"
-        )
+        err_txt = f"Cannot classify config list item `{txt}` into a proper configuration object line"
         logger.error(err_txt)
         raise ValueError(err_txt)
 
@@ -496,8 +480,7 @@ def cfgobj_from_text(
 
 
 @logger.catch(reraise=True)
-def build_space_tolerant_regex(linespec: str,
-                               encoding: str = "utf-8") -> str:
+def build_space_tolerant_regex(linespec: str, encoding: str = "utf-8") -> str:
     r"""Accept a string, and return a regex-like string with all spaces replaced with '\s+'.
 
     :param linespec: Input to be regex-escaped
@@ -529,11 +512,13 @@ def build_space_tolerant_regex(linespec: str,
 # This method was copied from the same method in git commit below...
 # https://raw.githubusercontent.com/mpenning/ciscoconfparse/bb3f77436023873da344377d3c839387f5131e7f/ciscoconfparse/ciscoconfparse2.py
 @logger.catch(reraise=True)
-def convert_junos_to_ios(input_list: Optional[List[str]] = None,
-                         stop_width: int = 4,
-                         comment_delimiters: Optional[List[str]] = None,
-                         ignore_blank_lines: bool = False,
-                         debug: int = 0) -> List[str]:
+def convert_junos_to_ios(
+    input_list: Optional[List[str]] = None,
+    stop_width: int = 4,
+    comment_delimiters: Optional[List[str]] = None,
+    ignore_blank_lines: bool = False,
+    debug: int = 0,
+) -> List[str]:
     """Accept `input_list` containing a list of junos-brace-formatted-string
     config lines.  This method strips off semicolons / braces from the string
     lines in `input_list` and returns the lines in a new list where all lines
@@ -587,11 +572,12 @@ def convert_junos_to_ios(input_list: Optional[List[str]] = None,
         logger.critical(error)
         raise ValueError(error)
 
-    config_txt = '\n'.join(input_list)
-    braceobj = BraceParse(config_txt=config_txt,
-                          comment_delimiters=comment_delimiters,
-                          stop_width=stop_width,
-                          )
+    config_txt = "\n".join(input_list)
+    braceobj = BraceParse(
+        config_txt=config_txt,
+        comment_delimiters=comment_delimiters,
+        stop_width=stop_width,
+    )
     return [ii.text for ii in braceobj.get_junoscfgline_list()]
 
 
@@ -599,6 +585,7 @@ def convert_junos_to_ios(input_list: Optional[List[str]] = None,
 @attrs.define(repr=False)
 class ConfigList(UserList):
     """A custom list to hold :class:`~ciscoconfparse2.ccp_abc.BaseCfgLine` objects.  Most users will never need to use this class directly."""
+
     initlist: Optional[Union[List[str], tuple[str, ...]]] = None
     comment_delimiters: Optional[List[str]] = None
     factory: bool = None
@@ -626,7 +613,7 @@ class ConfigList(UserList):
         syntax: str = "ios",
         auto_commit: bool = True,
         debug: int = 0,
-        **kwargs
+        **kwargs,
     ):
         """Initialize the class.
 
@@ -684,7 +671,7 @@ class ConfigList(UserList):
         UserList.__init__(self)
 
         if initlist is None:
-            initlist = list()
+            initlist = []
         elif not isinstance(initlist, Sequence):
             # IMPORTANT This check MUST come near the top of ConfigList()...
             raise ValueError
@@ -692,7 +679,7 @@ class ConfigList(UserList):
         #######################################################################
         # initialize the list with the correct BaseCfgLine() instances
         #######################################################################
-        initobjs = list()
+        initobjs = []
         for ii in initlist:
             if isinstance(ii, str):
                 if bool(factory) is False:
@@ -727,12 +714,6 @@ class ConfigList(UserList):
 
         if syntax not in ALL_VALID_SYNTAX:
             raise RequirementFailure()
-
-        # NOTE a string is a invalid sequence... this guards against bad inputs
-        if not isinstance(initlist, Sequence):
-            error = f"ConfigList(initlist) {type(initlist)} is not valid; `initlist` must be a valid Sequence."
-            logger.critical(error)
-            raise InvalidParameters(error)
 
         ciscoconfparse_kwarg_val = kwargs.get("CiscoConfParse", None)
         ccp_ref_kwarg_val = kwargs.get("ccp_ref", None)
@@ -785,14 +766,9 @@ class ConfigList(UserList):
             self._RE_OBJACL = re.compile(r"^\s*access-list\s+(\S+)")
             self._network_cache = {}
 
-
     # This method is on ConfigList()
     def __repr__(self) -> str:
-        return """<ConfigList, syntax='{}', comment_delimiters={}, conf={}>""".format(
-            self.syntax,
-            self.comment_delimiters,
-            self.data,
-        )
+        return f"""<ConfigList, syntax='{self.syntax}', comment_delimiters={self.comment_delimiters}, conf={self.data}>"""
 
     @logger.catch(reraise=True)
     def __iter__(self):
@@ -931,12 +907,9 @@ class ConfigList(UserList):
 
             ccp_ref = object.__getattribute__(self, "ccp_ref")
             ccp_method = ccp_ref.__getattribute__(arg)
-            message = """{2} doesn't have an attribute named "{3}". {0}() line {1} called `__getattribute__('{4}')`.""".format(
-                calling_function, caller.lineno, ccp_ref, ccp_method, arg
-            )
-            raise NotImplementedError(message)
+            message = f"""{ccp_ref} doesn't have an attribute named "{ccp_method}". {calling_function}() line {caller.lineno} called `__getattribute__('{arg}')`."""
             logger.warning(message)
-            return ccp_method
+            raise NotImplementedError(message)
 
     # This method is on ConfigList()
     @logger.catch(reraise=True)
@@ -946,13 +919,13 @@ class ConfigList(UserList):
         :rtype: int
         """
         total = 0
-        for idx, obj in enumerate(self.data):
+        for _, obj in enumerate(self.data):
             if isinstance(obj, BaseCfgLine):
-                #total += hash(obj.text) * hash(obj.linenum)
+                # total += hash(obj.text) * hash(obj.linenum)
                 total += obj.get_unique_identifier()
             else:
                 error = f"{self} is an unexpected type {type(self)}"
-                error.critical(error)
+                logger.critical(error)
                 raise NotImplementedError(error)
         return total
 
@@ -998,7 +971,7 @@ class ConfigList(UserList):
         :return: Configuration as a list of text lines
         :rtype: List[str]
         """
-        retval = list()
+        retval = []
         for ii in self.data:
             if isinstance(ii, BaseCfgLine):
                 retval.append(ii.text)
@@ -1012,29 +985,29 @@ class ConfigList(UserList):
 
     # This method is on ConfigList()
     @logger.catch(reraise=True)
-    def append(self, value: str) -> None:
-        """Append the BaseCfgLine() for ``value`` to the end of the ConfigList
+    def append(self, item: str) -> None:
+        """Append the BaseCfgLine() for ``item`` to the end of the ConfigList
 
-        :param value: The value to append
-        :type value: str
+        :param item: The value to append
+        :type item: str
         :rtype: None
         """
         if self.debug >= 1:
-            logger.debug("    ConfigList().append(val={}) was called.".format(value))
+            logger.debug(f"    ConfigList().append(item={item}) was called.")
 
         if bool(self.factory) is False:
             obj = CFGLINE[self.syntax](
                 all_lines=self.as_text,
-                line=value,
+                line=item,
             )
         else:
             obj = config_line_factory(
                 all_lines=self.as_text,
-                line=value,
+                line=item,
                 syntax=self.syntax,
             )
 
-        #self.data.append(obj)
+        # self.data.append(obj)
         self.data.insert(len(self.data), obj)
 
         if bool(self.auto_commit):
@@ -1043,8 +1016,7 @@ class ConfigList(UserList):
 
     # This method is on ConfigList()
     @logger.catch(reraise=True)
-    def pop(self,
-            index: int = -1) -> BaseCfgLine:
+    def pop(self, index: int = -1) -> BaseCfgLine:
         """
         Remove and return item at ``index`` (default last).
 
@@ -1065,22 +1037,23 @@ class ConfigList(UserList):
 
     # This method is on ConfigList()
     @logger.catch(reraise=True)
-    def remove(self,
-               value: BaseCfgLine) -> None:
+    def remove(self, item: BaseCfgLine) -> None:
         """
-        Remove first occurrence of ``value``.
+        Remove first occurrence of ``item``.
 
-        Raises :py:class:`ConfigListItemDoesNotExist` if the value is not present.
+        Raises :py:class:`ConfigListItemDoesNotExist` if the item is not present.
 
-        :param value: Value to remove from the ConfigList()
-        :type value: BaseCfgLine
+        :param item: Value to remove from the ConfigList()
+        :type item: BaseCfgLine
         :rtype: None
         """
 
-        if isinstance(value, BaseCfgLine):
-            idx = self.data.index(value)
+        if isinstance(item, BaseCfgLine):
+            idx = self.data.index(item)
         else:
-            error = f"value must be an instance of BaseCfgLine(), but we got {type(value)}"
+            error = (
+                f"item must be an instance of BaseCfgLine(), but we got {type(item)}"
+            )
             logger.critical(error)
             raise InvalidParameters(error)
 
@@ -1121,35 +1094,32 @@ class ConfigList(UserList):
 
     # This method is on ConfigList()
     @logger.catch(reraise=True)
-    def count(self,
-              value: BaseCfgLine) -> int:
+    def count(self, item: BaseCfgLine) -> int:
         """
-        :param value: value
-        :type value: BaseCfgLine
-        :return: The number of instances of ``value``
+        :param item: value
+        :type item: BaseCfgLine
+        :return: The number of instances of ``item``
         :rtype: int
         """
-        return self.data.count(value)
+        return self.data.count(item)
 
     # This method is on ConfigList()
     @logger.catch(reraise=True)
-    def index(self,
-              value: BaseCfgLine,
-              *args) -> int:
+    def index(self, item: BaseCfgLine) -> int:
         """
-        :param value: The item to index
-        :type value: BaseCfgLine
-        :return: the index of ``value``
+        :param item: The item to index
+        :type item: BaseCfgLine
+        :return: the index of ``item``
         :rtype: int
         """
 
         #######################################################################
         # first search by text and linenum if val is a BaseCfgLine() instance
         #######################################################################
-        if isinstance(value, BaseCfgLine):
+        if isinstance(item, BaseCfgLine):
             for idx, obj in enumerate(self.data):
 
-                if obj.get_unique_identifier() == value.get_unique_identifier():
+                if obj.get_unique_identifier() == item.get_unique_identifier():
                     return idx
 
         else:
@@ -1158,11 +1128,11 @@ class ConfigList(UserList):
             # can be too many string overlaps on multiple lines; only
             # BaseCfgLine() instances are unique enough to search on.
             ###################################################################
-            error = f"ConfigList().index() only supports instances of BaseCfgLine(), but got {type(value)}."
+            error = f"ConfigList().index() only supports instances of BaseCfgLine(), but got {type(item)}."
             logger.critical(error)
             raise InvalidParameters(error)
 
-        error = f"{value} is not in this ConfigList()"
+        error = f"{item} is not in this ConfigList()"
         logger.error(error)
         raise ConfigListItemDoesNotExist(error)
 
@@ -1184,10 +1154,12 @@ class ConfigList(UserList):
 
     # This method is on ConfigList()
     @logger.catch(reraise=True)
-    def sort(self,
-             cmp: Optional[Callable] = None,
-             key: Optional[Callable] = None,
-             reverse: bool = False) -> None:
+    def sort(
+        self,
+        cmp: Optional[Callable] = None,
+        key: Optional[Callable] = None,
+        reverse: bool = False,
+    ) -> None:
         """
         :param cmp: Specifies a custom comparison function of two arguments
                     (list items) which should return a negative, zero or
@@ -1213,8 +1185,7 @@ class ConfigList(UserList):
 
     # This method is on ConfigList()
     @logger.catch(reraise=True)
-    def extend(self,
-               other: Union[List[BaseCfgLine], tuple[BaseCfgLine, ...]]) -> None:
+    def extend(self, other: Union[List[BaseCfgLine], tuple[BaseCfgLine, ...]]) -> None:
         """
         Extend the ConfigList with ``other``.
 
@@ -1225,7 +1196,9 @@ class ConfigList(UserList):
         elif isinstance(other, (list, tuple)):
             self.data.extend(other)
         else:
-            error = f"'other' must be a ConfigList, list or tuple, but we got {type(other)}"
+            error = (
+                f"'other' must be a ConfigList, list or tuple, but we got {type(other)}"
+            )
             logger.critical(error)
             raise InvalidParameters(error)
 
@@ -1237,9 +1210,9 @@ class ConfigList(UserList):
 
     # This method is on ConfigList()
     @logger.catch(reraise=True)
-    def insert_before(self,
-                      exist_val: Optional[str] = None,
-                      new_val: Optional[str] = None) -> None:
+    def insert_before(
+        self, exist_val: Optional[str] = None, new_val: Optional[str] = None
+    ) -> None:
         """
         Insert new_val before all occurances of exist_val.
 
@@ -1264,14 +1237,13 @@ class ConfigList(UserList):
         calling_filename = inspect.stack()[calling_fn_index].filename
         calling_function = inspect.stack()[calling_fn_index].function
         calling_lineno = inspect.stack()[calling_fn_index].lineno
-        error = "FATAL CALL: in {} line {} {}(exist_val='{}', new_val='{}')".format(
-            calling_filename,
-            calling_lineno,
-            calling_function,
-            exist_val,
-            new_val,
-        )
-        if isinstance(new_val, str) and new_val.strip() == "" and self.ignore_blank_lines is True:
+        error = f"FATAL CALL: in {calling_filename} line {calling_lineno} {calling_function}(exist_val='{exist_val}', new_val='{new_val}')"
+
+        if (
+            isinstance(new_val, str)
+            and new_val.strip() == ""
+            and self.ignore_blank_lines is True
+        ):
             logger.warning(f"`new_val`=`{new_val}`")
             error = "Cannot insert a blank line if `ignore_blank_lines` is True"
             logger.error(error)
@@ -1334,9 +1306,9 @@ class ConfigList(UserList):
 
     # This method is on ConfigList()
     @logger.catch(reraise=True)
-    def insert_after(self,
-                     exist_val: Optional[str] = None,
-                     new_val: Optional[str] = None) -> None:
+    def insert_after(
+        self, exist_val: Optional[str] = None, new_val: Optional[str] = None
+    ) -> None:
         """
         Insert new_val after all occurances of exist_val.
 
@@ -1369,14 +1341,12 @@ class ConfigList(UserList):
         calling_filename = inspect.stack()[calling_fn_index].filename
         calling_function = inspect.stack()[calling_fn_index].function
         calling_lineno = inspect.stack()[calling_fn_index].lineno
-        err_txt = "FATAL CALL: in {} line {} {}(exist_val='{}', new_val='{}')".format(
-            calling_filename,
-            calling_lineno,
-            calling_function,
-            exist_val,
-            new_val,
-        )
-        if isinstance(new_val, str) and new_val.strip() == "" and self.ignore_blank_lines is True:
+        err_txt = f"FATAL CALL: in {calling_filename} line {calling_lineno} {calling_function}(exist_val='{exist_val}', new_val='{new_val}')"
+        if (
+            isinstance(new_val, str)
+            and new_val.strip() == ""
+            and self.ignore_blank_lines is True
+        ):
             logger.warning(f"`new_val`=`{new_val}`")
             error = "Cannot insert a blank line if `ignore_blank_lines` is True"
             logger.error(error)
@@ -1438,14 +1408,12 @@ class ConfigList(UserList):
 
     # This method is on ConfigList()
     @logger.catch(reraise=True)
-    def insert(self,
-               index: int,
-               value: Union[BaseCfgLine, str]) -> None:
+    def insert(self, index: int, item: Union[BaseCfgLine, str]) -> None:
         """
-        :param index: Index to insert ``value`` at
+        :param index: Index to insert ``item`` at
         :type index: int
-        :param value: Object to be inserted in the ConfigList()
-        :type value: Union[BaseCfgLine,str]
+        :param item: Object to be inserted in the ConfigList()
+        :type item: Union[BaseCfgLine,str]
         :rtype: None
         """
         if not isinstance(index, int):
@@ -1453,31 +1421,31 @@ class ConfigList(UserList):
             logger.critical(error)
             raise ValueError(error)
 
-        # Get the configuration line text if value is a BaseCfgLine() instance
-        if isinstance(value, BaseCfgLine):
+        # Get the configuration line text if item is a BaseCfgLine() instance
+        if isinstance(item, BaseCfgLine):
             # only work with plain text to ensure that all objects are the
             # correct object type, below
-            value = value.text
+            item = item.text
 
         # Coerce a string into the appropriate object
-        if isinstance(value, str):
+        if isinstance(item, str):
             if self.factory:
                 obj = config_line_factory(
-                    line=value,
+                    line=item,
                     syntax=self.syntax,
                 )
 
             elif self.factory is False:
                 obj = CFGLINE[self.syntax](
-                    line=value,
+                    line=item,
                 )
 
             else:
-                error = f'''insert() cannot insert {type(value)} "{value}" with factory={self.factory}'''
+                error = f"""insert() cannot insert {type(item)} "{item}" with factory={self.factory}"""
                 logger.critical(error)
                 raise ValueError(error)
         else:
-            error = f'''insert() cannot insert {type(value)} "{value}"'''
+            error = f'''insert() cannot insert {type(item)} "{item}"'''
             logger.critical(error)
             raise TypeError(error)
 
@@ -1494,8 +1462,7 @@ class ConfigList(UserList):
 
     # This method is on ConfigList()
     @logger.catch(reraise=True)
-    def _banner_mark_regex(self,
-                           regex: Union[str, re.Pattern]) -> None:
+    def _banner_mark_regex(self, regex: Union[str, re.Pattern]) -> None:
         """
         :param regex: Find banner object children with `regex`` and build references
                       between banner parent / child objects.
@@ -1524,14 +1491,9 @@ class ConfigList(UserList):
                 (banner_lead, bannerdelimit) = ("", None)
 
             if self.debug > 0:
-                logger.debug("banner_lead = '{}'".format(banner_lead))
-                logger.debug("bannerdelimit = '{}'".format(bannerdelimit))
-                logger.debug(
-                    "{} starts at line {}".format(
-                        banner_lead,
-                        parent.linenum,
-                    ),
-                )
+                logger.debug(f"banner_lead = '{banner_lead}'")
+                logger.debug(f"bannerdelimit = '{bannerdelimit}'")
+                logger.debug(f"{banner_lead} starts at line {parent.linenum}")
 
             idx = parent.linenum
             while bannerdelimit is not None:
@@ -1541,13 +1503,7 @@ class ConfigList(UserList):
                     if len(parts) > 2:
                         ## banner has both begin and end delimiter on one line
                         if self.debug > 0:
-                            logger.debug(
-                                "{} ends at line"
-                                " {}".format(
-                                    banner_lead,
-                                    parent.linenum,
-                                ),
-                            )
+                            logger.debug(f"{banner_lead} ends at line {parent.linenum}")
                         break
 
                 ## Use code below to identify children of the banner line
@@ -1557,20 +1513,12 @@ class ConfigList(UserList):
                     if obj.text is None:
                         if self.debug > 0:
                             logger.warning(
-                                "found empty text while parsing '{}' in the banner".format(
-                                    obj
-                                ),
+                                f"found empty text while parsing '{obj}' in the banner"
                             )
                     elif bannerdelimit in obj.text.strip():
                         # Hit the bannerdelimit char... Exit banner parsing here...
                         if self.debug > 0:
-                            logger.debug(
-                                "{} ends at line"
-                                " {}".format(
-                                    banner_lead,
-                                    obj.linenum,
-                                ),
-                            )
+                            logger.debug(f"{banner_lead} ends at line {obj.linenum}")
                         # blank_line_keep for Github Issue #229
                         parent.children.append(obj)
                         parent.child_indent = 0
@@ -1579,7 +1527,7 @@ class ConfigList(UserList):
                     else:
                         # all non-banner-parent lines should hit this condition
                         if self.debug > 0:
-                            logger.debug("found banner child {}".format(obj))
+                            logger.debug(f"found banner child {obj}")
 
                     parent.children.append(obj)
                     parent.child_indent = 0
@@ -1593,8 +1541,9 @@ class ConfigList(UserList):
 
     # This method is on ConfigList()
     @logger.catch(reraise=True)
-    def _ciscoios_macro_mark_children(self,
-                                      macro_parent_idx_list: List[BaseCfgLine]) -> None:
+    def _ciscoios_macro_mark_children(
+        self, macro_parent_idx_list: List[BaseCfgLine]
+    ) -> None:
         """
         Set the blank_line_keep attribute for all Cisco IOS banner parent / child objs.
 
@@ -1626,12 +1575,13 @@ class ConfigList(UserList):
 
     # This method is on ConfigList()
     @logger.catch(reraise=True)
-    def _maintain_bootstrap_parent_cache(self,
-                                         parents_cache: Dict[int, BaseCfgLine],
-                                         indent: int,
-                                         max_indent: int,
-                                         is_config_line: bool,
-                                         ) -> Tuple[Dict[int, BaseCfgLine], Union[BaseCfgLine, None]]:
+    def _maintain_bootstrap_parent_cache(
+        self,
+        parents_cache: Dict[int, BaseCfgLine],
+        indent: int,
+        max_indent: int,
+        is_config_line: bool,
+    ) -> Tuple[Dict[int, BaseCfgLine], Union[BaseCfgLine, None]]:
         """Use a family parent cache mapping to find the parent
         for a given indent level; maintain the cache mapping.
 
@@ -1671,15 +1621,18 @@ class ConfigList(UserList):
 
         return parents_cache, parent
 
+    # This method is on ConfigList()
     @logger.catch(reraise=True)
-    def _build_bootstrap_parent_child(self,
-                                      retval: List[BaseCfgLine],
-                                      parents_cache: Dict[int,BaseCfgLine],
-                                      parent: Union[BaseCfgLine,None],
-                                      index: int,
-                                      indent: int,
-                                      obj: BaseCfgLine,
-                                      debug: int) -> Tuple[List[BaseCfgLine], Dict, Union[BaseCfgLine, None]]:
+    def _build_bootstrap_parent_child(
+        self,
+        retval: List[BaseCfgLine],
+        parents_cache: Dict[int, BaseCfgLine],
+        parent: Union[BaseCfgLine, None],
+        index: int,
+        indent: int,
+        obj: BaseCfgLine,
+        debug: int,
+    ) -> Tuple[List[BaseCfgLine], Dict, Union[BaseCfgLine, None]]:
         candidate_parent = None
         candidate_parent_idx = None
         # If indented, walk backwards and find the parent...
@@ -1710,15 +1663,15 @@ class ConfigList(UserList):
 
         else:
             if debug:
-                logger.debug("    root obj assign: %s" % obj)
+                logger.debug(f"    root obj assign: {obj}")
 
         return retval, parents_cache, parent
 
     # This method is on ConfigList()
     @logger.catch(reraise=True)
-    def bootstrap(self,
-                  text_list: Optional[List[str]] = None,
-                  debug: int = 0) -> List[BaseCfgLine]:
+    def bootstrap(
+        self, text_list: Optional[List[str]] = None, debug: int = 0
+    ) -> List[BaseCfgLine]:
         """
         Accept a text list, and format into a list of BaseCfgLine() instances.
 
@@ -1737,7 +1690,6 @@ class ConfigList(UserList):
         if self.debug >= 1:
             logger.info("    ConfigList().bootstrap() was called.")
 
-
         retval = []
         idx = None
         syntax = self.syntax
@@ -1749,7 +1701,7 @@ class ConfigList(UserList):
         parents_cache = {}
         for idx, txt in enumerate(text_list):
             if self.debug >= 1:
-                logger.debug("    bootstrap() adding text cmd: '%s' at idx %s" % (txt, idx,))
+                logger.debug(f"    bootstrap() adding text cmd: '{txt}' at idx {idx}")
             if not isinstance(txt, str):
                 raise ValueError
 
@@ -1780,7 +1732,13 @@ class ConfigList(UserList):
             # 3.  Assign parent's child_indent
             # 4.  Maintain oldest_ancestor
             retval, parents_cache, parent = self._build_bootstrap_parent_child(
-                retval, parents_cache, parent, idx, indent, obj, debug,
+                retval,
+                parents_cache,
+                parent,
+                idx,
+                indent,
+                obj,
+                debug,
             )
 
             # Handle max_indent
@@ -1789,7 +1747,6 @@ class ConfigList(UserList):
                 max_indent = 0
             elif indent > max_indent:
                 max_indent = indent
-
 
             retval.append(obj)
 
@@ -1840,7 +1797,7 @@ class ConfigList(UserList):
             "telnet",
             "lcd",
         }
-        banner_all = [r"^(set\s+)*banner\s+{}".format(ii) for ii in banner_str]
+        banner_all = [rf"^(set\s+)*banner\s+{ii}" for ii in banner_str]
         banner_all.append(
             "aaa authentication fail-message",
         )  # original ciscoconfparse Github issue #76
@@ -1850,12 +1807,14 @@ class ConfigList(UserList):
 
     # This method is on ConfigList()
     @logger.catch(reraise=True)
-    def _add_child_to_parent(self,
-                             _list: List[BaseCfgLine],
-                             idx: int,
-                             indent: int,
-                             parentobj: Union[BaseCfgLine, None],
-                             childobj: BaseCfgLine) -> None:
+    def _add_child_to_parent(
+        self,
+        _list: List[BaseCfgLine],
+        idx: int,
+        indent: int,
+        parentobj: Union[BaseCfgLine, None],
+        childobj: BaseCfgLine,
+    ) -> None:
         """
         Add the child object to the parent object; assign the parent
         object to the child object.  Finally set the ``child_indent`` attribute
@@ -1869,14 +1828,8 @@ class ConfigList(UserList):
             return
 
         if self.debug >= 4:
-            logger.debug(
-                "Adding child '{}' to parent" " '{}'".format(childobj, parentobj),
-            )
-            logger.debug(
-                "BEFORE parent.children - {}".format(
-                    parentobj.children,
-                ),
-            )
+            logger.debug(f"Adding child '{childobj}' to parent '{parentobj}'")
+            logger.debug(f"BEFORE parent.children - {parentobj.children}")
 
         if childobj.is_comment and (_list[idx - 1].indent > indent):
             # I *really* hate making this exception, but legacy
@@ -1892,15 +1845,9 @@ class ConfigList(UserList):
         else:
             pass
 
-        if self.debug > 0:
-            # logger.debug("     AFTER parent.children - {0}"
-            #    .format(parentobj.children))
-            pass
-
     # This method is on ConfigList()
     @logger.catch(reraise=True)
-    def iter_with_comments(self,
-                           begin_index: int = 0) -> BaseCfgLine:
+    def iter_with_comments(self, begin_index: int = 0) -> BaseCfgLine:
         """
         :return: The BaseCfgLine instance at or greater than ``begin_index``
         :rtype: BaseCfgLine
@@ -1911,8 +1858,7 @@ class ConfigList(UserList):
 
     # This method is on ConfigList()
     @logger.catch(reraise=True)
-    def iter_no_comments(self,
-                         begin_index: int = 0) -> BaseCfgLine:
+    def iter_no_comments(self, begin_index: int = 0) -> BaseCfgLine:
         """
         :return: The BaseCfgLine instance at or greater than ``begin_index`` if it is not a comment
         :rtype: BaseCfgLine
@@ -1946,7 +1892,7 @@ class ConfigList(UserList):
     # This method was on ASAConfigList(); now tentatively on ConfigList()
     @property
     @logger.catch(reraise=True)
-    def asa_object_group_names(self) -> Dict[str,str]:
+    def asa_object_group_names(self) -> Dict[str, str]:
         """Return a dictionary of name to address mappings"""
         if self.syntax != "asa":
             raise RequirementFailure()
@@ -1962,7 +1908,7 @@ class ConfigList(UserList):
     # This method was on ASAConfigList(); now tentatively on ConfigList()
     @property
     @logger.catch(reraise=True)
-    def asa_object_group_network(self) -> Dict[str,BaseCfgLine]:
+    def asa_object_group_network(self) -> Dict[str, BaseCfgLine]:
         """Return a dictionary of name to object-group network mappings"""
         if self.syntax != "asa":
             raise RequirementFailure()
@@ -1977,7 +1923,7 @@ class ConfigList(UserList):
     # This method was on ASAConfigList(); now tentatively on ConfigList()
     @property
     @logger.catch(reraise=True)
-    def asa_access_list(self) -> Dict[str,BaseCfgLine]:
+    def asa_access_list(self) -> Dict[str, BaseCfgLine]:
         """Return a dictionary of ACL name to ACE (list) mappings"""
         if self.syntax != "asa":
             raise RequirementFailure()
@@ -1996,9 +1942,10 @@ class ConfigList(UserList):
 
 
 @attrs.define(repr=False, slots=False)
-class CiscoConfParse(object):
+class CiscoConfParse:
     """Parse Cisco IOS configurations and answer queries about the configs."""
-    #config: Optional[Union[str,List[str]]] = None
+
+    # config: Optional[Union[str,List[str]]] = None
     syntax: str = "ios"
     encoding: str = locale.getpreferredencoding()
     loguru: bool = True
@@ -2019,7 +1966,7 @@ class CiscoConfParse(object):
     @typechecked
     def __init__(
         self,
-        config: Optional[Union[str,List[str],tuple[str, ...]]] = None,
+        config: Optional[Union[str, List[str], tuple[str, ...]]] = None,
         syntax: str = "ios",
         encoding: str = locale.getpreferredencoding(),
         loguru: bool = True,
@@ -2168,7 +2115,11 @@ class CiscoConfParse(object):
         # Reconfigure loguru if read_only is True
         ######################################################################
         if loguru is False:
-            active_loguru_handlers = configure_loguru(read_only=loguru, active_handlers=globals()["ACTIVE_LOGURU_HANDLERS"], debug=debug)
+            active_loguru_handlers = configure_loguru(
+                read_only=loguru,
+                active_handlers=globals()["ACTIVE_LOGURU_HANDLERS"],
+                debug=debug,
+            )
             globals()["ACTIVE_LOGURU_HANDLERS"] = active_loguru_handlers
             if debug > 0:
                 logger.warning(f"Disabled loguru enqueue because loguru={loguru}")
@@ -2195,10 +2146,7 @@ class CiscoConfParse(object):
         #     parsing issues...
         ##################################################################
         config_lines = self.handle_ccp_brace_syntax(tmp_lines=tmp_lines, syntax=syntax)
-        if self.check_ccp_input_good(config=config_lines, logger=logger) is False:
-            error = f"Cannot parse config=`{tmp_lines}`"
-            logger.critical(error)
-            raise ValueError(error)
+        self.check_input_bad(config_lines=config_lines)
 
         if self.debug > 0:
             logger.info("assigning self.config_objs = ConfigList()")
@@ -2224,11 +2172,20 @@ class CiscoConfParse(object):
         # IMPORTANT this MUST not be a lie :-)...
         self.finished_config_parse = True
 
+
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
-    def handle_ccp_brace_syntax(self,
-                                tmp_lines: Optional[list] = None,
-                                syntax: Optional[str] = None) -> List[str]:
+    def check_input_bad(self, config_lines) -> None:
+        if self.check_ccp_input_good(config=config_lines, _logger=logger) is False:
+            error = f"Cannot parse config=`{config_lines}`"
+            logger.critical(error)
+            raise ValueError(error)
+
+    # This method is on CiscoConfParse()
+    @logger.catch(reraise=True)
+    def handle_ccp_brace_syntax(
+        self, tmp_lines: Optional[list] = None, syntax: Optional[str] = None
+    ) -> List[str]:
         """Deal with brace-delimited syntax issues, such as conditionally discarding junos closing brace-lines.
 
         :param tmp_lines: Brace-delimited text configuration lines
@@ -2253,9 +2210,11 @@ class CiscoConfParse(object):
         # Explicitly handle all brace-parsing factory syntax here...
         ######################################################################
         if syntax == "junos":
-            config_lines = convert_junos_to_ios(tmp_lines,
-                                                comment_delimiters=["#"],
-                                                ignore_blank_lines=self.ignore_blank_lines)
+            config_lines = convert_junos_to_ios(
+                tmp_lines,
+                comment_delimiters=["#"],
+                ignore_blank_lines=self.ignore_blank_lines,
+            )
         elif syntax in ALL_VALID_SYNTAX:
             config_lines = tmp_lines
         else:
@@ -2264,7 +2223,6 @@ class CiscoConfParse(object):
             raise InvalidParameters(error)
 
         return config_lines
-
 
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
@@ -2311,28 +2269,19 @@ class CiscoConfParse(object):
         :return: A representation of this object.
         :rtype: str
         """
+        num_lines = -1
         if self.config_objs is None:
             num_lines = 0
         elif isinstance(self.config_objs, Sequence):
             num_lines = len(self.config_objs)
-        return (
-            "<CiscoConfParse: %s lines / syntax: %s / comment delimiters: %s / auto_indent_width: %s / factory: %s / ignore_blank_lines: %s / encoding: '%s' / auto_commit: %s>"
-            % (
-                num_lines,
-                self.syntax,
-                self.comment_delimiters,
-                self.auto_indent_width,
-                self.factory,
-                self.ignore_blank_lines,
-                self.encoding,
-                self.auto_commit,
-            )
-        )
+
+        return f"<CiscoConfParse: {num_lines} lines / syntax: {self.syntax} / comment delimiters: {self.comment_delimiters} / auto_indent_width: {self.auto_indent_width} / factory: {self.factory} / ignore_blank_lines: {self.ignore_blank_lines} / encoding: '{self.encoding}' / auto_commit: {self.auto_commit}>"
 
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
-    def read_config(self,
-                    config: Union[None, tuple[str, ...], List[str], str, pathlib.Path]) -> List[str]:
+    def read_config(
+        self, config: Union[None, tuple[str, ...], List[str], str, pathlib.Path]
+    ) -> List[str]:
         """
         Read `config` as a string, list, tuple or `pathlib.Path`
 
@@ -2369,10 +2318,21 @@ class CiscoConfParse(object):
         ##################################################################
         # Read the configuration lines and detect invalid inputs...
         ##################################################################
-        if isinstance(config, (str, pathlib.Path,)) and len(str(config).splitlines())==1:
+        if (
+            isinstance(
+                config,
+                (
+                    str,
+                    pathlib.Path,
+                ),
+            )
+            and len(str(config).splitlines()) == 1
+        ):
             # Detect filepath inputs and read the file into a configuration
-            config_lines = self.read_config_file(filepath=config, linesplit_rgx=r"\r*\n")
-        elif isinstance(config, str) and len(str(config).splitlines())>1:
+            config_lines = self.read_config_file(
+                filepath=config, linesplit_rgx=r"\r*\n"
+            )
+        elif isinstance(config, str) and len(str(config).splitlines()) > 1:
             # Automatically split the configuration lines
             config_lines = config.splitlines()
         elif isinstance(config, Sequence):
@@ -2387,8 +2347,9 @@ class CiscoConfParse(object):
 
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
-    def read_config_file(self, filepath: Optional[str] = None,
-                         linesplit_rgx: str = r"\r*\n") -> List[str]:
+    def read_config_file(
+        self, filepath: Optional[str] = None, linesplit_rgx: str = r"\r*\n"
+    ) -> List[str]:
         """Read the config lines from the filepath.  Return the list of text configuration commands or raise an error.
 
         :param filepath: Filepath to be read
@@ -2407,7 +2368,14 @@ class CiscoConfParse(object):
             error = "Filepath: None is invalid"
             logger.critical(error)
             raise FileNotFoundError(error)
-        elif isinstance(filepath, (str, pathlib.Path,)):
+
+        if isinstance(
+            filepath,
+            (
+                str,
+                pathlib.Path,
+            ),
+        ):
             valid_path_variable = True
 
         if valid_path_variable and not os.path.exists(filepath):
@@ -2417,7 +2385,7 @@ class CiscoConfParse(object):
 
         config_lines = None
 
-        _encoding = self.openargs['encoding']
+        _encoding = self.openargs["encoding"]
         if valid_path_variable is True and os.path.isfile(filepath) is True:
             # config string - assume a filename...
             if self.debug > 0:
@@ -2427,7 +2395,8 @@ class CiscoConfParse(object):
             if self.debug > 0:
                 logger.debug(f"filepath not found - '{filepath}'")
             try:
-                _ = open(file=filepath, **self.openargs)
+                with open(file=filepath, **self.openargs) as _:
+                    pass
             except FileNotFoundError:
                 error = f"""FATAL - Attempted to open(file='{filepath}', mode='r', encoding="{_encoding}"); the filepath named:"{filepath}" does not exist."""
                 logger.critical(error)
@@ -2440,10 +2409,10 @@ class CiscoConfParse(object):
 
             except BaseException:
                 logger.critical(f"Cannot open {filepath}")
-                raise BaseException
+                raise
 
         else:
-            error = f'Unexpected condition processing filepath: {filepath}'
+            error = f"Unexpected condition processing filepath: {filepath}"
             logger.critical(error)
             raise ValueError(error)
 
@@ -2467,13 +2436,16 @@ class CiscoConfParse(object):
 
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
-    def check_ccp_input_good(self, config: Optional[Union[List[str],tuple[str, ...]]] = None,
-                             logger: Any = None) -> bool:
+    def check_ccp_input_good(
+        self,
+        config: Optional[Union[List[str], tuple[str, ...]]] = None,
+        _logger: Any = None,
+    ) -> bool:
         """
         :param config: Sequence of commands
         :type config: Union[List[str], tuple[str, ...]]
-        :param logger: loguru.logger() reference
-        :type logger: loguru._logger.Logger
+        :param _logger: loguru.logger() reference
+        :type _logger: loguru._logger.Logger
         :return: Whether the config can be parsed
         :rtype: bool
         """
@@ -2486,7 +2458,7 @@ class CiscoConfParse(object):
             #
             # config list of text lines...
             if self.debug > 0:
-                logger.debug(
+                _logger.debug(
                     f"parsing config stored in the config variable: `{config}`"
                 )
             return True
@@ -2496,7 +2468,7 @@ class CiscoConfParse(object):
 
     @property
     @logger.catch(reraise=True)
-    def openargs(self) -> Dict[str,Union[str,None]]:
+    def openargs(self) -> Dict[str, Union[str, None]]:
         """
         Fix Py3.5 deprecation of universal newlines
 
@@ -2540,9 +2512,7 @@ class CiscoConfParse(object):
         :rtype: List[BaseCfgLine]
         """
         if self.config_objs is None:
-            error = (
-                "config_objs is set to None.  config_objs should be a ConfigList() of configuration-line objects"
-            )
+            error = "config_objs is set to None.  config_objs should be a ConfigList() of configuration-line objects"
             logger.error(error)
             raise ValueError(error)
         return self.config_objs
@@ -2575,8 +2545,8 @@ class CiscoConfParse(object):
         self,
         parent_obj: Union[IOSCfgLine, JunosCfgLine, None],
         childspec: str,
-        regex_flags: Union[re.RegexFlag,int] = 0,
-        debug: int=0,
+        regex_flags: Union[re.RegexFlag, int] = 0,
+        debug: int = 0,
     ) -> list:
         """
         :param parent_obj: The parent object to be searched
@@ -2613,16 +2583,16 @@ debug={debug},
 
         # Find all child objects which match childspec...
         segment_list = [
-            cobj
-            for cobj in children
-            if re.search(childspec, cobj.text, regex_flags)
+            cobj for cobj in children if re.search(childspec, cobj.text, regex_flags)
         ]
         # Return [None] if no children matched...
         if len(segment_list) == 0:
             segment_list = [None]
 
         if debug > 1:
-            logger.info(f"    _find_child_object_branches() returns segment_list={segment_list}")
+            logger.info(
+                f"    _find_child_object_branches() returns segment_list={segment_list}"
+            )
         return segment_list
 
     # This method is on CiscoConfParse()
@@ -2631,13 +2601,15 @@ debug={debug},
     # NOTE typechecked does NOT correctly verify the return value of this
     #   method.  Sadly, I have to use List[Any] instead of
     #   List[List[BaseCfgLine]]
-    def find_object_branches(self,
-                             branchspec: Union[tuple[str, ...], List[str]] = (),
-                             regex_flags: Union[re.RegexFlag, int] = 0,
-                             regex_groups: bool = False,
-                             empty_branches: bool = False,
-                             reverse: bool = False,
-                             debug: int = 0,) -> List[Any]:
+    def find_object_branches(
+        self,
+        branchspec: Union[tuple[str, ...], List[str]] = (),
+        regex_flags: Union[re.RegexFlag, int] = 0,
+        regex_groups: bool = False,
+        empty_branches: bool = False,
+        reverse: bool = False,
+        debug: int = 0,
+    ) -> List[Any]:
         r"""A branch is just a list of all matching parent and child text lines.  This method iterates over a tuple of regular expression strings in `branchspec` and returns matching objects in a list of lists (consider it similar to a table of matching config objects). `branchspec` expects to start at a parent line and walk through the nested child lines below it (with no limit on depth).
 
         Previous CiscoConfParse() methods only handled a single parent regex and single child regex (such as :func:`~ciscoconfparse2.CiscoConfParse.find_objects`).
@@ -2737,7 +2709,9 @@ debug={debug},
 
         if isinstance(branchspec, tuple):
             if len(branchspec) <= 1:
-                error = "find_object_branches(): branchspec must have at least two elements"
+                error = (
+                    "find_object_branches(): branchspec must have at least two elements"
+                )
                 logger.error(error)
                 raise ValueError(error)
         else:
@@ -2816,13 +2790,17 @@ debug={debug},
                                 # If the branchspec groups() matches are a
                                 # zero-length tuple, populate this return_row
                                 # with the whole element's BaseCfgLine instance
-                                return_row[idx] = [element,]
+                                return_row[idx] = [
+                                    element,
+                                ]
                             else:
                                 # In this case, we found regex capture groups
                                 return_row[idx] = matched_capture
                         else:
                             # No regex capture groups b/c of no regex match...
-                            return_row[idx] = [None,]
+                            return_row[idx] = [
+                                None,
+                            ]
 
                 return_matrix.append(Branch(return_row))
 
@@ -2830,7 +2808,7 @@ debug={debug},
 
         # We could have lost or created an extra branch if these aren't the
         # same length
-        retval = list()
+        retval = []
         if bool(empty_branches) is False:
             for branch in branches:
                 ###############################################################
@@ -2863,12 +2841,14 @@ debug={debug},
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
     @typechecked
-    def find_objects(self,
-                     linespec: Union[str, re.Pattern, BaseCfgLine, List[str], List[re.Pattern]],
-                     exactmatch: bool = False,
-                     ignore_ws: bool = False,
-                     escape_chars: bool = False,
-                     reverse: bool = False) -> List[BaseCfgLine]:
+    def find_objects(
+        self,
+        linespec: Union[str, re.Pattern, BaseCfgLine, List[str], List[re.Pattern]],
+        exactmatch: bool = False,
+        ignore_ws: bool = False,
+        escape_chars: bool = False,
+        reverse: bool = False,
+    ) -> List[BaseCfgLine]:
         """Find all :class:`~ciscoconfparse2.models_cisco.IOSCfgLine` objects whose text matches ``linespec`` and return the
         :class:`~ciscoconfparse2.models_cisco.IOSCfgLine` objects in a python list.
 
@@ -2925,16 +2905,16 @@ debug={debug},
 
         if self.debug > 0:
             logger.info(
-                "find_objects('%s', exactmatch=%s) was called" % (linespec, exactmatch),
+                f"find_objects('{linespec}', exactmatch={exactmatch}) was called"
             )
 
         if ignore_ws:
             linespec = build_space_tolerant_regex(linespec, encoding=self.encoding)
 
-        if isinstance(linespec, str) or isinstance(linespec, re.Pattern):
+        if isinstance(linespec, (re.Pattern, str)):
             retval = self._find_line_OBJ(linespec, exactmatch)
         elif isinstance(linespec, BaseCfgLine):
-            retval = list()
+            retval = []
             for obj in self.objs:
                 if obj == linespec:
                     retval.append(obj)
@@ -3059,11 +3039,11 @@ debug={debug},
             pass
         elif isinstance(parentspec, (list, tuple)):
             if len(parentspec) == 0:
-                error = f"The parentspec list must have at least one element"
+                error = "The parentspec list must have at least one element"
                 logger.critical(error)
                 raise ValueError(error)
 
-            elif len(parentspec) == 1:
+            if len(parentspec) == 1:
                 return self.find_objects(parentspec[0])
 
             _result = set()
@@ -3102,20 +3082,24 @@ debug={debug},
         return list(
             filter(
                 lambda x: x.re_search_children(childspec, recurse=recurse),
-                self.find_objects(parentspec, ignore_ws=ignore_ws, escape_chars=False, reverse=reverse),
+                self.find_objects(
+                    parentspec, ignore_ws=ignore_ws, escape_chars=False, reverse=reverse
+                ),
             ),
         )
 
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
     @typechecked
-    def find_parent_objects_wo_child(self,
-                                     parentspec,
-                                     childspec: Optional[str] = None,
-                                     ignore_ws: bool = False,
-                                     recurse: bool = False,
-                                     escape_chars: bool = False,
-                                     reverse: bool = False):
+    def find_parent_objects_wo_child(
+        self,
+        parentspec,
+        childspec: Optional[str] = None,
+        ignore_ws: bool = False,
+        recurse: bool = False,
+        escape_chars: bool = False,
+        reverse: bool = False,
+    ):
         r"""Return a list of parent :class:`~ciscoconfparse2.models_cisco.IOSCfgLine` objects, which matched the ``parentspec`` and whose children did not match ``childspec``.  Only the parent :class:`~ciscoconfparse2.models_cisco.IOSCfgLine` objects will be returned.  For simplicity, this method only finds oldest_ancestors without immediate children that match.
 
         Parameters
@@ -3198,7 +3182,11 @@ debug={debug},
            >>>
         """
         if isinstance(parentspec, list):
-            if len(parentspec) == 2 and isinstance(parentspec[0], (str, re.Pattern)) and isinstance(parentspec[1], (str, re.Pattern)):
+            if (
+                len(parentspec) == 2
+                and isinstance(parentspec[0], (str, re.Pattern))
+                and isinstance(parentspec[1], (str, re.Pattern))
+            ):
                 parentspec = parentspec[0]
                 childspec = parentspec[1]
             else:
@@ -3239,24 +3227,25 @@ debug={debug},
             parentspec = build_space_tolerant_regex(parentspec, encoding=self.encoding)
             childspec = build_space_tolerant_regex(childspec, encoding=self.encoding)
 
-
         # Set escape_chars False to avoid double-escaping chars
         return [
             obj
-            for obj in self.find_objects(parentspec, ignore_ws=ignore_ws, escape_chars=False, reverse=reverse)
+            for obj in self.find_objects(
+                parentspec, ignore_ws=ignore_ws, escape_chars=False, reverse=reverse
+            )
             if not obj.re_search_children(childspec, recurse=recurse)
         ]
 
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
     def find_child_objects(
-            self,
-            parentspec,
-            childspec=None,
-            ignore_ws=False,
-            recurse=True,
-            escape_chars=False,
-            reverse=False,
+        self,
+        parentspec,
+        childspec=None,
+        ignore_ws=False,
+        recurse=True,
+        escape_chars=False,
+        reverse=False,
     ):
         r"""Parse through the children of all parents matching parentspec,
         and return a list of child objects, which matched the childspec.
@@ -3362,11 +3351,11 @@ debug={debug},
 
         elif isinstance(parentspec, (list, tuple)):
             if len(parentspec) == 0:
-                error = f"The parentspec list must have at least one element"
+                error = "The parentspec list must have at least one element"
                 logger.critical(error)
                 raise ValueError(error)
 
-            elif len(parentspec) == 1:
+            if len(parentspec) == 1:
                 return self.find_objects(parentspec[0])
 
             elif len(parentspec) > 1:
@@ -3387,7 +3376,9 @@ debug={debug},
                 # Sort the de-duplicated results
                 return sorted(_result)
             else:
-                error = f"`parentspec` {type(parentspec)} must have at least one element."
+                error = (
+                    f"`parentspec` {type(parentspec)} must have at least one element."
+                )
                 logger.error(error)
                 raise InvalidParameters(error)
         else:
@@ -3407,7 +3398,9 @@ debug={debug},
 
         retval = set()
         # Set escape_chars False to avoid double-escaping characters
-        parents = self.find_objects(parentspec, ignore_ws=ignore_ws, escape_chars=False, reverse=reverse)
+        parents = self.find_objects(
+            parentspec, ignore_ws=ignore_ws, escape_chars=False, reverse=reverse
+        )
         if recurse is False:
             for parent in parents:
                 ##############################################################
@@ -3454,7 +3447,7 @@ debug={debug},
             return [obj for obj in self.find_objects(regexspec) if (obj.parent is obj)]
         else:
             # Return any matching object
-            return [obj for obj in self.find_objects(regexspec)]
+            return list(self.find_objects(regexspec))
 
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
@@ -3595,12 +3588,13 @@ debug={debug},
             )
 
         # NOTE TO SELF: do not remove _find_line_OBJ(); used by Cisco employees
+        linespec_re = None
         if not exactmatch:
             # Return objects whose text attribute matches linespec
             linespec_re = re.compile(linespec)
         elif exactmatch:
             # Return objects whose text attribute matches linespec exactly
-            linespec_re = re.compile("^%s$" % linespec)
+            linespec_re = re.compile(rf"^{linespec}$")
 
         return list(
             filter(lambda obj: linespec_re.search(obj.text), self.config_objs),
@@ -3641,6 +3635,7 @@ debug={debug},
             retval.add(obj)
         return sorted(retval)
 
+
 class Branch(UserList):
     """A Branch object for CiscoConfParse().find_object_branches()"""
 
@@ -3651,7 +3646,11 @@ class Branch(UserList):
         self.data = data
 
         for idx, ii in enumerate(self.data):
-            if ii is not None and not isinstance(ii, (tuple, list)) and not isinstance(ii, BaseCfgLine):
+            if (
+                ii is not None
+                and not isinstance(ii, (tuple, list))
+                and not isinstance(ii, BaseCfgLine)
+            ):
                 raise ValueError(f"""Not an instance of BaseCfgLine(): {ii}""")
 
             if isinstance(ii, list):
@@ -3663,7 +3662,7 @@ class Branch(UserList):
     def __repr__(self):
         """Render the Branch() instance properly"""
 
-        branch_contents = list()
+        branch_contents = []
         for entry in self.data:
             if isinstance(entry, list):
                 for entry in self.data:
@@ -3677,7 +3676,7 @@ class Branch(UserList):
                 elif isinstance(entry, BaseCfgLine):
                     branch_contents.append(entry.text)
                 elif isinstance(entry, tuple):
-                    item_list = list()
+                    item_list = []
                     for item in entry:
                         try:
                             item_list.append(item.text)
@@ -3688,19 +3687,28 @@ class Branch(UserList):
                     # Convert to a tuple
                     branch_contents[-1] = tuple(branch_contents[-1])
                 else:
-                    raise ValueError(f"Modify Branch().__repr__() to handle entry type: {type(entry)}")
+                    raise ValueError(
+                        f"Modify Branch().__repr__() to handle entry type: {type(entry)}"
+                    )
 
         return f"""<Branch({branch_contents})>"""
 
+
 @attrs.define(repr=False, slots=False)
-class Diff(object):
+class Diff:
+    """
+    A class to implement diff operations with hier_config
+    """
+
     host: str = None
 
     @logger.catch(reraise=True)
-    def __init__(self,
-                 old_config: Union[str, List[str], tuple[str, ...]]=None,
-                 new_config: Union[str, List[str], tuple[str, ...]]=None,
-                 syntax: str='ios'):
+    def __init__(
+        self,
+        old_config: Union[str, List[str], tuple[str, ...]] = None,
+        new_config: Union[str, List[str], tuple[str, ...]] = None,
+        syntax: str = "ios",
+    ):
         """
         Initialize Diff().
 
@@ -3725,9 +3733,14 @@ class Diff(object):
         ######################################################################
         if old_config is None:
             old_config = []
-        elif isinstance(old_config, str) and len(old_config.splitlines()) == 1 and os.path.isfile(old_config):
+        elif (
+            isinstance(old_config, str)
+            and len(old_config.splitlines()) == 1
+            and os.path.isfile(old_config)
+        ):
             # load the old config from a file as a string...
-            old_config = open(old_config).read()
+            with open(old_config) as fh:
+                old_config = fh.read()
         elif isinstance(old_config, str):
             pass
         elif isinstance(old_config, (list, tuple)):
@@ -3742,9 +3755,14 @@ class Diff(object):
         ######################################################################
         if new_config is None:
             new_config = []
-        elif isinstance(new_config, str) and len(new_config.splitlines()) == 1 and os.path.isfile(new_config):
-            # load the new config from a file as a list...
-            new_config = open(new_config).read()
+        elif (
+            isinstance(new_config, str)
+            and len(new_config.splitlines()) == 1
+            and os.path.isfile(new_config)
+        ):
+            # load the new config from a file as a string...
+            with open(new_config) as fh:
+                new_config = fh.read()
         elif isinstance(new_config, str):
             pass
         elif isinstance(new_config, (list, tuple)):
@@ -3757,7 +3775,7 @@ class Diff(object):
         ######################################################################
         # Handle syntax
         ######################################################################
-        if syntax not in {'ios', 'nxos', 'iosxr', 'asa', 'junos'}:
+        if syntax not in {"ios", "nxos", "iosxr", "asa", "junos"}:
             error = f"Diff() does not support syntax='{syntax}'"
             logger.error(error)
             raise NotImplementedError(error)
@@ -3769,16 +3787,24 @@ class Diff(object):
         # _ represents ios options as a dict... for now we use an empty
         # dict below...
         try:
-            _ = yaml.load(open('./misc/options_ios.hier_config.yml'), Loader=yaml.SafeLoader)
+            with open("./misc/options_ios.hier_config.yml") as fh:
+                yaml.load(fh, Loader=yaml.SafeLoader)
         except FileNotFoundError:
             pass
 
         # For now, we use {} instead of `options_ios.yml`
-        if syntax in {'ios', 'nxos', 'iosxr',}:
-            self.host = hier_config.Host('example_hostname', syntax, {})
-        elif syntax in {'asa', 'junos',}:
+        if syntax in {
+            "ios",
+            "nxos",
+            "iosxr",
+        }:
+            self.host = hier_config.Host("example_hostname", syntax, {})
+        elif syntax in {
+            "asa",
+            "junos",
+        }:
             # for all other cases, default to 'ios' for now...
-            self.host = hier_config.Host('example_hostname', 'ios', {})
+            self.host = hier_config.Host("example_hostname", "ios", {})
         else:
             raise ValueError(f"Diff(syntax='{syntax}') is an invalid syntax.")
 
@@ -3812,12 +3838,10 @@ class Diff(object):
         return retval
 
 
-
-
 #########################################################################3
 
 
-class DiffObject(object):
+class DiffObject:
     """This object should be used at every level of hierarchy"""
 
     @logger.catch(reraise=True)
@@ -3828,10 +3852,10 @@ class DiffObject(object):
 
     @logger.catch(reraise=True)
     def __repr__(self):
-        return "<DiffObject level: {}>".format(self.level)
+        return f"<DiffObject level: {self.level}>"
 
 
-class CiscoPassword(object):
+class CiscoPassword:
     """Encrypt all cisco password types and decrypt cisco type 7 passwords.
 
     Cisco Encryption type 7, 8, and 9 code inspired by this MIT-licensed repo:
@@ -3857,9 +3881,13 @@ class CiscoPassword(object):
         """
         invalid_chars = r"?\""
         if len(pwd) > 127:
-            raise InvalidPassword('Password must be between 1 and 127 characters in length.')
+            raise InvalidPassword(
+                "Password must be between 1 and 127 characters in length."
+            )
         if any(char in invalid_chars for char in pwd):
-            raise InvalidPassword(r'? and \" are invalid characters for Cisco passwords.')
+            raise InvalidPassword(
+                r"? and \" are invalid characters for Cisco passwords."
+            )
 
     @logger.catch(reraise=True)
     def encrypt_type_7(self, pwd):
@@ -3964,7 +3992,9 @@ class CiscoPassword(object):
                 # int( blah, 16) assumes blah is base16... cool
                 magic = int(re.search(".{%s}(..)" % ii, e).group(1), 16)
                 # Wrap around after 53 chars...
-                newchar = "%c" % (magic ^ int(xlat[int(s % 53)]))
+                newchar = "%c" % (
+                    magic ^ int(xlat[int(s % 53)])
+                )  # pylint: disable=C0209
                 dp = dp + str(newchar)
                 s = s + 1
         # if s > 53:
@@ -3973,6 +4003,9 @@ class CiscoPassword(object):
 
     @logger.catch(reraise=True)
     def decrypt_type_5(self, pwd):
+        """
+        Un-implemented function added for consistency
+        """
         raise NotImplementedError()
 
     @logger.catch(reraise=True)
@@ -3987,6 +4020,9 @@ class CiscoPassword(object):
         return md5_crypt.using(salt_size=4).hash(pwd)
 
     def decrypt_type_8(self, pwd):
+        """
+        Un-implemented function added for consistency
+        """
         raise NotImplementedError()
 
     @logger.catch(reraise=True)
@@ -4012,10 +4048,13 @@ class CiscoPassword(object):
         chash = base64.b64encode(_hash).decode().translate(self.b64table)[:-1]
         # Print the hash in the Cisco IOS CLI format
         password_string = f"$8${salt}${chash}"
-        
+
         return password_string
 
     def decrypt_type_9(self, pwd):
+        """
+        Un-implemented function added for consistency
+        """
         raise NotImplementedError()
 
     @logger.catch(reraise=True)
@@ -4039,16 +4078,19 @@ class CiscoPassword(object):
         # Convert the hash from Standard Base64 to Cisco Base64
         hash_c64 = base64.b64encode(_hash).decode().translate(self.b64table)[:-1]
         # Print the hash in the Cisco IOS CLI format
-        password_string = f'$9${salt}${hash_c64}'
+        password_string = f"$9${salt}${hash_c64}"
         return password_string
 
+
 @logger.catch(reraise=True)
-def config_line_factory(all_lines: List[str]=None,
-                        line: str=None,
-                        index: int=None,
-                        comment_delimiters: List[str]=None,
-                        syntax: str="ios",
-                        debug: int=0) -> BaseCfgLine:
+def config_line_factory(
+    all_lines: List[str] = None,
+    line: str = None,
+    index: int = None,
+    comment_delimiters: List[str] = None,
+    syntax: str = "ios",
+    debug: int = 0,
+) -> BaseCfgLine:
     """A factory method to assign a custom BaseCfgLine() subclass.
 
     :param all_lines: Sequence of string configuration commands
@@ -4136,8 +4178,9 @@ def config_line_factory(all_lines: List[str]=None,
                 logger.debug(f"Consider config_line_factory() CLASS {_cls}")
             if _cls.is_object_for(all_lines=all_lines, line=line, index=index):
                 basecfgline_subclass = _cls(
-                    all_lines=all_lines, line=line,
-                    #comment_delimiters=comment_delimiters,
+                    all_lines=all_lines,
+                    line=line,
+                    # comment_delimiters=comment_delimiters,
                 )  # instance of the proper subclass
                 return basecfgline_subclass
     except ValueError:
@@ -4149,8 +4192,11 @@ def config_line_factory(all_lines: List[str]=None,
 
     if debug > 0:
         logger.debug("config_line_factory() is returning a default of IOSCfgLine()")
-    #return IOSCfgLine(all_lines=all_lines, line=line, comment_delimiters=comment_delimiters)
-    return IOSCfgLine(all_lines=all_lines, line=line,)
+    # return IOSCfgLine(all_lines=all_lines, line=line, comment_delimiters=comment_delimiters)
+    return IOSCfgLine(
+        all_lines=all_lines,
+        line=line,
+    )
 
 
 def parse_global_options():
@@ -4187,29 +4233,21 @@ def parse_global_options():
         help="Command's third argument",
         metavar="ARG",
     )
-    (opts, args) = pp.parse_args()
+    (opts, _) = pp.parse_args()
 
     if opts.method == "decrypt":
         pp = CiscoPassword()
-        print(pp.decrypt_type_07(opts.arg1))
-        exit(1)
+        print(pp.decrypt_type_7(opts.arg1))
+        sys.exit(0)
     elif opts.method == "help":
         print("Valid methods and their arguments:")
         print("   decrypt 7:                arg1=encrypted_passwd")
-        exit(1)
+        sys.exit(0)
     else:
         import doctest
 
         doctest.testmod()
-        exit(0)
-
-    if len(diff) > 0:
-        for line in diff:
-            print(line)
-    else:
-        opt_error = "ciscoconfparse2 was called with unknown parameters"
-        logger.error(opt_error)
-        raise RuntimeError(opt_error)
+        sys.exit(0)
 
 
 # TODO: Add unit tests below

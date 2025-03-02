@@ -9,7 +9,7 @@ import pytest
 
 r""" test_Models_Junos.py - Parse, Query, Build, and Modify IOS-style configs
 
-     Copyright (C) 2023      David Michael Pennington
+     Copyright (C) 2023-2025      David Michael Pennington
 
      This program is free software: you can redistribute it and/or modify
      it under the terms of the GNU General Public License as published by
@@ -29,12 +29,12 @@ r""" test_Models_Junos.py - Parse, Query, Build, and Modify IOS-style configs
 """
 
 
-
-#@pytest.mark.xfail(True, reason="Junos factory parsing is not supported yet")
+# @pytest.mark.xfail(True, reason="Junos factory parsing is not supported yet")
 def testVal_JunosIntfLine_dna(parse_j01):
     uut = parse_j01.objs
     assert len(uut) == 76
-    #assert obj.dna == "JunosIntfLine"
+    # assert obj.dna == "JunosIntfLine"
+
 
 def testVal_JunosCfgLine_dna_parent_01(parse_j01):
     parse = parse_j01
@@ -46,7 +46,10 @@ def testVal_JunosCfgLine_dna_parent_01(parse_j01):
     assert obj.child_indent == 4
     assert obj.confobj is not None
 
-@pytest.mark.xfail(True, reason="parse_j01 ge-0/0/1 is not correctly identified by `is_intf`")
+
+@pytest.mark.xfail(
+    True, reason="parse_j01 ge-0/0/1 is not correctly identified by `is_intf`"
+)
 def testVal_JunosCfgLine_child_01(parse_j01):
     parse = parse_j01
     obj = parse.find_child_objects("interfaces", "ge-0/0/1")[0]
@@ -59,7 +62,9 @@ def testVal_JunosCfgLine_child_01(parse_j01):
 
 def testVal_JunosCfgLine_child_02():
     """Identify a JunOS physical interface"""
-    parse = CiscoConfParse("fixtures/configs/sample_01.junos", syntax="junos", factory=False)
+    parse = CiscoConfParse(
+        "fixtures/configs/sample_01.junos", syntax="junos", factory=False
+    )
     obj = parse.find_child_objects("interfaces", "ge-0/0/1")[0]
     assert obj.dna == "JunosCfgLine"
     assert obj.text.strip() == "ge-0/0/1"
@@ -68,9 +73,12 @@ def testVal_JunosCfgLine_child_02():
     assert obj.is_switchport is True
     assert obj.name == "ge-0/0/1"
 
+
 def testVal_JunosCfgLine_child_03():
     """Identify a JunOS logical interface unit"""
-    parse = CiscoConfParse("fixtures/configs/sample_01.junos", syntax="junos", factory=False)
+    parse = CiscoConfParse(
+        "fixtures/configs/sample_01.junos", syntax="junos", factory=False
+    )
     obj = parse.find_child_objects("ge-0/0/1", "unit 0")[0]
     assert obj.dna == "JunosCfgLine"
     assert obj.text.strip() == "unit 0"
@@ -79,9 +87,12 @@ def testVal_JunosCfgLine_child_03():
     assert obj.is_switchport is True
     assert obj.name == "ge-0/0/1 unit 0"
 
+
 def testVal_JunosCfgLine_child_04():
     """Identify a JunOS logical interface unit"""
-    parse = CiscoConfParse("fixtures/configs/sample_01.junos", syntax="junos", factory=False)
+    parse = CiscoConfParse(
+        "fixtures/configs/sample_01.junos", syntax="junos", factory=False
+    )
     obj = parse.find_child_objects("vlan", "unit 0")[0]
     assert obj.dna == "JunosCfgLine"
     assert obj.text.strip() == "unit 0"
@@ -90,6 +101,7 @@ def testVal_JunosCfgLine_child_04():
     assert obj.is_switchport is False
     assert obj.name == "vlan unit 0"
 
+
 def testVal_find_child_objects_01(parse_j01):
     """Identify the number of grandchildren of parse_j01 ge-0/0/1"""
     parse = parse_j01
@@ -97,12 +109,14 @@ def testVal_find_child_objects_01(parse_j01):
     assert not ("{" in set(obj.text))  # Ensure there are no braces on this line
     assert len(obj.all_children) == 6
 
+
 def testVal_junos_factory_JunOSIntfLine_01(parse_j01):
-    parse = CiscoConfParse('fixtures/configs/sample_01.junos',
-                           syntax='junos',
-                           factory=True,
-                           ignore_blank_lines=False,
-                           )
+    parse = CiscoConfParse(
+        "fixtures/configs/sample_01.junos",
+        syntax="junos",
+        factory=True,
+        ignore_blank_lines=False,
+    )
     assert parse.config_objs[0].classname == "JunosCfgLine"
 
     assert parse.config_objs[58].text.strip() == "ge-0/0/0"
@@ -120,6 +134,7 @@ def testVal_junos_factory_JunOSIntfLine_01(parse_j01):
     assert parse.config_objs[60].classname == "JunosCfgLine"
     assert parse.config_objs[60].linenum == 60
     assert parse.config_objs[60].indent == 12
+
 
 # test for Github issue #49
 def testVal_parse_f5():

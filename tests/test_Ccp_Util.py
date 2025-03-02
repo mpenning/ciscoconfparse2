@@ -1,6 +1,6 @@
 r""" test_Ccp_Util.py - Parse, Query, Build, and Modify IOS-style configs
 
-     Copyright (C) 2014-2024  David Michael Pennington
+     Copyright (C) 2014-2025  David Michael Pennington
 
      This program is free software: you can redistribute it and/or modify
      it under the terms of the GNU General Public License as published by
@@ -18,6 +18,7 @@ r""" test_Ccp_Util.py - Parse, Query, Build, and Modify IOS-style configs
      If you need to contact the author, you can do so by emailing:
      mike [~at~] pennington [/dot\] net
 """
+
 ##############################################################################
 # Disable SonarCloud warnings in this file
 #   - S1192: Define a constant instead of duplicating this literal
@@ -26,11 +27,11 @@ r""" test_Ccp_Util.py - Parse, Query, Build, and Modify IOS-style configs
 #   - S5852: Slow regex are security-sensitive
 #   - S6395: Unwrap this unnecessarily grouped regex subpattern.
 ##############################################################################
-#pragma warning disable S1192
-#pragma warning disable S1313
-#pragma warning disable S5843
-#pragma warning disable S5852
-#pragma warning disable S6395
+# pragma warning disable S1192
+# pragma warning disable S1313
+# pragma warning disable S5843
+# pragma warning disable S5852
+# pragma warning disable S6395
 
 
 from ipaddress import IPv4Network, IPv6Network, IPv4Address, IPv6Address
@@ -57,16 +58,15 @@ sys.path.insert(0, "..")
 def testValues_pickle_01():
     """Ensure that pickle() accepts an IPv4Obj() instance and saves a file"""
 
-
     addr = IPv4Obj("192.0.2.1/24")
 
     # Save to disk as a pickle
     filename = "fixtures/plain_text/_test_01.pkl"
-    with open(filename, 'wb') as fh:
+    with open(filename, "wb") as fh:
         pickle.dump(addr, fh)
 
     # Load pickle from disk...
-    addr = pickle.load(open(filename, 'rb'))
+    addr = pickle.load(open(filename, "rb"))
 
     assert isinstance(addr, IPv4Obj)
 
@@ -74,7 +74,13 @@ def testValues_pickle_01():
 
 
 @pytest.mark.parametrize(
-    "addr", ["192.0.2.1", "4.2.2.2", "10.255.255.255", "127.0.0.1",]
+    "addr",
+    [
+        "192.0.2.1",
+        "4.2.2.2",
+        "10.255.255.255",
+        "127.0.0.1",
+    ],
 )
 def test_IPv4_REGEX(addr):
     test_result = _RGX_IPV4ADDR.search(addr)
@@ -205,7 +211,8 @@ def testIPv4Obj_contains_02():
 
 
 @pytest.mark.parametrize(
-    "addr_mask", [
+    "addr_mask",
+    [
         "1.0.0.1/24",
         "1.0.0.1/32",
         "1.0.0.1 255.255.255.0",
@@ -222,7 +229,7 @@ def testIPv4Obj_contains_02():
         "1.0.0.1 255.255.255.255",
         "1.0.0.1/255.255.255.0",
         "1.0.0.1/255.255.255.255",
-    ]
+    ],
 )
 def testIPv4Obj_parse(addr_mask):
     ## Ensure that IPv4Obj can correctly parse various inputs
@@ -312,16 +319,25 @@ def test_ip_factory_inputs_01():
     test_params = (
         # Test format...
         #    (<dict with test inputs>, result_correct)
-        ({'val': '1.1.1.1/16', 'stdlib': False}, IPv4Obj("1.1.1.1/16")),
-        ({'val': '1.1.1.1/16', 'stdlib': True}, IPv4Network("1.1.1.1/16", strict=False)),
-        ({'val': '1.1.1.1/32', 'stdlib': False}, IPv4Obj("1.1.1.1/32")),
-        ({'val': '1.1.1.1/32', 'stdlib': True}, IPv4Address("1.1.1.1")),
-        ({'val': '2b00:cd80:14:10::1/64', 'stdlib': False}, IPv6Obj("2b00:cd80:14:10::1/64")),
-        ({'val': '2b00:cd80:14:10::1/64', 'stdlib': True}, IPv6Network("2b00:cd80:14:10::/64", strict=True)),
-        ({'val': '::1/64', 'stdlib': False}, IPv6Obj("::1/64")),
-        ({'val': '::1/64', 'stdlib': True}, IPv6Network("::0/64")),
-        ({'val': '::1/128', 'stdlib': False}, IPv6Obj("::1/128")),
-        ({'val': '::1/128', 'stdlib': True}, IPv6Address("::1")),
+        ({"val": "1.1.1.1/16", "stdlib": False}, IPv4Obj("1.1.1.1/16")),
+        (
+            {"val": "1.1.1.1/16", "stdlib": True},
+            IPv4Network("1.1.1.1/16", strict=False),
+        ),
+        ({"val": "1.1.1.1/32", "stdlib": False}, IPv4Obj("1.1.1.1/32")),
+        ({"val": "1.1.1.1/32", "stdlib": True}, IPv4Address("1.1.1.1")),
+        (
+            {"val": "2b00:cd80:14:10::1/64", "stdlib": False},
+            IPv6Obj("2b00:cd80:14:10::1/64"),
+        ),
+        (
+            {"val": "2b00:cd80:14:10::1/64", "stdlib": True},
+            IPv6Network("2b00:cd80:14:10::/64", strict=True),
+        ),
+        ({"val": "::1/64", "stdlib": False}, IPv6Obj("::1/64")),
+        ({"val": "::1/64", "stdlib": True}, IPv6Network("::0/64")),
+        ({"val": "::1/128", "stdlib": False}, IPv6Obj("::1/128")),
+        ({"val": "::1/128", "stdlib": True}, IPv6Address("::1")),
     )
     for test_args, result_correct in test_params:
         assert ip_factory(**test_args) == result_correct
@@ -508,7 +524,7 @@ def testIPv4Obj_recursive():
 
 
 def testIPv4Obj_from_int():
-    assert IPv4Obj(2886729984).ip == IPv4Address('172.16.1.0')
+    assert IPv4Obj(2886729984).ip == IPv4Address("172.16.1.0")
 
 
 def testIPv4Obj_neq_01():
@@ -633,7 +649,9 @@ def testIPv6Obj_IPv4_embedded_in_IPv6_01():
 
 def testIPv6Obj_IPv4_embedded_in_IPv6_02():
     """Test IPv6Obj with an IPv4 address (192.0.2.33) embedded in an IPv6 address"""
-    assert IPv6Obj("2001:db8:122:344::192.0.2.33") == IPv6Obj("2001:db8:122:344::c000:221")
+    assert IPv6Obj("2001:db8:122:344::192.0.2.33") == IPv6Obj(
+        "2001:db8:122:344::c000:221"
+    )
 
 
 def testIPv6Obj_IPv4_embedded_in_IPv6_03():
@@ -645,92 +663,117 @@ def testIPv6Obj_IPv4_embedded_in_IPv6_04():
     """Test IPv6Obj with an IPv4 address (192.0.2.4) embedded in an IPv6 address"""
     assert IPv6Obj("::ffff:192.0.2.4") == IPv6Obj("::ffff:c000:204")
 
+
 def testIPv6Obj_IPv6_error_01():
     """Test IPv6Obj with an invalid address"""
     with pytest.raises(ValueError):
         IPv6Obj("hello,2001:db8::1/127")
 
+
 def testMACObj_int_01():
     assert int(MACObj("0001.dead.beef")) == 8030895855
+
 
 def testMACObj_oui_01():
     assert MACObj("0001.dead.beef").oui == OUI("00-01-DE")
 
+
 def testMACObj_cisco_01():
     assert MACObj("0001.dead.beef").cisco == "0001.dead.beef"
+
 
 def testMACObj_cisco_02():
     assert MACObj("00-01-de-ad-be-ef").cisco == "0001.dead.beef"
 
+
 def testMACObj_cisco_03():
     assert MACObj("00:01:de:ad:be:ef").cisco == "0001.dead.beef"
+
 
 def testMACObj_cisco_04():
     assert MACObj("0001deadbeef").cisco == "0001.dead.beef"
 
+
 def testMACObj_dash():
     assert MACObj("0001.dead.beef").dash == "00-01-de-ad-be-ef"
 
+
 def testMACObj_colon():
     assert MACObj("0001.dead.beef").colon == "00:01:de:ad:be:ef"
+
 
 def testMACObj_invalid_01():
     with pytest.raises(ValueError):
         assert MACObj("0001.dead")
 
+
 def testMACObj_invalid_02():
     with pytest.raises(ValueError):
         assert MACObj("0001.dead.dead.dead.dead.dead.beef")
 
+
 def testMACObj_equality_01():
     assert MACObj("dead.beef.0001") == MACObj("dead.beef.0001")
+
 
 def testMACObj_equality_02():
     assert MACObj("dead.beef.0001") == MACObj("de-ad-be-ef-00-01")
 
+
 def testMACObj_equality_03():
     assert MACObj("dead.beef.0001") == MACObj("de-ad-BE-EF-00-01")
+
 
 def testMACObj_equality_04():
     assert MACObj("dead.beef.0001") == EUI48("de-ad-be-ef-00-01")
     assert MACObj("dead.beef.0001") != EUI48("ff-ff-ff-ff-ff-ff")
 
+
 def testMACObj_equality_05():
     assert MACObj("dead.beef.0001") == MAC("de-ad-be-ef-00-01")
     assert MACObj("dead.beef.0001") != MAC("ff-ff-ff-ff-ff-ff")
 
+
 def testEUI64Obj_dash_01():
     assert EUI64Obj("0001.dead.beef.0001").dash == "00-01-de-ad-be-ef-00-01"
+
 
 def testEUI64Obj_colon_01():
     assert EUI64Obj("0001.dead.beef.0001").colon == "00:01:de:ad:be:ef:00:01"
 
+
 def testEUI64Obj_equality_01():
     assert EUI64Obj("0001.dead.beef.0001") == EUI64Obj("0001.dead.beef.0001")
+
 
 def testEUI64Obj_equality_02():
     assert EUI64Obj("0001.dead.beef.0001") == EUI64Obj("00-01-de-ad-be-ef-00-01")
 
+
 def testEUI64Obj_equality_03():
     assert EUI64Obj("0001.dead.beef.0001") == EUI64Obj("00-01-de-ad-BE-EF-00-01")
+
 
 def testEUI64Obj_equality_04():
     assert EUI64Obj("0001.dead.beef.0001") == EUI64("00-01-de-ad-be-ef-00-01")
     assert EUI64Obj("0001.dead.beef.0001") != EUI64("ff-ff-ff-ff-ff-ff-ff-ff")
 
+
 def test_collapse_addresses_01():
 
-    net_collapsed = ipaddress.collapse_addresses([IPv4Network('192.0.0.0/22'), IPv4Network('192.0.2.128/25')])
+    net_collapsed = ipaddress.collapse_addresses(
+        [IPv4Network("192.0.0.0/22"), IPv4Network("192.0.2.128/25")]
+    )
     for idx, entry in enumerate(net_collapsed):
         if idx == 0:
             assert entry == IPv4Network("192.0.0.0/22")
 
 
 def test_collapse_addresses_02():
-    net_list = [IPv4Obj('192.0.2.128/25'), IPv4Obj('192.0.0.0/26')]
+    net_list = [IPv4Obj("192.0.2.128/25"), IPv4Obj("192.0.0.0/26")]
     collapsed_list = sorted(collapse_addresses(net_list))
-    assert collapsed_list[0].network_address == IPv4Obj('192.0.0.0/26').ip
-    assert collapsed_list[1].network_address == IPv4Obj('192.0.2.128/25').ip
+    assert collapsed_list[0].network_address == IPv4Obj("192.0.0.0/26").ip
+    assert collapsed_list[1].network_address == IPv4Obj("192.0.2.128/25").ip
 
 
 def test_CiscoIOSInterface_01():
@@ -821,15 +864,16 @@ def test_CiscoIOSInterface_08():
     """Check that a card, slot, port, subinterface, and channel is parsed correctly from a dict"""
     uut = CiscoIOSInterface(
         interface_dict={
-            'prefix': 'Ethernet',
-            'card': 2,
-            'slot': 1,
-            'port': 3,
-            'digit_separator': '/',
-            'subinterface': 4,
-            'channel': 5,
-            'interface_class': None,
-        })
+            "prefix": "Ethernet",
+            "card": 2,
+            "slot": 1,
+            "port": 3,
+            "digit_separator": "/",
+            "subinterface": 4,
+            "channel": 5,
+            "interface_class": None,
+        }
+    )
     assert uut.prefix == "Ethernet"
     assert uut.slot == 1
     assert uut.card == 2
@@ -844,15 +888,16 @@ def test_CiscoIOSInterface_09():
     """Check that a port is parsed correctly from a dict"""
     uut = CiscoIOSInterface(
         interface_dict={
-            'prefix': 'Ethernet',
-            'card': None,
-            'slot': None,
-            'port': 1,
-            'digit_separator': None,
-            'subinterface': None,
-            'channel': None,
-            'interface_class': None,
-        })
+            "prefix": "Ethernet",
+            "card": None,
+            "slot": None,
+            "port": 1,
+            "digit_separator": None,
+            "subinterface": None,
+            "channel": None,
+            "interface_class": None,
+        }
+    )
     assert uut.prefix == "Ethernet"
     assert uut.slot == None
     assert uut.card is None
@@ -879,35 +924,45 @@ def test_CiscoRange_01():
     """Basic vlan range test"""
     result_correct = {1, 2, 3}
     uut_str = "1-3"
-    assert CiscoRange(uut_str, result_type=int).as_set(result_type=int) == result_correct
+    assert (
+        CiscoRange(uut_str, result_type=int).as_set(result_type=int) == result_correct
+    )
 
 
 def test_CiscoRange_02():
     """Basic vlan range test"""
     result_correct = {1, 3}
     uut_str = "1,3"
-    assert CiscoRange(uut_str, result_type=int).as_set(result_type=int) == result_correct
+    assert (
+        CiscoRange(uut_str, result_type=int).as_set(result_type=int) == result_correct
+    )
 
 
 def test_CiscoRange_03():
     """Basic vlan range test"""
     result_correct = {1, 2, 3, 4, 5}
     uut_str = "1,2-4,5"
-    assert CiscoRange(uut_str, result_type=int).as_set(result_type=int) == result_correct
+    assert (
+        CiscoRange(uut_str, result_type=int).as_set(result_type=int) == result_correct
+    )
 
 
 def test_CiscoRange_04():
     """Basic vlan range test"""
     result_correct = {1, 2, 3, 4, 5}
     uut_str = "1-3,4,5"
-    assert CiscoRange(uut_str, result_type=int).as_set(result_type=int) == result_correct
+    assert (
+        CiscoRange(uut_str, result_type=int).as_set(result_type=int) == result_correct
+    )
 
 
 def test_CiscoRange_05():
     """Basic vlan range test"""
     result_correct = {1, 2, 3, 4, 5}
     uut_str = "1,2,3-5"
-    assert CiscoRange(uut_str, result_type=int).as_set(result_type=int) == result_correct
+    assert (
+        CiscoRange(uut_str, result_type=int).as_set(result_type=int) == result_correct
+    )
 
 
 def test_CiscoRange_06():
@@ -916,7 +971,10 @@ def test_CiscoRange_06():
     uut_str = "1/1-3,4,5"
     # the CiscoRange() result_type None is a CiscoIOSInterface() type with a
     #     port attribute...
-    assert CiscoRange(uut_str, result_type=CiscoIOSInterface).as_set(result_type=str) == result_correct
+    assert (
+        CiscoRange(uut_str, result_type=CiscoIOSInterface).as_set(result_type=str)
+        == result_correct
+    )
     assert CiscoRange(uut_str).iterate_attribute == "port"
 
 
@@ -1020,7 +1078,11 @@ def test_CiscoRange_20():
 
 def test_CiscoRange_21():
     """Basic interface slot, card, port, subinterface, channel and interface_class range test"""
-    result_correct = {"Eth1/2/3.4:7 multipoint", "Eth1/2/3.4:8 multipoint", "Eth1/2/3.4:9 multipoint"}
+    result_correct = {
+        "Eth1/2/3.4:7 multipoint",
+        "Eth1/2/3.4:8 multipoint",
+        "Eth1/2/3.4:9 multipoint",
+    }
     uut_str = "Eth 1/2/3.4:7-9 multipoint"
     assert CiscoRange(uut_str).as_set(result_type=str) == result_correct
 
@@ -1028,9 +1090,17 @@ def test_CiscoRange_21():
 def test_CiscoRange_22():
     """Parse a string with a common prefix on all of the CiscoRange() inputs"""
     result_correct = {
-        "Eth1/1", "Eth1/10", "Eth1/12", "Eth1/13", "Eth1/14",
-        "Eth1/15", "Eth1/16", "Eth1/17", "Eth1/18", "Eth1/19",
-        "Eth1/20"
+        "Eth1/1",
+        "Eth1/10",
+        "Eth1/12",
+        "Eth1/13",
+        "Eth1/14",
+        "Eth1/15",
+        "Eth1/16",
+        "Eth1/17",
+        "Eth1/18",
+        "Eth1/19",
+        "Eth1/20",
     }
     uut_str = "Eth1/1,Eth1/12-20,Eth1/16,Eth1/10"
     assert CiscoRange(uut_str).as_set(result_type=str) == result_correct
@@ -1048,7 +1118,9 @@ def test_CiscoRange_23():
     }
     uut_str = "Eth1/1,Eth1/1-5,Eth1/16"
     # CiscoRange(text="foo", result_type=None) returns CiscoIOSInterface() instances...
-    assert CiscoRange(uut_str, result_type=None).as_set(result_type=None) == result_correct
+    assert (
+        CiscoRange(uut_str, result_type=None).as_set(result_type=None) == result_correct
+    )
 
 
 def test_CiscoRange_24():
@@ -1063,7 +1135,10 @@ def test_CiscoRange_24():
     ]
     uut_str = "Eth1/1,Eth1/1-5,Eth1/16"
     # CiscoRange(text="foo", result_type=None) returns CiscoIOSInterface() instances...
-    assert CiscoRange(uut_str, result_type=None).as_list(result_type=None) == result_correct
+    assert (
+        CiscoRange(uut_str, result_type=None).as_list(result_type=None)
+        == result_correct
+    )
 
 
 def test_CiscoRange_compressed_str_01():
@@ -1091,8 +1166,42 @@ def test_CiscoRange_contains_02():
     # Ethernet1/5 is in CiscoRange("Ethernet1/1-20")...
     assert (CiscoIOSInterface("Ethernet1/48") in CiscoRange(uut_str)) is False
 
-#pragma warning restore S1192
-#pragma warning restore S1313
-#pragma warning restore S5843
-#pragma warning restore S5852
-#pragma warning restore S6395
+
+def test_CiscoRange_insert_01():
+    """Check that CiscoRange().insert(sort=False) works correctly"""
+    uut_str = "Ethernet1/1-20"
+    uut = CiscoRange(uut_str)
+
+    uut.insert(0, "Ethernet1/100", sort=False)
+
+    assert CiscoIOSInterface("Ethernet1/100") in uut.data
+    assert uut.data[0] == CiscoIOSInterface("Ethernet1/100")
+
+
+def test_CiscoRange_insert_02():
+    """Check that CiscoRange().insert(sort=True) works correctly"""
+    uut_str = "Ethernet1/1-20"
+    uut = CiscoRange(uut_str)
+
+    uut.insert(0, "Ethernet1/100", sort=True)
+
+    assert CiscoIOSInterface("Ethernet1/100") in uut.data
+    assert uut.data[-1] == CiscoIOSInterface("Ethernet1/100")
+
+
+def test_CiscoRange_insert_03():
+    """Check that CiscoRange().insert() works correctly and sorts by default"""
+    uut_str = "Ethernet1/1-20"
+    uut = CiscoRange(uut_str)
+
+    uut.insert(0, "Ethernet1/100")
+
+    assert CiscoIOSInterface("Ethernet1/100") in uut.data
+    assert uut.data[-1] == CiscoIOSInterface("Ethernet1/100")
+
+
+# pragma warning restore S1192
+# pragma warning restore S1313
+# pragma warning restore S5843
+# pragma warning restore S5852
+# pragma warning restore S6395

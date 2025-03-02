@@ -13,6 +13,7 @@ sys.path.insert(0, "..")
 from loguru import logger
 from ciscoconfparse2 import CiscoConfParse
 
+
 def parse_cli_args(sys_argv1):
     """
     Reference: https://docs.python.org/3/library/argparse.html
@@ -20,8 +21,9 @@ def parse_cli_args(sys_argv1):
     if isinstance(sys_argv1, (list, tuple)):
         pass
     else:
-        raise ValueError("`sys_argv1` must be a list or tuple with CLI options from `sys.argv[1:]`")
-
+        raise ValueError(
+            "`sys_argv1` must be a list or tuple with CLI options from `sys.argv[1:]`"
+        )
 
     parser = argparse.ArgumentParser(
         prog=os.path.basename(__file__),
@@ -65,7 +67,8 @@ if __name__ == "__main__":
             run("CiscoConfParse('fixtures/configs/sample_05.ios')", sort=2)
         elif args.vlans is True:
             run(
-                "CiscoConfParse('fixtures/configs/sample_06.ios', syntax='ios', factory=True)", sort=2
+                "CiscoConfParse('fixtures/configs/sample_06.ios', syntax='ios', factory=True)",
+                sort=2,
             )
     else:
         error = "CLI arguments are required; use -h for help"

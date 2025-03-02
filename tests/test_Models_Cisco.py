@@ -9,10 +9,9 @@ import sys
 sys.path.insert(0, "..")
 
 
-
 r""" test_Models_Cisco.py - Parse, Query, Build, and Modify IOS-style configs
 
-     Copyright (C) 2023      David Michael Pennington
+     Copyright (C) 2023-2025      David Michael Pennington
 
      This program is free software: you can redistribute it and/or modify
      it under the terms of the GNU General Public License as published by
@@ -76,7 +75,7 @@ def testVal_Github_Issue_11():
      speed 10
     !
     """
-    parse = CiscoConfParse(config.splitlines(), syntax='ios', factory=True)
+    parse = CiscoConfParse(config.splitlines(), syntax="ios", factory=True)
     assert isinstance(parse, CiscoConfParse)
 
 
@@ -300,7 +299,9 @@ def testVal_IOSIntfLine_trunk_vlan_allowed_01():
     ]
     cfg = CiscoConfParse(lines, factory=True)
     intf_obj = cfg.find_objects("^interface")[0]
-    assert len(intf_obj.trunk_vlans_allowed.as_set(result_type=int)) == len(range(1, 4095))
+    assert len(intf_obj.trunk_vlans_allowed.as_set(result_type=int)) == len(
+        range(1, 4095)
+    )
     assert intf_obj.trunk_vlans_allowed.as_list(result_type=int) == list(range(1, 4095))
 
 
@@ -361,7 +362,9 @@ def testVal_IOSIntfLine_trunk_vlan_allowed_05():
     ]
     cfg = CiscoConfParse(lines, factory=True)
     intf_obj = cfg.find_objects("^interface")[0]
-    assert intf_obj.trunk_vlans_allowed.as_set(result_type=int) == {911, }
+    assert intf_obj.trunk_vlans_allowed.as_set(result_type=int) == {
+        911,
+    }
 
 
 def testVal_IOSIntfLine_trunk_vlan_allowed_06():
@@ -377,7 +380,15 @@ def testVal_IOSIntfLine_trunk_vlan_allowed_06():
     ]
     cfg = CiscoConfParse(lines, factory=True)
     intf_obj = cfg.find_objects("^interface")[0]
-    assert intf_obj.trunk_vlans_allowed.as_set(result_type=int) == {2, 3, 4, 5, 17, 18, 19}
+    assert intf_obj.trunk_vlans_allowed.as_set(result_type=int) == {
+        2,
+        3,
+        4,
+        5,
+        17,
+        18,
+        19,
+    }
 
 
 def testVal_IOSIntfLine_trunk_vlan_allowed_07():
@@ -1528,7 +1539,7 @@ def testVal_IOSIntfLine_in_ipv4_subnets(parse_c03_factory):
     test_network2 = IPv4Obj("1.1.2.0/23", strict=False)
     networks = set([test_network1, test_network2])
     for intf_obj in cfg.find_objects("^interface"):
-        #print("   INTF", intf_obj, networks)
+        # print("   INTF", intf_obj, networks)
         test_result[intf_obj.text] = intf_obj.in_ipv4_subnets(networks)
     assert test_result == result_correct
 
@@ -1625,7 +1636,7 @@ def testVal_IOSRouteLine_01():
     assert obj.tracking_object_name == ""
     assert obj.route_name == ""
     assert obj.permanent is False
-    assert obj.global_next_hop is True # All non-vrf routes have global NHs
+    assert obj.global_next_hop is True  # All non-vrf routes have global NHs
     assert obj.admin_distance == 1
     assert obj.tag == ""
 
@@ -1751,7 +1762,9 @@ def testVal_IOSRouteLine_07():
 
 
 def testVal_IOSRouteLine_08():
-    line = "ip route vrf mgmtVrf 12.0.0.0 255.255.0.0 FastEthernet0/0 254 track 35 tag 20"
+    line = (
+        "ip route vrf mgmtVrf 12.0.0.0 255.255.0.0 FastEthernet0/0 254 track 35 tag 20"
+    )
     cfg = CiscoConfParse([line], factory=True)
     obj = cfg.config_objs[0]
     assert obj.address_family == "ip"
@@ -1771,9 +1784,7 @@ def testVal_IOSRouteLine_08():
 
 
 def testVal_IOSRouteLine_09():
-    line = (
-        "ip route vrf mgmtVrf 10.0.0.0 255.0.0.0 FastEthernet0/0 254 name foobarme tag 20"
-    )
+    line = "ip route vrf mgmtVrf 10.0.0.0 255.0.0.0 FastEthernet0/0 254 name foobarme tag 20"
     cfg = CiscoConfParse([line], factory=True)
     obj = cfg.config_objs[0]
     assert obj.address_family == "ip"
@@ -1792,7 +1803,9 @@ def testVal_IOSRouteLine_09():
     assert obj.tag == "20"
 
 
-@pytest.mark.skip("Skipping due to need to reimplement ipv6 route parse in models_cisco.py")
+@pytest.mark.skip(
+    "Skipping due to need to reimplement ipv6 route parse in models_cisco.py"
+)
 def testVal_IOSRouteLine_10():
     line = "ipv6 route ::/0 2001:DEAD:BEEF::1"
     cfg = CiscoConfParse([line], factory=True)
@@ -1807,13 +1820,15 @@ def testVal_IOSRouteLine_10():
     assert obj.multicast is False
     assert obj.tracking_object_name == ""
     assert obj.route_name == ""
-    #assert obj.permanent is False      # NotImplementedError()
-    #assert obj.global_next_hop is True  # IPv6 doesnt support a global next-hop
+    # assert obj.permanent is False      # NotImplementedError()
+    # assert obj.global_next_hop is True  # IPv6 doesnt support a global next-hop
     assert obj.admin_distance == 1
     assert obj.tag == ""
 
 
-@pytest.mark.skip("Skipping due to need to reimplement ipv6 route parse in models_cisco.py")
+@pytest.mark.skip(
+    "Skipping due to need to reimplement ipv6 route parse in models_cisco.py"
+)
 def testVal_IOSRouteLine_11():
     line = "ipv6 route 2001:DEAD::/32 Serial 1/0 201"
     cfg = CiscoConfParse([line], factory=True)
@@ -1828,13 +1843,15 @@ def testVal_IOSRouteLine_11():
     assert obj.multicast is False
     assert obj.tracking_object_name == ""
     assert obj.route_name == ""
-    #assert obj.permanent is False       # IPv6 doesnt support permanent...
-    #assert obj.global_next_hop is True  # IPv6 doesnt support a global next-hop
+    # assert obj.permanent is False       # IPv6 doesnt support permanent...
+    # assert obj.global_next_hop is True  # IPv6 doesnt support a global next-hop
     assert obj.admin_distance == 201
     assert obj.tag == ""
 
 
-@pytest.mark.skip("Skipping due to need to reimplement ipv6 route parse in models_cisco.py")
+@pytest.mark.skip(
+    "Skipping due to need to reimplement ipv6 route parse in models_cisco.py"
+)
 def testVal_IOSRouteLine_12():
     line = "ipv6 route 2001::/16 Tunnel0 2002::1 multicast"
     cfg = CiscoConfParse([line], factory=True)
@@ -1853,6 +1870,7 @@ def testVal_IOSRouteLine_12():
     # assert obj.global_next_hop is True    # All non-vrf routes have global NHs
     assert 1 == obj.admin_distance
     assert "" == obj.tag
+
 
 ###
 ### ------ IPv4 secondary addresses
@@ -1900,6 +1918,7 @@ interface Vlan21
     intf_obj = cfg.find_objects("^interface")[0]
     assert bool(intf_obj.ip_secondary_addresses) is False
 
+
 ###
 ### ------ HSRP
 ###
@@ -1910,6 +1929,7 @@ def testVal_IOSHSRPGroups_01(parse_sample_08_ios_factory):
 
     assert isinstance(hsrp_groups, list)
     assert len(hsrp_groups) == 4
+
 
 def testVal_IOSHSRPGroups_02(parse_sample_08_ios_factory):
     """Test that the correct object instance is returned by get_hsrp_groups()"""
@@ -1926,6 +1946,7 @@ def testVal_IOSHSRPGroups_02(parse_sample_08_ios_factory):
     assert isinstance(hsrp_groups[2], HSRPInterfaceGroup)
     # HSRP Group 112
     assert isinstance(hsrp_groups[3], HSRPInterfaceGroup)
+
 
 def testVal_IOSHSRPGroups_03(parse_sample_08_ios_factory):
     """Test that the correct HSRP group numbers are populated"""
@@ -1947,6 +1968,7 @@ def testVal_IOSHSRPGroups_03(parse_sample_08_ios_factory):
     # HSRP Group 112
     assert hsrp_groups[3].group == 112
 
+
 def testVal_IOSHSRPGroups_04(parse_sample_08_ios_factory):
     """Test that the correct HSRP IPv4 addresses are returned"""
     intf_obj = parse_sample_08_ios_factory.find_objects("^interface FastEthernet0/0")[0]
@@ -1962,10 +1984,11 @@ def testVal_IOSHSRPGroups_04(parse_sample_08_ios_factory):
     assert hsrp_groups[0].ip == "172.16.2.251"
     # HSRP Group 110
     assert hsrp_groups[1].ip == "172.16.2.252"
-    # HSRP Group 111 
+    # HSRP Group 111
     assert hsrp_groups[2].ip == "172.16.2.253"
     # HSRP Group 112
     assert hsrp_groups[3].ip == "172.16.2.254"
+
 
 def testVal_IOSHSRPGroups_04(parse_sample_08_ios_factory):
     """Test that the correct HSRP preempt boolean is returned"""
@@ -1987,6 +2010,7 @@ def testVal_IOSHSRPGroups_04(parse_sample_08_ios_factory):
     # HSRP Group 112
     assert hsrp_groups[3].preempt is False
 
+
 def testVal_IOSHSRPGroups_05(parse_sample_08_ios_factory):
     """Test that the correct HSRP preempt_delay is returned"""
     intf_obj = parse_sample_08_ios_factory.find_objects("^interface FastEthernet0/0")[0]
@@ -2006,6 +2030,7 @@ def testVal_IOSHSRPGroups_05(parse_sample_08_ios_factory):
     assert hsrp_groups[2].preempt_delay == 20
     # HSRP Group 112
     assert hsrp_groups[3].preempt_delay == 0
+
 
 def testVal_IOSHSRPGroups_06(parse_sample_08_ios_factory):
     """Test that the correct HSRP tracking interfaces are returned"""
@@ -2047,6 +2072,7 @@ def testVal_IOSHSRPGroups_06(parse_sample_08_ios_factory):
     assert track_intfs_02[0].interface_name == "Dialer1"
     assert track_intfs_02[0].decrement == 50
 
+
 def testVal_IOSHSRPGroups_07(parse_sample_08_ios_factory):
     """Test that the correct HSRP priority is returned for each HSRP Group"""
     intf_obj = parse_sample_08_ios_factory.find_objects("^interface FastEthernet0/0")[0]
@@ -2070,6 +2096,7 @@ def testVal_IOSHSRPGroups_07(parse_sample_08_ios_factory):
     assert isinstance(hsrp_groups[3], HSRPInterfaceGroup)
     assert hsrp_groups[3].priority == 150
 
+
 ###
 ### ------ IPv4 Helper-Addresses --------
 ###
@@ -2092,26 +2119,33 @@ def testVal_IOSIPv4HelperAddress_01():
     obj = parse.find_objects("^interface")[0]
     assert obj.ip_helper_addresses == result_correct
 
+
 def testVal_IOSSDWAN_systemip_01():
     """Test that we can parse out the SDWAN system ip address (i.e. one child level)"""
-    parse = CiscoConfParse('fixtures/configs/sample_10.ios', syntax="ios", factory=False)
-    system_ip = parse.find_child_objects(['system',
-                                          'system-ip'])[0]
+    parse = CiscoConfParse(
+        "fixtures/configs/sample_10.ios", syntax="ios", factory=False
+    )
+    system_ip = parse.find_child_objects(["system", "system-ip"])[0]
     assert system_ip.split()[-1] == "192.168.11.1"
+
 
 def testVal_IOSSDWAN_vrf_route_target_01():
     """Test that we can parse out the SDWAN vrf 3001 export route-target (i.e. two child levels)"""
-    parse = CiscoConfParse('fixtures/configs/sample_10.ios', syntax="ios", factory=False)
-    route_target_export = parse.find_child_objects(['vrf definition 3001',
-                                                    'address-family ipv4',
-                                                    'route-target export'])[0]
+    parse = CiscoConfParse(
+        "fixtures/configs/sample_10.ios", syntax="ios", factory=False
+    )
+    route_target_export = parse.find_child_objects(
+        ["vrf definition 3001", "address-family ipv4", "route-target export"]
+    )[0]
     assert route_target_export.split()[-1] == "65111:3001"
+
 
 def testVal_IOSSDWAN_sdwan_interface_tunnel_color():
     """Test that we can parse out the SDWAN interface tunnel color (i.e. three child levels)"""
-    parse = CiscoConfParse('fixtures/configs/sample_10.ios', syntax="ios", factory=False)
-    intf_tunnel_color = parse.find_child_objects(['sdwan',
-                                                    'interface GigabitEthernet1$',
-                                                    'tunnel-interface',
-                                                    'color'])[0]
+    parse = CiscoConfParse(
+        "fixtures/configs/sample_10.ios", syntax="ios", factory=False
+    )
+    intf_tunnel_color = parse.find_child_objects(
+        ["sdwan", "interface GigabitEthernet1$", "tunnel-interface", "color"]
+    )[0]
     assert intf_tunnel_color.split()[-1] == "gold"

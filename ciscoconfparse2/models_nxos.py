@@ -35,7 +35,7 @@ from ciscoconfparse2.models_cisco import HSRPInterfaceGroup
 ###   Use models_nxos.py at your own risk.  You have been warned :-)
 r""" models_nxos.py - Parse, Query, Build, and Modify IOS-style configurations
 
-     Copyright (C) 2021-2024 David Michael Pennington
+     Copyright (C) 2021-2025 David Michael Pennington
 
      This program is free software: you can redistribute it and/or modify
      it under the terms of the GNU General Public License as published by

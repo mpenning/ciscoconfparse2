@@ -1310,7 +1310,9 @@ def parse_c03_factory(request):
 @pytest.fixture(scope="function")
 def parse_f01_ios(request):
     """Preparsed F5 f01 configuration as ios syntax"""
-    parse_f01_ios = CiscoConfParse(f01, syntax="ios", comment_delimiters=["#"], factory=False)
+    parse_f01_ios = CiscoConfParse(
+        f01, syntax="ios", comment_delimiters=["#"], factory=False
+    )
 
     yield parse_f01_ios
 
@@ -1319,76 +1321,107 @@ def parse_f01_ios(request):
 @pytest.fixture(scope="function")
 def parse_f02_junos_01(request):
     """Preparsed F5 f02 configuration as junos syntax"""
-    parse_f02_junos_01 = CiscoConfParse(f02,
-                                      syntax="junos",
-                                      comment_delimiters=["#"],
-                                      ignore_blank_lines=True,
-                                      factory=False)
+    parse_f02_junos_01 = CiscoConfParse(
+        f02,
+        syntax="junos",
+        comment_delimiters=["#"],
+        ignore_blank_lines=True,
+        factory=False,
+    )
 
     yield parse_f02_junos_01
+
 
 @pytest.fixture(scope="function")
 def parse_f01_junos_01(request):
     """Preparsed F5 f01 configuration as junos syntax"""
-    parse_f01_junos_01 = CiscoConfParse(f01, syntax="junos", comment_delimiters=["#"], factory=False)
+    parse_f01_junos_01 = CiscoConfParse(
+        f01, syntax="junos", comment_delimiters=["#"], factory=False
+    )
 
     yield parse_f01_junos_01
+
 
 ## parse_j01 yields configs/sample_01.junos
 @pytest.fixture(scope="function")
 def parse_j01(request):
     """Preparsed j01"""
-    parse_j01 = CiscoConfParse(j01, syntax="junos", comment_delimiters=["#"], ignore_blank_lines=True, factory=False)
+    parse_j01 = CiscoConfParse(
+        j01,
+        syntax="junos",
+        comment_delimiters=["#"],
+        ignore_blank_lines=True,
+        factory=False,
+    )
 
     yield parse_j01
+
 
 ## parse_j01_factory yields configs/sample_01.junos
 @pytest.fixture(scope="function")
 def parse_j01_factory(request):
     """Preparsed j01 with factory option"""
-    parse_j01_factory = CiscoConfParse(j01, syntax="junos", comment_delimiters=["#", "!"], factory=True)
+    parse_j01_factory = CiscoConfParse(
+        j01, syntax="junos", comment_delimiters=["#", "!"], factory=True
+    )
 
     yield parse_j01_factory
+
 
 ## parse_j01 yields configs/sample_01.junos
 @pytest.fixture(scope="function")
 def parse_j01(request):
     """Preparsed j01"""
-    parse_j01 = CiscoConfParse(j01, syntax="junos", comment_delimiters=["#"], ignore_blank_lines=True, factory=False)
+    parse_j01 = CiscoConfParse(
+        j01,
+        syntax="junos",
+        comment_delimiters=["#"],
+        ignore_blank_lines=True,
+        factory=False,
+    )
 
     yield parse_j01
+
 
 ## parse_fixture_j01 yields fixtures/configs/sample_01.junos
 @pytest.fixture(scope="function")
 def parse_fixture_j01(request):
     """Preparsed j01"""
-    parse_fixture_j01 = CiscoConfParse('fixtures/configs/sample_01.junos',
-                               syntax="junos",
-                               comment_delimiters=["#"],
-                               ignore_blank_lines=True,
-                               factory=False)
+    parse_fixture_j01 = CiscoConfParse(
+        "fixtures/configs/sample_01.junos",
+        syntax="junos",
+        comment_delimiters=["#"],
+        ignore_blank_lines=True,
+        factory=False,
+    )
 
     yield parse_fixture_j01
+
 
 ## parse_fixture_j03 yields fixtures/configs/sample_03.junos
 @pytest.fixture(scope="function")
 def parse_fixture_j03(request):
     """Preparsed j03"""
-    parse_fixture_j03 = CiscoConfParse('fixtures/configs/sample_03.junos',
-                               syntax="junos",
-                               comment_delimiters=["#"],
-                               ignore_blank_lines=True,
-                               factory=False)
+    parse_fixture_j03 = CiscoConfParse(
+        "fixtures/configs/sample_03.junos",
+        syntax="junos",
+        comment_delimiters=["#"],
+        ignore_blank_lines=True,
+        factory=False,
+    )
 
     yield parse_fixture_j03
+
 
 ## parse_fixture_j03 yields fixtures/configs/sample_03.junos
 @pytest.fixture(scope="function")
 def brace_fixture_j03(request):
     """Preparsed j03"""
-    brace_fixture_j03 = BraceParse('fixtures/configs/sample_03.junos',
-                                   comment_delimiters=["#"],
-                                   ignore_blank_lines=True,)
+    brace_fixture_j03 = BraceParse(
+        "fixtures/configs/sample_03.junos",
+        comment_delimiters=["#"],
+        ignore_blank_lines=True,
+    )
 
     yield brace_fixture_j03
 
@@ -1442,13 +1475,17 @@ def config_n01(request):
     """Unparsed n01"""
     yield n01
 
+
 ## parse_n01 yields a nexus configuration
 @pytest.fixture(scope="function")
 def parse_n01_w_blanklines(request):
     """Preparsed n01 with no ignored blank lines"""
-    parse_n01_blanklines = CiscoConfParse(n01, syntax="nxos", ignore_blank_lines=False, factory=False)
+    parse_n01_blanklines = CiscoConfParse(
+        n01, syntax="nxos", ignore_blank_lines=False, factory=False
+    )
 
     yield parse_n01_blanklines
+
 
 ## parse_n01 yields a nexus configuration
 @pytest.fixture(scope="function")
@@ -1467,12 +1504,14 @@ def parse_n01_factory(request):
 
     yield parse_n01_factory
 
+
 @pytest.fixture(scope="function")
 def parse_sample_01_ios_factory(request):
     """Preparsed sample_01.ios with factory option"""
     parse = CiscoConfParse("fixtures/configs/sample_01.ios", syntax="ios", factory=True)
 
     yield parse
+
 
 @pytest.fixture(scope="function")
 def parse_sample_02_ios_factory(request):
@@ -1481,12 +1520,14 @@ def parse_sample_02_ios_factory(request):
 
     yield parse
 
+
 @pytest.fixture(scope="function")
 def parse_sample_03_ios_factory(request):
     """Preparsed sample_03.ios with factory option"""
     parse = CiscoConfParse("fixtures/configs/sample_03.ios", syntax="ios", factory=True)
 
     yield parse
+
 
 @pytest.fixture(scope="function")
 def parse_sample_04_ios_factory(request):
@@ -1495,12 +1536,14 @@ def parse_sample_04_ios_factory(request):
 
     yield parse
 
+
 @pytest.fixture(scope="function")
 def parse_sample_05_ios_factory(request):
     """Preparsed sample_05.ios with factory option"""
     parse = CiscoConfParse("fixtures/configs/sample_05.ios", syntax="ios", factory=True)
 
     yield parse
+
 
 @pytest.fixture(scope="function")
 def parse_sample_06_ios_factory(request):
@@ -1509,12 +1552,14 @@ def parse_sample_06_ios_factory(request):
 
     yield parse
 
+
 @pytest.fixture(scope="function")
 def parse_sample_07_ios_factory(request):
     """Preparsed sample_07.ios with factory option"""
     parse = CiscoConfParse("fixtures/configs/sample_07.ios", syntax="ios", factory=True)
 
     yield parse
+
 
 @pytest.fixture(scope="function")
 def parse_sample_08_ios_factory(request):
@@ -1523,12 +1568,14 @@ def parse_sample_08_ios_factory(request):
 
     yield parse
 
+
 @pytest.fixture(scope="function")
 def parse_sample_09_ios_factory(request):
     """Preparsed sample_09.ios with factory option"""
     parse = CiscoConfParse("fixtures/configs/sample_09.ios", syntax="ios", factory=True)
 
     yield parse
+
 
 @pytest.mark.skipif(sys.version_info[0] >= 3, reason="No Python3 MockSSH support")
 @pytest.mark.skipif(

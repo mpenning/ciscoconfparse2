@@ -1,6 +1,6 @@
 r""" errors.py - Parse, Query, Build, and Modify IOS-style configs
 
-     Copyright (C) 2023 David Michael Pennington
+     Copyright (C) 2023-2025 David Michael Pennington
 
      This program is free software: you can redistribute it and/or modify
      it under the terms of the GNU General Public License as published by
@@ -55,6 +55,7 @@ class ListItemTypeError(Exception):
     def __init__(self, msg=""):
         super().__init__(msg)
         self.msg = msg
+
 
 class ConfigListItemDoesNotExist(Exception):
     """Raise this error if a list() does not contain the requested item"""
@@ -181,6 +182,7 @@ class InvalidPassword(Exception):
     """
     Exception to be thrown if an invalid password is submitted to be hashed.
     """
+
     def __init__(self, msg=""):
         super().__init__(msg)
         self.msg = msg

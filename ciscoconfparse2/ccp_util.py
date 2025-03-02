@@ -1,6 +1,6 @@
 """ ccp_util.py - Parse, Query, Build, and Modify IOS-style configurations
 
-     Copyright (C) 2014-2024  David Michael Pennington
+     Copyright (C) 2014-2025  David Michael Pennington
 
      This program is free software: you can redistribute it and/or modify
      it under the terms of the GNU General Public License as published by
@@ -27,53 +27,48 @@
 #   - S5852: Slow regex are security-sensitive
 #   - S6395: Unwrap this unnecessarily grouped regex subpattern.
 ##############################################################################
-#pragma warning disable S1192
-#pragma warning disable S1313
-#pragma warning disable S5843
-#pragma warning disable S5852
-#pragma warning disable S6395
+# pragma warning disable S1192
+# pragma warning disable S1313
+# pragma warning disable S5843
+# pragma warning disable S5852
+# pragma warning disable S6395
 
-from typing import Optional, Callable, Any, Union, List
-from operator import attrgetter
-from functools import wraps
-import subprocess
-import locale
-import socket
-import shlex
-import time
 import copy
-import sys
-import re
+import locale
 import os
-
-from collections.abc import Sequence
+import re
+import shlex
+import socket
+import subprocess
+import sys
+import time
 from collections import UserList
-from ipaddress import IPv4Network, IPv6Network, IPv4Address, IPv6Address
+from collections.abc import Sequence
+from functools import wraps
+from ipaddress import (AddressValueError, IPv4Address, IPv4Network,
+                       IPv6Address, IPv6Network)
 from ipaddress import collapse_addresses as ipaddr_collapse_addresses
-from ipaddress import AddressValueError
+from operator import attrgetter
+from typing import Any, Callable, List, Optional, Union
 
-from macaddress import MAC, EUI48, EUI64
-
+import attrs
+from dns import query, reversename, zone
 from dns.exception import DNSException
 from dns.resolver import Resolver
-from dns import reversename, query, zone
-
 from loguru import logger
-import attrs
+from macaddress import EUI48, EUI64, MAC
 
-from ciscoconfparse2.protocol_values import ASA_TCP_PORTS, ASA_UDP_PORTS
-from ciscoconfparse2.errors import DuplicateMember, InvalidParameters, InvalidMember, MismatchedType, UntypedError
-from ciscoconfparse2.errors import InvalidShellVariableMapping
-from ciscoconfparse2.errors import NoRegexMatch
-from ciscoconfparse2.errors import PythonOptimizeException
-from ciscoconfparse2.errors import DynamicAddressException
-from ciscoconfparse2.errors import ListItemMissingAttribute
-from ciscoconfparse2.errors import UnexpectedType
-from ciscoconfparse2.errors import InvalidCiscoInterface
-from ciscoconfparse2.errors import InvalidCiscoRange
-from ciscoconfparse2.errors import DNSTimeoutError
-from ciscoconfparse2.errors import RequirementFailure
 import ciscoconfparse2
+from ciscoconfparse2.errors import (DNSTimeoutError, DuplicateMember,
+                                    DynamicAddressException,
+                                    InvalidCiscoInterface, InvalidCiscoRange,
+                                    InvalidMember, InvalidParameters,
+                                    InvalidShellVariableMapping,
+                                    ListItemMissingAttribute, MismatchedType,
+                                    NoRegexMatch, PythonOptimizeException,
+                                    RequirementFailure, UnexpectedType,
+                                    UntypedError)
+from ciscoconfparse2.protocol_values import ASA_TCP_PORTS, ASA_UDP_PORTS
 
 # Maximum ipv4 as an integer
 IPV4_MAXINT = 4294967295
@@ -108,13 +103,21 @@ _IPV6_REGEX_STR = r"""^(?!:::\S+?$)             # Negative Lookahead for 3 colon
 |(?P<opt10>(?:{0}:){{1,7}}:)                   # ipv6 with trailing double colons
 |(?P<opt11>(?:::))                             # ipv6 bare double colons (default route)
 )([/\s](?P<masklen>\d+))*                      # match 'masklen' and end 'addr' group
-""".format(_IPV6_RGX_CLS)
+""".format(
+    _IPV6_RGX_CLS
+)
 
-_IPV6_REGEX_STR_COMPRESSED1 = r"""^(?!:::\S+?$)(?P<addr1>(?P<opt1_1>{0}(?::{0}){{7}})|(?P<opt1_2>(?:{0}:){{1}}(?::{0}){{1,6}})|(?P<opt1_3>(?:{0}:){{2}}(?::{0}){{1,5}})|(?P<opt1_4>(?:{0}:){{3}}(?::{0}){{1,4}})|(?P<opt1_5>(?:{0}:){{4}}(?::{0}){{1,3}})|(?P<opt1_6>(?:{0}:){{5}}(?::{0}){{1,2}})|(?P<opt1_7>(?:{0}:){{6}}(?::{0}){{1,1}})|(?P<opt1_8>:(?::{0}){{1,7}})|(?P<opt1_9>(?:{0}:){{1,7}}:)|(?P<opt1_10>(?:::)))""".format(_IPV6_RGX_CLS)
+_IPV6_REGEX_STR_COMPRESSED1 = r"""^(?!:::\S+?$)(?P<addr1>(?P<opt1_1>{0}(?::{0}){{7}})|(?P<opt1_2>(?:{0}:){{1}}(?::{0}){{1,6}})|(?P<opt1_3>(?:{0}:){{2}}(?::{0}){{1,5}})|(?P<opt1_4>(?:{0}:){{3}}(?::{0}){{1,4}})|(?P<opt1_5>(?:{0}:){{4}}(?::{0}){{1,3}})|(?P<opt1_6>(?:{0}:){{5}}(?::{0}){{1,2}})|(?P<opt1_7>(?:{0}:){{6}}(?::{0}){{1,1}})|(?P<opt1_8>:(?::{0}){{1,7}})|(?P<opt1_9>(?:{0}:){{1,7}}:)|(?P<opt1_10>(?:::)))""".format(
+    _IPV6_RGX_CLS
+)
 
-_IPV6_REGEX_STR_COMPRESSED2 = r"""^(?!:::\S+?$)(?P<addr2>(?P<opt2_1>{0}(?::{0}){{7}})|(?P<opt2_2>(?:{0}:){{1}}(?::{0}){{1,6}})|(?P<opt2_3>(?:{0}:){{2}}(?::{0}){{1,5}})|(?P<opt2_4>(?:{0}:){{3}}(?::{0}){{1,4}})|(?P<opt2_5>(?:{0}:){{4}}(?::{0}){{1,3}})|(?P<opt2_6>(?:{0}:){{5}}(?::{0}){{1,2}})|(?P<opt2_7>(?:{0}:){{6}}(?::{0}){{1,1}})|(?P<opt2_8>:(?::{0}){{1,7}})|(?P<opt2_9>(?:{0}:){{1,7}}:)|(?P<opt2_10>(?:::)))""".format(_IPV6_RGX_CLS)
+_IPV6_REGEX_STR_COMPRESSED2 = r"""^(?!:::\S+?$)(?P<addr2>(?P<opt2_1>{0}(?::{0}){{7}})|(?P<opt2_2>(?:{0}:){{1}}(?::{0}){{1,6}})|(?P<opt2_3>(?:{0}:){{2}}(?::{0}){{1,5}})|(?P<opt2_4>(?:{0}:){{3}}(?::{0}){{1,4}})|(?P<opt2_5>(?:{0}:){{4}}(?::{0}){{1,3}})|(?P<opt2_6>(?:{0}:){{5}}(?::{0}){{1,2}})|(?P<opt2_7>(?:{0}:){{6}}(?::{0}){{1,1}})|(?P<opt2_8>:(?::{0}){{1,7}})|(?P<opt2_9>(?:{0}:){{1,7}}:)|(?P<opt2_10>(?:::)))""".format(
+    _IPV6_RGX_CLS
+)
 
-_IPV6_REGEX_STR_COMPRESSED3 = r"""^(?!:::\S+?$)(?P<addr3>(?P<opt3_1>{0}(?::{0}){{7}})|(?P<opt3_2>(?:{0}:){{1}}(?::{0}){{1,6}})|(?P<opt3_3>(?:{0}:){{2}}(?::{0}){{1,5}})|(?P<opt3_4>(?:{0}:){{3}}(?::{0}){{1,4}})|(?P<opt3_5>(?:{0}:){{4}}(?::{0}){{1,3}})|(?P<opt3_6>(?:{0}:){{5}}(?::{0}){{1,2}})|(?P<opt3_7>(?:{0}:){{6}}(?::{0}){{1,1}})|(?P<opt3_8>:(?::{0}){{1,7}})|(?P<opt3_9>(?:{0}:){{1,7}}:)|(?P<opt3_10>(?:::)))""".format(_IPV6_RGX_CLS)
+_IPV6_REGEX_STR_COMPRESSED3 = r"""^(?!:::\S+?$)(?P<addr3>(?P<opt3_1>{0}(?::{0}){{7}})|(?P<opt3_2>(?:{0}:){{1}}(?::{0}){{1,6}})|(?P<opt3_3>(?:{0}:){{2}}(?::{0}){{1,5}})|(?P<opt3_4>(?:{0}:){{3}}(?::{0}){{1,4}})|(?P<opt3_5>(?:{0}:){{4}}(?::{0}){{1,3}})|(?P<opt3_6>(?:{0}:){{5}}(?::{0}){{1,2}})|(?P<opt3_7>(?:{0}:){{6}}(?::{0}){{1,1}})|(?P<opt3_8>:(?::{0}){{1,7}})|(?P<opt3_9>(?:{0}:){{1,7}}:)|(?P<opt3_10>(?:::)))""".format(
+    _IPV6_RGX_CLS
+)
 
 _RGX_IPV6ADDR = re.compile(_IPV6_REGEX_STR, re.VERBOSE)
 ####################### End IPv6 #############################
@@ -135,6 +138,7 @@ _RGX_IPV4ADDR_WITH_MASK = re.compile(
     re.VERBOSE,
 )
 ####################### End IPv4 #############################
+
 
 @attrs.define(repr=False)
 class UnsupportedFeatureWarning(SyntaxWarning):
@@ -166,6 +170,7 @@ class PythonOptimizeCheck(object):
 
 
     """
+
     @logger.catch(reraise=True)
     def __init__(self):
 
@@ -175,7 +180,10 @@ class PythonOptimizeCheck(object):
         try:
             # PYTHONOPTIMIZE is not supported...  in the linux shell
             # disable it with `unset PYTHONOPTIMIZE`
-            if isinstance(self.PYTHONOPTIMIZE_env_value, str) and self.PYTHONOPTIMIZE_env_value.strip() != "":
+            if (
+                isinstance(self.PYTHONOPTIMIZE_env_value, str)
+                and self.PYTHONOPTIMIZE_env_value.strip() != ""
+            ):
                 # This condition explicitly allows PYTHONOPTIMIZE="", which
                 # is not a problem.
                 error = "Your environment has PYTHONOPTIMIZE set.  ciscoconfparse2 doesn't support running under PYTHONOPTIMIZE."
@@ -196,13 +204,22 @@ class PythonOptimizeCheck(object):
 
         except Exception as exception_info:
             print("exception_info", str(exception_info))
-            raise RuntimeError("Something bad happened in PYTHONOPTIMIZE checks.  Please report this problem as a ciscoconfparse2 bug")
+            raise RuntimeError(
+                "Something bad happened in PYTHONOPTIMIZE checks.  Please report this problem as a ciscoconfparse2 bug"
+            )
 
         if error != "__no_error__":
             raise PythonOptimizeException(error)
 
 
-def run_this_posix_command(cmd, timeout=None, shell=False, cwd=None, encoding=locale.getpreferredencoding(), env=None):
+def run_this_posix_command(
+    cmd,
+    timeout=None,
+    shell=False,
+    cwd=None,
+    encoding=locale.getpreferredencoding(),
+    env=None,
+):
     """
     Run this POSIX command using subprocess.run().
     """
@@ -212,10 +229,12 @@ def run_this_posix_command(cmd, timeout=None, shell=False, cwd=None, encoding=lo
             if isinstance(key, str) and isinstance(value, (str, int, float)):
                 pass  # noqa
             else:
-                error = f"The ENV {key}: {value} {type(value)} mapping entry is invalid."
+                error = (
+                    f"The ENV {key}: {value} {type(value)} mapping entry is invalid."
+                )
                 raise ValueError(error)
     elif env is None:
-        pass          # noqa
+        pass  # noqa
     else:
         error = "`env` must be None or a dict of variable names / values."
         logger.critical(error)
@@ -231,10 +250,18 @@ def run_this_posix_command(cmd, timeout=None, shell=False, cwd=None, encoding=lo
         cmdparts = shlex.split(cmd)
 
     output_namedtuple = subprocess.run(
-        cmdparts, timeout=timeout, capture_output=True, shell=shell, cwd=cwd,
-        encoding=encoding
+        cmdparts,
+        timeout=timeout,
+        capture_output=True,
+        shell=shell,
+        cwd=cwd,
+        encoding=encoding,
     )
-    (return_code, stdout, stderr) = (output_namedtuple.returncode, output_namedtuple.stdout, output_namedtuple.stderr)
+    (return_code, stdout, stderr) = (
+        output_namedtuple.returncode,
+        output_namedtuple.stdout,
+        output_namedtuple.stderr,
+    )
 
     if return_code > 0:
         error = f"'{cmd}' failed: --> {stdout} <-- / --> {stderr} <--"
@@ -308,7 +335,9 @@ def ccp_logger_control(
     elif action == "add":
 
         if debug > 0:
-            print(f"    Adding loguru handler with enqueue={enqueue}, because read_only={read_only}")
+            print(
+                f"    Adding loguru handler with enqueue={enqueue}, because read_only={read_only}"
+            )
         handler_id = logger.add(
             sink=sink,
             diagnose=True,
@@ -350,7 +379,13 @@ def configure_loguru(
     if not isinstance(action, str):
         raise ValueError
 
-    if action not in ('remove', 'add', 'enable', 'disable', '',):
+    if action not in (
+        "remove",
+        "add",
+        "enable",
+        "disable",
+        "",
+    ):
         raise RequirementFailure()
     # assert isinstance(rotation, str)
     # assert isinstance(retention, str)
@@ -377,7 +412,9 @@ def configure_loguru(
         if isinstance(handler_id, int):
             if debug > 0:
                 print(f"Disabling loguru handler: {handler_id}")
-            ccp_logger_control(action="remove", read_only=read_only, active_handlers=[handler_id])
+            ccp_logger_control(
+                action="remove", read_only=read_only, active_handlers=[handler_id]
+            )
         else:
             raise ValueError(f"handler_id must be an integer -->{handler_id}<--")
 
@@ -393,12 +430,14 @@ def configure_loguru(
         # retention="1 month",
         # compression=compression,
         read_only=read_only,
-        colorize=colorize
+        colorize=colorize,
     )
 
     if debug > 0:
         print(f"added loguru handler_id -->{active_loguru_handlers}<--")
-    ccp_logger_control(action="enable", read_only=read_only, active_handlers=active_handlers)
+    ccp_logger_control(
+        action="enable", read_only=read_only, active_handlers=active_handlers
+    )
     if debug > 0:
         print(f"    enabled loguru with handlers -->{active_loguru_handlers}<--")
     return active_loguru_handlers
@@ -533,8 +572,8 @@ def fix_repeated_words(cmd="", word=""):
         mm = re.search(rgx, cmd)
         if mm is not None:
             # We found a repeated word in the command...
-            indent = mm.group('indent')
-            remaining_cmd = mm.group('remaining_cmd')
+            indent = mm.group("indent")
+            remaining_cmd = mm.group("remaining_cmd")
             cmd = f"{indent}{remaining_cmd}"
         else:
             break
@@ -542,7 +581,7 @@ def fix_repeated_words(cmd="", word=""):
 
 
 # intentionally not configuring @attrs.define() on this object
-class __ccp_re__(object):
+class __ccp_re__:
     """
     A wrapper around python's re.  This is an experimental object... it may
     disappear at any time as long as this message exists.
@@ -807,7 +846,10 @@ def ip_factory(val="", stdlib=False, mode="auto_detect", debug=0):
 
         elif isinstance(val, int):
             # Do not try to make ip version assumptions for integer inputs...
-            error_msg = "ip_factory(val=%s, mode='auto_detect') does not support integer inputs" % val
+            error_msg = (
+                "ip_factory(val=%s, mode='auto_detect') does not support integer inputs"
+                % val
+            )
             raise NotImplementedError(error_msg)
 
         if obj is not None:
@@ -872,9 +914,9 @@ def collapse_addresses(network_list):
 # interfaces (such as persisting host-bits when the intf masklen changes) and
 # add custom @properties
 @attrs.define(repr=False, slots=False)
-class IPv4Obj(object):
+class IPv4Obj:
     dna: str = "IPv4Obj"
-    v4input: Optional[Union[str,int]] = None
+    v4input: Optional[Union[str, int]] = None
     strict: bool = False
     debug: int = 0
 
@@ -884,7 +926,12 @@ class IPv4Obj(object):
     empty: bool = False
 
     # This method is on IPv4Obj().  @logger.catch() breaks the __init__() method.
-    def __init__(self, v4input: Optional[Union[str,int]]=None, strict: bool=False, debug: int=0):
+    def __init__(
+        self,
+        v4input: Optional[Union[str, int]] = None,
+        strict: bool = False,
+        debug: int = 0,
+    ):
         """An object to represent IPv4 addresses and IPv4 networks.
 
         When :class:`~ciscoconfparse2.ccp_util.IPv4Obj` objects are compared or sorted, network numbers are sorted lower to higher.  If network numbers are the same, shorter masks are lower than longer masks. After comparing mask length, numerically higher IP addresses are greater than numerically lower IP addresses..  Comparisons between :class:`~ciscoconfparse2.ccp_util.IPv4Obj` instances was chosen so it's easy to find the longest-match for a given prefix (see examples below).
@@ -1000,14 +1047,19 @@ class IPv4Obj(object):
         """
         if isinstance(debug, int):
             if debug > 0:
-                logger.info(f"IPv4Obj(v4input='{v4input}', strict={strict}, debug={debug}) was called")
+                logger.info(
+                    f"IPv4Obj(v4input='{v4input}', strict={strict}, debug={debug}) was called"
+                )
         else:
             error = f"IPv4Obj() debug must be an int, but `debug`=`{debug}` was called."
             logger.critical(error)
             raise ValueError(error)
 
         try:
-            if v4input is not None and isinstance(v4input, (str, int, IPv4Obj)) is False:
+            if (
+                v4input is not None
+                and isinstance(v4input, (str, int, IPv4Obj)) is False
+            ):
                 raise ValueError()
         except ValueError as eee:
             raise AddressValueError(
@@ -1064,10 +1116,14 @@ class IPv4Obj(object):
             mask_prefixlen = f"{netmask}{prefixlen}"
             if re.search(r"\d+\.\d+\.\d+\.\d+", v4addr):
                 self.ip_object = IPv4Address(v4addr)
-                self.network_object = IPv4Network(f"{v4addr}/{mask_prefixlen}", strict=False)
+                self.network_object = IPv4Network(
+                    f"{v4addr}/{mask_prefixlen}", strict=False
+                )
                 self.prefixlen = self.network_object.prefixlen
             elif v4addr == "dhcp":
-                raise DynamicAddressException("Cannot parse address from a DHCP string.")
+                raise DynamicAddressException(
+                    "Cannot parse address from a DHCP string."
+                )
             else:
                 raise AddressValueError(
                     f"Could not parse '{v4input}' {type(v4input)} into an IPv4 Address"
@@ -1144,7 +1200,7 @@ class IPv4Obj(object):
                     try:
                         if getattr(obj, attr_name, None) is None:
                             raise RequirementFailure()
-                    except (RequirementFailure):
+                    except RequirementFailure:
                         error_str = f"Cannot compare {self} with '{type(obj)}'"
                         raise AssertionError(error_str)
 
@@ -1178,7 +1234,7 @@ class IPv4Obj(object):
                     try:
                         if getattr(obj, attr_name, None) is None:
                             raise RequirementFailure()
-                    except (RequirementFailure):
+                    except RequirementFailure:
                         error_str = f"Cannot compare {self} with '{type(obj)}'"
                         raise AssertionError(error_str)
                     except BaseException:
@@ -1283,12 +1339,20 @@ class IPv4Obj(object):
                 # return (self.network <= val.network) and (
                 #    self.broadcast >= val.broadcast
                 # )
-                return (self.as_decimal_network <= val.as_decimal_network) and (self.as_decimal_broadcast >= val.as_decimal_broadcast) and (self.prefixlen <= val.prefixlen)
+                return (
+                    (self.as_decimal_network <= val.as_decimal_network)
+                    and (self.as_decimal_broadcast >= val.as_decimal_broadcast)
+                    and (self.prefixlen <= val.prefixlen)
+                )
 
         except ValueError as eee:
-            raise ValueError(f"Could not check whether '{val}' is contained in '{self}': {eee}")
+            raise ValueError(
+                f"Could not check whether '{val}' is contained in '{self}': {eee}"
+            )
         except BaseException as eee:
-            raise ValueError(f"Could not check whether '{val}' is contained in '{self}': {eee}")
+            raise ValueError(
+                f"Could not check whether '{val}' is contained in '{self}': {eee}"
+            )
 
     # do NOT wrap with @logger.catch(...)
     # On IPv4Obj()
@@ -1389,9 +1453,7 @@ class IPv4Obj(object):
     @masklen.setter
     def masklen(self, arg):
         """masklen setter method"""
-        self.network_object = IPv4Network(
-            f"{str(self.ip_object)}/{arg}", strict=False
-        )
+        self.network_object = IPv4Network(f"{str(self.ip_object)}/{arg}", strict=False)
 
     # do NOT wrap with @logger.catch(...)
     # On IPv4Obj()
@@ -1405,9 +1467,7 @@ class IPv4Obj(object):
     @masklength.setter
     def masklength(self, arg):
         """masklen setter method"""
-        self.network_object = IPv4Network(
-            f"{str(self.ip_object)}/{arg}", strict=False
-        )
+        self.network_object = IPv4Network(f"{str(self.ip_object)}/{arg}", strict=False)
 
     # do NOT wrap with @logger.catch(...)
     # On IPv4Obj()
@@ -1424,9 +1484,7 @@ class IPv4Obj(object):
     @prefixlen.setter
     def prefixlen(self, arg):
         """prefixlen setter method"""
-        self.network_object = IPv4Network(
-            f"{str(self.ip_object)}/{arg}", strict=False
-        )
+        self.network_object = IPv4Network(f"{str(self.ip_object)}/{arg}", strict=False)
 
     # do NOT wrap with @logger.catch(...)
     # On IPv4Obj()
@@ -1440,9 +1498,7 @@ class IPv4Obj(object):
     @prefixlength.setter
     def prefixlength(self, arg):
         """prefixlength setter method"""
-        self.network_object = IPv4Network(
-            f"{str(self.ip_object)}/{arg}", strict=False
-        )
+        self.network_object = IPv4Network(f"{str(self.ip_object)}/{arg}", strict=False)
 
     # do NOT wrap with @logger.catch(...)
     # On IPv4Obj()
@@ -1513,7 +1569,9 @@ class IPv4Obj(object):
             if arg <= max_offset:
                 self.ip_object = IPv4Address(self.as_decimal_network + arg)
             else:
-                raise AddressValueError(f"{self}.network_offset({arg=}) exceeds the boundaries of '{self.as_cidr_net}'")
+                raise AddressValueError(
+                    f"{self}.network_offset({arg=}) exceeds the boundaries of '{self.as_cidr_net}'"
+                )
         else:
             raise NotImplementedError
 
@@ -1683,7 +1741,7 @@ class IPv4Obj(object):
 # interfaces (such as persisting host-bits when the intf masklen changes) and
 # add custom @properties
 @attrs.define(repr=False, slots=False)
-class IPv6Obj(object):
+class IPv6Obj:
     dna: str = "IPv6Obj"
     v6input: Optional[Union[str, int]] = None
     strict: bool = False
@@ -1697,7 +1755,12 @@ class IPv6Obj(object):
     __setstate__: Any = None
 
     # This method is on IPv6Obj().  @logger.catch() breaks the __init__() method.
-    def __init__(self, v6input: Optional[Union[str,int]]=None, strict: bool=False, debug: int=0):
+    def __init__(
+        self,
+        v6input: Optional[Union[str, int]] = None,
+        strict: bool = False,
+        debug: int = 0,
+    ):
         """An object to represent IPv6 addresses and IPv6 networks.
 
         When :class:`~ciscoconfparse2.ccp_util.IPv6Obj` objects are compared or sorted, network numbers are sorted lower to higher.  If network numbers are the same, shorter masks are lower than longer masks. After comparing mask length, numerically higher IP addresses are greater than numerically lower IP addresses.  Comparisons between :class:`~ciscoconfparse2.ccp_util.IPv6Obj` instances was chosen so it's easy to find the longest-match for a given prefix.
@@ -1756,10 +1819,11 @@ class IPv6Obj(object):
 
         """
 
-
         if isinstance(debug, int):
             if debug > 0:
-                logger.info(f"IPv6Obj(v6input='{v6input}', strict={strict}, debug={debug}) was called")
+                logger.info(
+                    f"IPv6Obj(v6input='{v6input}', strict={strict}, debug={debug}) was called"
+                )
         else:
             error = f"IPv6Obj() debug must be an int, but `debug`=`{debug}` was called."
             logger.critical(error)
@@ -1811,9 +1875,24 @@ class IPv6Obj(object):
             if v6_str_rgx is not None:
                 v6_groupdict = v6_str_rgx.groupdict()
             else:
-                raise AddressValueError(f"Could not parse '{v6input}' {type(v6input)} into an IPv6 Address")
+                raise AddressValueError(
+                    f"Could not parse '{v6input}' {type(v6input)} into an IPv6 Address"
+                )
 
-            for key in ["addr", "opt1", "opt2", "opt3", "opt4", "opt5", "opt6", "opt7", "opt8", "opt9", "opt10", "opt11"]:
+            for key in [
+                "addr",
+                "opt1",
+                "opt2",
+                "opt3",
+                "opt4",
+                "opt5",
+                "opt6",
+                "opt7",
+                "opt8",
+                "opt9",
+                "opt10",
+                "opt11",
+            ]:
                 _ipv6 = v6_groupdict[key]
                 if _ipv6 is not None:
                     break
@@ -1826,7 +1905,7 @@ class IPv6Obj(object):
             if isinstance(v6_groupdict["masklen"], str):
                 netstr = _ipv6 + "/" + v6_groupdict["masklen"]
             # FIXME - this probably should be removed...
-            #elif isinstance(v6_groupdict["netmask"], str):
+            # elif isinstance(v6_groupdict["netmask"], str):
             #    netstr = ipv6 + "/" + v6_groupdict["netmask"]
             else:
                 netstr = _ipv6 + "/128"
@@ -1843,7 +1922,9 @@ class IPv6Obj(object):
             self.network_object = IPv6Network(v6input.as_cidr_net, strict=False)
 
         else:
-            raise AddressValueError(f"Could not parse '{v6input}' {type(v6input)} into an IPv6 Address")
+            raise AddressValueError(
+                f"Could not parse '{v6input}' {type(v6input)} into an IPv6 Address"
+            )
 
     # On IPv6Obj()
     def __repr__(self):
@@ -2000,12 +2081,16 @@ class IPv6Obj(object):
                 return False
             else:
                 # NOTE: We cannot use the same algorithm as IPv4Obj.__contains__() b/c IPv6Obj has no broadcast
-                comparison_01 = (self.as_decimal_network <= val.as_decimal_network)
-                comparison_02 = (self.as_decimal_network + self.numhosts - 1) >= (val.as_decimal_network + val.numhosts - 1)
+                comparison_01 = self.as_decimal_network <= val.as_decimal_network
+                comparison_02 = (self.as_decimal_network + self.numhosts - 1) >= (
+                    val.as_decimal_network + val.numhosts - 1
+                )
                 return comparison_01 and comparison_02
 
         except BaseException as eee:
-            raise ValueError(f"Could not check whether '{val}' is contained in '{self}': {eee}")
+            raise ValueError(
+                f"Could not check whether '{val}' is contained in '{self}': {eee}"
+            )
 
     # On IPv6Obj()
     def __hash__(self):
@@ -2103,9 +2188,7 @@ class IPv6Obj(object):
     @masklen.setter
     def masklen(self, arg):
         """masklen setter method"""
-        self.network_object = IPv6Network(
-            f"{str(self.ip_object)}/{arg}", strict=False
-        )
+        self.network_object = IPv6Network(f"{str(self.ip_object)}/{arg}", strict=False)
 
     # On IPv6Obj()
     @property
@@ -2117,9 +2200,7 @@ class IPv6Obj(object):
     @masklength.setter
     def masklength(self, arg):
         """masklength setter method"""
-        self.network_object = IPv6Network(
-            f"{str(self.ip_object)}/{arg}", strict=False
-        )
+        self.network_object = IPv6Network(f"{str(self.ip_object)}/{arg}", strict=False)
 
     # On IPv6Obj()
     @property
@@ -2131,9 +2212,7 @@ class IPv6Obj(object):
     @prefixlen.setter
     def prefixlen(self, arg):
         """prefixlen setter method"""
-        self.network_object = IPv6Network(
-            f"{str(self.ip_object)}/{arg}", strict=False
-        )
+        self.network_object = IPv6Network(f"{str(self.ip_object)}/{arg}", strict=False)
 
     # On IPv6Obj()
     @property
@@ -2205,7 +2284,9 @@ class IPv6Obj(object):
             if arg <= max_offset:
                 self.ip_object = IPv6Address(self.as_decimal_network + arg)
             else:
-                raise AddressValueError(f"{self}.network_offset({arg=}) exceeds the boundaries of '{self.as_cidr_net}'")
+                raise AddressValueError(
+                    f"{self}.network_offset({arg=}) exceeds the boundaries of '{self.as_cidr_net}'"
+                )
         else:
             raise NotImplementedError
 
@@ -2215,23 +2296,25 @@ class IPv6Obj(object):
         """Returns the integer value of the IP network as a decimal integer; explicitly, if this object represents 2b00:cd80:14:10::1/64, 'as_decimal_network' returns the integer value of 2b00:cd80:14:10::0/64"""
         num_strings = str(self.network.exploded).split("/")[0].split(":")
         num_strings.reverse()  # reverse the order
-        return sum(
-            int(num, 16) * (65536**idx) for idx, num in enumerate(num_strings)
-        )
+        return sum(int(num, 16) * (65536**idx) for idx, num in enumerate(num_strings))
 
     # do NOT wrap with @logger.catch(...)
     # On IPv6Obj()
     @property
     def as_decimal_broadcast(self):
         """IPv6 does not support broadcast addresses.  Use 'as_decimal_network_maxint' if you want the integer value that would otherwise be an IPv6 broadcast."""
-        raise NotImplementedError("IPv6 does not support broadcast addresses.  Use 'as_decimal_network_maxint' if you want the integer value that would otherwise be an IPv6 broadcast.")
+        raise NotImplementedError(
+            "IPv6 does not support broadcast addresses.  Use 'as_decimal_network_maxint' if you want the integer value that would otherwise be an IPv6 broadcast."
+        )
 
     # do NOT wrap with @logger.catch(...)
     # On IPv6Obj()
     @property
     def as_decimal_network_maxint(self):
         """Returns the integer value of the maximum value of an IPv6 subnet as a decimal integer; explicitly, if this object represents 2b00:cd80:14:10::0/64, 'as_decimal_network_maxint' returns the integer value of 2b00:cd80:14:10:ffff:ffff:ffff:ffff"""
-        network_maxint_offset = 2 ** (IPV6_MAX_PREFIXLEN - self.network_object.prefixlen) - 1
+        network_maxint_offset = (
+            2 ** (IPV6_MAX_PREFIXLEN - self.network_object.prefixlen) - 1
+        )
         return self.as_decimal_network + network_maxint_offset
 
     # On IPv6Obj()
@@ -2279,7 +2362,6 @@ class IPv6Obj(object):
         """Returns the IP address as a decimal integer"""
         num_strings = str(self.ip.exploded).split("/")[0].split(":")
 
-
         ########################################################################
         # Handle IPv4 embeddded in IPv6 strings (such as '::ffff:192.0.2.4')
         # in Python 3.13 and higher... Python 3.13 IPv6Address() changed how
@@ -2289,7 +2371,7 @@ class IPv6Obj(object):
         for index, part in enumerate(num_strings):
             try:
                 obj = IPv4Obj(part)
-                replacements.append((index, hex(obj.as_decimal).lstrip('0x')))
+                replacements.append((index, hex(obj.as_decimal).lstrip("0x")))
             except AddressValueError:
                 pass
 
@@ -2304,9 +2386,7 @@ class IPv6Obj(object):
 
         num_strings.reverse()  # reverse the order
 
-        return sum(
-            int(num, 16) * (65536**idx) for idx, num in enumerate(num_strings)
-        )
+        return sum(int(num, 16) * (65536**idx) for idx, num in enumerate(num_strings))
 
     # On IPv6Obj()
     def as_int(self):
@@ -2401,6 +2481,7 @@ class MACObj(EUI48):
     """
     An object to represent a 48-bit mac-address in various formats.
     """
+
     value: str = None
     mac: EUI48 = None
     _address: Any = None
@@ -2473,13 +2554,15 @@ class MACObj(EUI48):
         return self.__repr__()
 
     def __repr__(self) -> str:
-        return f'<MACObj {str(self.mac)}>'
+        return f"<MACObj {str(self.mac)}>"
+
 
 @attrs.define(repr=False, slots=False)
 class EUI64Obj(EUI64):
     """
     An object to represent a 64-bit EUI64 address in various formats.
     """
+
     value: str = None
     eui64: EUI64 = None
     _address: Any = None
@@ -2539,7 +2622,7 @@ class EUI64Obj(EUI64):
         return self.__repr__()
 
     def __repr__(self) -> str:
-        return f'<EUI64Obj {str(self.eui64)}>'
+        return f"<EUI64Obj {str(self.eui64)}>"
 
 
 class L4Object(object):
@@ -2623,11 +2706,6 @@ class L4Object(object):
         if (self.protocol == val.protocol) and (self.port_list == val.port_list):
             return True
         return False
-
-    def __repr__(self):
-        crobj = CiscoRange()
-        crobj.data = self.port_list
-        return f"<L4Object {self.protocol} ports: {crobj.compressed_str}>"
 
 
 class DNSResponse(object):
@@ -2949,7 +3027,7 @@ def check_valid_ipaddress(input_addr=None):
 
 
 @attrs.define(repr=False, slots=False)
-class CiscoIOSInterface(object):
+class CiscoIOSInterface:
     interface_name: str = None
     interface_dict: dict = None
     debug: bool = None
@@ -2967,7 +3045,12 @@ class CiscoIOSInterface(object):
 
     # This method is on CiscoIOSInterface()
     @logger.catch(reraise=True)
-    def __init__(self, interface_name: str=None, interface_dict: dict=None, debug: bool=False):
+    def __init__(
+        self,
+        interface_name: str = None,
+        interface_dict: dict = None,
+        debug: bool = False,
+    ):
         """
         Parse a string `interface_name` like "Serial4/1/2.9:5 point-to-point", (containing slot, card, port, subinterface, channel, and interface_class) into its typical Cisco IOS components:
         - prefix: 'Serial'
@@ -2996,16 +3079,22 @@ class CiscoIOSInterface(object):
 
         if isinstance(interface_name, str):
             if debug is True:
-                logger.info(f"CiscoIOSInterface(interface_name='{interface_name}') was called")
+                logger.info(
+                    f"CiscoIOSInterface(interface_name='{interface_name}') was called"
+                )
         elif isinstance(interface_name, (CiscoIOSInterface, CiscoIOSXRInterface)):
             if debug is True:
-                logger.info(f"CiscoIOSInterface(interface_name={interface_name}) {type(interface_name)} was called")
+                logger.info(
+                    f"CiscoIOSInterface(interface_name={interface_name}) {type(interface_name)} was called"
+                )
             # Re-parse the
             interface_dict = interface_name.as_dict()
             interface_name = None
         elif isinstance(interface_dict, dict):
             if debug is True:
-                logger.info(f"CiscoIOSInterface(interface_dict='{interface_dict}') was called")
+                logger.info(
+                    f"CiscoIOSInterface(interface_dict='{interface_dict}') was called"
+                )
         elif interface_name is not None:
             error = f"interface_name must be a string, not {type(interface_name)}."
             logger.critical(error)
@@ -3031,7 +3120,9 @@ class CiscoIOSInterface(object):
             logger.critical(error)
             raise InvalidCiscoInterface(error)
         else:
-            error = "Could not create a CiscoIOSInterface() or CiscoIOSXRInterface instance"
+            error = (
+                "Could not create a CiscoIOSInterface() or CiscoIOSXRInterface instance"
+            )
             logger.critical(error)
             raise InvalidCiscoInterface(error)
 
@@ -3044,21 +3135,35 @@ class CiscoIOSInterface(object):
         if isinstance(interface_name, str):
             intf_dict = self.parse_single_interface(interface_name, debug=debug)
             if debug is True:
-                logger.success(f"    CiscoIOSInterface().check_interface_dict({intf_dict}) succeeded")
-                logger.debug(f"    Calling CiscoIOSInterface().update_internal_state({intf_dict})")
+                logger.success(
+                    f"    CiscoIOSInterface().check_interface_dict({intf_dict}) succeeded"
+                )
+                logger.debug(
+                    f"    Calling CiscoIOSInterface().update_internal_state({intf_dict})"
+                )
             self.update_internal_state(intf_dict=intf_dict)
             if debug is True:
-                logger.success(f"    CiscoIOSInterface().update_internal_state({intf_dict}) succeeded")
+                logger.success(
+                    f"    CiscoIOSInterface().update_internal_state({intf_dict}) succeeded"
+                )
         elif isinstance(interface_dict, dict):
             if debug is True:
-                logger.info(f"CiscoIOSInterface(interface_dict={interface_dict}) was called")
+                logger.info(
+                    f"CiscoIOSInterface(interface_dict={interface_dict}) was called"
+                )
             if self.check_interface_dict(interface_dict) is True:
                 if debug is True:
-                    logger.success(f"    CiscoIOSInterface().check_interface_dict({interface_dict}) succeeded")
-                    logger.debug(f"    Calling CiscoIOSInterface().update_internal_state({interface_dict})")
+                    logger.success(
+                        f"    CiscoIOSInterface().check_interface_dict({interface_dict}) succeeded"
+                    )
+                    logger.debug(
+                        f"    Calling CiscoIOSInterface().update_internal_state({interface_dict})"
+                    )
                 self.update_internal_state(intf_dict=interface_dict, debug=debug)
                 if debug is True:
-                    logger.success(f"    CiscoIOSInterface().update_internal_state({interface_dict}) succeeded")
+                    logger.success(
+                        f"    CiscoIOSInterface().update_internal_state({interface_dict}) succeeded"
+                    )
             else:
                 error = f"The interface dict check of {interface_dict} failed"
                 logger.error(error)
@@ -3074,15 +3179,33 @@ class CiscoIOSInterface(object):
 
     def dump_internal_state(self):
         if self.debug is True:
-            logger.debug(f"    CiscoRange().dump_internal_state(): prefix = '{self._prefix}'")
-            logger.debug(f"    CiscoRange().dump_internal_state(): digit_separator = '{self._digit_separator}'")
-            logger.debug(f"    CiscoRange().dump_internal_state(): slot = '{self._slot}'")
-            logger.debug(f"    CiscoRange().dump_internal_state(): card = '{self._card}'")
-            logger.debug(f"    CiscoRange().dump_internal_state(): port = '{self._port}'")
-            logger.debug(f"    CiscoRange().dump_internal_state(): subinterface = '{self._subinterface}'")
-            logger.debug(f"    CiscoRange().dump_internal_state(): channel = '{self._channel}'")
-            logger.debug(f"    CiscoRange().dump_internal_state(): interface_class = '{self._interface_class}'")
-            logger.debug(f"    CiscoRange().dump_internal_state():     initialized = '{self.initialized}'")
+            logger.debug(
+                f"    CiscoRange().dump_internal_state(): prefix = '{self._prefix}'"
+            )
+            logger.debug(
+                f"    CiscoRange().dump_internal_state(): digit_separator = '{self._digit_separator}'"
+            )
+            logger.debug(
+                f"    CiscoRange().dump_internal_state(): slot = '{self._slot}'"
+            )
+            logger.debug(
+                f"    CiscoRange().dump_internal_state(): card = '{self._card}'"
+            )
+            logger.debug(
+                f"    CiscoRange().dump_internal_state(): port = '{self._port}'"
+            )
+            logger.debug(
+                f"    CiscoRange().dump_internal_state(): subinterface = '{self._subinterface}'"
+            )
+            logger.debug(
+                f"    CiscoRange().dump_internal_state(): channel = '{self._channel}'"
+            )
+            logger.debug(
+                f"    CiscoRange().dump_internal_state(): interface_class = '{self._interface_class}'"
+            )
+            logger.debug(
+                f"    CiscoRange().dump_internal_state():     initialized = '{self.initialized}'"
+            )
             # Sleep to prevent stdout race conditions
             time.sleep(0.05)
         return True
@@ -3100,7 +3223,14 @@ class CiscoIOSInterface(object):
             "channel": self._channel,
             "interface_class": self._interface_class,
         }
-        for param_key in ["slot", "card", "port", "subinterface", "channel", "interface_class"]:
+        for param_key in [
+            "slot",
+            "card",
+            "port",
+            "subinterface",
+            "channel",
+            "interface_class",
+        ]:
             ii = params[param_key]
             if isinstance(ii, (str, int)):
                 if param_key != "interface_class":
@@ -3125,7 +3255,9 @@ class CiscoIOSInterface(object):
         ######################################################################
         # Handle a slot and port
         ######################################################################
-        if isinstance(intf_dict["slot"], (str, int)) and isinstance(intf_dict["port"], (str, int)):
+        if isinstance(intf_dict["slot"], (str, int)) and isinstance(
+            intf_dict["port"], (str, int)
+        ):
             _slot = intf_dict["slot"]
             _card = intf_dict["card"]
             _port = intf_dict["port"]
@@ -3155,7 +3287,9 @@ class CiscoIOSInterface(object):
         # Always update sort_list
         ######################################################################
         if debug is True:
-            logger.info("    CiscoIOSInterface().update_internal_state() is calling CiscoIOSInterface().update_sort_list()")
+            logger.info(
+                "    CiscoIOSInterface().update_internal_state() is calling CiscoIOSInterface().update_sort_list()"
+            )
         self.update_sort_list()
 
     # This method is on CiscoIOSInterface()
@@ -3175,7 +3309,9 @@ class CiscoIOSInterface(object):
         When comparing two CiscoIOSInterface() instances, the most explicit comparison is with `CiscoIOSInterface().sort_list`
         """
         if debug is True:
-            logger.info(f"Calling CiscoRange().parse_single_interface(interface_name='{interface_name}', debug={debug})")
+            logger.info(
+                f"Calling CiscoRange().parse_single_interface(interface_name='{interface_name}', debug={debug})"
+            )
         if isinstance(interface_name, str):
             self.interface_name = interface_name
             if "," in interface_name:
@@ -3187,8 +3323,14 @@ class CiscoIOSInterface(object):
             logger.critical(error)
             raise InvalidCiscoInterface(error)
 
-        re_intf_short = re.search(r"^(?P<prefix>[a-zA-Z\-\s]*)(?P<port_subinterface_channel>[\d\:\.^\-^a-z^A-Z^\s]+)(?P<interface_class>\s+[a-zA-Z\-]+){0,1}$", interface_name.strip())
-        re_intf_long = re.search(r"^(?P<prefix>[a-zA-Z\-\s]*)(?P<slot_card_port_subinterface_channel>[\d\:\.\/^\-^a-z^A-Z^\s]+)(?P<interface_class>\s+[a-zA-Z\-]+){0,1}$", interface_name.strip())
+        re_intf_short = re.search(
+            r"^(?P<prefix>[a-zA-Z\-\s]*)(?P<port_subinterface_channel>[\d\:\.^\-^a-z^A-Z^\s]+)(?P<interface_class>\s+[a-zA-Z\-]+){0,1}$",
+            interface_name.strip(),
+        )
+        re_intf_long = re.search(
+            r"^(?P<prefix>[a-zA-Z\-\s]*)(?P<slot_card_port_subinterface_channel>[\d\:\.\/^\-^a-z^A-Z^\s]+)(?P<interface_class>\s+[a-zA-Z\-]+){0,1}$",
+            interface_name.strip(),
+        )
         re_any = re.search(r".*", interface_name.strip())
         if isinstance(re_intf_short, re.Match):
 
@@ -3239,14 +3381,30 @@ class CiscoIOSInterface(object):
             "interface_class": _interface_class,
         }
         if debug is True:
-            logger.debug(f"    CiscoRange().parse_single_interface(): _prefix = '{_prefix}'")
-            logger.debug(f"    CiscoRange().parse_single_interface(): _digit_separator = '{_digit_separator}'")
-            logger.debug(f"    CiscoRange().parse_single_interface(): _slot = '{_slot}'")
-            logger.debug(f"    CiscoRange().parse_single_interface(): _card = '{_card}'")
-            logger.debug(f"    CiscoRange().parse_single_interface(): _port = '{_port}'")
-            logger.debug(f"    CiscoRange().parse_single_interface(): _subinterface = '{_subinterface}'")
-            logger.debug(f"    CiscoRange().parse_single_interface(): _channel = '{_channel}'")
-            logger.debug(f"    CiscoRange().parse_single_interface(): _interface_class = '{_interface_class}'")
+            logger.debug(
+                f"    CiscoRange().parse_single_interface(): _prefix = '{_prefix}'"
+            )
+            logger.debug(
+                f"    CiscoRange().parse_single_interface(): _digit_separator = '{_digit_separator}'"
+            )
+            logger.debug(
+                f"    CiscoRange().parse_single_interface(): _slot = '{_slot}'"
+            )
+            logger.debug(
+                f"    CiscoRange().parse_single_interface(): _card = '{_card}'"
+            )
+            logger.debug(
+                f"    CiscoRange().parse_single_interface(): _port = '{_port}'"
+            )
+            logger.debug(
+                f"    CiscoRange().parse_single_interface(): _subinterface = '{_subinterface}'"
+            )
+            logger.debug(
+                f"    CiscoRange().parse_single_interface(): _channel = '{_channel}'"
+            )
+            logger.debug(
+                f"    CiscoRange().parse_single_interface(): _interface_class = '{_interface_class}'"
+            )
 
         if debug is True:
             logger.success(f"CiscoRange().parse_single_interface() returned {retval}")
@@ -3256,7 +3414,9 @@ class CiscoIOSInterface(object):
     @logger.catch(reraise=True)
     def check_interface_dict(self, interface_dict):
         if not isinstance(interface_dict, dict):
-            error = f"`interface_dict` must be a dict, but we got {type(interface_dict)}"
+            error = (
+                f"`interface_dict` must be a dict, but we got {type(interface_dict)}"
+            )
             logger.error(error)
             raise ValueError(error)
 
@@ -3266,7 +3426,16 @@ class CiscoIOSInterface(object):
             raise ValueError(error)
 
         for attr_name in set(interface_dict.keys()):
-            if attr_name not in {"prefix", "slot", "card", "port", "digit_separator", "subinterface", "channel", "interface_class"}:
+            if attr_name not in {
+                "prefix",
+                "slot",
+                "card",
+                "port",
+                "digit_separator",
+                "subinterface",
+                "channel",
+                "interface_class",
+            }:
                 error = f"'{attr_name}' is not a valid `attribute_dict` key"
                 logger.critical(error)
                 raise KeyError(error)
@@ -3293,7 +3462,9 @@ class CiscoIOSInterface(object):
             logger.critical(error)
             raise ValueError(error)
 
-        re_port_short = re.search(r"^\D*(?P<port>\d+)", groupdict_intf_short["port_subinterface_channel"])
+        re_port_short = re.search(
+            r"^\D*(?P<port>\d+)", groupdict_intf_short["port_subinterface_channel"]
+        )
         if isinstance(re_port_short, re.Match):
             groupdict_port_short = re_port_short.groupdict()
         else:
@@ -3301,8 +3472,10 @@ class CiscoIOSInterface(object):
             logger.error(error)
             raise NoRegexMatch(error)
 
-        _prefix = groupdict_intf_short.get("prefix", '').strip()
-        _slot_card_port_subinterface_channel = groupdict_intf_short["port_subinterface_channel"]
+        _prefix = groupdict_intf_short.get("prefix", "").strip()
+        _slot_card_port_subinterface_channel = groupdict_intf_short[
+            "port_subinterface_channel"
+        ]
         _sep1 = None
         _sep2 = None
         _slot = None
@@ -3310,19 +3483,26 @@ class CiscoIOSInterface(object):
         _port = groupdict_port_short["port"]
         _digit_separator = _sep1
 
-        re_subinterface = re.search(r"\.(?P<subinterface>\d+)", _slot_card_port_subinterface_channel)
+        re_subinterface = re.search(
+            r"\.(?P<subinterface>\d+)", _slot_card_port_subinterface_channel
+        )
         if isinstance(re_subinterface, re.Match):
             _subinterface = int(re_subinterface.groupdict()["subinterface"])
         else:
             _subinterface = None
 
-        re_channel = re.search(r"\:(?P<channel>\d+)", _slot_card_port_subinterface_channel)
+        re_channel = re.search(
+            r"\:(?P<channel>\d+)", _slot_card_port_subinterface_channel
+        )
         if isinstance(re_channel, re.Match):
             _channel = int(re_channel.groupdict()["channel"])
         else:
             _channel = None
 
-        re_interface_class = re.search(r"(?P<interface_class>\s+[a-zA-Z\-]+)$", _slot_card_port_subinterface_channel)
+        re_interface_class = re.search(
+            r"(?P<interface_class>\s+[a-zA-Z\-]+)$",
+            _slot_card_port_subinterface_channel,
+        )
         if isinstance(re_interface_class, re.Match):
             _interface_class = str(re_interface_class.groupdict()["interface_class"])
         else:
@@ -3360,15 +3540,17 @@ class CiscoIOSInterface(object):
             logger.error(error)
             raise ValueError(error)
 
-        _prefix = groupdict_intf_long.get("prefix", '').strip()
+        _prefix = groupdict_intf_long.get("prefix", "").strip()
         re_slot_card_port = re.search(
             r"^(?P<slot>\d+)(?P<sep1>[^\:^\.^\-^\s^\d^a-z^A-Z])?(?P<card>\d+)?(?P<sep2>[^\:^\.^\-^\s^\d^a-z^A-Z])?(?P<port>\d+)?",
-            groupdict_intf_long["slot_card_port_subinterface_channel"]
+            groupdict_intf_long["slot_card_port_subinterface_channel"],
         )
         if isinstance(re_slot_card_port, re.Match):
             groupdict_slot_card_port = re_slot_card_port.groupdict()
             if groupdict_intf_long["slot_card_port_subinterface_channel"] is not None:
-                _slot_card_port_subinterface_channel = groupdict_intf_long["slot_card_port_subinterface_channel"]
+                _slot_card_port_subinterface_channel = groupdict_intf_long[
+                    "slot_card_port_subinterface_channel"
+                ]
                 _prefix = groupdict_intf_long["prefix"]
                 _sep1 = groupdict_slot_card_port["sep1"]
                 _sep2 = groupdict_slot_card_port["sep1"]
@@ -3376,7 +3558,10 @@ class CiscoIOSInterface(object):
                 _card = groupdict_slot_card_port["card"]
                 _port = groupdict_slot_card_port["port"]
                 try:
-                    _interface_class = re.split(r"\s+", groupdict_intf_long["slot_card_port_subinterface_channel"])[1]
+                    _interface_class = re.split(
+                        r"\s+",
+                        groupdict_intf_long["slot_card_port_subinterface_channel"],
+                    )[1]
                 except BaseException:
                     _interface_class = None
 
@@ -3395,43 +3580,62 @@ class CiscoIOSInterface(object):
                     _port = int(_port)
 
                 if debug is True:
-                    logger.debug(f"    CiscoRange().parse_single_interface(): {groupdict_slot_card_port}")
+                    logger.debug(
+                        f"    CiscoRange().parse_single_interface(): {groupdict_slot_card_port}"
+                    )
                 if isinstance(_sep1, str) and _sep1 == _sep2:
                     _digit_separator = _sep1
                     if debug is True:
-                        logger.debug(f"    CiscoRange().parse_single_interface(): `_digit_separator` = '{_digit_separator}'`")
+                        logger.debug(
+                            f"    CiscoRange().parse_single_interface(): `_digit_separator` = '{_digit_separator}'`"
+                        )
                 elif isinstance(_sep1, str):
                     _digit_separator = _sep1
                     if debug is True:
-                        logger.debug(f"    CiscoRange().parse_single_interface(): `_digit_separator` = '{_digit_separator}'`")
+                        logger.debug(
+                            f"    CiscoRange().parse_single_interface(): `_digit_separator` = '{_digit_separator}'`"
+                        )
                 elif _sep1 is None and _sep2 is None and isinstance(_slot, str):
                     _digit_separator = None
                     if debug is True:
-                        logger.debug(f"    CiscoRange().parse_single_interface(): `_digit_separator` = '{_digit_separator}'`")
+                        logger.debug(
+                            f"    CiscoRange().parse_single_interface(): `_digit_separator` = '{_digit_separator}'`"
+                        )
                 elif _sep1 is None and _slot is None and _card is None:
                     _digit_separator = None
                     if debug is True:
-                        logger.debug(f"    CiscoRange().parse_single_interface(): `_digit_separator` = '{_digit_separator}'")
+                        logger.debug(
+                            f"    CiscoRange().parse_single_interface(): `_digit_separator` = '{_digit_separator}'"
+                        )
                 else:
                     error = "CiscoIOSInterface() found a digit_separator inconsistency"
                     logger.critical(error)
                     raise ValueError(error)
 
-                re_subinterface = re.search(r"\.(?P<subinterface>\d+)", _slot_card_port_subinterface_channel)
+                re_subinterface = re.search(
+                    r"\.(?P<subinterface>\d+)", _slot_card_port_subinterface_channel
+                )
                 if isinstance(re_subinterface, re.Match):
                     _subinterface = int(re_subinterface.groupdict()["subinterface"])
                 else:
                     _subinterface = None
 
-                re_channel = re.search(r"\:(?P<channel>\d+)", _slot_card_port_subinterface_channel)
+                re_channel = re.search(
+                    r"\:(?P<channel>\d+)", _slot_card_port_subinterface_channel
+                )
                 if isinstance(re_channel, re.Match):
                     _channel = int(re_channel.groupdict()["channel"])
                 else:
                     _channel = None
 
-                re_interface_class = re.search(r"(?P<interface_class>\s+[a-zA-Z\-]+)$", _slot_card_port_subinterface_channel)
+                re_interface_class = re.search(
+                    r"(?P<interface_class>\s+[a-zA-Z\-]+)$",
+                    _slot_card_port_subinterface_channel,
+                )
                 if isinstance(re_interface_class, re.Match):
-                    _interface_class = str(re_interface_class.groupdict()["interface_class"])
+                    _interface_class = str(
+                        re_interface_class.groupdict()["interface_class"]
+                    )
                 else:
                     _interface_class = self._interface_class
 
@@ -3520,7 +3724,13 @@ class CiscoIOSInterface(object):
     def __hash__(self):
         """Build a unique (and sortable) identifier based solely on slot / card / port / subinterface / channel numbers for the object instance"""
         # I am using __hash__() in __gt__() and __lt__()
-        return sum([(idx + 1)**ii for idx, ii in enumerate(self.sort_list) if isinstance(ii, int)])
+        return sum(
+            [
+                (idx + 1) ** ii
+                for idx, ii in enumerate(self.sort_list)
+                if isinstance(ii, int)
+            ]
+        )
 
     # This method is on CiscoIOSInterface()
     @logger.catch(reraise=True)
@@ -3533,7 +3743,9 @@ class CiscoIOSInterface(object):
         if self.subinterface is None and self.channel is None:
             return f"""{self.prefix}{self.number}{interface_class}"""
         elif isinstance(self.subinterface, int) and self.channel is None:
-            return f"""{self.prefix}{self.number}.{self.subinterface}{interface_class}"""
+            return (
+                f"""{self.prefix}{self.number}.{self.subinterface}{interface_class}"""
+            )
         elif self.subinterface is None and isinstance(self.channel, int):
             return f"""{self.prefix}{self.number}:{self.channel}{interface_class}"""
         else:
@@ -3586,15 +3798,29 @@ class CiscoIOSInterface(object):
                 logger.error(error)
                 # Use sys.exit(1) here to avoid infinite recursion during
                 #     pathological errors such as a dash in an interface range
-                logger.critical(f"Forced python sys.exit() from `CiscoIOSInterface(interface_name='{self.interface_name}').number`.  Manually calling sys.exit(99) on this failure to avoid infinite recursion during what should be a `raise ValueError()`; the infinite recursion might be a bug in a third-party library.")
+                logger.critical(
+                    f"Forced python sys.exit() from `CiscoIOSInterface(interface_name='{self.interface_name}').number`.  Manually calling sys.exit(99) on this failure to avoid infinite recursion during what should be a `raise ValueError()`; the infinite recursion might be a bug in a third-party library."
+                )
                 sys.exit(99)
 
             # Fix regex port parsing problems... relocate _slot and _card, as-required
-            if self._slot is None and self._card is None and isinstance(self._port, (int, str)):
+            if (
+                self._slot is None
+                and self._card is None
+                and isinstance(self._port, (int, str))
+            ):
                 self._number = f"{self._port}"
-            elif isinstance(self._slot, (int, str)) and self._card is None and isinstance(self._port, (int, str)):
+            elif (
+                isinstance(self._slot, (int, str))
+                and self._card is None
+                and isinstance(self._port, (int, str))
+            ):
                 self._number = f"{self._slot}{self.digit_separator}{self._port}"
-            elif isinstance(self._slot, (int, str)) and isinstance(self._card, (int, str)) and isinstance(self._port, (int, str)):
+            elif (
+                isinstance(self._slot, (int, str))
+                and isinstance(self._card, (int, str))
+                and isinstance(self._port, (int, str))
+            ):
                 self._number = f"{self._slot}{self.digit_separator}{self._card}{self.digit_separator}{self._port}"
             else:
                 error = f"Could not parse into _number: _slot: {self._slot} _card: {self._card} _port: {self._port} _digit_separator: {self.digit_separator}"
@@ -3646,7 +3872,9 @@ class CiscoIOSInterface(object):
             if self.debug is True:
                 logger.debug("Ignoring _digit_separator when there is no slot or card.")
         else:
-            error = "Found an unsupported value for `CiscoIOSInterface().digit_separator`."
+            error = (
+                "Found an unsupported value for `CiscoIOSInterface().digit_separator`."
+            )
             logger.error(error)
             raise ValueError(error)
 
@@ -3654,22 +3882,56 @@ class CiscoIOSInterface(object):
     @property
     @logger.catch(reraise=True)
     def slot_card_port_subinterface_channel(self):
-        ""
+        """"""
 
         if self.interface_class is None:
             _interface_class = ""
         else:
             _interface_class = f" {self.interface_class.strip()}"
 
-        if isinstance(self.digit_separator, str) and isinstance(self.slot, (int, str)) and isinstance(self.card, (int, str)) and isinstance(self.port, (int, str)) and isinstance(self.subinterface, (int, str)) and isinstance(self.channel, (int, str)):
+        if (
+            isinstance(self.digit_separator, str)
+            and isinstance(self.slot, (int, str))
+            and isinstance(self.card, (int, str))
+            and isinstance(self.port, (int, str))
+            and isinstance(self.subinterface, (int, str))
+            and isinstance(self.channel, (int, str))
+        ):
             return f"{self.slot}{self.digit_separator}{self.card}{self.digit_separator}{self.port}.{self.subinterface}:{self.channel}{_interface_class}"
-        elif isinstance(self.digit_separator, str) and isinstance(self.slot, (int, str)) and isinstance(self.card, (int, str)) and isinstance(self.port, (int, str)) and isinstance(self.subinterface, (int, str)) and self.channel is None:
+        elif (
+            isinstance(self.digit_separator, str)
+            and isinstance(self.slot, (int, str))
+            and isinstance(self.card, (int, str))
+            and isinstance(self.port, (int, str))
+            and isinstance(self.subinterface, (int, str))
+            and self.channel is None
+        ):
             return f"{self.slot}{self.digit_separator}{self.card}{self.digit_separator}{self.port}.{self.subinterface}{_interface_class}"
-        elif isinstance(self.digit_separator, str) and isinstance(self.slot, (int, str)) and isinstance(self.card, (int, str)) and isinstance(self.port, (int, str)) and self.subinterface is None and self.channel is None:
+        elif (
+            isinstance(self.digit_separator, str)
+            and isinstance(self.slot, (int, str))
+            and isinstance(self.card, (int, str))
+            and isinstance(self.port, (int, str))
+            and self.subinterface is None
+            and self.channel is None
+        ):
             return f"{self.slot}{self.digit_separator}{self.card}{self.digit_separator}{self.port}{_interface_class}"
-        elif isinstance(self.digit_separator, str) and isinstance(self.slot, (int, str)) and self.card is None and isinstance(self.port, (int, str)) and self.subinterface is None and self.channel is None:
+        elif (
+            isinstance(self.digit_separator, str)
+            and isinstance(self.slot, (int, str))
+            and self.card is None
+            and isinstance(self.port, (int, str))
+            and self.subinterface is None
+            and self.channel is None
+        ):
             return f"{self.slot}{self.digit_separator}{self.port}{_interface_class}"
-        elif self.slot is None and self.card is None and isinstance(self.port, (int, str)) and self.subinterface is None and self.channel is None:
+        elif (
+            self.slot is None
+            and self.card is None
+            and isinstance(self.port, (int, str))
+            and self.subinterface is None
+            and self.channel is None
+        ):
             return f"{self.port}{_interface_class}"
         else:
             error = "Could not construct a return value for CiscoIOSInterface().slot_card_port_subinterface_channel.  digit_separator: {self.digit_separator} sort_list: {self.sort_list}"
@@ -3851,7 +4113,12 @@ class CiscoIOSXRInterface(object):
 
     # This method is on CiscoIOSXRInterface()
     @logger.catch(reraise=True)
-    def __init__(self, interface_name: str=None, interface_dict: dict=None, debug: bool=False):
+    def __init__(
+        self,
+        interface_name: str = None,
+        interface_dict: dict = None,
+        debug: bool = False,
+    ):
         """
         Parse a string `interface_name` like "Serial4/1/2.9:5 point-to-point", (containing slot, card, port, subinterface, channel, and interface_class) into its typical Cisco IOS components:
         - prefix: 'Serial'
@@ -3881,16 +4148,22 @@ class CiscoIOSXRInterface(object):
 
         if isinstance(interface_name, str):
             if debug is True:
-                logger.info(f"CiscoIOSXRInterface(interface_name='{interface_name}') was called")
+                logger.info(
+                    f"CiscoIOSXRInterface(interface_name='{interface_name}') was called"
+                )
         elif isinstance(interface_name, CiscoIOSXRInterface):
             if debug is True:
-                logger.info(f"CiscoIOSXRInterface(interface_name={interface_name}) {type(interface_name)} was called")
+                logger.info(
+                    f"CiscoIOSXRInterface(interface_name={interface_name}) {type(interface_name)} was called"
+                )
             # Re-parse the
             interface_dict = interface_name.as_dict()
             interface_name = None
         elif isinstance(interface_dict, dict):
             if debug is True:
-                logger.info(f"CiscoIOSXRInterface(interface_dict='{interface_dict}') was called")
+                logger.info(
+                    f"CiscoIOSXRInterface(interface_dict='{interface_dict}') was called"
+                )
         elif interface_name is not None:
             error = f"interface_name must be a string, not {type(interface_name)}."
             logger.critical(error)
@@ -3929,21 +4202,35 @@ class CiscoIOSXRInterface(object):
         if isinstance(interface_name, str):
             intf_dict = self.parse_single_interface(interface_name, debug=debug)
             if debug is True:
-                logger.success(f"    CiscoIOSXRInterface().check_interface_dict({intf_dict}) succeeded")
-                logger.debug(f"    Calling CiscoIOSXRInterface().update_internal_state({intf_dict})")
+                logger.success(
+                    f"    CiscoIOSXRInterface().check_interface_dict({intf_dict}) succeeded"
+                )
+                logger.debug(
+                    f"    Calling CiscoIOSXRInterface().update_internal_state({intf_dict})"
+                )
             self.update_internal_state(intf_dict=intf_dict)
             if debug is True:
-                logger.success(f"    CiscoIOSXRInterface().update_internal_state({intf_dict}) succeeded")
+                logger.success(
+                    f"    CiscoIOSXRInterface().update_internal_state({intf_dict}) succeeded"
+                )
         elif isinstance(interface_dict, dict):
             if debug is True:
-                logger.info(f"CiscoIOSXRInterface(interface_dict={interface_dict}) was called")
+                logger.info(
+                    f"CiscoIOSXRInterface(interface_dict={interface_dict}) was called"
+                )
             if self.check_interface_dict(interface_dict) is True:
                 if debug is True:
-                    logger.success(f"    CiscoIOSXRInterface().check_interface_dict({interface_dict}) succeeded")
-                    logger.debug(f"    Calling CiscoIOSXRInterface().update_internal_state({interface_dict})")
+                    logger.success(
+                        f"    CiscoIOSXRInterface().check_interface_dict({interface_dict}) succeeded"
+                    )
+                    logger.debug(
+                        f"    Calling CiscoIOSXRInterface().update_internal_state({interface_dict})"
+                    )
                 self.update_internal_state(intf_dict=interface_dict, debug=debug)
                 if debug is True:
-                    logger.success(f"    CiscoIOSXRInterface().update_internal_state({interface_dict}) succeeded")
+                    logger.success(
+                        f"    CiscoIOSXRInterface().update_internal_state({interface_dict}) succeeded"
+                    )
             else:
                 error = f"The interface dict check of {interface_dict} failed"
                 logger.error(error)
@@ -3960,16 +4247,36 @@ class CiscoIOSXRInterface(object):
     # This method is on CiscoIOSXRInterface()
     def dump_internal_state(self):
         if self.debug is True:
-            logger.debug(f"    CiscoRange().dump_internal_state(): prefix = '{self._prefix}'")
-            logger.debug(f"    CiscoRange().dump_internal_state(): digit_separator = '{self._digit_separator}'")
-            logger.debug(f"    CiscoRange().dump_internal_state(): slot = '{self._slot}'")
-            logger.debug(f"    CiscoRange().dump_internal_state(): card = '{self._card}'")
-            logger.debug(f"    CiscoRange().dump_internal_state(): processor = '{self._processor}'")
-            logger.debug(f"    CiscoRange().dump_internal_state(): port = '{self._port}'")
-            logger.debug(f"    CiscoRange().dump_internal_state(): subinterface = '{self._subinterface}'")
-            logger.debug(f"    CiscoRange().dump_internal_state(): channel = '{self._channel}'")
-            logger.debug(f"    CiscoRange().dump_internal_state(): interface_class = '{self._interface_class}'")
-            logger.debug(f"    CiscoRange().dump_internal_state():     initialized = '{self.initialized}'")
+            logger.debug(
+                f"    CiscoRange().dump_internal_state(): prefix = '{self._prefix}'"
+            )
+            logger.debug(
+                f"    CiscoRange().dump_internal_state(): digit_separator = '{self._digit_separator}'"
+            )
+            logger.debug(
+                f"    CiscoRange().dump_internal_state(): slot = '{self._slot}'"
+            )
+            logger.debug(
+                f"    CiscoRange().dump_internal_state(): card = '{self._card}'"
+            )
+            logger.debug(
+                f"    CiscoRange().dump_internal_state(): processor = '{self._processor}'"
+            )
+            logger.debug(
+                f"    CiscoRange().dump_internal_state(): port = '{self._port}'"
+            )
+            logger.debug(
+                f"    CiscoRange().dump_internal_state(): subinterface = '{self._subinterface}'"
+            )
+            logger.debug(
+                f"    CiscoRange().dump_internal_state(): channel = '{self._channel}'"
+            )
+            logger.debug(
+                f"    CiscoRange().dump_internal_state(): interface_class = '{self._interface_class}'"
+            )
+            logger.debug(
+                f"    CiscoRange().dump_internal_state():     initialized = '{self.initialized}'"
+            )
             # Sleep to prevent stdout race conditions
             time.sleep(0.05)
         return True
@@ -3988,7 +4295,15 @@ class CiscoIOSXRInterface(object):
             "channel": self._channel,
             "interface_class": self._interface_class,
         }
-        for param_key in ["slot", "card", "processor", "port", "subinterface", "channel", "interface_class"]:
+        for param_key in [
+            "slot",
+            "card",
+            "processor",
+            "port",
+            "subinterface",
+            "channel",
+            "interface_class",
+        ]:
             ii = params[param_key]
             if isinstance(ii, (str, int)):
                 # Under CiscoIOSInterface() the card could only be an integer, but
@@ -4012,7 +4327,9 @@ class CiscoIOSXRInterface(object):
         ######################################################################
         # Handle a slot and port
         ######################################################################
-        if isinstance(intf_dict["slot"], (str, int)) and isinstance(intf_dict["port"], (str, int)):
+        if isinstance(intf_dict["slot"], (str, int)) and isinstance(
+            intf_dict["port"], (str, int)
+        ):
             _slot = intf_dict["slot"]
             _card = intf_dict["card"]
             _processor = intf_dict["processor"]
@@ -4045,7 +4362,9 @@ class CiscoIOSXRInterface(object):
         # Always update sort_list
         ######################################################################
         if debug is True:
-            logger.info("    CiscoIOSXRInterface().update_internal_state() is calling CiscoIOSXRInterface().update_sort_list()")
+            logger.info(
+                "    CiscoIOSXRInterface().update_internal_state() is calling CiscoIOSXRInterface().update_sort_list()"
+            )
         self.update_sort_list()
 
     # This method is on CiscoIOSXRInterface()
@@ -4066,7 +4385,9 @@ class CiscoIOSXRInterface(object):
         When comparing two CiscoIOSXRInterface() instances, the most explicit comparison is with `CiscoIOSXRInterface().sort_list`
         """
         if debug is True:
-            logger.info(f"Calling CiscoRange().parse_single_interface(interface_name='{interface_name}', debug={debug})")
+            logger.info(
+                f"Calling CiscoRange().parse_single_interface(interface_name='{interface_name}', debug={debug})"
+            )
         if isinstance(interface_name, str):
             self.interface_name = interface_name
             if "," in interface_name:
@@ -4078,8 +4399,14 @@ class CiscoIOSXRInterface(object):
             logger.critical(error)
             raise InvalidCiscoInterface(error)
 
-        re_intf_short = re.search(r"^(?P<prefix>[a-zA-Z\-\s]*)(?P<port_subinterface_channel>[\d\:\.^\-^a-z^A-Z^\s]+)(?P<interface_class>\s+[a-zA-Z\-]+){0,1}$", interface_name.strip())
-        re_intf_long = re.search(r"^(?P<prefix>[a-zA-Z\-\s]*)(?P<slot_card_port_subinterface_channel>(?P<slot>[a-zA-Z0-9]+)(?P<sep1>[^\:^\.^\-^\s^\d^a-z^A-Z])?(?P<card>[a-zA-Z0-9]+)?(?P<sep2>[^\:^\.^\-^\s^\d^a-z^A-Z])?(?P<processor>[a-zA-Z0-9]+)?(?P<sep3>[^\:^\.^\-^\s^\d^a-z^A-Z])?(?P<port>[a-zA-Z0-9]+)?)", interface_name.strip())
+        re_intf_short = re.search(
+            r"^(?P<prefix>[a-zA-Z\-\s]*)(?P<port_subinterface_channel>[\d\:\.^\-^a-z^A-Z^\s]+)(?P<interface_class>\s+[a-zA-Z\-]+){0,1}$",
+            interface_name.strip(),
+        )
+        re_intf_long = re.search(
+            r"^(?P<prefix>[a-zA-Z\-\s]*)(?P<slot_card_port_subinterface_channel>(?P<slot>[a-zA-Z0-9]+)(?P<sep1>[^\:^\.^\-^\s^\d^a-z^A-Z])?(?P<card>[a-zA-Z0-9]+)?(?P<sep2>[^\:^\.^\-^\s^\d^a-z^A-Z])?(?P<processor>[a-zA-Z0-9]+)?(?P<sep3>[^\:^\.^\-^\s^\d^a-z^A-Z])?(?P<port>[a-zA-Z0-9]+)?)",
+            interface_name.strip(),
+        )
         re_any = re.search(r".*", interface_name.strip())
         if isinstance(re_intf_short, re.Match):
 
@@ -4133,15 +4460,33 @@ class CiscoIOSXRInterface(object):
             "interface_class": _interface_class,
         }
         if debug is True:
-            logger.debug(f"    CiscoRange().parse_single_interface(): _prefix = '{_prefix}'")
-            logger.debug(f"    CiscoRange().parse_single_interface(): _digit_separator = '{_digit_separator}'")
-            logger.debug(f"    CiscoRange().parse_single_interface(): _slot = '{_slot}'")
-            logger.debug(f"    CiscoRange().parse_single_interface(): _card = '{_card}'")
-            logger.debug(f"    CiscoRange().parse_single_interface(): _processor = '{_processor}'")
-            logger.debug(f"    CiscoRange().parse_single_interface(): _port = '{_port}'")
-            logger.debug(f"    CiscoRange().parse_single_interface(): _subinterface = '{_subinterface}'")
-            logger.debug(f"    CiscoRange().parse_single_interface(): _channel = '{_channel}'")
-            logger.debug(f"    CiscoRange().parse_single_interface(): _interface_class = '{_interface_class}'")
+            logger.debug(
+                f"    CiscoRange().parse_single_interface(): _prefix = '{_prefix}'"
+            )
+            logger.debug(
+                f"    CiscoRange().parse_single_interface(): _digit_separator = '{_digit_separator}'"
+            )
+            logger.debug(
+                f"    CiscoRange().parse_single_interface(): _slot = '{_slot}'"
+            )
+            logger.debug(
+                f"    CiscoRange().parse_single_interface(): _card = '{_card}'"
+            )
+            logger.debug(
+                f"    CiscoRange().parse_single_interface(): _processor = '{_processor}'"
+            )
+            logger.debug(
+                f"    CiscoRange().parse_single_interface(): _port = '{_port}'"
+            )
+            logger.debug(
+                f"    CiscoRange().parse_single_interface(): _subinterface = '{_subinterface}'"
+            )
+            logger.debug(
+                f"    CiscoRange().parse_single_interface(): _channel = '{_channel}'"
+            )
+            logger.debug(
+                f"    CiscoRange().parse_single_interface(): _interface_class = '{_interface_class}'"
+            )
 
         if debug is True:
             logger.success(f"CiscoRange().parse_single_interface() returned {retval}")
@@ -4151,7 +4496,9 @@ class CiscoIOSXRInterface(object):
     @logger.catch(reraise=True)
     def check_interface_dict(self, interface_dict):
         if not isinstance(interface_dict, dict):
-            error = f"`interface_dict` must be a dict, but we got {type(interface_dict)}"
+            error = (
+                f"`interface_dict` must be a dict, but we got {type(interface_dict)}"
+            )
             logger.error(error)
             raise ValueError(error)
 
@@ -4161,7 +4508,16 @@ class CiscoIOSXRInterface(object):
             raise ValueError(error)
 
         for attr_name in set(interface_dict.keys()):
-            if attr_name not in {"prefix", "slot", "card", "port", "digit_separator", "subinterface", "channel", "interface_class"}:
+            if attr_name not in {
+                "prefix",
+                "slot",
+                "card",
+                "port",
+                "digit_separator",
+                "subinterface",
+                "channel",
+                "interface_class",
+            }:
                 error = f"'{attr_name}' is not a valid `attribute_dict` key"
                 logger.critical(error)
                 raise KeyError(error)
@@ -4188,7 +4544,9 @@ class CiscoIOSXRInterface(object):
             logger.critical(error)
             raise ValueError(error)
 
-        re_port_short = re.search(r"^\D*(?P<port>\d+)", groupdict_intf_short["port_subinterface_channel"])
+        re_port_short = re.search(
+            r"^\D*(?P<port>\d+)", groupdict_intf_short["port_subinterface_channel"]
+        )
         if isinstance(re_port_short, re.Match):
             groupdict_port_short = re_port_short.groupdict()
         else:
@@ -4196,8 +4554,10 @@ class CiscoIOSXRInterface(object):
             logger.error(error)
             raise NoRegexMatch(error)
 
-        _prefix = groupdict_intf_short.get("prefix", '').strip()
-        _slot_card_port_subinterface_channel = groupdict_intf_short["port_subinterface_channel"]
+        _prefix = groupdict_intf_short.get("prefix", "").strip()
+        _slot_card_port_subinterface_channel = groupdict_intf_short[
+            "port_subinterface_channel"
+        ]
         _sep1 = None
         _sep2 = None
         _sep3 = None
@@ -4207,19 +4567,26 @@ class CiscoIOSXRInterface(object):
         _port = groupdict_port_short["port"]
         _digit_separator = _sep1
 
-        re_subinterface = re.search(r"\.(?P<subinterface>\d+)", _slot_card_port_subinterface_channel)
+        re_subinterface = re.search(
+            r"\.(?P<subinterface>\d+)", _slot_card_port_subinterface_channel
+        )
         if isinstance(re_subinterface, re.Match):
             _subinterface = int(re_subinterface.groupdict()["subinterface"])
         else:
             _subinterface = None
 
-        re_channel = re.search(r"\:(?P<channel>\d+)", _slot_card_port_subinterface_channel)
+        re_channel = re.search(
+            r"\:(?P<channel>\d+)", _slot_card_port_subinterface_channel
+        )
         if isinstance(re_channel, re.Match):
             _channel = int(re_channel.groupdict()["channel"])
         else:
             _channel = None
 
-        re_interface_class = re.search(r"(?P<interface_class>\s+[a-zA-Z\-]+)$", _slot_card_port_subinterface_channel)
+        re_interface_class = re.search(
+            r"(?P<interface_class>\s+[a-zA-Z\-]+)$",
+            _slot_card_port_subinterface_channel,
+        )
         if isinstance(re_interface_class, re.Match):
             _interface_class = str(re_interface_class.groupdict()["interface_class"])
         else:
@@ -4259,17 +4626,19 @@ class CiscoIOSXRInterface(object):
             logger.error(error)
             raise ValueError(error)
 
-        _prefix = groupdict_intf_long.get("prefix", '').strip()
+        _prefix = groupdict_intf_long.get("prefix", "").strip()
         # Cisco IOS XR can have mixed number and letter interfaces, it's different than
         # Cisco IOS, example: MgmtEth0/RSP1/CPU0/0
         re_slot_card_port = re.search(
             r"^(?P<prefix>[a-zA-Z\-\s]*)(?P<slot_card_port_subinterface_channel>(?P<slot>[a-zA-Z0-9]+)(?P<sep1>[^\:^\.^\-^\s^\d^a-z^A-Z])?(?P<card>[a-zA-Z0-9]+)?(?P<sep2>[^\:^\.^\-^\s^\d^a-z^A-Z])?(?P<processor>[a-zA-Z0-9]+)?(?P<sep3>[^\:^\.^\-^\s^\d^a-z^A-Z])?(?P<port>[a-zA-Z0-9]+)?)",
-            groupdict_intf_long["slot_card_port_subinterface_channel"]
+            groupdict_intf_long["slot_card_port_subinterface_channel"],
         )
         if isinstance(re_slot_card_port, re.Match):
             groupdict_slot_card_port = re_slot_card_port.groupdict()
             if groupdict_intf_long["slot_card_port_subinterface_channel"] is not None:
-                _slot_card_port_subinterface_channel = groupdict_intf_long["slot_card_port_subinterface_channel"]
+                _slot_card_port_subinterface_channel = groupdict_intf_long[
+                    "slot_card_port_subinterface_channel"
+                ]
                 _prefix = groupdict_intf_long["prefix"]
                 _sep1 = groupdict_slot_card_port["sep1"]
                 _sep2 = groupdict_slot_card_port["sep2"]
@@ -4279,7 +4648,10 @@ class CiscoIOSXRInterface(object):
                 _processor = groupdict_slot_card_port["processor"]
                 _port = groupdict_slot_card_port["port"]
                 try:
-                    _interface_class = re.split(r"\s+", groupdict_intf_long["slot_card_port_subinterface_channel"])[1]
+                    _interface_class = re.split(
+                        r"\s+",
+                        groupdict_intf_long["slot_card_port_subinterface_channel"],
+                    )[1]
                 except BaseException:
                     _interface_class = None
 
@@ -4291,43 +4663,64 @@ class CiscoIOSXRInterface(object):
                     _card = None
 
                 if debug is True:
-                    logger.debug(f"    CiscoRange().parse_single_interface(): {groupdict_slot_card_port}")
+                    logger.debug(
+                        f"    CiscoRange().parse_single_interface(): {groupdict_slot_card_port}"
+                    )
                 if isinstance(_sep1, str) and _sep1 == _sep2 == _sep3:
                     _digit_separator = _sep1
                     if debug is True:
-                        logger.debug(f"    CiscoRange().parse_single_interface(): `_digit_separator` = '{_digit_separator}'`")
+                        logger.debug(
+                            f"    CiscoRange().parse_single_interface(): `_digit_separator` = '{_digit_separator}'`"
+                        )
                 elif isinstance(_sep1, str):
                     _digit_separator = _sep1
                     if debug is True:
-                        logger.debug(f"    CiscoRange().parse_single_interface(): `_digit_separator` = '{_digit_separator}'`")
+                        logger.debug(
+                            f"    CiscoRange().parse_single_interface(): `_digit_separator` = '{_digit_separator}'`"
+                        )
                 elif _sep1 is None and _sep2 is None and isinstance(_slot, str):
                     _digit_separator = None
                     if debug is True:
-                        logger.debug(f"    CiscoRange().parse_single_interface(): `_digit_separator` = '{_digit_separator}'`")
+                        logger.debug(
+                            f"    CiscoRange().parse_single_interface(): `_digit_separator` = '{_digit_separator}'`"
+                        )
                 elif _sep1 is None and _slot is None and _card is None:
                     _digit_separator = None
                     if debug is True:
-                        logger.debug(f"    CiscoRange().parse_single_interface(): `_digit_separator` = '{_digit_separator}'")
+                        logger.debug(
+                            f"    CiscoRange().parse_single_interface(): `_digit_separator` = '{_digit_separator}'"
+                        )
                 else:
-                    error = "CiscoIOSXRInterface() found a digit_separator inconsistency"
+                    error = (
+                        "CiscoIOSXRInterface() found a digit_separator inconsistency"
+                    )
                     logger.critical(error)
                     raise ValueError(error)
 
-                re_subinterface = re.search(r"\.(?P<subinterface>\d+)", _slot_card_port_subinterface_channel)
+                re_subinterface = re.search(
+                    r"\.(?P<subinterface>\d+)", _slot_card_port_subinterface_channel
+                )
                 if isinstance(re_subinterface, re.Match):
                     _subinterface = int(re_subinterface.groupdict()["subinterface"])
                 else:
                     _subinterface = None
 
-                re_channel = re.search(r"\:(?P<channel>\d+)", _slot_card_port_subinterface_channel)
+                re_channel = re.search(
+                    r"\:(?P<channel>\d+)", _slot_card_port_subinterface_channel
+                )
                 if isinstance(re_channel, re.Match):
                     _channel = int(re_channel.groupdict()["channel"])
                 else:
                     _channel = None
 
-                re_interface_class = re.search(r"(?P<interface_class>\s+[a-zA-Z\-]+)$", _slot_card_port_subinterface_channel)
+                re_interface_class = re.search(
+                    r"(?P<interface_class>\s+[a-zA-Z\-]+)$",
+                    _slot_card_port_subinterface_channel,
+                )
                 if isinstance(re_interface_class, re.Match):
-                    _interface_class = str(re_interface_class.groupdict()["interface_class"])
+                    _interface_class = str(
+                        re_interface_class.groupdict()["interface_class"]
+                    )
                 else:
                     _interface_class = self._interface_class
 
@@ -4420,7 +4813,13 @@ class CiscoIOSXRInterface(object):
     def __hash__(self):
         """Build a unique (and sortable) identifier based solely on slot / card / port / subinterface / channel numbers for the object instance"""
         # I am using __hash__() in __gt__() and __lt__()
-        return sum([(idx + 1)**ii for idx, ii in enumerate(self.sort_list) if isinstance(ii, int)])
+        return sum(
+            [
+                (idx + 1) ** ii
+                for idx, ii in enumerate(self.sort_list)
+                if isinstance(ii, int)
+            ]
+        )
 
     # This method is on CiscoIOSXRInterface()
     @logger.catch(reraise=True)
@@ -4433,7 +4832,9 @@ class CiscoIOSXRInterface(object):
         if self.subinterface is None and self.channel is None:
             return f"""{self.prefix}{self.number}{interface_class}"""
         elif isinstance(self.subinterface, int) and self.channel is None:
-            return f"""{self.prefix}{self.number}.{self.subinterface}{interface_class}"""
+            return (
+                f"""{self.prefix}{self.number}.{self.subinterface}{interface_class}"""
+            )
         elif self.subinterface is None and isinstance(self.channel, int):
             return f"""{self.prefix}{self.number}:{self.channel}{interface_class}"""
         else:
@@ -4481,20 +4882,42 @@ class CiscoIOSXRInterface(object):
 
         if self.initialized is True:
             # Shortcut invalid interface configurations...
-            if self.slot is None and self.card is None and self.processor is None and self.port is None:
+            if (
+                self.slot is None
+                and self.card is None
+                and self.processor is None
+                and self.port is None
+            ):
                 error = f"Could not parse into _number: _slot: {self._slot} _card: {self._card} _processor: {self._processor} _port: {self._port} _digit_separator: {self.digit_separator}"
                 logger.error(error)
                 # Use sys.exit(1) here to avoid infinite recursion during
                 #     pathological errors such as a dash in an interface range
-                logger.critical(f"Forced python sys.exit() from `CiscoIOSXRInterface(interface_name='{self.interface_name}').number`.  Manually calling sys.exit(99) on this failure to avoid infinite recursion during what should be a `raise ValueError()`; the infinite recursion might be a bug in a third-party library.")
+                logger.critical(
+                    f"Forced python sys.exit() from `CiscoIOSXRInterface(interface_name='{self.interface_name}').number`.  Manually calling sys.exit(99) on this failure to avoid infinite recursion during what should be a `raise ValueError()`; the infinite recursion might be a bug in a third-party library."
+                )
                 sys.exit(99)
 
             # Fix regex port parsing problems... relocate _slot and _card, as-required
-            if self._slot is None and self._card is None and self._processor is None and isinstance(self._port, (int, str)):
+            if (
+                self._slot is None
+                and self._card is None
+                and self._processor is None
+                and isinstance(self._port, (int, str))
+            ):
                 self._number = f"{self._port}"
-            elif isinstance(self._slot, (int, str)) and self._card is None and self._processor is None and isinstance(self._port, (int, str)):
+            elif (
+                isinstance(self._slot, (int, str))
+                and self._card is None
+                and self._processor is None
+                and isinstance(self._port, (int, str))
+            ):
                 self._number = f"{self._slot}{self.digit_separator}{self._port}"
-            elif isinstance(self._slot, (int, str)) and isinstance(self._card, (int, str)) and isinstance(self._processor, (int, str)) and isinstance(self._port, (int, str)):
+            elif (
+                isinstance(self._slot, (int, str))
+                and isinstance(self._card, (int, str))
+                and isinstance(self._processor, (int, str))
+                and isinstance(self._port, (int, str))
+            ):
                 self._number = f"{self._slot}{self.digit_separator}{self._card}{self.digit_separator}{self.processor}{self.digit_separator}{self._port}"
             else:
                 error = f"Could not parse into _number: _slot: {self._slot} _card: {self._card} _processor: {self._processor} _port: {self._port} _digit_separator: {self.digit_separator}"
@@ -4554,22 +4977,56 @@ class CiscoIOSXRInterface(object):
     @property
     @logger.catch(reraise=True)
     def slot_card_port_subinterface_channel(self):
-        ""
+        """"""
 
         if self.interface_class is None:
             _interface_class = ""
         else:
             _interface_class = f" {self.interface_class.strip()}"
 
-        if isinstance(self.digit_separator, str) and isinstance(self.slot, (int, str)) and isinstance(self.card, (int, str)) and isinstance(self.port, (int, str)) and isinstance(self.subinterface, (int, str)) and isinstance(self.channel, (int, str)):
+        if (
+            isinstance(self.digit_separator, str)
+            and isinstance(self.slot, (int, str))
+            and isinstance(self.card, (int, str))
+            and isinstance(self.port, (int, str))
+            and isinstance(self.subinterface, (int, str))
+            and isinstance(self.channel, (int, str))
+        ):
             return f"{self.slot}{self.digit_separator}{self.card}{self.digit_separator}{self.port}.{self.subinterface}:{self.channel}{_interface_class}"
-        elif isinstance(self.digit_separator, str) and isinstance(self.slot, (int, str)) and isinstance(self.card, (int, str)) and isinstance(self.port, (int, str)) and isinstance(self.subinterface, (int, str)) and self.channel is None:
+        elif (
+            isinstance(self.digit_separator, str)
+            and isinstance(self.slot, (int, str))
+            and isinstance(self.card, (int, str))
+            and isinstance(self.port, (int, str))
+            and isinstance(self.subinterface, (int, str))
+            and self.channel is None
+        ):
             return f"{self.slot}{self.digit_separator}{self.card}{self.digit_separator}{self.port}.{self.subinterface}{_interface_class}"
-        elif isinstance(self.digit_separator, str) and isinstance(self.slot, (int, str)) and isinstance(self.card, (int, str)) and isinstance(self.port, (int, str)) and self.subinterface is None and self.channel is None:
+        elif (
+            isinstance(self.digit_separator, str)
+            and isinstance(self.slot, (int, str))
+            and isinstance(self.card, (int, str))
+            and isinstance(self.port, (int, str))
+            and self.subinterface is None
+            and self.channel is None
+        ):
             return f"{self.slot}{self.digit_separator}{self.card}{self.digit_separator}{self.port}{_interface_class}"
-        elif isinstance(self.digit_separator, str) and isinstance(self.slot, (int, str)) and self.card is None and isinstance(self.port, (int, str)) and self.subinterface is None and self.channel is None:
+        elif (
+            isinstance(self.digit_separator, str)
+            and isinstance(self.slot, (int, str))
+            and self.card is None
+            and isinstance(self.port, (int, str))
+            and self.subinterface is None
+            and self.channel is None
+        ):
             return f"{self.slot}{self.digit_separator}{self.port}{_interface_class}"
-        elif self.slot is None and self.card is None and isinstance(self.port, (int, str)) and self.subinterface is None and self.channel is None:
+        elif (
+            self.slot is None
+            and self.card is None
+            and isinstance(self.port, (int, str))
+            and self.subinterface is None
+            and self.channel is None
+        ):
             return f"{self.port}{_interface_class}"
         else:
             error = "Could not construct a return value for CiscoIOSXRInterface().slot_card_port_subinterface_channel.  digit_separator: {self.digit_separator} sort_list: {self.sort_list}"
@@ -4754,12 +5211,11 @@ class CiscoIOSXRInterface(object):
 class CiscoRange(UserList):
     # Set up default attributes on the object...
     data: Any = None
-    text: str = None
     result_type: Callable = None
     default_iter_attr: str = None
     reverse: bool = None
-    begin_obj: Union[CiscoIOSInterface,CiscoIOSXRInterface] = None
-    this_obj: Union[CiscoIOSInterface,CiscoIOSXRInterface] = None
+    begin_obj: Union[CiscoIOSInterface, CiscoIOSXRInterface] = None
+    this_obj: Union[CiscoIOSInterface, CiscoIOSXRInterface] = None
     iterate_attribute: int = None
     range_str: str = None
     """Explode Cisco ranges into a list of explicit items... examples below...
@@ -4787,7 +5243,15 @@ class CiscoRange(UserList):
 
     # This method is on CiscoRange()
     @logger.catch(reraise=True)
-    def __init__(self, text="", result_type=str, empty=False, default_iter_attr='port', reverse=False, debug=False):
+    def __init__(
+        self,
+        text="",
+        result_type=str,
+        empty=False,
+        default_iter_attr="port",
+        reverse=False,
+        debug=False,
+    ):
         # Use this with UserList() instead of super()
         UserList.__init__(self)
 
@@ -4804,17 +5268,26 @@ class CiscoRange(UserList):
             raise InvalidCiscoRange(error)
 
         # Ensure that result_type is in the set of valid_result_types...
-        valid_result_types = {str, int, float, None, CiscoIOSInterface, CiscoIOSXRInterface}
+        valid_result_types = {
+            str,
+            int,
+            float,
+            None,
+            CiscoIOSInterface,
+            CiscoIOSXRInterface,
+        }
         if result_type not in valid_result_types:
             error = f'CiscoRange(text="{text}", result_type={result_type}) [text: {type(text)}] is not a valid result_type.  Choose from {valid_result_types}'
             logger.critical(error)
             raise InvalidCiscoRange(error)
 
         if debug is True:
-            logger.info(f"CiscoRange(text=`{text}`, debug=True) [text: {type(text)}] was called.")
+            logger.info(
+                f"CiscoRange(text=`{text}`, debug=True) [text: {type(text)}] was called."
+            )
             logger.info(f"CiscoRange() for --> text: {text} <--")
 
-        self.text = text
+        self.data = []
         self.result_type = result_type
         self.default_iter_attr = default_iter_attr
         self.reverse = reverse
@@ -4823,15 +5296,19 @@ class CiscoRange(UserList):
         self.iterate_attribute = None
         if isinstance(text, str) or empty is False:
             if result_type is None:
-                self.data = self.parse_cisco_interfaces(text, result_type=CiscoIOSInterface, debug=debug)
+                self.data = self.parse_cisco_interfaces(
+                    text, result_type=CiscoIOSInterface, debug=debug
+                )
             elif result_type is CiscoIOSInterface:
-                self.data = self.parse_cisco_interfaces(text, result_type=CiscoIOSInterface, debug=debug)
+                self.data = self.parse_cisco_interfaces(
+                    text, result_type=CiscoIOSInterface, debug=debug
+                )
             elif result_type is CiscoIOSXRInterface:
-                self.data = self.parse_cisco_interfaces(text, result_type=CiscoIOSXRInterface, debug=debug)
+                self.data = self.parse_cisco_interfaces(
+                    text, result_type=CiscoIOSXRInterface, debug=debug
+                )
             elif result_type is int:
                 self.data = self.parse_integers(text, debug=debug)
-            elif result_type is float:
-                self.data = self.parse_floats(text, debug=debug)
             elif result_type is str:
                 self.data = self.parse_strings(text, debug=debug)
         else:
@@ -4850,9 +5327,13 @@ class CiscoRange(UserList):
                     # Append a whole range of interfaces...
                     begin_ordinal = int(_csv_part.split("-")[0].strip())
                     end_ordinal = int(_csv_part.split("-")[1].strip())
-                    end_ordinal = int("".join(filter(str.isdigit, _csv_part.split("-")[1].strip())))
+                    end_ordinal = int(
+                        "".join(filter(str.isdigit, _csv_part.split("-")[1].strip()))
+                    )
                     if debug is True:
-                        logger.info(f"CiscoRange(text={text}, debug=True) : end_ordinal={end_ordinal}")
+                        logger.info(
+                            f"CiscoRange(text={text}, debug=True) : end_ordinal={end_ordinal}"
+                        )
                 else:
                     error = f"Could not divide {_csv_part} into integer components"
                     logger.error(error)
@@ -4861,7 +5342,9 @@ class CiscoRange(UserList):
                 begin_ordinal = int(_csv_part)
                 end_ordinal = None
                 if debug is True:
-                    logger.info(f"CiscoRange(text={text}, debug=True) : end_ordinal={end_ordinal}")
+                    logger.info(
+                        f"CiscoRange(text={text}, debug=True) : end_ordinal={end_ordinal}"
+                    )
             ##############################################################
             # Handle incrementing channel numbers
             ##############################################################
@@ -4870,14 +5353,18 @@ class CiscoRange(UserList):
                     # Use deepcopy to avoid problems with the same object
                     #     instance appended multiple times
                     if debug is True:
-                        logger.info(f"    idx: {idx} at point01, Appending {ii}{os.linesep}")
+                        logger.info(
+                            f"    idx: {idx} at point01, Appending {ii}{os.linesep}"
+                        )
                     # WAS DEEPCOPY
                     integers.append(int(ii))
                     continue
             else:
                 # Append a single integer
                 if debug is True:
-                    logger.info(f"    idx: {idx} at point02, Appending {self.this_obj}{os.linesep}")
+                    logger.info(
+                        f"    idx: {idx} at point02, Appending {self.this_obj}{os.linesep}"
+                    )
                 # WAS DEEPCOPY
                 integers.append(int(begin_ordinal))
                 continue
@@ -4890,13 +5377,9 @@ class CiscoRange(UserList):
     def parse_strings(self, text, debug=False):
         """Parse text input to CiscoRange(), such as CiscoRange('1-5,7', result_type=None).  '1-5,7 will be parsed.  By default, CiscoIOSInterface() instances are used when CiscoRange(result_type=None) is parsed.'  An error is raised if the CiscoRange() cannot be parsed"""
         self.result_type = str
-        return self.parse_cisco_interfaces(text=text, result_type=self.result_type, debug=debug)
-
-    # This method is on CiscoRange()
-    @logger.catch(reraise=True)
-    def parse_floats(self, text, debug=False):
-        self.result_type = float
-        raise NotImplementedError("parse_floats() is not yet supported")
+        return self.parse_cisco_interfaces(
+            text=text, result_type=self.result_type, debug=debug
+        )
 
     # This method is on CiscoRange()
     @logger.catch(reraise=True)
@@ -4915,7 +5398,9 @@ class CiscoRange(UserList):
         for idx, _csv_part in enumerate(csv_parts):
 
             if debug is True:
-                logger.info(f"    CiscoRange() idx: {idx} for --> _csv_part: {_csv_part} <--")
+                logger.info(
+                    f"    CiscoRange() idx: {idx} for --> _csv_part: {_csv_part} <--"
+                )
 
             ##################################################################
             # Build base instances of begin_obj and this_obj
@@ -4924,14 +5409,16 @@ class CiscoRange(UserList):
                 # Set the begin_obj...
                 begin_obj = _result_type(_csv_part.split("-")[0])
                 self.begin_obj = begin_obj
-                self.this_obj = _result_type(interface_dict=begin_obj.as_dict(), debug=debug)
+                self.this_obj = _result_type(
+                    interface_dict=begin_obj.as_dict(), debug=debug
+                )
                 intf_dict = begin_obj.as_dict()
 
                 ##############################################################
                 # Manually add interface class because begin_obj won't see
                 #   it by default: 'multipoint' in 'Serial1/0-5 multipoint'
                 ##############################################################
-                if "".join(filter(str.isdigit, text.split()[-1])) == '':
+                if "".join(filter(str.isdigit, text.split()[-1])) == "":
                     # if there are no digits in the last word, that's an
                     # interface_class...
                     _interface_class = text.split()[-1]
@@ -4954,27 +5441,55 @@ class CiscoRange(UserList):
             # Walk all possible attributes to find which target_attribute
             #     we're iterating on...
             ##################################################################
-            for potential_iter_attr in ['channel', 'subinterface', 'port', 'card', 'slot']:
+            for potential_iter_attr in [
+                "channel",
+                "subinterface",
+                "port",
+                "card",
+                "slot",
+            ]:
                 if isinstance(getattr(begin_obj, potential_iter_attr), int):
                     self.iterate_attribute = potential_iter_attr
                     break
 
             if self.iterate_attribute is None:
                 if debug is True:
-                    logger.warning(f"CiscoRange() set `iterate_attribute` to the default of {self.default_iter_attr}")
+                    logger.warning(
+                        f"CiscoRange() set `iterate_attribute` to the default of {self.default_iter_attr}"
+                    )
                 self.iterate_attribute = self.default_iter_attr
 
             if idx > 0:
-                if self.iterate_attribute == 'channel' and isinstance(begin_obj.channel, int):
-                    self.this_obj.channel = _result_type(_csv_part.split("-")[0].strip(), debug=debug).channel
-                elif self.iterate_attribute == 'subinterface' and isinstance(begin_obj.subinterface, int):
-                    self.this_obj.subinterface = _result_type(_csv_part.split("-")[0].strip(), debug=debug).subinterface
-                elif self.iterate_attribute == 'port' and isinstance(begin_obj.port, int):
-                    self.this_obj.port = _result_type(_csv_part.split("-")[0].strip(), debug=debug).port
-                elif self.iterate_attribute == 'card' and isinstance(begin_obj.card, int):
-                    self.this_obj.card = _result_type(_csv_part.split("-")[0].strip(), debug=debug).card
-                elif self.iterate_attribute == 'slot' and isinstance(begin_obj.card, int):
-                    self.this_obj.slot = _result_type(_csv_part.split("-")[0].strip(), debug=debug).slot
+                if self.iterate_attribute == "channel" and isinstance(
+                    begin_obj.channel, int
+                ):
+                    self.this_obj.channel = _result_type(
+                        _csv_part.split("-")[0].strip(), debug=debug
+                    ).channel
+                elif self.iterate_attribute == "subinterface" and isinstance(
+                    begin_obj.subinterface, int
+                ):
+                    self.this_obj.subinterface = _result_type(
+                        _csv_part.split("-")[0].strip(), debug=debug
+                    ).subinterface
+                elif self.iterate_attribute == "port" and isinstance(
+                    begin_obj.port, int
+                ):
+                    self.this_obj.port = _result_type(
+                        _csv_part.split("-")[0].strip(), debug=debug
+                    ).port
+                elif self.iterate_attribute == "card" and isinstance(
+                    begin_obj.card, int
+                ):
+                    self.this_obj.card = _result_type(
+                        _csv_part.split("-")[0].strip(), debug=debug
+                    ).card
+                elif self.iterate_attribute == "slot" and isinstance(
+                    begin_obj.card, int
+                ):
+                    self.this_obj.slot = _result_type(
+                        _csv_part.split("-")[0].strip(), debug=debug
+                    ).slot
                 else:
                     raise NotImplementedError()
 
@@ -4986,12 +5501,22 @@ class CiscoRange(UserList):
             #
             ##################################################################
             if debug is True:
-                logger.info(f"    CiscoRange(text={text}, debug=True) _csv_part: {_csv_part}")
-                logger.info(f"    CiscoRange(text={text}, debug=True)     iterate_attribute: {self.iterate_attribute}")
-                logger.debug(f"    CiscoRange(text={text}, debug=True)     begin_obj: {begin_obj}{os.linesep}")
-                logger.debug(f"    CiscoRange(text={text}, debug=True)     this_obj: {self.this_obj}")
+                logger.info(
+                    f"    CiscoRange(text={text}, debug=True) _csv_part: {_csv_part}"
+                )
+                logger.info(
+                    f"    CiscoRange(text={text}, debug=True)     iterate_attribute: {self.iterate_attribute}"
+                )
+                logger.debug(
+                    f"    CiscoRange(text={text}, debug=True)     begin_obj: {begin_obj}{os.linesep}"
+                )
+                logger.debug(
+                    f"    CiscoRange(text={text}, debug=True)     this_obj: {self.this_obj}"
+                )
 
             # Set the end_ordinal... keep this separate from begin_obj logic...
+            begin_ordinal = None
+            end_ordinal = None
             if self.iterate_attribute is None:
                 raise ValueError()
             if "-" in _csv_part:
@@ -5001,9 +5526,13 @@ class CiscoRange(UserList):
                     begin_ordinal = getattr(obj, self.iterate_attribute)
                     # parse end_ordinal from 'Eth1/2-4 multipoint'
                     #     ref: https://stackoverflow.com/a/1450900
-                    end_ordinal = int("".join(filter(str.isdigit, _csv_part.split("-")[1].strip())))
+                    end_ordinal = int(
+                        "".join(filter(str.isdigit, _csv_part.split("-")[1].strip()))
+                    )
                     if debug is True:
-                        logger.info(f"CiscoRange(text={text}, debug=True) : end_ordinal={end_ordinal}")
+                        logger.info(
+                            f"CiscoRange(text={text}, debug=True) : end_ordinal={end_ordinal}"
+                        )
                 else:
                     error = f"Could not divide {_csv_part} into interface components"
                     logger.error(error)
@@ -5011,12 +5540,18 @@ class CiscoRange(UserList):
             else:
                 end_ordinal = None
                 if debug is True:
-                    logger.info(f"CiscoRange(text={text}, debug=True) : end_ordinal={end_ordinal}")
+                    logger.info(
+                        f"CiscoRange(text={text}, debug=True) : end_ordinal={end_ordinal}"
+                    )
 
             if debug is True:
-                logger.debug(f"    CiscoRange(text={text}, debug=True) [begin_obj: {type(self.begin_obj)}]    end_ordinal: {end_ordinal}")
+                logger.debug(
+                    f"    CiscoRange(text={text}, debug=True) [begin_obj: {type(self.begin_obj)}]    end_ordinal: {end_ordinal}"
+                )
 
-            if self.iterate_attribute == 'channel' and isinstance(begin_obj.channel, int):
+            if self.iterate_attribute == "channel" and isinstance(
+                begin_obj.channel, int
+            ):
                 ##############################################################
                 # Handle incrementing channel numbers
                 ##############################################################
@@ -5024,23 +5559,31 @@ class CiscoRange(UserList):
                     iter_dict = self.this_obj.as_dict()
                     for ii in range(begin_ordinal, end_ordinal + 1):
                         if debug is True:
-                            logger.debug(f"    idx: {idx} at point01,     set channel: {ii}")
+                            logger.debug(
+                                f"    idx: {idx} at point01,     set channel: {ii}"
+                            )
                         iter_dict["channel"] = ii
                         # Use deepcopy to avoid problems with the same object
                         #     instance appended multiple times
                         if debug is True:
-                            logger.info(f"    idx: {idx} at point02, Appending {self.this_obj}{os.linesep}")
+                            logger.info(
+                                f"    idx: {idx} at point02, Appending {self.this_obj}{os.linesep}"
+                            )
                         # WAS DEEPCOPY
                         expanded_interfaces.append(self.this_obj.from_dict(iter_dict))
                         continue
                 else:
                     # Append a single interface
                     if debug is True:
-                        logger.info(f"    idx: {idx} at point03, Appending {self.this_obj}{os.linesep}")
+                        logger.info(
+                            f"    idx: {idx} at point03, Appending {self.this_obj}{os.linesep}"
+                        )
                     # WAS DEEPCOPY
                     expanded_interfaces.append(copy.deepcopy(self.this_obj))
                     continue
-            elif self.iterate_attribute == 'subinterface' and isinstance(begin_obj.subinterface, int):
+            elif self.iterate_attribute == "subinterface" and isinstance(
+                begin_obj.subinterface, int
+            ):
                 ##############################################################
                 # Handle incrementing subinterface numbers
                 ##############################################################
@@ -5048,21 +5591,27 @@ class CiscoRange(UserList):
                     iter_dict = self.this_obj.as_dict()
                     for ii in range(begin_ordinal, end_ordinal + 1):
                         if debug is True:
-                            logger.debug(f"    idx: {idx} at point04,     set subinterface: {ii}")
+                            logger.debug(
+                                f"    idx: {idx} at point04,     set subinterface: {ii}"
+                            )
                         iter_dict["subinterface"] = ii
                         # Use deepcopy to avoid problems with the same object
                         #     instance appended multiple times
                         if debug is True:
-                            logger.info(f"    idx: {idx} at point05, Appending {self.this_obj}{os.linesep}")
+                            logger.info(
+                                f"    idx: {idx} at point05, Appending {self.this_obj}{os.linesep}"
+                            )
                         expanded_interfaces.append(self.this_obj.from_dict(iter_dict))
                         continue
                 else:
                     # Append a single interface
                     if debug is True:
-                        logger.info(f"    idx: {idx} at point06, Appending {self.this_obj}{os.linesep}")
+                        logger.info(
+                            f"    idx: {idx} at point06, Appending {self.this_obj}{os.linesep}"
+                        )
                     expanded_interfaces.append(self.this_obj)
                     continue
-            elif self.iterate_attribute == 'port' and isinstance(begin_obj.port, int):
+            elif self.iterate_attribute == "port" and isinstance(begin_obj.port, int):
                 ##############################################################
                 # Handle incrementing port numbers
                 ##############################################################
@@ -5070,22 +5619,28 @@ class CiscoRange(UserList):
                     iter_dict = self.this_obj.as_dict()
                     for ii in range(begin_ordinal, end_ordinal + 1):
                         if debug is True:
-                            logger.debug(f"    idx: {idx} at point07,     set subinterface: {ii}")
+                            logger.debug(
+                                f"    idx: {idx} at point07,     set subinterface: {ii}"
+                            )
                         iter_dict["port"] = ii
                         # Use deepcopy to avoid problems with the same object
                         #     instance appended multiple times
                         if debug is True:
-                            logger.info(f"    idx: {idx} at point08, Appending {self.this_obj}{os.linesep}")
+                            logger.info(
+                                f"    idx: {idx} at point08, Appending {self.this_obj}{os.linesep}"
+                            )
                         expanded_interfaces.append(self.this_obj.from_dict(iter_dict))
                         continue
                 else:
                     # Append a single interface
                     if debug is True:
-                        logger.info(f"    idx: {idx} at point09, Appending {self.this_obj}{os.linesep}")
+                        logger.info(
+                            f"    idx: {idx} at point09, Appending {self.this_obj}{os.linesep}"
+                        )
                     expanded_interfaces.append(self.this_obj)
                     continue
 
-            elif self.iterate_attribute == 'card' and isinstance(begin_obj.card, int):
+            elif self.iterate_attribute == "card" and isinstance(begin_obj.card, int):
                 ##############################################################
                 # Handle incrementing port numbers
                 ##############################################################
@@ -5093,22 +5648,28 @@ class CiscoRange(UserList):
                     iter_dict = self.this_obj.as_dict()
                     for ii in range(begin_ordinal, end_ordinal + 1):
                         if debug is True:
-                            logger.debug(f"    idx: {idx} at point10,     set subinterface: {ii}")
+                            logger.debug(
+                                f"    idx: {idx} at point10,     set subinterface: {ii}"
+                            )
                         iter_dict["card"] = ii
                         # Use deepcopy to avoid problems with the same object
                         #     instance appended multiple times
                         if debug is True:
-                            logger.info(f"    idx: {idx} at point11, Appending {self.this_obj}{os.linesep}")
+                            logger.info(
+                                f"    idx: {idx} at point11, Appending {self.this_obj}{os.linesep}"
+                            )
                         expanded_interfaces.append(self.this_obj.from_dict(iter_dict))
                         continue
                 else:
                     # Append a single interface
                     if debug is True:
-                        logger.info(f"    idx: {idx} at point12, Appending {self.this_obj}{os.linesep}")
+                        logger.info(
+                            f"    idx: {idx} at point12, Appending {self.this_obj}{os.linesep}"
+                        )
                     expanded_interfaces.append(self.this_obj)
                     continue
 
-            elif self.iterate_attribute == 'slot' and isinstance(begin_obj.slot, int):
+            elif self.iterate_attribute == "slot" and isinstance(begin_obj.slot, int):
                 ##############################################################
                 # Handle incrementing port numbers
                 ##############################################################
@@ -5116,18 +5677,24 @@ class CiscoRange(UserList):
                     iter_dict = self.this_obj.as_dict()
                     for ii in range(begin_ordinal, end_ordinal + 1):
                         if debug is True:
-                            logger.debug(f"    idx: {idx} at point13,     set subinterface: {ii}")
+                            logger.debug(
+                                f"    idx: {idx} at point13,     set subinterface: {ii}"
+                            )
                         iter_dict["slot"] = ii
                         # Use deepcopy to avoid problems with the same object
                         #     instance appended multiple times
                         if debug is True:
-                            logger.info(f"    idx: {idx} at point14, Appending {self.this_obj}{os.linesep}")
+                            logger.info(
+                                f"    idx: {idx} at point14, Appending {self.this_obj}{os.linesep}"
+                            )
                         expanded_interfaces.append(self.this_obj.from_dict(iter_dict))
                         continue
                 else:
                     # Append a single interface
                     if debug is True:
-                        logger.info(f"    idx: {idx} at point15, Appending {self.this_obj}{os.linesep}")
+                        logger.info(
+                            f"    idx: {idx} at point15, Appending {self.this_obj}{os.linesep}"
+                        )
                     expanded_interfaces.append(self.this_obj)
                     continue
 
@@ -5148,10 +5715,16 @@ class CiscoRange(UserList):
         _expanded_interfaces = expanded_interfaces
         _expanded_interfaces = list(set(_expanded_interfaces))
         if False:
-            retval = sorted(_expanded_interfaces, key=lambda x: x.sort_list, reverse=self.reverse)
-        retval = self.attribute_sort(_expanded_interfaces, attribute="sort_list", reverse=False)
+            retval = sorted(
+                _expanded_interfaces, key=lambda x: x.sort_list, reverse=self.reverse
+            )
+        retval = self.attribute_sort(
+            _expanded_interfaces, attribute="sort_list", reverse=False
+        )
         if debug is True:
-            logger.info(f"CiscoRange(text='{self.text}', debug=True) [begin_obj: {type(self.begin_obj)}] returning: {retval}")
+            logger.info(
+                f"CiscoRange(text='{self.text}', debug=True) [begin_obj: {type(self.begin_obj)}] returning: {retval}"
+            )
         return retval
 
     # This method is on CiscoRange()
@@ -5182,7 +5755,7 @@ class CiscoRange(UserList):
     def __repr__(self):
         """Return a formal string representation of this CiscoRange() object."""
         if len(self.data) > 0:
-            return f"""<CiscoRange {self.__str__()} members: {self.member_type}>"""
+            return f"""<CiscoRange {self.as_compressed_str()} members: {self.member_type}>"""
         else:
             return f"""<CiscoRange [] result_type: {self.result_type}>"""
 
@@ -5237,7 +5810,7 @@ class CiscoRange(UserList):
             self.data = sorted(set(self.data))
             return self
         else:
-            error = f'`{other}` must be a CiscoRange() instance; the received argument was {type(other)} instead of a CiscoRange()'
+            error = f"`{other}` must be a CiscoRange() instance; the received argument was {type(other)} instead of a CiscoRange()"
             logger.error(error)
             raise InvalidCiscoRange(error)
 
@@ -5251,7 +5824,7 @@ class CiscoRange(UserList):
                     pass
             return self
         else:
-            error = f'`{other}` must be a CiscoRange() instance; the received argument was {type(other)} instead of a CiscoRange()'
+            error = f"`{other}` must be a CiscoRange() instance; the received argument was {type(other)} instead of a CiscoRange()"
             logger.error(error)
             raise InvalidCiscoRange(error)
 
@@ -5270,15 +5843,23 @@ class CiscoRange(UserList):
         else:
             if len(target_list) > 0:
                 if isinstance(target_list, list):
-                    if isinstance(target_list[0], (CiscoIOSInterface, CiscoIOSXRInterface)):
+                    if isinstance(
+                        target_list[0], (CiscoIOSInterface, CiscoIOSXRInterface)
+                    ):
                         # Sort CiscoIOSInterface() or CiscoIOSXRInterface members
-                        new_list = sorted(target_list, key=lambda x: getattr(x, attribute), reverse=reverse)
+                        new_list = sorted(
+                            target_list,
+                            key=lambda x: getattr(x, attribute),
+                            reverse=reverse,
+                        )
                     elif isinstance(target_list[0], (int, float)):
                         # Sort int or float members
                         new_list = sorted(target_list, reverse=reverse)
                     elif isinstance(target_list[0], str):
                         # Sort int or string members containing an int
-                        new_list = sorted(target_list, key=lambda x: int(x), reverse=reverse)
+                        new_list = sorted(
+                            target_list, key=lambda x: int(x), reverse=reverse
+                        )
                     else:
                         error = f"CiscoRange() member {target_list[0]} {type(target_list[0])} was an unhandled member type."
                 else:
@@ -5291,29 +5872,31 @@ class CiscoRange(UserList):
 
     # This method is on CiscoRange()
     @property
-    @logger.catch(reraise=True)
-    def member_type(self):
+    def member_type(self) -> type:
         """Return the member type of this CiscoRange().  The type is always based off the first member"""
+
         if len(self.data) > 0:
             return type(self.data[0])
         else:
-            error = "An empty CiscoRange() has no type"
-            logger.critical(error)
-            raise UntypedError(error)
+            return None
 
     # This method is on CiscoRange()
     @logger.catch(reraise=True)
-    def append(self, val, sort=True, ignore_errors=False, debug=False):
+    def append(self, val, sort=True, ignore_errors=False):
         """Append a member which matches the type of CiscoRange()._list[0]."""
 
         arg_type = type(val)
-        if len(self.data) > 0 and arg_type is not type(self.data[0]) and ignore_errors is False:
-            error = f'Requested to append {val} {type(val)}; however, CiscoRange() expected {self.member_type}'
+        if (
+            len(self.data) > 0
+            and arg_type is not type(self.data[0])
+            and ignore_errors is False
+        ):
+            error = f"Requested to append {val} {type(val)}; however, CiscoRange() expected {self.member_type}"
             logger.error(error)
             raise MismatchedType(error)
 
         if val in self.data and ignore_errors is False:
-            error = f'Requested to append {val} {type(val)}; however, CiscoRange() already contains {val}'
+            error = f"Requested to append {val} {type(val)}; however, CiscoRange() already contains {val}"
             logger.error(error)
             raise DuplicateMember(error)
 
@@ -5323,40 +5906,61 @@ class CiscoRange(UserList):
         try:
             # Append to the list intelligently (accounting for types...)
             if len(self.data) > 0 and self.member_type is not None:
-                new_list.append(self.member_type(val))
+                new_list.append(self.result_type(val))
             elif len(self.data) == 0 and self.result_type is not None:
                 new_list.append(self.result_type(val))
             else:
                 new_list.append(val)
 
             if sort is True:
-                retval = self.attribute_sort(new_list, attribute="sort_list", reverse=False)
+                retval = self.attribute_sort(
+                    new_list, attribute="sort_list", reverse=False
+                )
             else:
                 retval = new_list
             self.data = retval
         except DuplicateMember:
             if ignore_errors is True:
-                logger.debug(f"CiscoRange().append({val}) was skipped because {val} already exists in this CiscoRange()")
+                logger.debug(
+                    f"CiscoRange().append({val}) was skipped because {val} already exists in this CiscoRange()"
+                )
         except Exception as eee:
-            logger.warning(f"CiscoRange().append({val}) was skipped because of an error: {eee}")
+            logger.warning(
+                f"CiscoRange().append({val}) was skipped because of an error: {eee}"
+            )
 
         return self
 
-    # This method is on CiscoRange()
-    @logger.catch(reraise=True)
-    def insert(self, idx, val, sort=True):
-        """CiscoRange().insert() is disabled because it currently generates a stackoverflow.  Use CiscoRange().append() instead."""
-        raise NotImplementedError()
+    @property
+    def text(self) -> str:
+        if len(self.data) > 0:
+            return self.as_compressed_str()
+        else:
+            return ""
 
     # This method is on CiscoRange()
     @logger.catch(reraise=True)
-    def remove(self, arg, ignore_errors=False, debug=False):
+    def insert(self, i, item, sort=True):
+        """Insert a member in the CiscoRange()"""
+
+        if self.result_type is None:
+            result_type = type(self.data[0])
+        else:
+            result_type = self.result_type
+
+        self.data.insert(i, result_type(item))
+        if sort:
+            self.data.sort()
+
+    # This method is on CiscoRange()
+    @logger.catch(reraise=True)
+    def remove(self, item, ignore_errors=False, debug=False):
         length_before = len(self.data)
         # WAS DEEPCOPY
         list_before = copy.deepcopy(self.data)
 
-        # Ignore absent arg if ignore_errors is True
-        if arg not in self.data and ignore_errors is True:
+        # Ignore absent item if ignore_errors is True
+        if item not in self.data and ignore_errors is True:
             new_list = self.data
             if len(self.data) > 0:
                 result_type = type(self.data[0])
@@ -5367,26 +5971,35 @@ class CiscoRange(UserList):
 
             # Try removing some common result types...
             for result_type in [None, int, str, float, 0]:
+
                 if len(self.data) > 0 and result_type is not type(self.data[0]):
                     # Skip this result_type...
                     continue
-                elif result_type == 0:
+
+                if result_type == 0:
                     # Explicitly handle inability to detect type dynamically...
-                    error = f"CiscoRange().remove({arg}) arg type: {type(arg)} does not match type: {self.member_type} of this CiscoRange(): {self}"
+                    error = f"CiscoRange().remove({item}) item type: {type(item)} does not match type: {self.member_type} of this CiscoRange(): {self}"
                     logger.error(error)
                     raise MismatchedType(error)
-                elif result_type is None:
+
+                if result_type is None:
                     # These are CiscoIOSInterface() or CiscoIOSXRInterface()
-                    new_list = [CiscoIOSInterface(ii) for ii in list_before if ii != arg]
+                    new_list = [
+                        CiscoIOSInterface(ii) for ii in list_before if ii != item
+                    ]
                 elif isinstance(result_type, (CiscoIOSInterface, CiscoIOSXRInterface)):
                     # These are CiscoIOSInterface() or CiscoIOSXRInterface()
-                    new_list = [result_type(ii) for ii in list_before if ii != arg]
+                    new_list = [result_type(ii) for ii in list_before if ii != item]
                 else:
                     try:
-                        new_list = [result_type(ii) for ii in list_before if result_type(ii) != result_type(arg)]
+                        new_list = [
+                            result_type(ii)
+                            for ii in list_before
+                            if result_type(ii) != result_type(item)
+                        ]
                     except TypeError:
                         if debug is True:
-                            error = f"CiscoRange().remove() found type mismatch: {arg}"
+                            error = f"CiscoRange().remove() found type mismatch: {item}"
                             logger.debug(error)
 
                 # Break if the remove() was successful, above...
@@ -5398,18 +6011,21 @@ class CiscoRange(UserList):
         if len(new_list) == length_before:
             if len(self.data) > 0 and result_type is not type(self.data[0]):
                 # Do a simple type check to see if typing is the problem...
-                error = f"CiscoRange().remove() could not remove {arg} {type(arg)} from this CiscoRange(); existing members are type {type(self.data[0])}"
+                error = f"CiscoRange().remove() could not remove {item} {type(item)} from this CiscoRange(); existing members are type {type(self.data[0])}"
                 logger.error(error)
                 raise MismatchedType(error)
-            elif len(self.data) == 0:
+
+            if len(self.data) == 0:
                 if ignore_errors is not True:
-                    error = "CiscoRange().remove() cannot remove from an empty CiscoRange()"
+                    error = (
+                        "CiscoRange().remove() cannot remove from an empty CiscoRange()"
+                    )
                     logger.critical(error)
                     raise InvalidMember(error)
             else:
                 # Otherwise, flag the problem as an invalid member...
                 if ignore_errors is not True:
-                    error = f"CiscoRange().remove() could not find {arg} {type(arg)} in this CiscoRange(); ensure that {arg} is {self.member_type}"
+                    error = f"CiscoRange().remove() could not find {item} {type(item)} in this CiscoRange(); ensure that {item} is {self.member_type}"
                     logger.critical(error)
                     raise InvalidMember(error)
 
@@ -5432,7 +6048,7 @@ class CiscoRange(UserList):
         self.data = yy_list
         try:
             # Disable linter qa checks on this embedded list syntax...
-            retval = sorted(set(self.data), reverse=self.reverse) # noqa
+            retval = sorted(set(self.data), reverse=self.reverse)  # noqa
             if result_type == "auto":
                 if len(self.data) > 0:
                     result_type = self.member_type
@@ -5447,8 +6063,6 @@ class CiscoRange(UserList):
                 return [str(ii) for ii in retval]
             elif result_type is int:
                 return [int(ii) for ii in retval]
-            elif result_type is float:
-                return [float(ii) for ii in retval]
             else:
                 error = f"CiscoRange().as_list(result_type={result_type}) is not valid.  Choose from {['auto', None, int, str, float, CiscoIOSInterface, CiscoIOSXRInterface]}.  result_type: None will return CiscoIOSInterface() objects."
                 logger.critical(error)
@@ -5471,7 +6085,7 @@ class CiscoRange(UserList):
                 result_type = type(self.as_list[0])
                 return set([result_type(ii) for ii in retval])
             else:
-                return list()
+                return []
         elif result_type is None:
             return set([CiscoIOSInterface(ii) for ii in retval])
         elif isinstance(result_type, (CiscoIOSInterface, CiscoIOSXRInterface)):
@@ -5496,37 +6110,92 @@ class CiscoRange(UserList):
 
         >>> from ciscoconfparse2.ccp_util import CiscoRange
         >>> range_obj = CiscoRange('1,3,5,6,7')
-        >>> range_obj.compressed_str
+        >>> range_obj.as_compressed_str()
         '1,3,5-7'
         >>>
         """
         if len(self.data) == 0:
             return ""
-        else:
-            retval = list()
+
+        retval = []
 
         # Handle CiscoIOSInterface() instances...
-        if isinstance(self.member_type, (CiscoIOSInterface, CiscoIOSXRInterface)):
+        if self.member_type is CiscoIOSInterface:
+
+            if len(self.data) == 0:
+                raise NotImplementedError
+
             # Build a magic attribute dict so we can intelligently prepend slot/card/port/etc...
             magic_string = "3141592653591892234109876543212345678"
-            this_obj = self.member_type(self.text.split(",")[0])
+            this_obj = self.data[0]
             magic_dict = this_obj.as_dict()
-            for attr_name in ("channel", "subinterface", "port", "card", "slot",):
+            for attr_name in (
+                "channel",
+                "subinterface",
+                "port",
+                "card",
+                "slot",
+            ):
                 if magic_dict[attr_name] is not None:
                     if attr_name == self.iterate_attribute:
                         magic_dict[attr_name] = int(magic_string)
                         break
             if debug is True:
-                logger.info(f"CiscoRange() calling {self.member_type}(interface_dict={magic_dict}).as_compressed_str()")
-            obj = self.member_type(interface_dict=magic_dict, debug=debug)
+                logger.info(
+                    f"CiscoRange() calling {self.member_type}(interface_dict={magic_dict}).as_compressed_str()"
+                )
+            obj = CiscoIOSInterface(interface_dict=magic_dict, debug=debug)
             if debug is True:
-                logger.success(f"    CiscoRange() call to {self.member_type}().as_compressed_str() with `interface_dict` parameter succeeded")
+                logger.success(
+                    f"    CiscoRange() call to {self.member_type}().as_compressed_str() with `interface_dict` parameter succeeded"
+                )
             prefix_str = str(obj).replace(magic_string, "")
 
             # Build a list of the relevant string iteration pieces...
             input_str = []
             for _, component in enumerate(self.as_list()):
-                input_str.append(getattr(self.member_type(component), self.iterate_attribute))
+                input_str.append(
+                    getattr(CiscoIOSInterface(component), self.iterate_attribute)
+                )
+
+        elif self.member_type is CiscoIOSXRInterface:
+
+            if len(self.data) == 0:
+                raise NotImplementedError
+
+            # Build a magic attribute dict so we can intelligently prepend slot/card/port/etc...
+            magic_string = "3141592653591892234109876543212345678"
+            this_obj = self.data[0]
+            magic_dict = this_obj.as_dict()
+            for attr_name in (
+                "channel",
+                "subinterface",
+                "port",
+                "card",
+                "slot",
+            ):
+                if magic_dict[attr_name] is not None:
+                    if attr_name == self.iterate_attribute:
+                        magic_dict[attr_name] = int(magic_string)
+                        break
+            if debug is True:
+                logger.info(
+                    f"CiscoRange() calling {self.member_type}(interface_dict={magic_dict}).as_compressed_str()"
+                )
+            obj = CiscoIOSXRInterface(interface_dict=magic_dict, debug=debug)
+            if debug is True:
+                logger.success(
+                    f"    CiscoRange() call to {self.member_type}().as_compressed_str() with `interface_dict` parameter succeeded"
+                )
+            prefix_str = str(obj).replace(magic_string, "")
+
+            # Build a list of the relevant string iteration pieces...
+            input_str = []
+            for _, component in enumerate(self.as_list()):
+                input_str.append(
+                    getattr(CiscoIOSXRInterface(component), self.iterate_attribute)
+                )
+
         # Handle str() instances...
         elif self.member_type is str:
             prefix_str = ""
@@ -5534,6 +6203,7 @@ class CiscoRange(UserList):
             input_str = []
             for _, component in enumerate(self.as_list()):
                 input_str.append(str(component))
+
         # Handle int() instances...
         elif self.member_type is int:
             prefix_str = ""
@@ -5541,6 +6211,7 @@ class CiscoRange(UserList):
             input_str = []
             for _, component in enumerate(self.as_list()):
                 input_str.append(int(component))
+
         # Handle float() instances...
         elif self.member_type is float:
             prefix_str = ""
@@ -5548,6 +6219,7 @@ class CiscoRange(UserList):
             input_str = []
             for _, component in enumerate(self.as_list()):
                 input_str.append(float(component))
+
         else:
             raise UnexpectedType(self.member_type)
 
@@ -5583,8 +6255,8 @@ class CiscoRange(UserList):
 ##############################################################################
 # Restore SonarCloud warnings in this file
 ##############################################################################
-#pragma warning restore S1192
-#pragma warning restore S1313
-#pragma warning restore S5843
-#pragma warning restore S5852
-#pragma warning restore S6395
+# pragma warning restore S1192
+# pragma warning restore S1313
+# pragma warning restore S5843
+# pragma warning restore S5852
+# pragma warning restore S6395

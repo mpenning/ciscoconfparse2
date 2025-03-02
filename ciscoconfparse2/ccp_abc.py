@@ -1,5 +1,5 @@
 r""" ccp_abc.py - Parse, Query, Build, and Modify IOS-style configurations
-     Copyright (C) 2023 David Michael Pennington
+     Copyright (C) 2023-2025 David Michael Pennington
 
      This program is free software: you can redistribute it and/or modify
      it under the terms of the GNU General Public License as published by
@@ -15,20 +15,24 @@ r""" ccp_abc.py - Parse, Query, Build, and Modify IOS-style configurations
      mike [~at~] pennington [/dot\] net
 """
 
-from typing import Any, Union, List, Tuple, Type
-from collections.abc import Sequence
-import warnings
 import math
 import re
+import warnings
+from collections.abc import Sequence
+from typing import Any, List, Tuple, Type, Union
 
-from loguru import logger
 import attrs
+from loguru import logger
 
-from ciscoconfparse2.errors import InvalidTypecast, InvalidParameters
-from ciscoconfparse2.errors import ConfigListItemDoesNotExist
 from ciscoconfparse2.ccp_util import junos_unsupported
+from ciscoconfparse2.errors import (
+    ConfigListItemDoesNotExist,
+    InvalidParameters,
+    InvalidTypecast,
+)
 
 DEFAULT_TEXT = "__undefined__"
+
 
 @logger.catch(reraise=True)
 def get_brace_termination(line: str) -> str:
@@ -69,20 +73,21 @@ def get_brace_termination(line: str) -> str:
         if brace_open and char == "{":
             brace_open = False
 
-
-
     # Go back to a normal left-to-right string...
     _retval.reverse()
     return "".join(_retval).strip()
+
 
 #
 # -------------  Config Line ABC
 #
 
+
 # Set slots False to ensure that BaseCfgLine() has a __dict__
 @attrs.define(repr=False, kw_only=True, slots=False)
 class BaseCfgLine(object):
     """Base configuration object for all configuration line instances; in most cases, the configuration line will be a subclass of this object."""
+
     all_text: Any = None
     all_lines: Any = None
     line: str = DEFAULT_TEXT
@@ -153,13 +158,11 @@ class BaseCfgLine(object):
         self.feature = ""
         self._brace_termination = ""
 
-
         # FIXME
         #   Bypass @text.setter method for now...  @text.setter writes to
         #   self._text, but currently children do not associate correctly if
         #   @text.setter is used as-is...
         # self.text = text
-
 
     # On BaseCfgLine()
     @logger.catch(reraise=True)
@@ -198,7 +201,7 @@ class BaseCfgLine(object):
             # Use the subscript object from the slicing index
             #     credit - https://stackoverflow.com/a/34372150/667301
             #     i.e. obj[0:5]
-            return self.text[subscript.start:subscript.stop:subscript.step]
+            return self.text[subscript.start : subscript.stop : subscript.step]
         else:
             #     i.e. obj[0]
             return self.text[subscript]
@@ -230,7 +233,7 @@ class BaseCfgLine(object):
     # On BaseCfgLine()
     @logger.catch(reraise=True)
     def __eq__(self, val):
-        if not getattr(val, 'get_unique_identifier', False):
+        if not getattr(val, "get_unique_identifier", False):
             return False
 
         try:
@@ -265,8 +268,8 @@ class BaseCfgLine(object):
         :return: A unique number for the BaseCfgLine object
         :rtype: int
         """
-        linenum = getattr(self, 'linenum', None)
-        _text = getattr(self, 'text', DEFAULT_TEXT)
+        linenum = getattr(self, "linenum", None)
+        _text = getattr(self, "text", DEFAULT_TEXT)
         return hash(linenum) * hash(_text)
 
     # On BaseCfgLine()
@@ -305,7 +308,7 @@ class BaseCfgLine(object):
         :return: Configuration text
         :rtype: str
         """
-        _text = getattr(self, '_text', DEFAULT_TEXT)
+        _text = getattr(self, "_text", DEFAULT_TEXT)
         return _text
 
     # On BaseCfgLine()
@@ -320,7 +323,7 @@ class BaseCfgLine(object):
         :return: Configuration text
         :rtype: None
         """
-        is_comment = getattr(self, 'is_comment', None)
+        is_comment = getattr(self, "is_comment", None)
         if isinstance(value, str):
             self._text = self.safe_escape_curly_braces(value)
 
@@ -341,7 +344,7 @@ class BaseCfgLine(object):
         :return: The brace termination string for this BaseCfgLine()
         :rtype: str
         """
-        _brace_termination = getattr(self, '_brace_termination', "")
+        _brace_termination = getattr(self, "_brace_termination", "")
         return _brace_termination
 
     # On BaseCfgLine()
@@ -461,8 +464,7 @@ class BaseCfgLine(object):
     # On BaseCfgLine()
     @property
     def hash_children(self):
-        """Return a unique hash of all children (if the number of children > 0)
-        """
+        """Return a unique hash of all children (if the number of children > 0)"""
         if len(self.all_children) > 0:
             return hash(tuple(self.all_children))
         else:
@@ -575,7 +577,7 @@ class BaseCfgLine(object):
 
     # On BaseCfgLine()
     @junos_unsupported
-    def add_parent(self, parentobj: Any=None) -> bool:
+    def add_parent(self, parentobj: Any = None) -> bool:
         """
         Assign ``parentobj`` as the parent of this object.
 
@@ -640,7 +642,9 @@ class BaseCfgLine(object):
             raise ConfigListItemDoesNotExist(error)
 
         if self.confobj.debug >= 1:
-            logger.debug(f"Executing <IOSCfgLine line #{self.linenum}>.delete(recurse=True)")
+            logger.debug(
+                f"Executing <IOSCfgLine line #{self.linenum}>.delete(recurse=True)"
+            )
 
         # NOTE - 1.5.30 changed this from iterating over self.children
         #        to self.all_children
@@ -680,7 +684,7 @@ class BaseCfgLine(object):
 
     # On BaseCfgLine()
     @logger.catch(reraise=True)
-    def has_child_with(self, linespec: str, all_children: bool=False):
+    def has_child_with(self, linespec: str, all_children: bool = False):
         """
         :param linespec: The string to search for
         :type linespec: str
@@ -705,9 +709,8 @@ class BaseCfgLine(object):
     # On BaseCfgLine()
     @junos_unsupported
     @logger.catch(reraise=True)
-    def insert_before(self, insertstr: str=None):
-        """Usage: confobj.insert_before('! insert text before this confobj')
-        """
+    def insert_before(self, insertstr: str = None):
+        """Usage: confobj.insert_before('! insert text before this confobj')"""
         # Fail if insertstr is not the correct object type...
         #   only strings and *CfgLine() are allowed...
         error = "Cannot insert object type - %s" % type(insertstr)
@@ -720,7 +723,9 @@ class BaseCfgLine(object):
             retval = self.confobj.insert_before(exist_val=self.text, new_val=insertstr)
 
         elif isinstance(insertstr, BaseCfgLine) is True:
-            retval = self.confobj.insert_before(exist_val=self.text, new_val=insertstr.text)
+            retval = self.confobj.insert_before(
+                exist_val=self.text, new_val=insertstr.text
+            )
 
         else:
             raise ValueError(error)
@@ -731,8 +736,7 @@ class BaseCfgLine(object):
     @junos_unsupported
     @logger.catch(reraise=True)
     def insert_after(self, insertstr=None):
-        """Usage: confobj.insert_after('! insert text after this confobj')
-        """
+        """Usage: confobj.insert_after('! insert text after this confobj')"""
 
         # Fail if insertstr is not the correct object type...
         #   only strings and *CfgLine() are allowed...
@@ -751,7 +755,9 @@ class BaseCfgLine(object):
 
         elif isinstance(insertstr, BaseCfgLine):
             # Handle insertion of a configuration line obj such as IOSCfgLine()
-            retval = self.confobj.insert_after(exist_val=self.text, new_val=insertstr.text)
+            retval = self.confobj.insert_after(
+                exist_val=self.text, new_val=insertstr.text
+            )
 
         else:
             logger.error(error)
@@ -761,7 +767,9 @@ class BaseCfgLine(object):
 
     # On BaseCfgLine()
     @logger.catch(reraise=True)
-    def append_to_family(self, insertstr: str, indent: int=-1, auto_indent: bool=False) -> None:
+    def append_to_family(
+        self, insertstr: str, indent: int = -1, auto_indent: bool = False
+    ) -> None:
         """Append an :py:class:`~ciscoconfparse2.models_cisco.IOSCfgLine` object with ``insertstr``
         as a child at the top of the current configuration family.
 
@@ -837,7 +845,10 @@ class BaseCfgLine(object):
         if indent > 0:
             insertstr = (" " * indent) + insertstr.lstrip()
         elif bool(auto_indent) is True:
-            insertstr = " " * (auto_indent_width * insertstr_parent_indent + 1) + insertstr.lstrip()
+            insertstr = (
+                " " * (auto_indent_width * insertstr_parent_indent + 1)
+                + insertstr.lstrip()
+            )
         else:
             # do not modify insertstr indent, or indentstr leading spaces
             pass
@@ -922,7 +933,9 @@ class BaseCfgLine(object):
                     # Potentially append another child to the family
                     ###########################################################
 
-                    direct_child_indent = self.classify_family_indent(self.children[-1].text)
+                    direct_child_indent = self.classify_family_indent(
+                        self.children[-1].text
+                    )
                     insertstr_family_indent = self.classify_family_indent(insertstr)
                     if insertstr_family_indent == 0:
                         #######################################################
@@ -930,7 +943,9 @@ class BaseCfgLine(object):
                         #######################################################
                         _idx = self.linenum + len(self.children)
 
-                    elif insertstr_family_indent > self.classify_family_indent(self.text):
+                    elif insertstr_family_indent > self.classify_family_indent(
+                        self.text
+                    ):
                         #######################################################
                         # Insert a child... do the children have children?
                         #######################################################
@@ -939,7 +954,9 @@ class BaseCfgLine(object):
                         else:
                             _idx = self.linenum + len(self.children) + 1
 
-                    elif insertstr_family_indent < self.classify_family_indent(self.text):
+                    elif insertstr_family_indent < self.classify_family_indent(
+                        self.text
+                    ):
                         # inserstr is indented less than this object
                         raise NotImplementedError()
 
@@ -951,14 +968,15 @@ class BaseCfgLine(object):
                     if classify_family_indent == 1:
                         self.children.append(newobj)
                     elif classify_family_indent > 1:
-                        raise NotImplementedError("Cannot append more than one child level")
+                        raise NotImplementedError(
+                            "Cannot append more than one child level"
+                        )
                     retval = self.confobj.insert(_idx, newobj)
 
                     if auto_commit is True:
                         self.confobj.ccp_ref.commit()
 
                     return retval
-
 
                 else:
                     ###########################################################
@@ -992,7 +1010,7 @@ class BaseCfgLine(object):
 
     # On BaseCfgLine()
     @logger.catch(reraise=True)
-    def classify_family_indent(self, insertstr: str=None) -> int:
+    def classify_family_indent(self, insertstr: str = None) -> int:
         """Look at the indent level of insertstr and return an integer for the auto_indent_width of insertstr relative to this object and auto_indent_width.
 
         - If insertstr is indented at the same level, return 0.
@@ -1056,7 +1074,7 @@ class BaseCfgLine(object):
 
     # On BaseCfgLine()
     @logger.catch(reraise=True)
-    def rstrip(self, chars: str=None) -> str:
+    def rstrip(self, chars: str = None) -> str:
         """Implement rstrip() on the BaseCfgLine().text
 
         .. note::
@@ -1073,7 +1091,7 @@ class BaseCfgLine(object):
 
     # On BaseCfgLine()
     @logger.catch(reraise=True)
-    def lstrip(self, chars: str=None) -> str:
+    def lstrip(self, chars: str = None) -> str:
         """Implement lstrip() on the BaseCfgLine().text
 
         .. note::
@@ -1090,7 +1108,7 @@ class BaseCfgLine(object):
 
     # On BaseCfgLine()
     @logger.catch(reraise=True)
-    def strip(self, chars: str=None) -> str:
+    def strip(self, chars: str = None) -> str:
         """Implement strip() on the BaseCfgLine().text
 
         .. note::
@@ -1107,7 +1125,7 @@ class BaseCfgLine(object):
 
     # On BaseCfgLine()
     @logger.catch(reraise=True)
-    def split(self, sep: str=None, maxsplit: int=-1) -> List[str]:
+    def split(self, sep: str = None, maxsplit: int = -1) -> List[str]:
         """
         Split ``text`` in-place
 
@@ -1129,7 +1147,13 @@ class BaseCfgLine(object):
 
     # On BaseCfgLine()
     @logger.catch(reraise=True)
-    def get_regex_typed_dict(self, regex: re.Match=None, type_dict: dict=None, default: str=None, debug: bool=False) -> dict:
+    def get_regex_typed_dict(
+        self,
+        regex: re.Match = None,
+        type_dict: dict = None,
+        default: str = None,
+        debug: bool = False,
+    ) -> dict:
         """
         :return: Return a typed dict if ``regex`` is an re.Match() instance (with named match groups) and `type_dict` is a `dict` of types.  If a key in `type_dict` does not match, `default` is returned for that key.
         :rtype: dict
@@ -1151,7 +1175,9 @@ class BaseCfgLine(object):
         """
         retval = {}
         if debug is True:
-            logger.info(f"{self}.get_regex_typed_dict(`regex`={regex}, `type_dict`={type_dict}, `default`='{default}', debug={debug}) was called")
+            logger.info(
+                f"{self}.get_regex_typed_dict(`regex`={regex}, `type_dict`={type_dict}, `default`='{default}', debug={debug}) was called"
+            )
 
         # If the `regex` is a string, compile so we can access match group info
         if isinstance(regex, str):
@@ -1262,12 +1288,10 @@ class BaseCfgLine(object):
         text_after_replace = re.sub(regex, replacergx, self._text)
         self.text = text_after_replace
 
-
         if self.confobj and text_before_replace != text_after_replace:
             # Substitute the modified object back into
             # the UserList...
             self.confobj[idx] = self
-
 
         # Only auto_commit if there was a text change
         if text_before_replace != text_after_replace:
@@ -1354,7 +1378,6 @@ class BaseCfgLine(object):
             logger.critical(error)
             raise NotImplementedError(error)
 
-
         retval = default
         # Shortcut with a substring match, if possible...
         if isinstance(regex, str) and (regex in self.text):
@@ -1402,11 +1425,11 @@ class BaseCfgLine(object):
     def re_match_typed(
         self,
         regex: Union[str, re.Pattern],
-        group: int=1,
-        result_type: type=str,
-        default: Any="",
-        untyped_default: bool=False,
-        groupdict: dict=None,
+        group: int = 1,
+        result_type: type = str,
+        default: Any = "",
+        untyped_default: bool = False,
+        groupdict: dict = None,
     ) -> Any:
         r"""Use ``regex`` to search the :class:`~ciscoconfparse2.models_cisco.IOSCfgLine` text
         and return the contents of the regular expression group, at the
@@ -1481,13 +1504,13 @@ class BaseCfgLine(object):
     def re_match_iter_typed(
         self,
         regex: Union[str, re.Pattern],
-        group: int=1,
-        result_type: type=str,
-        default: Any="",
-        untyped_default: bool=False,
-        groupdict: dict=None,
-        recurse: bool=True,
-        debug: bool=False,
+        group: int = 1,
+        result_type: type = str,
+        default: Any = "",
+        untyped_default: bool = False,
+        groupdict: dict = None,
+        recurse: bool = True,
+        debug: bool = False,
     ) -> Any:
         r"""Use ``regex`` to search the children of
         :class:`~ciscoconfparse2.models_cisco.IOSCfgLine` text and return the contents of
@@ -1560,11 +1583,15 @@ class BaseCfgLine(object):
         #   this while I build the API
         #    raise NotImplementedError
         if debug is True:
-            logger.info(f"{self}.re_match_iter_typed(`regex`={regex}, `group`={group}, `result_type`={result_type}, `recurse`={recurse}, `untyped_default`={untyped_default}, `default`='{default}', `groupdict`={groupdict}, `debug`={debug}) was called")
+            logger.info(
+                f"{self}.re_match_iter_typed(`regex`={regex}, `group`={group}, `result_type`={result_type}, `recurse`={recurse}, `untyped_default`={untyped_default}, `default`='{default}', `groupdict`={groupdict}, `debug`={debug}) was called"
+            )
 
         if groupdict is None:
             if debug is True:
-                logger.debug(f"    {self}.re_match_iter_typed() is checking with `groupdict`=None")
+                logger.debug(
+                    f"    {self}.re_match_iter_typed() is checking with `groupdict`=None"
+                )
 
             # Return the result if the parent line matches the regex...
             mm = re.search(regex, self.text)
@@ -1574,7 +1601,9 @@ class BaseCfgLine(object):
             if recurse is False:
                 for cobj in self.children:
                     if debug is True:
-                        logger.debug(f"    {self}.re_match_iter_typed() is checking match of r'''{regex}''' on -->{cobj}<--")
+                        logger.debug(
+                            f"    {self}.re_match_iter_typed() is checking match of r'''{regex}''' on -->{cobj}<--"
+                        )
                     mm = re.search(regex, cobj.text)
                     if isinstance(mm, re.Match):
                         return result_type(mm.group(group))
@@ -1586,7 +1615,9 @@ class BaseCfgLine(object):
             else:
                 for cobj in self.all_children:
                     if debug is True:
-                        logger.debug(f"    {self}.re_match_iter_typed() is checking match of r'''{regex}''' on -->{cobj}<--")
+                        logger.debug(
+                            f"    {self}.re_match_iter_typed() is checking match of r'''{regex}''' on -->{cobj}<--"
+                        )
                     mm = re.search(regex, cobj.text)
                     if isinstance(mm, re.Match):
                         return result_type(mm.group(group))
@@ -1597,7 +1628,9 @@ class BaseCfgLine(object):
                     return result_type(default)
         elif isinstance(groupdict, dict) is True:
             if debug is True:
-                logger.debug(f"    {self}.re_match_iter_typed() is checking with `groupdict`={groupdict}")
+                logger.debug(
+                    f"    {self}.re_match_iter_typed() is checking with `groupdict`={groupdict}"
+                )
 
             # Return the result if the parent line matches the regex...
             mm = re.search(regex, self.text)
@@ -1641,7 +1674,9 @@ class BaseCfgLine(object):
                     debug=debug,
                 )
         else:
-            error = f"`groupdict` must be None or a `dict`, but we got {type(groupdict)}."
+            error = (
+                f"`groupdict` must be None or a `dict`, but we got {type(groupdict)}."
+            )
             logger.critical(error)
             raise ValueError(error)
 
@@ -1650,11 +1685,11 @@ class BaseCfgLine(object):
     def re_list_iter_typed(
         self,
         regex: Union[str, re.Pattern],
-        group: int=1,
-        result_type: type=str,
-        groupdict: dict=None,
-        recurse: bool=True,
-        debug: bool=False,
+        group: int = 1,
+        result_type: type = str,
+        groupdict: dict = None,
+        recurse: bool = True,
+        debug: bool = False,
     ) -> List[Any]:
         r"""Use ``regex`` to search the children of
         :class:`~ciscoconfparse2.models_cisco.IOSCfgLine` text and return a list of the contents of
@@ -1726,39 +1761,51 @@ class BaseCfgLine(object):
         #   to be sure I build the correct API for match=False
         #
         if debug is True:
-            logger.info(f"{self}.re_list_iter_typed(`regex`={regex}, `group`={group}, `result_type`={result_type}, `recurse`={recurse}, `groupdict`={groupdict}, `debug`={debug}) was called")
+            logger.info(
+                f"{self}.re_list_iter_typed(`regex`={regex}, `group`={group}, `result_type`={result_type}, `recurse`={recurse}, `groupdict`={groupdict}, `debug`={debug}) was called"
+            )
 
         retval = list()
 
         if groupdict is None:
-            return self.re_list_iter_typed_groupdict_none(regex = regex,
-                                                          group = group,
-                                                          result_type = result_type,
-                                                          groupdict = groupdict,
-                                                          recurse = recurse,
-                                                          debug = debug)
+            return self.re_list_iter_typed_groupdict_none(
+                regex=regex,
+                group=group,
+                result_type=result_type,
+                groupdict=groupdict,
+                recurse=recurse,
+                debug=debug,
+            )
         elif isinstance(groupdict, dict) is True:
-            return self.re_list_iter_typed_groupdict_dict(regex = regex,
-                                                          group = group,
-                                                          result_type = result_type,
-                                                          groupdict = groupdict,
-                                                          recurse = recurse,
-                                                          debug = debug)
+            return self.re_list_iter_typed_groupdict_dict(
+                regex=regex,
+                group=group,
+                result_type=result_type,
+                groupdict=groupdict,
+                recurse=recurse,
+                debug=debug,
+            )
         else:
-            error = f"`groupdict` must be None or a `dict`, but we got {type(groupdict)}."
+            error = (
+                f"`groupdict` must be None or a `dict`, but we got {type(groupdict)}."
+            )
             logger.critical(error)
             raise ValueError(error)
 
     @logger.catch(reraise=True)
-    def re_list_iter_typed_groupdict_none(self,
-                                          regex: Union[str, re.Pattern],
-                                          group: int=1,
-                                          result_type: type=str,
-                                          groupdict: dict=None,
-                                          recurse: bool=True,
-                                          debug: bool=False,):
+    def re_list_iter_typed_groupdict_none(
+        self,
+        regex: Union[str, re.Pattern],
+        group: int = 1,
+        result_type: type = str,
+        groupdict: dict = None,
+        recurse: bool = True,
+        debug: bool = False,
+    ):
         if debug is True:
-            logger.debug(f"    {self}.re_list_iter_typed_groupdict_none() is checking with `groupdict`=None")
+            logger.debug(
+                f"    {self}.re_list_iter_typed_groupdict_none() is checking with `groupdict`=None"
+            )
 
         retval = list()
 
@@ -1770,29 +1817,37 @@ class BaseCfgLine(object):
         if recurse is False:
             for cobj in self.children:
                 if debug is True:
-                    logger.debug(f"    {self}.re_list_iter_typed() is checking match of r'''{regex}''' on -->{cobj}<--")
+                    logger.debug(
+                        f"    {self}.re_list_iter_typed() is checking match of r'''{regex}''' on -->{cobj}<--"
+                    )
                 mm = re.search(regex, cobj.text)
                 if isinstance(mm, re.Match):
                     retval.append(result_type(mm.group(group)))
         else:
             for cobj in self.all_children:
                 if debug is True:
-                    logger.debug(f"    {self}.re_list_iter_typed() is checking match of r'''{regex}''' on -->{cobj}<--")
+                    logger.debug(
+                        f"    {self}.re_list_iter_typed() is checking match of r'''{regex}''' on -->{cobj}<--"
+                    )
                 mm = re.search(regex, cobj.text)
                 if isinstance(mm, re.Match):
                     retval.append(result_type(mm.group(group)))
         return retval
 
     @logger.catch(reraise=True)
-    def re_list_iter_typed_groupdict_dict(self,
-                                          regex: Union[str, re.Pattern],
-                                          group: int=1,
-                                          result_type: type=str,
-                                          groupdict: dict=None,
-                                          recurse: bool=True,
-                                          debug: bool=False,):
+    def re_list_iter_typed_groupdict_dict(
+        self,
+        regex: Union[str, re.Pattern],
+        group: int = 1,
+        result_type: type = str,
+        groupdict: dict = None,
+        recurse: bool = True,
+        debug: bool = False,
+    ):
         if debug is True:
-            logger.debug(f"    {self}.re_list_iter_typed() is checking with `groupdict`={groupdict}")
+            logger.debug(
+                f"    {self}.re_list_iter_typed() is checking with `groupdict`={groupdict}"
+            )
 
         # Return the result if the parent line matches the regex...
         mm = re.search(regex, self.text)
@@ -1940,7 +1995,7 @@ class BaseCfgLine(object):
     # On BaseCfgLine()
     @property
     def is_child(self):
-        parent = getattr(self, 'parent', None)
+        parent = getattr(self, "parent", None)
         return not bool(parent == self)
 
     # On BaseCfgLine()
