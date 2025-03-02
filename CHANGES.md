@@ -4,6 +4,13 @@
 - Summary:
     - Insert something here
 
+## Version: 0.8.4
+
+- Released: 2025-03-02
+- Summary:
+    - Add `tests/coverage.xml`
+
+
 ## Version: 0.8.3
 
 - Released: 2025-03-02
