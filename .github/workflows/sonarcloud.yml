@@ -23,6 +23,8 @@ jobs:
         run: pip install pytest
       - name: Run coverage
         run: cd tests && coverage run -m pytest
+      - name: Generate xml
+        run: cd tests && coverage xml -o coverage.xml
       - name: Relocate the coverage report
         run: mv tests/coverage.xml coverage.xml
       - name: SonarQube Scan
