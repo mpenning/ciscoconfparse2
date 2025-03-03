@@ -4,6 +4,12 @@
 - Summary:
     - Insert something here
 
+## Version: 0.8.6
+
+- Released: 2025-03-02
+- Summary:
+    - Improve test coverage measurement
+
 ## Version: 0.8.5
 
 - Released: 2025-03-02

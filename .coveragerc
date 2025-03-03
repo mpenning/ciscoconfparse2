@@ -1,8 +1,15 @@
+[paths]
+source = ciscoconfparse2/
+
 [run]
-source = ciscoconfparse2
-branch = True
+branch = true
+source =
+      ciscoconfparse2/
+      tests/
 
 [report]
+show_missing = true
+precision = 2
 exclude_lines =
     pragma: no cover
     def __repr__
