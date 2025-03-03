@@ -17,6 +17,8 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: '3.12'
+      - name: Install ciscoconfparse2
+        run: pip install .
       - name: Install coverage
         run: pip install coverage==5.0.0
       - name: Install pytest
