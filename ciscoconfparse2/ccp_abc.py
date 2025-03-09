@@ -17,9 +17,8 @@ r""" ccp_abc.py - Parse, Query, Build, and Modify IOS-style configurations
 
 import math
 import re
-import warnings
 from collections.abc import Sequence
-from typing import Any, List, Tuple, Type, Union
+from typing import Any, List, Union
 
 import attrs
 from loguru import logger
@@ -57,7 +56,7 @@ def get_brace_termination(line: str) -> str:
     reversed_line = list(line.strip())
     reversed_line.reverse()
 
-    _retval = list()
+    _retval = []
     brace_open = False
     # Walk backwards in the configuration line and get all brace termination
     for char in reversed_line:
@@ -85,7 +84,7 @@ def get_brace_termination(line: str) -> str:
 
 # Set slots False to ensure that BaseCfgLine() has a __dict__
 @attrs.define(repr=False, kw_only=True, slots=False)
-class BaseCfgLine(object):
+class BaseCfgLine:
     """Base configuration object for all configuration line instances; in most cases, the configuration line will be a subclass of this object."""
 
     all_text: Any = None
@@ -459,6 +458,7 @@ class BaseCfgLine(object):
     # On BaseCfgLine()
     @property
     def dna(self):
+        """Return the classname of this object"""
         return self.classname
 
     # On BaseCfgLine()
@@ -491,24 +491,10 @@ class BaseCfgLine(object):
         :rtype: str
         """
         if self.has_children:
-            return (
-                "<%s # %s '%s' (child_indent: %s / len(children): %s / family_endpoint: %s)>"
-                % (
-                    self.classname,
-                    self.linenum,
-                    self.text,
-                    self.child_indent,
-                    len(self.children),
-                    self.family_endpoint,
-                )
-            )
+            return f"<{self.classname} # {self.linenum} '{self.text}' (child_indent: {self.child_indent} / len(children): {len(self.children)} / family_endpoint: {self.family_endpoint})>"
+
         else:
-            return "<{} # {} '{}' (no_children / family_endpoint: {})>".format(
-                self.classname,
-                self.linenum,
-                self.text,
-                self.family_endpoint,
-            )
+            return f"<{self.classname} # {self.linenum} '{self.text}' (no_children / family_endpoint: {self.family_endpoint})>"
 
     # On BaseCfgLine()
     @property
@@ -536,7 +522,7 @@ class BaseCfgLine(object):
         :return: A sequence of all child objects, not including this object
         :rtype: List[BaseCfgLine]
         """
-        retval = list()
+        retval = []
         if self.has_children:
             for child in self.children:
                 retval.append(child)
@@ -584,13 +570,15 @@ class BaseCfgLine(object):
         :return: True
         :rtype: bool
         """
+
         if parentobj is None:
             raise NotImplementedError()
-        elif not isinstance(parentobj, BaseCfgLine):
+
+        if not isinstance(parentobj, BaseCfgLine):
             raise NotImplementedError()
-        else:
-            self.parent = parentobj
-            return True
+
+        self.parent = parentobj
+        return True
 
     # On BaseCfgLine()
     @logger.catch(reraise=True)
@@ -694,7 +682,9 @@ class BaseCfgLine(object):
         :return: Whether ``linespec`` exists in any of children
         :rtype: bool
         """
-        assert isinstance(all_children, bool)
+        if not isinstance(all_children, bool):
+            raise ValueError("has_child_with() all_children must be a boolean")
+
         # Old, crusty broken... fixed in 1.6.30...
         # return bool(filter(methodcaller("re_search", linespec), self.children))
         #
@@ -704,7 +694,11 @@ class BaseCfgLine(object):
             offspring = self.children
         else:
             offspring = self.all_children
-        return bool(len([ll for cobj in offspring if cobj.re_search(ll)]))
+
+        length = len([ll for cobj in offspring if cobj.re_search(ll)])
+        if length == 0:
+            return False
+        return True
 
     # On BaseCfgLine()
     @junos_unsupported
@@ -713,7 +707,7 @@ class BaseCfgLine(object):
         """Usage: confobj.insert_before('! insert text before this confobj')"""
         # Fail if insertstr is not the correct object type...
         #   only strings and *CfgLine() are allowed...
-        error = "Cannot insert object type - %s" % type(insertstr)
+        error = f"Cannot insert object type - {type(insertstr)}"
         if not isinstance(insertstr, str) and not isinstance(insertstr, BaseCfgLine):
             logger.error(error)
             raise NotImplementedError(error)
@@ -740,14 +734,14 @@ class BaseCfgLine(object):
 
         # Fail if insertstr is not the correct object type...
         #   only strings and *CfgLine() are allowed...
-        error = "Cannot insert object type - %s" % type(insertstr)
+        error = f"Cannot insert object type - {type(insertstr)}"
         if not isinstance(insertstr, str) and not isinstance(insertstr, BaseCfgLine):
             logger.error(error)
             raise NotImplementedError(error)
 
         retval = None
         if self.confobj.debug >= 1:
-            logger.debug("Inserting '{}' after '{}'".format(insertstr, self))
+            logger.debug(f"Inserting '{insertstr}' after '{repr(self)}'")
 
         if isinstance(insertstr, str) is True:
             # Handle insertion of a plain-text line
@@ -853,9 +847,6 @@ class BaseCfgLine(object):
             # do not modify insertstr indent, or indentstr leading spaces
             pass
 
-        # Get the resulting indent of the insertstr
-        insertstr_indent = len(insertstr) - len(insertstr.lstrip())
-
         # BaseCfgLine.append_to_family(), insert a single line after this
         #  object...
         this_obj = type(self)
@@ -933,9 +924,6 @@ class BaseCfgLine(object):
                     # Potentially append another child to the family
                     ###########################################################
 
-                    direct_child_indent = self.classify_family_indent(
-                        self.children[-1].text
-                    )
                     insertstr_family_indent = self.classify_family_indent(insertstr)
                     if insertstr_family_indent == 0:
                         #######################################################
@@ -1223,7 +1211,7 @@ class BaseCfgLine(object):
         return self._text
 
     # On BaseCfgLine()
-    def re_sub(self, regex, replacergx, re_flags=None):
+    def re_sub(self, regex, replacergx, re_flags=0):
         """Replace all strings matching ``linespec`` with ``replacestr`` in the :class:`~ciscoconfparse2.models_cisco.IOSCfgLine` object; however, if the :class:`~ciscoconfparse2.models_cisco.IOSCfgLine` text matches ``ignore_rgx``, then the text is *not* replaced.
 
         Parameters
@@ -1285,7 +1273,7 @@ class BaseCfgLine(object):
 
         text_before_replace = self._text
 
-        text_after_replace = re.sub(regex, replacergx, self._text)
+        text_after_replace = re.sub(regex, replacergx, self._text, flags=re_flags)
         self.text = text_after_replace
 
         if self.confobj and text_before_replace != text_after_replace:
@@ -1382,12 +1370,12 @@ class BaseCfgLine(object):
         # Shortcut with a substring match, if possible...
         if isinstance(regex, str) and (regex in self.text):
             if debug > 0:
-                logger.debug("'{}' is a substring of '{}'".format(regex, self.text))
+                logger.debug(f"'{regex}' is a substring of '{self.text}'")
             retval = self.text
         elif re.search(regex, self.text) is not None:
             ## TODO: use re.escape(regex) on all regex, instead of bare regex
             if debug > 0:
-                logger.debug("re.search('{}', '{}') matches".format(regex, self.text))
+                logger.debug(f"re.search('{regex}', '{self.text}') matches")
             retval = self.text
         return retval
 
@@ -1489,6 +1477,9 @@ class BaseCfgLine(object):
             error = "The configuration has changed since the last commit; a config search is not safe."
             logger.critical(error)
             raise NotImplementedError(error)
+
+        if groupdict is not None:
+            raise NotImplementedError("groupdict is not supported at this time")
 
         mm = re.search(regex, self.text)
         if mm is not None:
@@ -1752,8 +1743,6 @@ class BaseCfgLine(object):
             logger.critical(error)
             raise NotImplementedError(error)
 
-        untyped_default = False
-
         # iterate through children, and return all matching values
         #  (cast as result_type) from all child.text that match regex
         # if (default is True):
@@ -1764,8 +1753,6 @@ class BaseCfgLine(object):
             logger.info(
                 f"{self}.re_list_iter_typed(`regex`={regex}, `group`={group}, `result_type`={result_type}, `recurse`={recurse}, `groupdict`={groupdict}, `debug`={debug}) was called"
             )
-
-        retval = list()
 
         if groupdict is None:
             return self.re_list_iter_typed_groupdict_none(
@@ -1807,7 +1794,10 @@ class BaseCfgLine(object):
                 f"    {self}.re_list_iter_typed_groupdict_none() is checking with `groupdict`=None"
             )
 
-        retval = list()
+        if groupdict is not None:
+            raise NotImplementedError("re_list_iter_typed_groupdict_none() must be called without groupdict argument")
+
+        retval = []
 
         # Append to return values if the parent line matches the regex...
         mm = re.search(regex, self.text)
@@ -1848,6 +1838,11 @@ class BaseCfgLine(object):
             logger.debug(
                 f"    {self}.re_list_iter_typed() is checking with `groupdict`={groupdict}"
             )
+
+        if not isinstance(groupdict, dict):
+            raise NotImplementedError("re_list_iter_typed_groupdict_dict() must be called with a dict in groupdict")
+
+        retval = None
 
         # Return the result if the parent line matches the regex...
         mm = re.search(regex, self.text)
@@ -1990,21 +1985,25 @@ class BaseCfgLine(object):
     # On BaseCfgLine()
     @property
     def is_parent(self):
+        """Return True if this BaseCfgLine() instance has children"""
         return bool(self.has_children)
 
     # On BaseCfgLine()
     @property
     def is_child(self):
+        """Return True if this BaseCfgLine() instance is a child of something"""
         parent = getattr(self, "parent", None)
         return not bool(parent == self)
 
     # On BaseCfgLine()
     @property
     def siblings(self):
+        """Return a list of siblings for this BaseCfgLine() instance"""
         indent = self.indent
         return [obj for obj in self.parent.children if (obj.indent == indent)]
 
     # On BaseCfgLine()
     @classmethod
     def is_object_for(cls, line=""):
+        """A base method to allow subclassing with an is_object_for() classmethod"""
         return False
