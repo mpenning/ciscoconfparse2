@@ -1795,7 +1795,9 @@ class BaseCfgLine:
             )
 
         if groupdict is not None:
-            raise NotImplementedError("re_list_iter_typed_groupdict_none() must be called without groupdict argument")
+            raise NotImplementedError(
+                "re_list_iter_typed_groupdict_none() must be called without groupdict argument"
+            )
 
         retval = []
 
@@ -1840,7 +1842,9 @@ class BaseCfgLine:
             )
 
         if not isinstance(groupdict, dict):
-            raise NotImplementedError("re_list_iter_typed_groupdict_dict() must be called with a dict in groupdict")
+            raise NotImplementedError(
+                "re_list_iter_typed_groupdict_dict() must be called with a dict in groupdict"
+            )
 
         retval = None
 
