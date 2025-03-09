@@ -1,6 +1,8 @@
+"""This file should not be used anywhere other than the hatch build system and pytest"""
+
 from argparse import ArgumentParser, Namespace, FileType, Action
 from argparse import _SubParsersAction
-from typing import List, Set, Any, Union, Optional
+from typing import List, Set, Any, Union
 import shlex
 import sys
 import re
@@ -17,7 +19,6 @@ from ciscoconfparse2.ciscoconfparse2 import Diff
 from ciscoconfparse2.ccp_util import IPv4Obj, IPv6Obj
 from ciscoconfparse2.ccp_util import MACObj, EUI64Obj
 
-"""This file should not be used anywhere other than the hatch build system and pytest"""
 
 @logger.catch(reraise=True)
 @typechecked
@@ -103,6 +104,7 @@ class ArgParser:
 
     @logger.catch(reraise=True)
     def parse(self) -> Namespace:
+        """Return an argparse Namespace instance for the CLI arguments"""
         return self.parser.parse_args()
 
     @logger.catch(reraise=True)
@@ -279,7 +281,7 @@ class ArgParser:
             "ipgrep",
             help="grep for IPv4 / IPv6 addresses contained in an IP subnet")
 
-        parser_required = parser.add_argument_group("required")
+        parser.add_argument_group("required")
 
         # Accept either a file or STDIN
         # https://stackoverflow.com/a/11038508/667301
@@ -402,6 +404,7 @@ class ArgParser:
 
 @attrs.define(repr=False)
 class CliApplication:
+    """A class to represent this ciscoconfparse2 cli application"""
 
     arg_parser: ArgParser
     console: RichConsole
@@ -561,11 +564,13 @@ class CliApplication:
 
     @logger.catch(reraise=True)
     def print_all_stdout(self):
+        """Write self.stdout to stdout"""
         for line in self.stdout:
             print(line)
 
     @logger.catch(reraise=True)
     def parent_command(self) -> None:
+        """Implement the find_parent_objects() CLI command"""
         if self.output_format == "raw_text":
             for obj in self.parse.find_parent_objects(self.args):
                 self.stdout.append(obj.text)
@@ -576,6 +581,7 @@ class CliApplication:
 
     @logger.catch(reraise=True)
     def child_command(self) -> None:
+        """Implement the find_child_objects() CLI command"""
         if self.output_format == "raw_text":
             for obj in self.parse.find_child_objects(self.args):
                 self.stdout.append(obj.text)
@@ -586,6 +592,7 @@ class CliApplication:
 
     @logger.catch(reraise=True)
     def branch_command(self) -> None:
+        """Implement the CLI find_object_branches command"""
 
         if self.output_format == "raw_text":
 
@@ -625,10 +632,13 @@ class CliApplication:
 
     @logger.catch(reraise=True)
     def diff_command(self) -> None:
-        diff = Diff(
-                   open(self.file_list[0]).read(),
-                   open(self.file_list[1]).read()
-               )
+        """Implement the CLI diff command"""
+
+        with open(self.file_list[0]) as fh0:
+            file0 = fh0.read()
+        with open(self.file_list[1]) as fh1:
+            file1 = fh1.read()
+        diff = Diff(file0, file1)
 
         if self.diff_method == "diff":
 
@@ -672,7 +682,7 @@ class CliApplication:
             try:
                 _subnet = IPv6Obj(subnet)
                 mode = 6
-            except Exception as eee:
+            except Exception:
                 pass
                 
 
@@ -680,8 +690,8 @@ class CliApplication:
                 error = f"subnet: {subnet} is not a valid IPv4 or IPv6 subnet"
                 logger.critical(error)
                 raise ValueError(error)
-            else:
-                _subnets.add(_subnet)
+
+            _subnets.add(_subnet)
 
         if not self.line:
             words = re.split(self.word_delimiter, text)
@@ -697,7 +707,7 @@ class CliApplication:
             retval = self.find_ip46_line_matches(subnets = _subnets,
                                                  potential_matches = lines,
                                                  unique_matches = self.unique)
-        if retval == []:
+        if len(retval) == 0:
             # potential_matches == [] is a special case where the text
             # had an invalid ip address like 172.16.355555
             return False
@@ -721,7 +731,7 @@ class CliApplication:
                                potential_matches: List[str],
                                unique_matches: bool) -> List:
         """Walk the IPv4 / IPv6 instances in potential_matches, return the list of addrs matching subnet"""
-        found = False
+
         retval = []
 
         for tmp in potential_matches:
@@ -885,8 +895,8 @@ class CliApplication:
 
         mac_regex_strs = set([])
 
-        for mac_regex in mac_regex.split(","):
-            mac_regex_strs.add(mac_regex)
+        for _regex in mac_regex.split(","):
+            mac_regex_strs.add(_regex)
 
         if not self.line:
             words = re.split(self.word_delimiter, text)
@@ -899,7 +909,7 @@ class CliApplication:
                                                    potential_matches = lines,
                                                    unique_matches = self.unique)
 
-        if retval == []:
+        if len(retval) == 0:
             # potential_matches == [] is a special case where the text
             # had an invalid ip address like 172.16.355555
             return False
@@ -912,7 +922,7 @@ class CliApplication:
             return True
 
         else:
-            error = f"Something unexpected happened.  Please file this bug on github.com/mpenning/ciscoconfparse2"
+            error = "Something unexpected happened.  Please file this bug on github.com/mpenning/ciscoconfparse2"
             logger.critical(error)
             raise ValueError(error)
 
@@ -922,7 +932,6 @@ class CliApplication:
                                  potential_matches: List[str],
                                  unique_matches: bool) -> List:
         """Walk the MAC / EUI64 instances in potential_matches, return the list of addrs matching mac_regex_strs"""
-        found = False
         retval = []
 
         for word in potential_matches:
