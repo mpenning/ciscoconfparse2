@@ -238,16 +238,6 @@ class BaseFactoryLine(BaseCfgLine):
         """
         raise NotImplementedError()
 
-    @property
-    @logger.catch(reraise=True)
-    def is_portchannel_intf(self) -> bool:
-        r"""
-        :return: Return a boolean indicating whether this port is a port-channel intf
-        :rtype: bool
-        """
-        raise NotImplementedError()
-
-
 ##
 ##-------------  IOS Interface ABC
 ##
@@ -1448,6 +1438,12 @@ class BaseIOSRouteLine(BaseFactoryLine):
     @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):
         super(BaseIOSRouteLine, self).__init__(*args, **kwargs)
+
+    # This method is on BaseIOSRouteLine()
+    @property
+    @logger.catch(reraise=True)
+    def network_object(self):
+        raise NotImplementedError()
 
     # This method is on BaseIOSRouteLine()
     @logger.catch(reraise=True)

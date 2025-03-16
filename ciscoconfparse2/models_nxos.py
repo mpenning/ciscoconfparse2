@@ -416,15 +416,6 @@ class NXOSCfgLine(BaseFactoryLine):
         )
         return retval
 
-    @property
-    @logger.catch(reraise=True)
-    def is_portchannel_intf(self) -> bool:
-        r"""
-        :return: Return a boolean indicating whether this port is a port-channel intf
-        :rtype: bool
-        """
-        return "channel" in self.name.lower()
-
 
 ##
 ##-------------  NXOS Interface ABC

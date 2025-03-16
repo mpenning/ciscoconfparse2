@@ -94,18 +94,6 @@ class TrackingInterface(BaseCfgLine):
     def group(self):
         return self._group
 
-    @property
-    def interface(self):
-        return self._interface
-
-    @property
-    def decrement(self):
-        return self._decrement
-
-    @property
-    def weighting(self):
-        return self._weighting
-
     # This method is on TrackingInterface()
     def __str__(self):
         return f"'{self.name}' group: {self._group}, weighting: {self._weighting}, decrement: {self._decrement}"
@@ -118,7 +106,7 @@ class TrackingInterface(BaseCfgLine):
     @logger.catch(reraise=True)
     def __hash__(self):
         """Return a hash value based on the Tracking interface group, interface name and decrement / weighting."""
-        if self._name is None or self._group is None:
+        if self.name is None or self._group is None:
             error = f"Cannot hash TrackingInterface() {self}"
             logger.critical(error)
             raise ValueError(error)
@@ -941,16 +929,6 @@ class IOSCfgLine(BaseFactoryLine):
         )
         return retval
 
-    @property
-    @logger.catch(reraise=True)
-    def is_portchannel_intf(self) -> bool:
-        r"""
-        :return: Return a boolean indicating whether this port is a port-channel intf
-        :rtype: bool
-        """
-        return "channel" in self.name.lower()
-
-
 ##
 ##-------------  IOS Interface ABC
 ##
@@ -1028,6 +1006,12 @@ class BaseIOSIntfLine(IOSCfgLine, BaseFactoryInterfaceLine):
         # Return a sorted list of HSRPInterfaceGroup() instances...
         intf_groups = sorted(retval, key=lambda x: x.group, reverse=False)
         return intf_groups
+
+    @property
+    @logger.catch(reraise=True)
+    def ipv4_mask(self):
+        raise NotImplementedError
+
 
     # This method is on BaseIOSIntfLine()
     @property
@@ -1874,19 +1858,6 @@ class BaseIOSIntfLine(IOSCfgLine, BaseFactoryInterfaceLine):
             return ""
         else:
             return retval
-
-    # This method is on BaseIOSIntfLine()
-    @property
-    @logger.catch(reraise=True)
-    def ipv6_masklength(self) -> int:
-        r"""
-        :return: The IPv6 masklength configured on the interface, default to -1
-        :rtype: int
-        """
-        ipv6_addr_object = self.ipv6_addr_object
-        if ipv6_addr_object != self.default_ipv6_addr_object:
-            return ipv6_addr_object.masklength
-        return -1
 
     # This method is on BaseIOSIntfLine()
     @logger.catch(reraise=True)
@@ -2764,19 +2735,6 @@ class BaseIOSIntfLine(IOSCfgLine, BaseFactoryInterfaceLine):
     # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
-    def ipv6_trafficfilter_in(self) -> str:
-        """
-        :return: The name or number of the inbound IPv6 ACL
-        :rtype: str
-        """
-        retval = self.re_match_iter_typed(
-            r"^\s*ipv6\straffic-filter\s+(\S+)\s+in\s*$", result_type=str, default=""
-        )
-        return retval
-
-    # This method is on BaseIOSIntfLine()
-    @property
-    @logger.catch(reraise=True)
     def ipv4_accessgroup_out(self) -> str:
         """
         :return: The name or number of the outbound IPv4 access-group
@@ -3036,7 +2994,8 @@ class IOSAccessLine(IOSCfgLine):
         retval = self.re_match_iter_typed(
             r"^\s*exec-timeout\s+(\d+\s*\d*)\s*$", group=1, result_type=str, default=""
         )
-        tmp = map(int, retval.strip().split())
+        # Return the exec-timeout value as a list of strings...
+        tmp = list(map(int, retval.strip().split()))
         return tmp
 
 
@@ -3088,6 +3047,11 @@ class BaseIOSRouteLine(IOSCfgLine):
     @logger.catch(reraise=True)
     def address_family(self):
         ## ipv4, ipv6, etc
+        raise NotImplementedError
+
+    @property
+    @logger.catch(reraise=True)
+    def network_object(self):
         raise NotImplementedError
 
     @property
@@ -3253,7 +3217,8 @@ class IOSRouteLine(IOSCfgLine):
                 result_type=str,
                 default="",
             )
-        return retval
+            return retval
+        raise NotImplementedError
 
     @property
     @logger.catch(reraise=True)
@@ -3299,7 +3264,8 @@ class IOSRouteLine(IOSCfgLine):
                 result_type=str,
                 default="",
             )
-        return retval
+            return retval
+        raise NotImplementedError
 
     @property
     @logger.catch(reraise=True)
