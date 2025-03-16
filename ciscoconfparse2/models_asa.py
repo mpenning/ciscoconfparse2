@@ -556,12 +556,6 @@ class BaseASAIntfLine(ASACfgLine):
     # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
-    def has_manual_switch_trunk_encap(self):
-        return bool(self.manual_switch_trunk_encap)
-
-    # This method is on BaseIOSIntfLine()
-    @property
-    @logger.catch(reraise=True)
     def has_manual_switch_trunk(self):
         retval = self.re_match_iter_typed(
             r"^\s*(switchport\s+mode\s+trunk)\s*$", result_type=bool, default=False
@@ -1138,7 +1132,7 @@ class BaseASARouteLine(BaseCfgLine):
         return "<{} # {} '{}' info: '{}'>".format(
             self.classname,
             self.linenum,
-            self.network_object,
+            self.network,
             self.routeinfo,
         )
 
@@ -1250,7 +1244,8 @@ class ASARouteLine(BaseASARouteLine):
             retval = self.re_match_typed(
                 r"^ipv6\s+route\s+*(\S+?)\/\d+", group=2, result_type=str, default=""
             )
-        return retval
+            return retval
+        raise NotImplementedError
 
     @property
     @logger.catch(reraise=True)
@@ -1263,7 +1258,8 @@ class ASARouteLine(BaseASARouteLine):
             retval = self.re_match_typed(
                 r"^ipv6\s+route\s+*\S+?\/(\d+)", group=2, result_type=str, default=""
             )
-        return retval
+            return retval
+        raise NotImplementedError
 
     @property
     @logger.catch(reraise=True)
@@ -1290,7 +1286,8 @@ class ASARouteLine(BaseASARouteLine):
             retval = self.re_match_typed(
                 r"^ipv6\s+route\s+*\S+\s+(\S+)", group=2, result_type=str, default=""
             )
-        return retval
+            return retval
+        raise NotImplementedError
 
     @property
     @logger.catch(reraise=True)

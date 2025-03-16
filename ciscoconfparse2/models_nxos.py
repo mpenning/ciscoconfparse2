@@ -544,14 +544,14 @@ class BaseNXOSIntfLine(NXOSCfgLine, BaseFactoryInterfaceLine):
     def cisco_interface_object(self) -> Union[CiscoIOSInterface, CiscoIOSXRInterface]:
         """Return a CiscoIOSInterface() instance for this interface
 
-        :return: The interface name as a CiscoNXOSInterface() / CiscoNXOSXRInterface() instance, or '' if the object is not an interface.  The CiscoNXOSInterface instance can be transparently cast as a string into a typical Cisco NXOS name.
-        :rtype: Union[CiscoNXOSInterface, CiscoNXOSXRInterface]
+        :return: The interface name as a CiscoIOSInterface() / CiscoIOSXRInterface() instance, or '' if the object is not an interface.  The CiscoIOSInterface instance can be transparently cast as a string into a typical Cisco NXOS name.
+        :rtype: Union[CiscoIOSInterface, CiscoIOSXRInterface]
         """
         if not self.is_intf:
             error = f"`{self.text}` is not a valid Cisco interface"
             logger.error(error)
             raise InvalidCiscoInterface(error)
-        return CiscoNXOSInterface("".join(self.text.split()[1:]))
+        return CiscoIOSInterface("".join(self.text.split()[1:]))
 
     # This method is on BaseNXOSIntfLine()
     @property
@@ -1041,7 +1041,7 @@ class BaseNXOSIntfLine(NXOSCfgLine, BaseFactoryInterfaceLine):
         """
         # Simplified on 2014-12-02
         try:
-            return IPv4Obj(f"{self.ipv4_addr}/{self.ipv4_mask}", strict=False)
+            return IPv4Obj(f"{self.ipv4_addr}/{self.ipv4_masklength}", strict=False)
         except DynamicAddressException as e:
             raise DynamicAddressException(e)
         except BaseException:
@@ -1337,19 +1337,6 @@ class BaseNXOSIntfLine(NXOSCfgLine, BaseFactoryInterfaceLine):
             return ""
         else:
             return retval
-
-    # This method is on BaseNXOSIntfLine()
-    @property
-    @logger.catch(reraise=True)
-    def ipv6_masklength(self) -> int:
-        r"""
-        :return: The IPv6 masklength configured on the interface, default to -1
-        :rtype: int
-        """
-        ipv6_addr_object = self.ipv6_addr_object
-        if ipv6_addr_object != self.default_ipv6_addr_object:
-            return ipv6_addr_object.masklength
-        return -1
 
     # This method is on BaseNXOSIntfLine()
     @logger.catch(reraise=True)
@@ -2227,19 +2214,6 @@ class BaseNXOSIntfLine(NXOSCfgLine, BaseFactoryInterfaceLine):
     # This method is on BaseNXOSIntfLine()
     @property
     @logger.catch(reraise=True)
-    def ipv6_trafficfilter_in(self) -> str:
-        """
-        :return: The name or number of the inbound IPv6 ACL
-        :rtype: str
-        """
-        retval = self.re_match_iter_typed(
-            r"^\s*ipv6\straffic-filter\s+(\S+)\s+in\s*$", result_type=str, default=""
-        )
-        return retval
-
-    # This method is on BaseNXOSIntfLine()
-    @property
-    @logger.catch(reraise=True)
     def ipv4_accessgroup_out(self) -> str:
         """
         :return: The name or number of the outbound IPv4 access-group
@@ -2658,7 +2632,7 @@ class NXOSAccessLine(NXOSCfgLine):
         retval = self.re_match_iter_typed(
             r"^\s*exec-timeout\s+(\d+\s*\d*)\s*$", group=1, result_type=str, default=""
         )
-        tmp = map(int, retval.strip().split())
+        tmp = list(map(int, retval.strip().split()))
         return tmp
 
 
@@ -2677,7 +2651,7 @@ class BaseNXOSRouteLine(NXOSCfgLine):
         return "<%s # %s '%s' info: '%s'>" % (
             self.classname,
             self.linenum,
-            self.network_object,
+            self.network,
             self.routeinfo,
         )
 
@@ -2856,7 +2830,8 @@ class NXOSRouteLine(NXOSCfgLine):
                 result_type=str,
                 default="",
             )
-        return retval
+            return retval
+        raise NotImplementedError(f"_address_family: {self._address_family}")
 
     @property
     @logger.catch(reraise=True)
@@ -2902,7 +2877,8 @@ class NXOSRouteLine(NXOSCfgLine):
                 result_type=str,
                 default="",
             )
-        return retval
+            return retval
+        raise NotImplementedError
 
     @property
     @logger.catch(reraise=True)

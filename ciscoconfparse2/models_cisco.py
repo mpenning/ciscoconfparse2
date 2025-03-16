@@ -3014,7 +3014,7 @@ class BaseIOSRouteLine(IOSCfgLine):
         return "<%s # %s '%s' info: '%s'>" % (
             self.classname,
             self.linenum,
-            self.network_object,
+            self.network,
             self.routeinfo,
         )
 
@@ -3047,11 +3047,6 @@ class BaseIOSRouteLine(IOSCfgLine):
     @logger.catch(reraise=True)
     def address_family(self):
         ## ipv4, ipv6, etc
-        raise NotImplementedError
-
-    @property
-    @logger.catch(reraise=True)
-    def network_object(self):
         raise NotImplementedError
 
     @property

@@ -170,6 +170,8 @@ class JunosCfgLine(BaseCfgLine):
            >>>
         """
         # Check whether the oldest parent is "interfaces {"...
+
+        interfacesobj = None
         if len(self.all_parents) >= 1:
             in_intf_block = bool(self.all_parents[0].text.strip()[0:10] == "interfaces")
             interfacesobj = self.all_parents[0]
@@ -361,15 +363,6 @@ class BaseJunosIntfLine(JunosCfgLine):
     @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):
         super(BaseJunosIntfLine, self).__init__(*args, **kwargs)
-
-    # This method is on BaseJunosIntfLine()
-    @property
-    @logger.catch(reraise=True)
-    def is_switchport(self):
-        for obj in self.parent.all_children:
-            if obj.parent.text.split()[0] == "unit" and obj.text.split()[0:2] == ["family", "ethernet-switching"]:
-                return True
-        return False
 
     # This method is on BaseJunosIntfLine()
     def __repr__(self):
@@ -754,7 +747,7 @@ class BaseJunosRouteLine(BaseCfgLine):
         return "<{} # {} '{}' info: '{}'>".format(
             self.classname,
             self.linenum,
-            self.network_object,
+            self.network,
             self.routeinfo,
         )
 
@@ -868,7 +861,8 @@ class JunosRouteLine(BaseJunosRouteLine):
                 result_type=str,
                 default="",
             )
-        return retval
+            return retval
+        raise NotImplementedError
 
     @property
     @logger.catch(reraise=True)
@@ -887,7 +881,8 @@ class JunosRouteLine(BaseJunosRouteLine):
                 result_type=str,
                 default="",
             )
-        return retval
+            return retval
+        raise NotImplementedError
 
     @property
     @logger.catch(reraise=True)
@@ -917,7 +912,8 @@ class JunosRouteLine(BaseJunosRouteLine):
                 result_type=str,
                 default="",
             )
-        return retval
+            return retval
+        raise NotImplementedError
 
     @property
     @logger.catch(reraise=True)
