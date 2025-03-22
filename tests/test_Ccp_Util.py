@@ -41,12 +41,19 @@ import sys
 from ipaddress import IPv4Address, IPv4Network, IPv6Address, IPv6Network
 
 import pytest
-from ciscoconfparse2.ccp_util import (_RGX_IPV4ADDR, _RGX_IPV6ADDR,
-                                      CiscoIOSInterface, CiscoIOSXRInterface,
-                                      CiscoRange, EUI64Obj, IPv4Obj, IPv6Obj,
-                                      L4Object, MACObj)
-from ciscoconfparse2.ccp_util import \
-    collapse_addresses as ccp_collapse_addresses
+from ciscoconfparse2.ccp_util import (
+    _RGX_IPV4ADDR,
+    _RGX_IPV6ADDR,
+    CiscoIOSInterface,
+    CiscoIOSXRInterface,
+    CiscoRange,
+    EUI64Obj,
+    IPv4Obj,
+    IPv6Obj,
+    L4Object,
+    MACObj,
+)
+from ciscoconfparse2.ccp_util import collapse_addresses as ccp_collapse_addresses
 from ciscoconfparse2.ccp_util import ip_factory
 from loguru import logger
 from macaddress import EUI48, EUI64, MAC, OUI
@@ -705,10 +712,12 @@ def testMACObj_invalid_01():
     with pytest.raises(ValueError):
         assert MACObj("0001.dead")
 
+
 def testMACObj_invalid_02():
     """This test is to check for an invalid MAC address format"""
     with pytest.raises(ValueError):
         assert MACObj("0001.dead.dead.dead.dead.dead.beef")
+
 
 def testMACObj_equality_01():
     """Ensure that the same mac addresses in two instances test as equal"""
@@ -734,13 +743,16 @@ def testMACObj_equality_05():
     """Ensure we can compare to native macaddress instance types (i.e. macaddress.MAC)"""
     assert MACObj("dead.beef.0001") == MAC("de-ad-be-ef-00-01")
 
+
 def testMACObj_inequality_01():
     """Ensure that different input mac addresses and different input objects test as not equal"""
     assert MACObj("dead.beef.0001") != EUI48("ff-ff-ff-ff-ff-ff")
 
+
 def testEUI64Obj_dash_01():
     """Test EUI64Obj.dash"""
     assert EUI64Obj("0001.dead.beef.0001").dash == "00-01-de-ad-be-ef-00-01"
+
 
 def testEUI64Obj_colon_01():
     """Test EUI64Obj.colon"""
@@ -1149,6 +1161,7 @@ def test_CiscoRange_24():
         CiscoRange(uut_str, result_type=None).as_list(result_type=None)
         == result_correct
     )
+
 
 def test_CiscoRange_compressed_str_01():
     """compressed_str test with a very basic set of vlan numbers"""

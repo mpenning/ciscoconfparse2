@@ -23,8 +23,7 @@ from argparse import Namespace
 
 import pytest
 from ciscoconfparse2.ccp_util import EUI64Obj, MACObj
-from ciscoconfparse2.cli_script import (CliApplication, MACEUISearch,
-                                        ccp_script_entry)
+from ciscoconfparse2.cli_script import CliApplication, MACEUISearch, ccp_script_entry
 
 
 def testValues_ccp_script_entry_cliapplication_searchmaceui_01():

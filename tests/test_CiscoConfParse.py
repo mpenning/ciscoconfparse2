@@ -35,9 +35,14 @@ import re
 import pytest
 from ciscoconfparse2.ccp_abc import BaseCfgLine
 from ciscoconfparse2.ccp_util import IPv4Obj
-from ciscoconfparse2.ciscoconfparse2 import (Branch, CiscoConfParse,
-                                             CiscoPassword, Diff, IOSCfgLine,
-                                             IOSIntfLine)
+from ciscoconfparse2.ciscoconfparse2 import (
+    Branch,
+    CiscoConfParse,
+    CiscoPassword,
+    Diff,
+    IOSCfgLine,
+    IOSIntfLine,
+)
 from ciscoconfparse2.errors import InvalidParameters
 from ciscoconfparse2.models_junos import JunosCfgLine
 from macaddress import EUI48, EUI64
