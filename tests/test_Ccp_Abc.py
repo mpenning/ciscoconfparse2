@@ -70,21 +70,21 @@ def testVal_get_brace_termination_05():
     assert uut == "{ }"
 
 
-def testVal_get_brace_termination_05():
+def testVal_get_brace_termination_06():
     """Test correct parsing of opening and closing braces with a space in the middle and a leading / trailing space"""
     line = " tcp { } "
     uut = get_brace_termination(line)
     assert uut == "{ }"
 
 
-def testVal_get_brace_termination_05():
+def testVal_get_brace_termination_07():
     """Test correct parsing of opening and closing braces with two spaces in the middle"""
     line = "tcp {  }"
     uut = get_brace_termination(line)
     assert uut == "{  }"
 
 
-def testVal_get_brace_termination_05():
+def testVal_get_brace_termination_08():
     """Test correct parsing of opening and closing braces with a parameter in the middle"""
     line = "    servers { 10.6.252.1 }"
     uut = get_brace_termination(line)
@@ -1382,7 +1382,7 @@ def testVal_append_to_family_04():
     assert parse.config_objs[3].text == " second-child"
 
 
-def testVal_append_to_family_04():
+def testVal_append_to_family_05():
     """Test parent-append operations and ensure that a NotImplementedError() is raised if a direct grandchild is appended with append_to_family()."""
     parse = CiscoConfParse()
     parse.config_objs.append("first")
