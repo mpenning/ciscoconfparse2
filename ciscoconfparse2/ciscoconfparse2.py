@@ -20,6 +20,7 @@ If you need to contact the author, you can do so by emailing:
 mike [~at~] pennington [.dot.] net
 """
 
+import argparse
 import base64
 import copy
 import hashlib
@@ -4198,58 +4199,5 @@ def config_line_factory(
         line=line,
     )
 
-
-def parse_global_options():
-    import optparse
-
-    pp = optparse.OptionParser()
-    pp.add_option(
-        "-c",
-        dest="config",
-        help="Config file to be parsed",
-        metavar="FILENAME",
-    )
-    pp.add_option(
-        "-m",
-        dest="method",
-        help="Command for parsing",
-        metavar="METHOD",
-    )
-    pp.add_option(
-        "--a1",
-        dest="arg1",
-        help="Command's first argument",
-        metavar="ARG",
-    )
-    pp.add_option(
-        "--a2",
-        dest="arg2",
-        help="Command's second argument",
-        metavar="ARG",
-    )
-    pp.add_option(
-        "--a3",
-        dest="arg3",
-        help="Command's third argument",
-        metavar="ARG",
-    )
-    (opts, _) = pp.parse_args()
-
-    if opts.method == "decrypt":
-        pp = CiscoPassword()
-        print(pp.decrypt_type_7(opts.arg1))
-        sys.exit(0)
-    elif opts.method == "help":
-        print("Valid methods and their arguments:")
-        print("   decrypt 7:                arg1=encrypted_passwd")
-        sys.exit(0)
-    else:
-        import doctest
-
-        doctest.testmod()
-        sys.exit(0)
-
-
-# TODO: Add unit tests below
 if __name__ == "__main__":
-    parse_global_options()
+    pass
