@@ -20,12 +20,11 @@ r"""test_Cli_Script.py - Parse, Query, Build, and Modify IOS-style configs
 """
 
 from argparse import Namespace
-import pytest
 
-from ciscoconfparse2.cli_script import CliApplication
-from ciscoconfparse2.cli_script import ccp_script_entry
-from ciscoconfparse2.cli_script import MACEUISearch
-from ciscoconfparse2.ccp_util import MACObj, EUI64Obj
+import pytest
+from ciscoconfparse2.ccp_util import EUI64Obj, MACObj
+from ciscoconfparse2.cli_script import (CliApplication, MACEUISearch,
+                                        ccp_script_entry)
 
 
 def testValues_ccp_script_entry_cliapplication_searchmaceui_01():

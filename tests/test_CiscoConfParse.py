@@ -19,34 +19,29 @@ r""" test_CiscoConfParse.py - Parse, Query, Build, and Modify IOS-style configs
      mike [~at~] pennington [.dot.] net
 """
 
-from operator import attrgetter
-from itertools import repeat
-from copy import deepcopy
 import pickle
+from copy import deepcopy
+from itertools import repeat
+from operator import attrgetter
 
 try:
     from unittest.mock import patch
 except ImportError:
     from unittest.mock import patch
-import re
+
 import os
+import re
 
-from passlib.hash import cisco_type7
 import pytest
-
-from ciscoconfparse2.ciscoconfparse2 import CiscoConfParse
-from ciscoconfparse2.ciscoconfparse2 import IOSCfgLine, IOSIntfLine
-from ciscoconfparse2.ciscoconfparse2 import CiscoPassword
-from ciscoconfparse2.ciscoconfparse2 import Branch
-from ciscoconfparse2.ciscoconfparse2 import Diff
-from ciscoconfparse2.models_junos import JunosCfgLine
-from ciscoconfparse2.ccp_util import IPv4Obj
 from ciscoconfparse2.ccp_abc import BaseCfgLine
-
+from ciscoconfparse2.ccp_util import IPv4Obj
+from ciscoconfparse2.ciscoconfparse2 import (Branch, CiscoConfParse,
+                                             CiscoPassword, Diff, IOSCfgLine,
+                                             IOSIntfLine)
 from ciscoconfparse2.errors import InvalidParameters
-
+from ciscoconfparse2.models_junos import JunosCfgLine
 from macaddress import EUI48, EUI64
-
+from passlib.hash import cisco_type7
 
 THIS_TEST_PATH = os.path.dirname(os.path.abspath(__file__))
 

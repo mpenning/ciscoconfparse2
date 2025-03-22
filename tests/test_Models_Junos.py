@@ -1,11 +1,11 @@
-import sys
 import os
+import sys
 
 sys.path.insert(0, "..")
 
-from ciscoconfparse2.ciscoconfparse2 import CiscoConfParse
-from ciscoconfparse2.ccp_util import IPv4Obj
 import pytest
+from ciscoconfparse2.ccp_util import IPv4Obj
+from ciscoconfparse2.ciscoconfparse2 import CiscoConfParse
 
 r""" test_Models_Junos.py - Parse, Query, Build, and Modify IOS-style configs
 

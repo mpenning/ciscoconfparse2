@@ -1,15 +1,14 @@
-from loguru import logger
-import pytest
-from ciscoconfparse2.ciscoconfparse2 import CiscoConfParse
-from ciscoconfparse2.errors import ConfigListItemDoesNotExist
-from ciscoconfparse2.errors import DynamicAddressException
-from ciscoconfparse2.ccp_util import CiscoRange, CiscoIOSInterface
-from ciscoconfparse2.ccp_util import IPv4Obj, IPv6Obj
-from ciscoconfparse2.ccp_abc import get_brace_termination
-from ciscoconfparse2.ccp_abc import BaseCfgLine
-from ciscoconfparse2.models_cisco import IOSCfgLine
-from ciscoconfparse2.models_cisco import IOSCfgLine
 import sys
+
+import pytest
+from ciscoconfparse2.ccp_abc import BaseCfgLine, get_brace_termination
+from ciscoconfparse2.ccp_util import (CiscoIOSInterface, CiscoRange, IPv4Obj,
+                                      IPv6Obj)
+from ciscoconfparse2.ciscoconfparse2 import CiscoConfParse
+from ciscoconfparse2.errors import (ConfigListItemDoesNotExist,
+                                    DynamicAddressException)
+from ciscoconfparse2.models_cisco import IOSCfgLine
+from loguru import logger
 
 sys.path.insert(0, "..")
 

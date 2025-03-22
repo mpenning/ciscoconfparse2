@@ -1,10 +1,11 @@
-from loguru import logger
+import sys
+
 import pytest
+from ciscoconfparse2.ccp_util import CiscoIOSInterface, CiscoRange, IPv4Obj
 from ciscoconfparse2.ciscoconfparse2 import CiscoConfParse
 from ciscoconfparse2.errors import DynamicAddressException
-from ciscoconfparse2.ccp_util import IPv4Obj, CiscoRange, CiscoIOSInterface
 from ciscoconfparse2.models_cisco import HSRPInterfaceGroup
-import sys
+from loguru import logger
 
 sys.path.insert(0, "..")
 

@@ -19,24 +19,23 @@
      mike [~at~] pennington [.dot.] net
 """
 
-from collections.abc import MutableSequence
-import uuid
-import sys
-import re
 import os
+import re
+import sys
+import uuid
+from collections.abc import MutableSequence
 
 sys.path.insert(0, "..")
 
 import pytest
-from conftest import parse_a01, parse_a01_factory
-
+from ciscoconfparse2.ccp_util import IPv4Obj, L4Object
 from ciscoconfparse2.ciscoconfparse2 import CiscoConfParse
 from ciscoconfparse2.models_asa import ASAObjGroupService
-from ciscoconfparse2.ccp_util import L4Object
-from ciscoconfparse2.ccp_util import IPv4Obj
+
+from conftest import parse_a01, parse_a01_factory
 
 if sys.version_info[0] < 3:
-    from ipaddr import IPv4Network, IPv6Network, IPv4Address, IPv6Address
+    from ipaddr import IPv4Address, IPv4Network, IPv6Address, IPv6Network
 else:
     from ipaddress import IPv4Network, IPv6Network, IPv4Address, IPv6Address
 

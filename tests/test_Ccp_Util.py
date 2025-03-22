@@ -34,23 +34,22 @@ r""" test_Ccp_Util.py - Parse, Query, Build, and Modify IOS-style configs
 # pragma warning disable S6395
 
 
-from ipaddress import IPv4Network, IPv6Network, IPv4Address, IPv6Address
 import ipaddress
-import pickle
 import os
-
-from loguru import logger
-import pytest
-
-from macaddress import OUI, MAC, EUI48, EUI64
-
-from ciscoconfparse2.ccp_util import CiscoRange
-from ciscoconfparse2.ccp_util import CiscoIOSInterface, CiscoIOSXRInterface
-from ciscoconfparse2.ccp_util import _RGX_IPV4ADDR, _RGX_IPV6ADDR
-from ciscoconfparse2.ccp_util import IPv6Obj, IPv4Obj, L4Object, ip_factory
-from ciscoconfparse2.ccp_util import MACObj, EUI64Obj
-from ciscoconfparse2.ccp_util import collapse_addresses
+import pickle
 import sys
+from ipaddress import IPv4Address, IPv4Network, IPv6Address, IPv6Network
+
+import pytest
+from ciscoconfparse2.ccp_util import (_RGX_IPV4ADDR, _RGX_IPV6ADDR,
+                                      CiscoIOSInterface, CiscoIOSXRInterface,
+                                      CiscoRange, EUI64Obj, IPv4Obj, IPv6Obj,
+                                      L4Object, MACObj)
+from ciscoconfparse2.ccp_util import \
+    collapse_addresses as ccp_collapse_addresses
+from ciscoconfparse2.ccp_util import ip_factory
+from loguru import logger
+from macaddress import EUI48, EUI64, MAC, OUI
 
 sys.path.insert(0, "..")
 
@@ -706,61 +705,71 @@ def testMACObj_invalid_01():
     with pytest.raises(ValueError):
         assert MACObj("0001.dead")
 
-
 def testMACObj_invalid_02():
+    """This test is to check for an invalid MAC address format"""
     with pytest.raises(ValueError):
         assert MACObj("0001.dead.dead.dead.dead.dead.beef")
 
-
 def testMACObj_equality_01():
+    """Ensure that the same mac addresses in two instances test as equal"""
     assert MACObj("dead.beef.0001") == MACObj("dead.beef.0001")
 
 
 def testMACObj_equality_02():
+    """Ensure that the same mac addresses in two instances (with different input formats) test as equal"""
     assert MACObj("dead.beef.0001") == MACObj("de-ad-be-ef-00-01")
 
 
 def testMACObj_equality_03():
+    """Ensure that the same mac addresses in two instances (with different input formats) test as equal"""
     assert MACObj("dead.beef.0001") == MACObj("de-ad-BE-EF-00-01")
 
 
 def testMACObj_equality_04():
+    """Ensure that the same mac addresses in two instances (comparing MACObj() and EUI48()) test as equal"""
     assert MACObj("dead.beef.0001") == EUI48("de-ad-be-ef-00-01")
-    assert MACObj("dead.beef.0001") != EUI48("ff-ff-ff-ff-ff-ff")
 
 
 def testMACObj_equality_05():
+    """Ensure we can compare to native macaddress instance types (i.e. macaddress.MAC)"""
     assert MACObj("dead.beef.0001") == MAC("de-ad-be-ef-00-01")
-    assert MACObj("dead.beef.0001") != MAC("ff-ff-ff-ff-ff-ff")
 
+def testMACObj_inequality_01():
+    """Ensure that different input mac addresses and different input objects test as not equal"""
+    assert MACObj("dead.beef.0001") != EUI48("ff-ff-ff-ff-ff-ff")
 
 def testEUI64Obj_dash_01():
+    """Test EUI64Obj.dash"""
     assert EUI64Obj("0001.dead.beef.0001").dash == "00-01-de-ad-be-ef-00-01"
 
-
 def testEUI64Obj_colon_01():
+    """Test EUI64Obj.colon"""
     assert EUI64Obj("0001.dead.beef.0001").colon == "00:01:de:ad:be:ef:00:01"
 
 
 def testEUI64Obj_equality_01():
+    """Ensure that the same eui64 addresses in two instances test as equal"""
     assert EUI64Obj("0001.dead.beef.0001") == EUI64Obj("0001.dead.beef.0001")
 
 
 def testEUI64Obj_equality_02():
+    """Ensure that the same eui64 addresses in two instances (with different input formats) test as equal"""
     assert EUI64Obj("0001.dead.beef.0001") == EUI64Obj("00-01-de-ad-be-ef-00-01")
 
 
 def testEUI64Obj_equality_03():
+    """Ensure that the same eui64 addresses in two instances (with different input formats) test as equal"""
     assert EUI64Obj("0001.dead.beef.0001") == EUI64Obj("00-01-de-ad-BE-EF-00-01")
 
 
 def testEUI64Obj_equality_04():
+    """Ensure we can compare to native macaddress instance types (i.e. macaddress.EUI64)"""
     assert EUI64Obj("0001.dead.beef.0001") == EUI64("00-01-de-ad-be-ef-00-01")
     assert EUI64Obj("0001.dead.beef.0001") != EUI64("ff-ff-ff-ff-ff-ff-ff-ff")
 
 
 def test_collapse_addresses_01():
-
+    """Test ipaddress.collapse_addresses() can collapse a list of IPv4Network objects with ipaddress.collapse_addresses()"""
     net_collapsed = ipaddress.collapse_addresses(
         [IPv4Network("192.0.0.0/22"), IPv4Network("192.0.2.128/25")]
     )
@@ -770,14 +779,15 @@ def test_collapse_addresses_01():
 
 
 def test_collapse_addresses_02():
+    """Ensure that the native ccp_util.collapse_addresses can collapse a list of IPv4Obj objects into native ipaddress objects"""
     net_list = [IPv4Obj("192.0.2.128/25"), IPv4Obj("192.0.0.0/26")]
-    collapsed_list = sorted(collapse_addresses(net_list))
+    collapsed_list = sorted(ccp_collapse_addresses(net_list))
     assert collapsed_list[0].network_address == IPv4Obj("192.0.0.0/26").ip
     assert collapsed_list[1].network_address == IPv4Obj("192.0.2.128/25").ip
 
 
 def test_CiscoIOSInterface_01():
-    """Check that a single number is parsed correctly"""
+    """Check that a single interface number is parsed correctly"""
     uut = CiscoIOSInterface("Ethernet1")
     assert uut.prefix == "Ethernet"
     assert uut.card is None
@@ -789,7 +799,7 @@ def test_CiscoIOSInterface_01():
 
 
 def test_CiscoIOSInterface_02():
-    """Check that a card and port is parsed correctly"""
+    """Check that an interface card and port is parsed correctly"""
     uut = CiscoIOSInterface("Ethernet1/42")
     assert uut.prefix == "Ethernet"
     assert uut.slot == 1
@@ -801,7 +811,7 @@ def test_CiscoIOSInterface_02():
 
 
 def test_CiscoIOSInterface_03():
-    """Check that a card and large port-number is parsed correctly"""
+    """Check that an interface card and large port-number is parsed correctly"""
     uut = CiscoIOSInterface("Ethernet1/4242")
     assert uut.prefix == "Ethernet"
     assert uut.slot == 1
@@ -813,7 +823,7 @@ def test_CiscoIOSInterface_03():
 
 
 def test_CiscoIOSInterface_04():
-    """Check that a card, port and subinterface is parsed correctly"""
+    """Check that an interface card, port and subinterface is parsed correctly"""
     uut = CiscoIOSInterface("Ethernet1/42.5")
     assert uut.prefix == "Ethernet"
     assert uut.slot == 1
@@ -825,7 +835,7 @@ def test_CiscoIOSInterface_04():
 
 
 def test_CiscoIOSInterface_05():
-    """Check that a card, slot, port  is parsed correctly"""
+    """Check that an interface card, slot, port is parsed correctly"""
     uut = CiscoIOSInterface("Ethernet1/3/42")
     assert uut.prefix == "Ethernet"
     assert uut.slot == 1
@@ -837,7 +847,7 @@ def test_CiscoIOSInterface_05():
 
 
 def test_CiscoIOSInterface_06():
-    """Check that a card, slot, port and subinterface  is parsed correctly"""
+    """Check that an interface card, slot, port and subinterface is parsed correctly"""
     uut = CiscoIOSInterface("Ethernet1/3/42.5")
     assert uut.prefix == "Ethernet"
     assert uut.slot == 1
@@ -1139,7 +1149,6 @@ def test_CiscoRange_24():
         CiscoRange(uut_str, result_type=None).as_list(result_type=None)
         == result_correct
     )
-
 
 def test_CiscoRange_compressed_str_01():
     """compressed_str test with a very basic set of vlan numbers"""
