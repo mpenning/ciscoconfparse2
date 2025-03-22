@@ -4,6 +4,14 @@
 - Summary:
     - Insert something here
 
+## Version: 0.8.7
+
+- Released: 2025-03-02
+- Summary:
+    - Fix duplicated test names
+    - Improve code quality
+    - Remove native CLI optparse argument parsing.  Use `ciscoconfparse2.cli_script` instead.
+
 ## Version: 0.8.6
 
 - Released: 2025-03-02
