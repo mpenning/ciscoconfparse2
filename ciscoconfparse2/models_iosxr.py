@@ -1051,7 +1051,7 @@ class BaseIOSXRIntfLine(IOSXRCfgLine, BaseFactoryInterfaceLine):
         """
         # Simplified on 2014-12-02
         try:
-            return IPv4Obj(f"{self.ipv4_addr}/{self.ipv4_mask}", strict=False)
+            return IPv4Obj(f"{self.ipv4_addr}/{self.ipv4_masklength}", strict=False)
         except DynamicAddressException as e:
             raise DynamicAddressException(e)
         except BaseException:
@@ -1347,19 +1347,6 @@ class BaseIOSXRIntfLine(IOSXRCfgLine, BaseFactoryInterfaceLine):
             return ""
         else:
             return retval
-
-    # This method is on BaseIOSXRIntfLine()
-    @property
-    @logger.catch(reraise=True)
-    def ipv6_masklength(self) -> int:
-        r"""
-        :return: The IPv6 masklength configured on the interface, default to -1
-        :rtype: int
-        """
-        ipv6_addr_object = self.ipv6_addr_object
-        if ipv6_addr_object != self.default_ipv6_addr_object:
-            return ipv6_addr_object.masklength
-        return -1
 
     # This method is on BaseIOSXRIntfLine()
     @logger.catch(reraise=True)
@@ -2237,19 +2224,6 @@ class BaseIOSXRIntfLine(IOSXRCfgLine, BaseFactoryInterfaceLine):
     # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
-    def ipv6_trafficfilter_in(self) -> str:
-        """
-        :return: The name or number of the inbound IPv6 ACL
-        :rtype: str
-        """
-        retval = self.re_match_iter_typed(
-            r"^\s*ipv6\straffic-filter\s+(\S+)\s+in\s*$", result_type=str, default=""
-        )
-        return retval
-
-    # This method is on BaseIOSXRIntfLine()
-    @property
-    @logger.catch(reraise=True)
     def ipv4_accessgroup_out(self) -> str:
         """
         :return: The name or number of the outbound IPv4 access-group
@@ -2667,7 +2641,7 @@ class IOSXRAccessLine(IOSXRCfgLine):
         retval = self.re_match_iter_typed(
             r"^\s*exec-timeout\s+(\d+\s*\d*)\s*$", group=1, result_type=str, default=""
         )
-        tmp = map(int, retval.strip().split())
+        tmp = list(map(int, retval.strip().split()))
         return tmp
 
 
@@ -2686,7 +2660,7 @@ class BaseIOSXRRouteLine(IOSXRCfgLine):
         return "<%s # %s '%s' info: '%s'>" % (
             self.classname,
             self.linenum,
-            self.network_object,
+            self.network,
             self.routeinfo,
         )
 
@@ -2856,6 +2830,7 @@ class IOSXRRouteLine(IOSXRCfgLine):
     @property
     @logger.catch(reraise=True)
     def network(self):
+        retval = None
         if self._address_family == "ip":
             return self.route_info["prefix"]
         elif self._address_family == "ipv6":
@@ -2865,6 +2840,9 @@ class IOSXRRouteLine(IOSXRCfgLine):
                 result_type=str,
                 default="",
             )
+
+        if retval is None:
+            raise NotImplementedError
         return retval
 
     @property
@@ -2899,6 +2877,7 @@ class IOSXRRouteLine(IOSXRCfgLine):
     @property
     @logger.catch(reraise=True)
     def nexthop_str(self):
+        retval = None
         if self._address_family == "ip":
             if self.next_hop_interface:
                 return self.next_hop_interface + " " + self.next_hop_addr
@@ -2911,6 +2890,9 @@ class IOSXRRouteLine(IOSXRCfgLine):
                 result_type=str,
                 default="",
             )
+
+        if retval is None:
+            raise NotImplementedError
         return retval
 
     @property
