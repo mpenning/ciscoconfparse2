@@ -2815,7 +2815,7 @@ def dns_query(input_str="", query_type="", server="", timeout=2.0):
     start = time.time()
     if (query_type == "A") or (query_type == "AAAA"):
         try:
-            answer = query(input_str, query_type)
+            answer = rr.query(input_str, query_type)
             duration = time.time() - start
             for result in answer:
                 response = DNSResponse(
