@@ -4,6 +4,18 @@
 - Summary:
     - Insert something here
 
+## Version: 0.8.9
+
+- Released: 2025-03-02
+- Summary:
+    - Fix SonarCloud password hash iteration alert
+
+## Version: 0.8.8
+
+- Released: 2025-03-02
+- Summary:
+    - Fix CiscoConfParse(loguru=False)
+
 ## Version: 0.8.7
 
 - Released: 2025-03-02
