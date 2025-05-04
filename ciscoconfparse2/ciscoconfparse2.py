@@ -147,8 +147,8 @@ __status__ = "Production"
 @logger.catch(reraise=True)
 def initialize_globals():
     """Initialize ciscoconfparse2 global dunder-variables and a couple others."""
-    global ENCODING
-    # global ACTIVE_LOGURU_HANDLERS
+    #global ENCODING
+    #global ACTIVE_LOGURU_HANDLERS
     global __author_email__
     global __author__
     global __copyright__
@@ -172,6 +172,7 @@ def initialize_globals():
         "__license__": __license__,
         "__status__": __status__,
         "__version__": __version__,
+        "ACTIVE_LOGURU_HANDLERS": ACTIVE_LOGURU_HANDLERS,
     }
     return globals_dict
 
@@ -2075,6 +2076,7 @@ class CiscoConfParse:
         self.encoding = encoding or ENCODING
         self.auto_commit = auto_commit
 
+
         if syntax not in ALL_VALID_SYNTAX:
             error = f"{syntax} is not a valid syntax."
             logger.error(error)
@@ -2117,13 +2119,17 @@ class CiscoConfParse:
         ######################################################################
         if loguru is False:
             active_loguru_handlers = configure_loguru(
+                action="disable",
                 read_only=loguru,
                 active_handlers=globals()["ACTIVE_LOGURU_HANDLERS"],
                 debug=debug,
             )
             globals()["ACTIVE_LOGURU_HANDLERS"] = active_loguru_handlers
             if debug > 0:
-                logger.warning(f"Disabled loguru enqueue because loguru={loguru}")
+                logger.warning(f"Disabled loguru because loguru={loguru}")
+
+            # Force logger removal in this package...
+            logger.remove()
 
         ######################################################################
         # Check for valid syntax

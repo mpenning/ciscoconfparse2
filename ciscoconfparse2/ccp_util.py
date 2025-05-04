@@ -306,6 +306,9 @@ def ccp_logger_control(
 
     package_name = "ciscoconfparse"
 
+    # Remove all loggers by default
+    logger.remove()
+
     if read_only is True:
         if debug > 0:
             print(f"    Setting loguru enqueue=False, because read_only={read_only}")
@@ -317,7 +320,11 @@ def ccp_logger_control(
             for handler_id in active_handlers:
                 if not isinstance(handler_id, int):
                     raise ValueError
-                logger.remove(handler_id)
+                try:
+                    logger.remove(handler_id)
+                except ValueError:
+                    # There was no logger with this handler_id...
+                    continue
         else:
             raise ValueError()
         return True
@@ -330,6 +337,7 @@ def ccp_logger_control(
     elif action == "enable":
         # Administratively enable this loguru logger
         logger.enable(package_name)
+        logger.add(sys.stderr, level=level)
         return True
 
     elif action == "add":
@@ -376,6 +384,10 @@ def configure_loguru(
     """
     configure_loguru()
     """
+
+    if debug > 0:
+        logger.info(f"configure_loguru(action='{action}', level='{level}') was called")
+
     if not isinstance(action, str):
         raise ValueError
 
@@ -411,7 +423,7 @@ def configure_loguru(
     for handler_id in active_handlers:
         if isinstance(handler_id, int):
             if debug > 0:
-                print(f"Disabling loguru handler: {handler_id}")
+                logger.debug(f"Disabling loguru handler: {handler_id}")
             ccp_logger_control(
                 action="remove", read_only=read_only, active_handlers=[handler_id]
             )
@@ -420,7 +432,7 @@ def configure_loguru(
 
     # Add log to STDOUT
     if debug > 0:
-        print(f"Calling ccp_logger_control(action='add', read_only={read_only})")
+        logger.info(f"Calling ccp_logger_control(action='add', read_only={read_only})")
 
     active_loguru_handlers = ccp_logger_control(
         sink=sys.stdout,
@@ -434,12 +446,11 @@ def configure_loguru(
     )
 
     if debug > 0:
-        print(f"added loguru handler_id -->{active_loguru_handlers}<--")
-    ccp_logger_control(
-        action="enable", read_only=read_only, active_handlers=active_handlers
-    )
+        logger.trace(f"added loguru handler_id -->{active_loguru_handlers}<--")
+
     if debug > 0:
-        print(f"    enabled loguru with handlers -->{active_loguru_handlers}<--")
+        logger.trace(f"    enabled loguru with handlers -->{active_loguru_handlers}<--")
+
     return active_loguru_handlers
 
 
