@@ -2153,6 +2153,7 @@ class CiscoConfParse:
             # Force logger removal in this package...
             logger.remove()
 
+
         ######################################################################
         # Check for valid syntax
         ######################################################################
