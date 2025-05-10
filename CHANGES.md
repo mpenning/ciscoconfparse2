@@ -4,6 +4,12 @@
 - Summary:
     - Insert something here
 
+## Version: 0.8.12
+
+- Released: 2025-05-10
+- Summary:
+    - Upgrade setup-python to v5
+
 ## Version: 0.8.11
 
 - Released: 2025-05-10
