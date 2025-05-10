@@ -12,11 +12,11 @@ banner exec /
 /
 banner login /
 *******************************************************************************
-*         
-*         
+*
+*
 *******************************************************************************
-*         
-*         
+*
+*
 *******************************************************************************
 /
 domain name-server 192.0.0.212
@@ -173,351 +173,351 @@ ipv4 access-list ACL-IPV4-BCP38-VL2014
  10 permit ipv4 192.88.73.0 0.0.0.7 any
 !
 class-map ma-com-any CM-NQ-QG1
- ma-com qos-group 1 
+ ma-com qos-group 1
  end-class-map
-! 
+!
 class-map ma-com-any CM-NQ-QG2
- ma-com qos-group 2 
+ ma-com qos-group 2
  end-class-map
-! 
+!
 class-map ma-com-any CM-NQ-QG3
- ma-com qos-group 3 
+ ma-com qos-group 3
  end-class-map
-! 
+!
 class-map ma-com-any CM-NQ-QG4
- ma-com qos-group 4 
+ ma-com qos-group 4
  end-class-map
-! 
+!
 class-map ma-com-any CM-NQ-QG5
- ma-com qos-group 5 
+ ma-com qos-group 5
  end-class-map
-! 
+!
 class-map ma-com-any CM-NQ-TC1
- ma-com traffic-class 1 
+ ma-com traffic-class 1
  end-class-map
-! 
+!
 class-map ma-com-any CM-NQ-TC2
- ma-com traffic-class 2 
+ ma-com traffic-class 2
  end-class-map
-! 
+!
 class-map ma-com-any CM-NQ-TC3
- ma-com traffic-class 3 
+ ma-com traffic-class 3
  end-class-map
-! 
+!
 class-map ma-com-any CM-NQ-TC4
- ma-com traffic-class 4 
+ ma-com traffic-class 4
  end-class-map
-! 
+!
 class-map ma-com-any CM-NQ-TC5
- ma-com traffic-class 5 
+ ma-com traffic-class 5
  end-class-map
-! 
+!
 class-map ma-com-any CM-NQ-QG0-IN
- ma-com mpls experimental topmost 0 
+ ma-com mpls experimental topmost 0
  end-class-map
-! 
+!
 class-map ma-com-any CM-NQ-QG1-IN
- ma-com mpls experimental topmost 1 
+ ma-com mpls experimental topmost 1
  end-class-map
-! 
+!
 class-map ma-com-any CM-NQ-QG2-IN
- ma-com mpls experimental topmost 2 
+ ma-com mpls experimental topmost 2
  end-class-map
-! 
+!
 class-map ma-com-any CM-NQ-QG3-IN
- ma-com mpls experimental topmost 3 
+ ma-com mpls experimental topmost 3
  end-class-map
-! 
+!
 class-map ma-com-any CM-NQ-QG4-IN
- ma-com mpls experimental topmost 4 
+ ma-com mpls experimental topmost 4
  end-class-map
-! 
+!
 class-map ma-com-any CM-NQ-QG5-IN
- ma-com mpls experimental topmost 5 
+ ma-com mpls experimental topmost 5
  end-class-map
-! 
+!
 class-map ma-com-any CM-NQ-QG6-IN
- ma-com mpls experimental topmost 6 
- ma-com precedence 6 
+ ma-com mpls experimental topmost 6
+ ma-com precedence 6
  end-class-map
-! 
+!
 class-map ma-com-any CM-NQ-QG7-IN
- ma-com mpls experimental topmost 7 
- ma-com precedence 7 
+ ma-com mpls experimental topmost 7
+ ma-com precedence 7
  end-class-map
-! 
+!
 class-map ma-com-any CM-NQ-L2-COS0
- ma-com cos 0 
+ ma-com cos 0
  end-class-map
-! 
+!
 class-map ma-com-any CM-NQ-L2-COS1
- ma-com cos 1 
+ ma-com cos 1
  end-class-map
-! 
+!
 class-map ma-com-any CM-NQ-L2-COS2
- ma-com cos 2 
+ ma-com cos 2
  end-class-map
-! 
+!
 class-map ma-com-any CM-NQ-L2-COS3
- ma-com cos 3 
+ ma-com cos 3
  end-class-map
-! 
+!
 class-map ma-com-any CM-NQ-L2-COS4
- ma-com cos 4 
+ ma-com cos 4
  end-class-map
-! 
+!
 class-map ma-com-any CM-NQ-L2-COS5
- ma-com cos 5 
+ ma-com cos 5
  end-class-map
-! 
+!
 class-map ma-com-any CM-NQ-L2-COS6
- ma-com cos 6 
+ ma-com cos 6
  end-class-map
-! 
+!
 class-map ma-com-any CM-NQ-L2-COS7
- ma-com cos 7 
+ ma-com cos 7
  end-class-map
-! 
+!
 class-map ma-com-any CM-NQ-QG0-OUT
- ma-com traffic-class 0 
+ ma-com traffic-class 0
  end-class-map
-! 
+!
 class-map ma-com-any CM-NQ-QG1-OUT
- ma-com traffic-class 1 
+ ma-com traffic-class 1
  end-class-map
-! 
+!
 class-map ma-com-any CM-NQ-QG2-OUT
- ma-com traffic-class 2 
+ ma-com traffic-class 2
  end-class-map
-! 
+!
 class-map ma-com-any CM-NQ-QG3-OUT
- ma-com traffic-class 3 
+ ma-com traffic-class 3
  end-class-map
-! 
+!
 class-map ma-com-any CM-NQ-QG4-OUT
- ma-com traffic-class 4 
+ ma-com traffic-class 4
  end-class-map
-! 
+!
 class-map ma-com-any CM-NQ-QG5-OUT
- ma-com traffic-class 5 
+ ma-com traffic-class 5
  end-class-map
-! 
+!
 class-map ma-com-any CM-NQ-QG6-OUT
- ma-com traffic-class 6 
+ ma-com traffic-class 6
  end-class-map
-! 
+!
 class-map ma-com-any CM-NQ-QG67-IN
- ma-com mpls experimental topmost 6 7 
- ma-com precedence 6 7 
+ ma-com mpls experimental topmost 6 7
+ ma-com precedence 6 7
  end-class-map
-! 
+!
 class-map ma-com-any CM-NQ-QG7-OUT
- ma-com traffic-class 7 
+ ma-com traffic-class 7
  end-class-map
-! 
+!
 class-map ma-com-any CM-NQ-QG67-OUT
- ma-com traffic-class 6 
+ ma-com traffic-class 6
  end-class-map
-! 
+!
 class-map ma-com-any CM-NQ-NET-QG-CONTROL
- ma-com qos-group 6 
+ ma-com qos-group 6
  end-class-map
-! 
+!
 class-map ma-com-any CM-NQ-NET-TC-CONTROL
- ma-com traffic-class 7 
+ ma-com traffic-class 7
  end-class-map
-! 
+!
 policy-map PM-NQ-QOS-IN
  class CM-NQ-L2-COS7
   set qos-group 7
- ! 
+ !
  class CM-NQ-L2-COS6
   set qos-group 6
- ! 
+ !
  class CM-NQ-L2-COS5
   set qos-group 5
- ! 
+ !
  class CM-NQ-L2-COS4
   set qos-group 4
- ! 
+ !
  class CM-NQ-L2-COS3
   set qos-group 3
- ! 
+ !
  class CM-NQ-L2-COS2
   set qos-group 2
- ! 
+ !
  class CM-NQ-L2-COS1
   set qos-group 1
- ! 
+ !
  class CM-NQ-L2-COS0
   set qos-group 0
- ! 
+ !
  class class-default
- ! 
+ !
  end-policy-map
-! 
+!
 policy-map PM-NQ-CORE-IN
  class CM-NQ-QG67-IN
   set traffic-class 7
-  police rate percent 10 
-  ! 
- ! 
+  police rate percent 10
+  !
+ !
  class CM-NQ-QG5-IN
   set traffic-class 5
- ! 
+ !
  class CM-NQ-QG4-IN
   set traffic-class 4
- ! 
+ !
  class CM-NQ-QG3-IN
   set traffic-class 3
- ! 
+ !
  class CM-NQ-QG2-IN
   set traffic-class 2
- ! 
+ !
  class CM-NQ-QG1-IN
   set traffic-class 1
- ! 
+ !
  class CM-NQ-QG0-IN
   set traffic-class 0
- ! 
+ !
  class class-default
- ! 
+ !
  end-policy-map
-! 
+!
 policy-map PM-CUST-10M-IN
  class class-default
-  police rate 10000000 bps 
-  ! 
- ! 
+  police rate 10000000 bps
+  !
+ !
  end-policy-map
-! 
+!
 policy-map PM-NQ-CORE-OUT
  class CM-NQ-QG2-OUT
-  bandwidth remaining percent 15 
-  random-detect default 
- ! 
+  bandwidth remaining percent 15
+  random-detect default
+ !
  class CM-NQ-QG1-OUT
-  bandwidth remaining percent 5 
-  random-detect default 
- ! 
+  bandwidth remaining percent 5
+  random-detect default
+ !
  class CM-NQ-QG4-OUT
-  bandwidth remaining percent 25 
-  random-detect default 
- ! 
+  bandwidth remaining percent 25
+  random-detect default
+ !
  class CM-NQ-QG3-OUT
-  bandwidth remaining percent 20 
-  random-detect default 
- ! 
+  bandwidth remaining percent 20
+  random-detect default
+ !
  class CM-NQ-QG5-OUT
-  priority level 1 
-  shape average percent 20 
- ! 
+  priority level 1
+  shape average percent 20
+ !
  class CM-NQ-QG6-OUT
-  priority level 2 
-  shape average percent 1 
- ! 
+  priority level 2
+  shape average percent 1
+ !
  class CM-NQ-QG7-OUT
-  priority level 2 
-  shape average percent 1 
- ! 
+  priority level 2
+  shape average percent 1
+ !
  class class-default
-  bandwidth remaining percent 35 
-  random-detect default 
- ! 
+  bandwidth remaining percent 35
+  random-detect default
+ !
  end-policy-map
-! 
+!
 policy-map PM-CUST-100M-IN
  class class-default
-  police rate 100000000 bps 
-  ! 
- ! 
+  police rate 100000000 bps
+  !
+ !
  end-policy-map
-! 
+!
 policy-map PM-CUST-10M-OUT
  class class-default
-  shape average 10000000 bps 
- ! 
+  shape average 10000000 bps
+ !
  end-policy-map
-! 
+!
 policy-map PM-CUST-100M-OUT
  class class-default
-  shape average 100000000 bps 
- ! 
+  shape average 100000000 bps
+ !
  end-policy-map
-! 
+!
 policy-map PM-NQ-SHAPE-10G-L1-OUT
  class class-default
   service-policy PM-NQ-SHAPE-10G-L2-OUT
-  shape average 4000000000 bps 
- ! 
+  shape average 4000000000 bps
+ !
  end-policy-map
-! 
+!
 policy-map PM-NQ-SHAPE-10G-L2-OUT
  class CM-NQ-NET-TC-CONTROL
-  bandwidth remaining percent 1 
- ! 
+  bandwidth remaining percent 1
+ !
  class class-default
- ! 
+ !
  end-policy-map
-! 
+!
 policy-map PM-NQ-07-S-foo-com-LAB-CE-L1-OUT
  class class-default
   service-policy PM-NQ-07-S-foo-com-LAB-CE-L2-OUT
-  shape average 100000000 bps 
- ! 
+  shape average 100000000 bps
+ !
  end-policy-map
-! 
+!
 policy-map PM-NQ-07-S-foo-com-LAB-CE-L2-OUT
  class CM-NQ-NET-TC-CONTROL
-  bandwidth remaining percent 1 
- ! 
+  bandwidth remaining percent 1
+ !
  class class-default
- ! 
+ !
  end-policy-map
-! 
+!
 policy-map PM-NQ-09-R-moo-com-LAB-CE-L1-OUT
  class class-default
   service-policy PM-NQ-09-R-moo-com-LAB-CE-L2-OUT
-  shape average 1000000000 bps 
- ! 
+  shape average 1000000000 bps
+ !
  end-policy-map
-! 
+!
 policy-map PM-NQ-09-R-moo-com-LAB-CE-L2-OUT
  class CM-NQ-NET-TC-CONTROL
-  bandwidth remaining percent 1 
- ! 
+  bandwidth remaining percent 1
+ !
  class CM-NQ-TC5
-  priority level 2 
-  shape average percent 10 
- ! 
+  priority level 2
+  shape average percent 10
+ !
  class CM-NQ-TC4
-  bandwidth remaining percent 10 
- ! 
+  bandwidth remaining percent 10
+ !
  class CM-NQ-TC3
-  bandwidth remaining percent 10 
- ! 
+  bandwidth remaining percent 10
+ !
  class CM-NQ-TC2
-  bandwidth remaining percent 10 
- ! 
+  bandwidth remaining percent 10
+ !
  class class-default
- ! 
+ !
  end-policy-map
-! 
+!
 policy-map PM-NQ-14-R-foo-com-LAB-CE-L1-OUT
  class class-default
   service-policy PM-NQ-14-R-foo-com-LAB-CE-L2-OUT
-  shape average 100000000 bps 
- ! 
+  shape average 100000000 bps
+ !
  end-policy-map
-! 
+!
 policy-map PM-NQ-14-R-foo-com-LAB-CE-L2-OUT
  class CM-NQ-NET-TC-CONTROL
-  bandwidth remaining percent 1 
- ! 
+  bandwidth remaining percent 1
+ !
  class class-default
- ! 
+ !
  end-policy-map
-! 
+!
 flow exporter-map NF-EM-NTOP1
  version v9
   template timeout 60
@@ -735,7 +735,7 @@ interface GigabitEthernet0/0/0/31
  mtu 1900
 !
 interface TenGigE0/0/0/24
- description 02com-com.lab@Te0/0/25 
+ description 02com-com.lab@Te0/0/25
  cdp
  mtu 9114
  ipv4 flowspec disable
@@ -1123,7 +1123,7 @@ router bgp 64512
  neighbor 172.16.217.77
   remote-as 64512
   password encrypted 081543D3B1718065955D1C567B
-  description 01-ro-sbo-com  
+  description 01-ro-sbo-com
   update-source Loopback0
   address-family ipv4 unicast
   !
@@ -1135,7 +1135,7 @@ router bgp 64512
  neighbor 172.16.217.88
   remote-as 64512
   password encrypted 046F041035E411D451BB554543
-  description 01-ro-bag-com  
+  description 01-ro-bag-com
   update-source Loopback0
   address-family ipv4 unicast
   !

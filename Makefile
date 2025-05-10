@@ -52,6 +52,7 @@ cicd:
 	# yamlfix doesn't understand pyproject.toml config
 	#     if used in pre-commit...
 	yamlfix .github/workflows/
+	-git commit --all -m "chore: yamlfix changes"
 	# Run pre-commit on all files...
 	pre-commit run -a
 	-git commit --all -m "chore: pre-commit changes"

@@ -103,7 +103,7 @@
     - Improve `CiscoRange().member_type`
     - Improve `CiscoRange().text`
     - Remove `CiscoRange().parse_floats()`
-    - Fix `repr(CiscoRange())` 
+    - Fix `repr(CiscoRange())`
 
 ## Version: 0.8.1
 
@@ -531,7 +531,7 @@
 - Released: 2024-03-03
 - Summary:
     - Fix hatch changelog github url
-    - Adjust `ccp branch` command commands 
+    - Adjust `ccp branch` command commands
     - More documentation updates
 
 ## Version: 0.7.3

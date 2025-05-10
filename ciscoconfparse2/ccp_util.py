@@ -1,22 +1,22 @@
-""" ccp_util.py - Parse, Query, Build, and Modify IOS-style configurations
+"""ccp_util.py - Parse, Query, Build, and Modify IOS-style configurations
 
-     Copyright (C) 2014-2025  David Michael Pennington
+Copyright (C) 2014-2025  David Michael Pennington
 
-     This program is free software: you can redistribute it and/or modify
-     it under the terms of the GNU General Public License as published by
-     the Free Software Foundation, either version 3 of the License, or
-     (at your option) any later version.
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
 
-     This program is distributed in the hope that it will be useful,
-     but WITHOUT ANY WARRANTY; without even the implied warranty of
-     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-     GNU General Public License for more details.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
 
-     You should have received a copy of the GNU General Public License
-     along with this program.  If not, see <http://www.gnu.org/licenses/>.
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-     If you need to contact the author, you can do so by emailing:
-     mike [~at~] pennington !dot! net
+If you need to contact the author, you can do so by emailing:
+mike [~at~] pennington !dot! net
 """
 
 ##############################################################################
@@ -45,8 +45,13 @@ import time
 from collections import UserList
 from collections.abc import Sequence
 from functools import wraps
-from ipaddress import (AddressValueError, IPv4Address, IPv4Network,
-                       IPv6Address, IPv6Network)
+from ipaddress import (
+    AddressValueError,
+    IPv4Address,
+    IPv4Network,
+    IPv6Address,
+    IPv6Network,
+)
 from ipaddress import collapse_addresses as ipaddr_collapse_addresses
 from operator import attrgetter
 from typing import Any, Callable, List, Optional, Union
@@ -59,15 +64,23 @@ from loguru import logger
 from macaddress import EUI48, EUI64, MAC
 
 import ciscoconfparse2
-from ciscoconfparse2.errors import (DNSTimeoutError, DuplicateMember,
-                                    DynamicAddressException,
-                                    InvalidCiscoInterface, InvalidCiscoRange,
-                                    InvalidMember, InvalidParameters,
-                                    InvalidShellVariableMapping,
-                                    ListItemMissingAttribute, MismatchedType,
-                                    NoRegexMatch, PythonOptimizeException,
-                                    RequirementFailure, UnexpectedType,
-                                    UntypedError)
+from ciscoconfparse2.errors import (
+    DNSTimeoutError,
+    DuplicateMember,
+    DynamicAddressException,
+    InvalidCiscoInterface,
+    InvalidCiscoRange,
+    InvalidMember,
+    InvalidParameters,
+    InvalidShellVariableMapping,
+    ListItemMissingAttribute,
+    MismatchedType,
+    NoRegexMatch,
+    PythonOptimizeException,
+    RequirementFailure,
+    UnexpectedType,
+    UntypedError,
+)
 from ciscoconfparse2.protocol_values import ASA_TCP_PORTS, ASA_UDP_PORTS
 
 # Maximum ipv4 as an integer
@@ -146,7 +159,7 @@ class UnsupportedFeatureWarning(SyntaxWarning):
 
 
 # intentionally not configuring @attrs.define() on this object
-class PythonOptimizeCheck(object):
+class PythonOptimizeCheck:
     """
     Check if we're running under "python -O ...".  The -O option removes
     all `assert` statements at runtime.  ciscoconfparse2 depends heavily on
@@ -2641,7 +2654,7 @@ class EUI64Obj(EUI64):
         return f"<EUI64Obj {str(self.eui64)}>"
 
 
-class L4Object(object):
+class L4Object:
     """Object for Transport-layer protocols; the object ensures that logical operators (such as le, gt, eq, and ne) are parsed correctly, as well as mapping service names to port numbers
 
     Examples
@@ -2724,7 +2737,7 @@ class L4Object(object):
         return False
 
 
-class DNSResponse(object):
+class DNSResponse:
     """A universal DNS Response object
 
     Parameters
@@ -4106,7 +4119,7 @@ class CiscoIOSInterface:
 
 
 @attrs.define(repr=False, slots=False)
-class CiscoIOSXRInterface(object):
+class CiscoIOSXRInterface:
     ##########################################################################
     ### FIXME CiscoIOSXRInterface() is fundamentally broken.
     ###       this is a placeholder until we fix CiscoIOSXRInterface
@@ -5386,7 +5399,7 @@ class CiscoRange(UserList):
                 continue
 
         # De-duplicate the list of integers and return it...
-        return list(set([int(ii) for ii in integers]))
+        return list({int(ii) for ii in integers})
 
     # This method is on CiscoRange()
     @logger.catch(reraise=True)
@@ -6099,19 +6112,19 @@ class CiscoRange(UserList):
         if result_type == "auto":
             if len(self.data) > 0:
                 result_type = type(self.as_list[0])
-                return set([result_type(ii) for ii in retval])
+                return {result_type(ii) for ii in retval}
             else:
                 return []
         elif result_type is None:
-            return set([CiscoIOSInterface(ii) for ii in retval])
+            return {CiscoIOSInterface(ii) for ii in retval}
         elif isinstance(result_type, (CiscoIOSInterface, CiscoIOSXRInterface)):
-            return set([result_type(ii) for ii in retval])
+            return {result_type(ii) for ii in retval}
         elif result_type is str:
-            return set([str(ii) for ii in retval])
+            return {str(ii) for ii in retval}
         elif result_type is int:
-            return set([int(ii) for ii in retval])
+            return {int(ii) for ii in retval}
         elif result_type is float:
-            return set([float(ii) for ii in retval])
+            return {float(ii) for ii in retval}
         else:
             error = f"CiscoRange().as_list(result_type={result_type}) is not valid.  Choose from {['auto', None, int, str, float]}.  result_type: None will return CiscoIOSInterface() objects."
             logger.critical(error)

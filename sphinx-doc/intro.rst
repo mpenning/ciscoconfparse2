@@ -87,8 +87,8 @@ The biggest difference in the two APIs is the multi-level search capability.  To
     feature01
      parameter01
 
-The original `ciscoconfparse`_ could not find `parameter01` on `Ethernet0/1` without
-iterating in a loop (because two different interfaces have `parameter01`).  However,
+The original `ciscoconfparse`_ could not find ``parameter01`` on ``Ethernet0/1`` without
+iterating in a loop (because two different interfaces have ``parameter01``).  However,
 `ciscoconfparse2`_ can easily identify it by searching a list of elements with
 :py:meth:`~ciscoconfparse2.CiscoConfParse.find_child_objects`:
 

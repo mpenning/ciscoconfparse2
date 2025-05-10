@@ -5,12 +5,11 @@
 # Thanks to Pallets/flask for a useful test.yaml template...
 #     https://github.com/pallets/flask/blob/main/.github/workflows/tests.yaml
 #
-
-name: Tests
+name: 'Tests'
 on:
   push:
     branches:
-      - main
+      - 'main'
       - '*.x'
     paths-ignore:
       - 'docs/**'
@@ -18,7 +17,7 @@ on:
       - '*.rst'
   pull_request:
     branches:
-      - main
+      - 'main'
       - '*.x'
     paths-ignore:
       - 'docs/**'
@@ -26,65 +25,64 @@ on:
       - '*.rst'
 jobs:
   pytest:
-    name: ${{ matrix.name }}
-    runs-on: ${{ matrix.os }}
+    name: '${{ matrix.name }}'
+    runs-on: '${{ matrix.os }}'
     strategy:
       fail-fast: false
       matrix:
         include:
-          - {name: Linux, python: '3.11', os: ubuntu-latest, tox: py311}
-          - {name: Windows, python: '3.11', os: windows-latest, tox: py311}
-          - {name: Mac, python: '3.11', os: macos-latest, tox: py311}
-          - {name: '3.13', python: '3.13', os: ubuntu-latest, tox: py313}
-          - {name: '3.12', python: '3.12', os: ubuntu-latest, tox: py312}
-          - {name: '3.11', python: '3.11', os: ubuntu-latest, tox: py311}
-          - {name: '3.10', python: '3.10', os: ubuntu-latest, tox: py310}
-          - {name: '3.9', python: '3.9', os: ubuntu-latest, tox: py39}
-          - {name: 'PyPy', python: 'pypy-3.10', os: ubuntu-latest, tox: pypy310}
-          - {name: 'Minimum Versions', python: '3.11', os: ubuntu-latest, tox: py311}
+          - {name: 'Linux', python: '3.11', os: 'ubuntu-latest', tox: 'py311'}
+          - {name: 'Windows', python: '3.11', os: 'windows-latest', tox: 'py311'}
+          - {name: 'Mac', python: '3.11', os: 'macos-latest', tox: 'py311'}
+          - {name: '3.13', python: '3.13', os: 'ubuntu-latest', tox: 'py313'}
+          - {name: '3.12', python: '3.12', os: 'ubuntu-latest', tox: 'py312'}
+          - {name: '3.11', python: '3.11', os: 'ubuntu-latest', tox: 'py311'}
+          - {name: '3.10', python: '3.10', os: 'ubuntu-latest', tox: 'py310'}
+          - {name: '3.9', python: '3.9', os: 'ubuntu-latest', tox: 'py39'}
+          - {name: 'PyPy', python: 'pypy-3.10', os: 'ubuntu-latest', tox: 'pypy310'}
+          - {name: 'Minimum Versions', python: '3.11', os: 'ubuntu-latest', tox: 'py311'}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: 'actions/checkout@v4'
+      - uses: 'actions/setup-python@v5'
         with:
-          python-version: ${{ matrix.python }}
-      - name: Display Python version
-        run: python -c 'import sys; print(sys.version)'
-      - name: Install dependencies on macos and fix scrypt install with CFLAGS / LDFLAGS
-        if: ${{ matrix.os == 'macos-latest' }}
+          python-version: '${{ matrix.python }}'
+      - name: 'Display Python version'
+        run: 'python -c ''import sys; print(sys.version)'''
+      - name: 'Install dependencies on macos and fix scrypt install with CFLAGS / LDFLAGS'
+        if: '${{ matrix.os == ''macos-latest'' }}'
         run: |
-             true ###############################################################
-             true # install pip, pytest, and python packages
-             true #     asterisk globbing is fragile, so don't use asterisk path
-             true #     globs.  Just call out individual files, below.
-             true ###############################################################
-             python -m pip install --upgrade pip
-             pip install -U pytest
-             true ###############################################################
-             true #     Install ourself
-             true ###############################################################
-             true # Fix macos scrypt imports manually because they throw errors otherwise
-             export CFLAGS="-I$(brew --prefix openssl)/include"
-             export LDFLAGS="-L$(brew --prefix openssl)/lib"
-             pip install -U .
-      - name: Install dependencies on Ubuntu Linux / Windows
-        if: ${{ matrix.os != 'macos-latest' }}
+          true  ###############################################################
+          true  # install pip, pytest, and python packages
+          true  #     asterisk globbing is fragile, so don't use asterisk path
+          true  #     globs.  Just call out individual files, below.
+          true  ###############################################################
+          python -m pip install --upgrade pip
+          pip install -U pytest
+          true  ###############################################################
+          true  #     Install ourself
+          true  ###############################################################
+          true  # Fix macos scrypt imports manually because they throw errors otherwise
+          export CFLAGS="-I$(brew --prefix openssl)/include"
+          export LDFLAGS="-L$(brew --prefix openssl)/lib"
+          pip install -U .
+      - name: 'Install dependencies on Ubuntu Linux / Windows'
+        if: '${{ matrix.os != ''macos-latest'' }}'
         run: |
-             true ###############################################################
-             true # install pip, pytest, and python packages
-             true #     asterisk globbing is fragile, so don't use asterisk path
-             true #     globs.  Just call out individual files, below.
-             true ###############################################################
-             python -m pip install --upgrade pip
-             pip install -U pytest
-             true ###############################################################
-             true #     Install ourself
-             true ###############################################################
-             pip install -U .
-      - name: Run pytest
-        run: |
-             true ###############################################################
-             true # use pytest dot path because it's portable across
-             true #     windows and unix
-             true ###############################################################
-             cd tests && pytest .
-
+          true  ###############################################################
+          true  # install pip, pytest, and python packages
+          true  #     asterisk globbing is fragile, so don't use asterisk path
+          true  #     globs.  Just call out individual files, below.
+          true  ###############################################################
+          python -m pip install --upgrade pip
+          pip install -U pytest
+          true  ###############################################################
+          true  #     Install ourself
+          true  ###############################################################
+          pip install -U .
+      - name: 'Run pytest'
+        run: |-
+          true  ###############################################################
+          true  # use pytest dot path because it's portable across
+          true  #     windows and unix
+          true  ###############################################################
+          cd tests && pytest .

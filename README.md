@@ -135,7 +135,7 @@ complex queries about these relationships.
 
 ## What changed in ciscoconfparse2?
 
-In late 2023, I started a rewrite because [ciscoconfparse][64] is too large 
+In late 2023, I started a rewrite because [ciscoconfparse][64] is too large
 and has some defaults that I wish it didn't have.  I froze
 [ciscoconfparse][64] PYPI releases at [version 1.9.41][65]; there will be no
 more [ciscoconfparse][64] PYPI releases.
@@ -296,4 +296,3 @@ The word \"Cisco\" is a registered trademark of [Cisco Systems][27].
   [68]: https://img.shields.io/badge/%F0%9F%A5%9A-Hatch-4051b5.svg
   [69]: https://github.com/pypa/hatch
   [70]: http://www.pennington.net/py/ciscoconfparse2/examples.html
-

@@ -24,7 +24,7 @@ dependencies = [
   # passlib uses crypt
   "passlib==1.7.4",
 
-  # Using crypt-r as a replacement for crypt in Python3.13+ 
+  # Using crypt-r as a replacement for crypt in Python3.13+
   # NOTE: crypt-r is not available for python 3.10 and lower so keeping
   # as a dependency may not be possible
   # "crypt-r>=3.13.1",
@@ -67,6 +67,8 @@ dev = [
   "wheel>=0.38.4",
   "twine>=4.0.2",
   "pytest>=7.4.3",
+  "pre-commit==4.2.0",
+  "yamlfix==1.17.0",
   "pylama==8.4.1",
   "pylint==3.0.3",
   "coverage>=7.3.2",
@@ -117,3 +119,10 @@ packages = [
 [tool.hatch.envs.default.scripts]
 pytest = "cd tests && pytest ."
 
+[tool.yamlfix]
+preserve_quotes = true
+line_length = 1000
+sequence_style = "block_style"
+whitelines = 1
+quote_basic_values = true
+quote_representation='"'

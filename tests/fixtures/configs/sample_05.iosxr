@@ -1,6 +1,6 @@
 !! Building configuration
 !! IOS XR Configuration 7.10.1
-!! Last configuration change at Fri Oct 27 12:56:11 2023 by   
+!! Last configuration change at Fri Oct 27 12:56:11 2023 by
 !
 hostname NCS57B1
 banner exec /
@@ -13,7 +13,7 @@ banner exec /
 banner login /
 *******************************************************************************
 *
-*         
+*
 *******************************************************************************
 /
 logging console debugging
@@ -139,7 +139,7 @@ vrf BAZZER
  !
 !
 vrf INTERNET10
- description *** INTERNET ***    
+ description *** INTERNET ***
  address-family ipv4 unicast
   import route-target
    65412:20001030
@@ -162,7 +162,7 @@ vrf INTERNET10
  !
 !
 vrf INTERNET11
- description *** INTERNET ***  
+ description *** INTERNET ***
  address-family ipv4 unicast
   import route-target
    65412:20001040
@@ -175,7 +175,7 @@ vrf INTERNET11
  !
 !
 vrf INTERNET12
- description *** INTERNET ***  
+ description *** INTERNET ***
  address-family ipv4 unicast
   import route-target
    65412:20001050
@@ -302,254 +302,254 @@ ipv4 access-list ACL-IPV4-BCP38-HU-0-0-0-6
  10 permit ipv4 198.18.82.84 0.0.0.3 any
 !
 class-map match-any CM-NQ-QG0-IN
- match mpls experimental topmost 0 
+ match mpls experimental topmost 0
  end-class-map
-! 
+!
 class-map match-any CM-NQ-QG1-IN
- match mpls experimental topmost 1 
+ match mpls experimental topmost 1
  end-class-map
-! 
+!
 class-map match-any CM-NQ-QG2-IN
- match mpls experimental topmost 2 
+ match mpls experimental topmost 2
  end-class-map
-! 
+!
 class-map match-any CM-NQ-QG3-IN
- match mpls experimental topmost 3 
+ match mpls experimental topmost 3
  end-class-map
-! 
+!
 class-map match-any CM-NQ-QG4-IN
- match mpls experimental topmost 4 
+ match mpls experimental topmost 4
  end-class-map
-! 
+!
 class-map match-any CM-NQ-QG5-IN
- match mpls experimental topmost 5 
+ match mpls experimental topmost 5
  end-class-map
-! 
+!
 class-map match-any CM-NQ-QG6-IN
- match mpls experimental topmost 6 
- match precedence 6 
+ match mpls experimental topmost 6
+ match precedence 6
  end-class-map
-! 
+!
 class-map match-any CM-NQ-QG7-IN
- match mpls experimental topmost 7 
- match precedence 7 
+ match mpls experimental topmost 7
+ match precedence 7
  end-class-map
-! 
+!
 class-map match-any CM-NQ-L2-COS0
- match cos 0 
+ match cos 0
  end-class-map
-! 
+!
 class-map match-any CM-NQ-L2-COS1
- match cos 1 
+ match cos 1
  end-class-map
-! 
+!
 class-map match-any CM-NQ-L2-COS2
- match cos 2 
+ match cos 2
  end-class-map
-! 
+!
 class-map match-any CM-NQ-L2-COS3
- match cos 3 
+ match cos 3
  end-class-map
-! 
+!
 class-map match-any CM-NQ-L2-COS4
- match cos 4 
+ match cos 4
  end-class-map
-! 
+!
 class-map match-any CM-NQ-L2-COS5
- match cos 5 
+ match cos 5
  end-class-map
-! 
+!
 class-map match-any CM-NQ-L2-COS6
- match cos 6 
+ match cos 6
  end-class-map
-! 
+!
 class-map match-any CM-NQ-L2-COS7
- match cos 7 
+ match cos 7
  end-class-map
-! 
+!
 class-map match-any CM-NQ-QG0-OUT
- match traffic-class 0 
+ match traffic-class 0
  end-class-map
-! 
+!
 class-map match-any CM-NQ-QG1-OUT
- match traffic-class 1 
+ match traffic-class 1
  end-class-map
-! 
+!
 class-map match-any CM-NQ-QG2-OUT
- match traffic-class 2 
+ match traffic-class 2
  end-class-map
-! 
+!
 class-map match-any CM-NQ-QG3-OUT
- match traffic-class 3 
+ match traffic-class 3
  end-class-map
-! 
+!
 class-map match-any CM-NQ-QG4-OUT
- match traffic-class 4 
+ match traffic-class 4
  end-class-map
-! 
+!
 class-map match-any CM-NQ-QG5-OUT
- match traffic-class 5 
+ match traffic-class 5
  end-class-map
-! 
+!
 class-map match-any CM-NQ-QG6-OUT
- match traffic-class 6 
+ match traffic-class 6
  end-class-map
-! 
+!
 class-map match-any CM-NQ-QG67-IN
- match mpls experimental topmost 6 7 
- match precedence 6 7 
+ match mpls experimental topmost 6 7
+ match precedence 6 7
  end-class-map
-! 
+!
 class-map match-any CM-NQ-QG7-OUT
- match traffic-class 7 
+ match traffic-class 7
  end-class-map
-! 
+!
 class-map match-any CM-NQ-QG67-OUT
- match traffic-class 6 
+ match traffic-class 6
  end-class-map
-! 
+!
 class-map match-any CM-NQ-NET-QG-CONTROL
- match qos-group 6 
+ match qos-group 6
  end-class-map
-! 
+!
 class-map match-any CM-NQ-NET-TC-CONTROL
- match traffic-class 7 
+ match traffic-class 7
  end-class-map
-! 
+!
 policy-map PM-NQ-QOS-IN
  class CM-NQ-L2-COS7
   set qos-group 7
- ! 
+ !
  class CM-NQ-L2-COS6
   set qos-group 6
- ! 
+ !
  class CM-NQ-L2-COS5
   set qos-group 5
- ! 
+ !
  class CM-NQ-L2-COS4
   set qos-group 4
- ! 
+ !
  class CM-NQ-L2-COS3
   set qos-group 3
- ! 
+ !
  class CM-NQ-L2-COS2
   set qos-group 2
- ! 
+ !
  class CM-NQ-L2-COS1
   set qos-group 1
- ! 
+ !
  class CM-NQ-L2-COS0
   set qos-group 0
- ! 
+ !
  class class-default
- ! 
+ !
  end-policy-map
-! 
+!
 policy-map PM-NQ-CORE-IN
  class CM-NQ-QG67-IN
   set traffic-class 7
-  police rate percent 10 
-  ! 
- ! 
+  police rate percent 10
+  !
+ !
  class CM-NQ-QG5-IN
   set traffic-class 5
- ! 
+ !
  class CM-NQ-QG4-IN
   set traffic-class 4
- ! 
+ !
  class CM-NQ-QG3-IN
   set traffic-class 3
- ! 
+ !
  class CM-NQ-QG2-IN
   set traffic-class 2
- ! 
+ !
  class CM-NQ-QG1-IN
   set traffic-class 1
- ! 
+ !
  class CM-NQ-QG0-IN
   set traffic-class 0
- ! 
+ !
  class class-default
- ! 
+ !
  end-policy-map
-! 
+!
 policy-map PM-NQ-CORE-OUT
  class CM-NQ-QG2-OUT
-  bandwidth remaining percent 15 
-  random-detect default 
- ! 
+  bandwidth remaining percent 15
+  random-detect default
+ !
  class CM-NQ-QG1-OUT
-  bandwidth remaining percent 5 
-  random-detect default 
- ! 
+  bandwidth remaining percent 5
+  random-detect default
+ !
  class CM-NQ-QG4-OUT
-  bandwidth remaining percent 25 
-  random-detect default 
- ! 
+  bandwidth remaining percent 25
+  random-detect default
+ !
  class CM-NQ-QG3-OUT
-  bandwidth remaining percent 20 
-  random-detect default 
- ! 
+  bandwidth remaining percent 20
+  random-detect default
+ !
  class CM-NQ-QG5-OUT
-  priority level 1 
-  shape average percent 20 
- ! 
+  priority level 1
+  shape average percent 20
+ !
  class CM-NQ-QG6-OUT
-  priority level 2 
-  shape average percent 1 
- ! 
+  priority level 2
+  shape average percent 1
+ !
  class CM-NQ-QG7-OUT
-  priority level 2 
-  shape average percent 1 
- ! 
+  priority level 2
+  shape average percent 1
+ !
  class class-default
-  bandwidth remaining percent 35 
-  random-detect default 
- ! 
+  bandwidth remaining percent 35
+  random-detect default
+ !
  end-policy-map
-! 
+!
 policy-map PM-NQ-SHAPE-1G-L1-OUT
  class class-default
   service-policy PM-NQ-SHAPE-1G-L2-OUT
-  shape average 1000000000 bps 
- ! 
+  shape average 1000000000 bps
+ !
  end-policy-map
-! 
+!
 policy-map PM-NQ-SHAPE-1G-L2-OUT
  class CM-NQ-NET-TC-CONTROL
-  bandwidth remaining percent 1 
- ! 
+  bandwidth remaining percent 1
+ !
  class class-default
- ! 
+ !
  end-policy-map
-! 
+!
 policy-map PM-NQ-AS65124-ACME-LABOR-L1-IN
  class class-default
   set dscp 0
- ! 
+ !
  end-policy-map
-! 
+!
 policy-map PM-NQ-15-R-foo-CH-LAB-CE-L1-OUT
  class class-default
   service-policy PM-NQ-15-R-foo-CH-LAB-CE-L2-OUT
-  shape average 100000000 bps 
- ! 
+  shape average 100000000 bps
+ !
  end-policy-map
-! 
+!
 policy-map PM-NQ-15-R-foo-CH-LAB-CE-L2-OUT
  class CM-NQ-NET-TC-CONTROL
-  bandwidth remaining percent 1 
- ! 
+  bandwidth remaining percent 1
+ !
  class class-default
- ! 
+ !
  end-policy-map
-! 
+!
 policy-map PM-NQ-AS65124-ACME-LABOR-10G-L1-OUT
  class class-default
-  shape average 10 gbps 
- ! 
+  shape average 10 gbps
+ !
  end-policy-map
-! 
+!
 flow exporter-map NF-EM-NTOP1
  version v9
   template timeout 60
@@ -869,7 +869,7 @@ prefix-set PS-CONNECTED-2-BGP
 end-set
 !
 prefix-set PS-IPv4-AS123-IWAY
-  22.56.40.0/22 le 32, 
+  22.56.40.0/22 le 32,
 end-set
 !
 prefix-set PS-IPV6-STATIC-2-BGP

@@ -1,22 +1,22 @@
-r""" models_asa.py - Parse, Query, Build, and Modify IOS-style configurations
+r"""models_asa.py - Parse, Query, Build, and Modify IOS-style configurations
 
-     Copyright (C) 2023-2025      David Michael Pennington
+Copyright (C) 2023-2025      David Michael Pennington
 
-     This program is free software: you can redistribute it and/or modify
-     it under the terms of the GNU General Public License as published by
-     the Free Software Foundation, either version 3 of the License, or
-     (at your option) any later version.
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
 
-     This program is distributed in the hope that it will be useful,
-     but WITHOUT ANY WARRANTY; without even the implied warranty of
-     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-     GNU General Public License for more details.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
 
-     You should have received a copy of the GNU General Public License
-     along with this program.  If not, see <http://www.gnu.org/licenses/>.
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-     If you need to contact the author, you can do so by emailing:
-     mike [~at~] pennington [/dot\] net
+If you need to contact the author, you can do so by emailing:
+mike [~at~] pennington [/dot\] net
 """
 
 ### HUGE UGLY WARNING:
@@ -70,15 +70,16 @@ class ASACfgLine(BaseCfgLine):
         - an instance of :class:`~models_asa.ASACfgLine`.
 
     """
+
     _mm_results: Any = None
 
     @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):
         """Accept an ASA line number and initialize family relationship
         attributes"""
-        super(ASACfgLine, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
-        #self.text = kwargs.get("line", None)
+        # self.text = kwargs.get("line", None)
         self._mm_results = None
 
     @logger.catch(reraise=True)
@@ -96,8 +97,6 @@ class ASACfgLine(BaseCfgLine):
     @logger.catch(reraise=True)
     def __hash__(self):
         return self.get_unique_identifier()
-
-
 
     @classmethod
     @logger.catch(reraise=True)
@@ -165,7 +164,7 @@ class BaseASAIntfLine(ASACfgLine):
 
     @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):
-        super(BaseASAIntfLine, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.ifindex = None  # Optional, for user use
         self.default_ipv4_addr_object = IPv4Obj()
 
@@ -180,8 +179,6 @@ class BaseASAIntfLine(ASACfgLine):
     @logger.catch(reraise=True)
     def __hash__(self):
         return self.get_unique_identifier()
-
-
 
     @logger.catch(reraise=True)
     def __repr__(self):
@@ -256,7 +253,8 @@ class BaseASAIntfLine(ASACfgLine):
     def ordinal_list(self):
         """Return a list of numbers representing card, slot, port for this interface.  If you call ordinal_list on GigabitEthernet2/25.100, you'll get this python list of integers: [2, 25].  If you call ordinal_list on GigabitEthernet2/0/25.100 you'll get this python list of integers: [2, 0, 25].  This method strips all subinterface information in the returned value.
 
-        ..warning:: ordinal_list should silently fail (returning an empty python list) if the interface doesn't parse correctly"""
+        ..warning:: ordinal_list should silently fail (returning an empty python list) if the interface doesn't parse correctly
+        """
         if not self.is_intf:
             return []
         else:
@@ -590,16 +588,15 @@ class ASAName(ASACfgLine):
     def __init__(self, *args, **kwargs):
         """Accept an ASA line number and initialize family relationship
         attributes"""
-        super(ASAName, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         mm = _RE_NAMEOBJECT.search(self.text)
-        if (mm is not None):
+        if mm is not None:
             self._mm_results = mm.groupdict()  # All regex match results
         else:
             raise ValueError
 
         self.name = self._mm_results["name"]
         self.addr = self._mm_results["addr"]
-
 
     @logger.catch(reraise=True)
     def __eq__(self, other):
@@ -612,7 +609,6 @@ class ASAName(ASACfgLine):
     @logger.catch(reraise=True)
     def __hash__(self):
         return self.get_unique_identifier()
-
 
     @classmethod
     @logger.catch(reraise=True)
@@ -643,8 +639,7 @@ class ASAObjNetwork(ASACfgLine):
     def __init__(self, *args, **kwargs):
         """Accept an ASA line number and initialize family relationship
         attributes"""
-        super(ASAObjNetwork, self).__init__(*args, **kwargs)
-
+        super().__init__(*args, **kwargs)
 
     @logger.catch(reraise=True)
     def __eq__(self, other):
@@ -657,7 +652,6 @@ class ASAObjNetwork(ASACfgLine):
     @logger.catch(reraise=True)
     def __hash__(self):
         return self.get_unique_identifier()
-
 
     @classmethod
     @logger.catch(reraise=True)
@@ -678,8 +672,7 @@ class ASAObjService(ASACfgLine):
     def __init__(self, *args, **kwargs):
         """Accept an ASA line number and initialize family relationship
         attributes"""
-        super(ASAObjService, self).__init__(*args, **kwargs)
-
+        super().__init__(*args, **kwargs)
 
     @logger.catch(reraise=True)
     def __eq__(self, other):
@@ -692,7 +685,6 @@ class ASAObjService(ASACfgLine):
     @logger.catch(reraise=True)
     def __hash__(self):
         return self.get_unique_identifier()
-
 
     @classmethod
     @logger.catch(reraise=True)
@@ -722,12 +714,11 @@ class ASAObjGroupNetwork(ASACfgLine):
     def __init__(self, *args, **kwargs):
         """Accept an ASA line number and initialize family relationship
         attributes"""
-        super(ASAObjGroupNetwork, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         self.name = self.re_match_typed(
             r"^object-group\s+network\s+(\S+)", group=1, result_type=str
         )
-
 
     @logger.catch(reraise=True)
     def __eq__(self, other):
@@ -740,7 +731,6 @@ class ASAObjGroupNetwork(ASACfgLine):
     @logger.catch(reraise=True)
     def __hash__(self):
         return self.get_unique_identifier()
-
 
     @classmethod
     @logger.catch(reraise=True)
@@ -775,7 +765,7 @@ class ASAObjGroupNetwork(ASACfgLine):
 
             ## Parse out 'object-group ...' and 'group-object' lines...
             mm = _RE_NETOBJECT.search(obj.text)
-            if (mm is not None):
+            if mm is not None:
                 net_obj = mm.groupdict()
                 if net_obj["netmask"] == "255.255.255.255":
                     net_obj["host"] = net_obj["network"]
@@ -802,7 +792,9 @@ class ASAObjGroupNetwork(ASACfgLine):
                         )
                     )
 
-                group_nets = self.confobj.asa_object_group_network.get(groupobject, None)
+                group_nets = self.confobj.asa_object_group_network.get(
+                    groupobject, None
+                )
                 if group_nets is None:
                     raise ValueError(
                         "FATAL: Cannot find group-object named {}".format(self.name)
@@ -860,8 +852,8 @@ class ASAObjGroupService(ASACfgLine):
     @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):
         """Accept an ASA line number and initialize family relationship
-            attributes"""
-        super(ASAObjGroupService, self).__init__(*args, **kwargs)
+        attributes"""
+        super().__init__(*args, **kwargs)
 
         self.protocol_type = self.re_match_typed(
             r"^object-group\s+service\s+\S+(\s+.+)*$",
@@ -881,7 +873,6 @@ class ASAObjGroupService(ASACfgLine):
         else:
             self.L4Objects_are_directional = False
 
-
     @logger.catch(reraise=True)
     def __eq__(self, other):
         return self.get_unique_identifier() == other.get_unique_identifier()
@@ -893,7 +884,6 @@ class ASAObjGroupService(ASACfgLine):
     @logger.catch(reraise=True)
     def __hash__(self):
         return self.get_unique_identifier()
-
 
     @classmethod
     @logger.catch(reraise=True)
@@ -920,7 +910,7 @@ class ASAObjGroupService(ASACfgLine):
 
             ## Parse out 'service-object ...' and 'port-object' lines...
             mm = _RE_PORTOBJECT.search(obj.text)
-            if (mm is not None):
+            if mm is not None:
                 svc_obj = mm.groupdict()
             else:
                 svc_obj = dict()
@@ -996,8 +986,7 @@ class ASAIntfLine(BaseASAIntfLine):
     def __init__(self, *args, **kwargs):
         """Accept an ASA line number and initialize family relationship
         attributes"""
-        super(ASAIntfLine, self).__init__(*args, **kwargs)
-
+        super().__init__(*args, **kwargs)
 
     @logger.catch(reraise=True)
     def __eq__(self, other):
@@ -1010,7 +999,6 @@ class ASAIntfLine(BaseASAIntfLine):
     @logger.catch(reraise=True)
     def __hash__(self):
         return self.get_unique_identifier()
-
 
     @classmethod
     @logger.catch(reraise=True)
@@ -1030,9 +1018,8 @@ class ASAIntfLine(BaseASAIntfLine):
 class ASAIntfGlobal(BaseCfgLine):
     @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):
-        super(ASAIntfGlobal, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.feature = "interface global"
-
 
     @logger.catch(reraise=True)
     def __eq__(self, other):
@@ -1045,7 +1032,6 @@ class ASAIntfGlobal(BaseCfgLine):
     @logger.catch(reraise=True)
     def __hash__(self):
         return self.get_unique_identifier()
-
 
     @logger.catch(reraise=True)
     def __repr__(self):
@@ -1068,9 +1054,8 @@ class ASAIntfGlobal(BaseCfgLine):
 class ASAHostnameLine(BaseCfgLine):
     @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):
-        super(ASAHostnameLine, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.feature = "hostname"
-
 
     @logger.catch(reraise=True)
     def __eq__(self, other):
@@ -1083,7 +1068,6 @@ class ASAHostnameLine(BaseCfgLine):
     @logger.catch(reraise=True)
     def __hash__(self):
         return self.get_unique_identifier()
-
 
     @logger.catch(reraise=True)
     def __repr__(self):
@@ -1111,8 +1095,7 @@ class ASAHostnameLine(BaseCfgLine):
 class BaseASARouteLine(BaseCfgLine):
     @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):
-        super(BaseASARouteLine, self).__init__(*args, **kwargs)
-
+        super().__init__(*args, **kwargs)
 
     @logger.catch(reraise=True)
     def __eq__(self, other):
@@ -1125,7 +1108,6 @@ class BaseASARouteLine(BaseCfgLine):
     @logger.catch(reraise=True)
     def __hash__(self):
         return self.get_unique_identifier()
-
 
     @logger.catch(reraise=True)
     def __repr__(self):
@@ -1197,12 +1179,11 @@ class BaseASARouteLine(BaseCfgLine):
 class ASARouteLine(BaseASARouteLine):
     @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):
-        super(ASARouteLine, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         if "ipv6" in self.text:
             self.feature = "ipv6 route"
         else:
             self.feature = "ip route"
-
 
     @logger.catch(reraise=True)
     def __eq__(self, other):
@@ -1215,7 +1196,6 @@ class ASARouteLine(BaseASARouteLine):
     @logger.catch(reraise=True)
     def __hash__(self):
         return self.get_unique_identifier()
-
 
     @classmethod
     @logger.catch(reraise=True)
@@ -1455,7 +1435,7 @@ class ASAAclLine(ASACfgLine):
     @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):
         """Provide attributes on Cisco ASA Access-Lists"""
-        super(ASAAclLine, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         # Parse out the most common parameter names...
         text = kwargs.get("text", None) or kwargs.get("line", None)
@@ -1469,11 +1449,10 @@ class ASAAclLine(ASACfgLine):
         self._mm_results = None
 
         mm = _RE_ACLOBJECT.search(text)
-        if (mm is not None):
+        if mm is not None:
             self._mm_results = mm.groupdict()  # All regex match results
         else:
             raise ValueError("[FATAL] ASAAclLine() cannot parse text:'{}'".format(text))
-
 
     @logger.catch(reraise=True)
     def __eq__(self, other):
@@ -1486,7 +1465,6 @@ class ASAAclLine(ASACfgLine):
     @logger.catch(reraise=True)
     def __hash__(self):
         return self.get_unique_identifier()
-
 
     @classmethod
     @logger.catch(reraise=True)
@@ -1560,9 +1538,7 @@ class ASAAclLine(ASACfgLine):
             return "network"
         else:
             raise ValueError(
-                "Cannot parse ACL destination address method for '{}'".format(
-                    self.text
-                )
+                "Cannot parse ACL destination address method for '{}'".format(self.text)
             )
 
     @property

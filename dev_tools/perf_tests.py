@@ -11,12 +11,12 @@ CONFIG_FILEPATH = None
 # Set CONFIG_FILEPATH as a relative path
 for base_dir, dirs, files in os.walk("../"):
     for filename in files:
-        if filename=="sample_01.ios":
-            CONFIG_FILEPATH = '{}/{}'.format(base_dir, filename)
+        if filename == "sample_01.ios":
+            CONFIG_FILEPATH = "{}/{}".format(base_dir, filename)
             break
 
 if CONFIG_FILEPATH is None:
-    raise RuntimeError('RuntimeError - Could not find a config to parse')
+    raise RuntimeError("RuntimeError - Could not find a config to parse")
 
 # Regarding how to import a variable into timeit(),
 #     (for example: 'from __main__ import CONFIG_FILEPATH'),

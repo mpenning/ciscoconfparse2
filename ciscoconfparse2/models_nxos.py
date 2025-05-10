@@ -1,4 +1,3 @@
-from __future__ import absolute_import
 from typing import Union, Any, Set, Tuple, List, Dict
 import re
 
@@ -99,7 +98,7 @@ class NXOSCfgLine(BaseFactoryLine):
     @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):
         r"""Accept an NXOS line number and initialize family relationship attributes"""
-        super(NXOSCfgLine, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     @logger.catch(reraise=True)
     def __eq__(self, other) -> bool:
@@ -116,7 +115,6 @@ class NXOSCfgLine(BaseFactoryLine):
     @logger.catch(reraise=True)
     def __hash__(self) -> int:
         return self.get_unique_identifier()
-
 
     @classmethod
     def from_list(cls, *list_of_args) -> BaseCfgLine:
@@ -437,7 +435,7 @@ class BaseNXOSIntfLine(NXOSCfgLine, BaseFactoryInterfaceLine):
 
     @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):
-        super(BaseNXOSIntfLine, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.ifindex = None  # Optional, for user use
         self.default_ipv4_addr_object = IPv4Obj()
         self.default_ipv6_addr_object = IPv6Obj()
@@ -467,7 +465,7 @@ class BaseNXOSIntfLine(NXOSCfgLine, BaseFactoryInterfaceLine):
         :return: a set of valid abbreviations (lowercased) for the interface
         :rtype: set[str]
         """
-        retval = set([])
+        retval = set()
         port_type = self.port_type.lower()
         subinterface_number = self.subinterface_number
         for sep in ["", " "]:
@@ -723,8 +721,12 @@ class BaseNXOSIntfLine(NXOSCfgLine, BaseFactoryInterfaceLine):
             ifobj = self.cisco_interface_object
             retval = []
             static_list = (
-                ifobj.slot, ifobj.card, ifobj.port,
-                ifobj.subinterface, ifobj.channel, ifobj.interface_class
+                ifobj.slot,
+                ifobj.card,
+                ifobj.port,
+                ifobj.subinterface,
+                ifobj.channel,
+                ifobj.interface_class,
             )
             if ifobj:
                 for ii in static_list:
@@ -951,7 +953,7 @@ class BaseNXOSIntfLine(NXOSCfgLine, BaseFactoryInterfaceLine):
     # This method is on BaseNXOSIntfLine()
     @property
     @logger.catch(reraise=True)
-    def ipv6_addr_objects(self) -> Dict[str,List[IPv6Obj]]:
+    def ipv6_addr_objects(self) -> Dict[str, List[IPv6Obj]]:
         r"""
         :return: A Dict of :class:`ccp_util.IPv6Obj` objects representing the addresss on this interface, default to {}
         :rtype: IPv6Obj
@@ -959,7 +961,7 @@ class BaseNXOSIntfLine(NXOSCfgLine, BaseFactoryInterfaceLine):
         v6_globals = self.re_list_iter_typed(
             r"^\s+ipv6\s+address\s+(?P<v6addr>\S+?)\/(?P<v6masklength>\d+)",
             groupdict={"v6addr": str, "v6masklength": str},
-            result_type=IPv6Obj
+            result_type=IPv6Obj,
         )
         return {"globals": v6_globals}
 
@@ -976,7 +978,7 @@ class BaseNXOSIntfLine(NXOSCfgLine, BaseFactoryInterfaceLine):
             _gg = obj.re_match_iter_typed(
                 r"^\s*ip\s+address\s+(?P<secondary>\S+\s+\S+)\s+secondary\s*$",
                 groupdict={"secondary": IPv4Obj},
-                default=False
+                default=False,
             )
             if _gg["secondary"]:
                 retval.add(str(_gg["secondary"].ip))
@@ -995,7 +997,7 @@ class BaseNXOSIntfLine(NXOSCfgLine, BaseFactoryInterfaceLine):
             _gg = obj.re_match_iter_typed(
                 r"^\s*ip\s+address\s+(?P<secondary>\S+\s+\S+)\s+secondary\s*$",
                 groupdict={"secondary": IPv4Obj},
-                default=False
+                default=False,
             )
             if _gg["secondary"]:
                 retval.add(f"{_gg['secondary'].ip}/{_gg['secondary'].prefixlen}")
@@ -1351,7 +1353,7 @@ class BaseNXOSIntfLine(NXOSCfgLine, BaseFactoryInterfaceLine):
 
     # This method is on BaseNXOSIntfLine()
     @logger.catch(reraise=True)
-    def in_ipv4_subnet(self, ipv4network: IPv4Obj=None, strict: bool=False) -> bool:
+    def in_ipv4_subnet(self, ipv4network: IPv4Obj = None, strict: bool = False) -> bool:
         r"""
         :return: Whether the interface is in a :class:`~ciscoconfparse2.ccp_util.IPv4Obj` subnet, default to False.
         :rtype: bool
@@ -1413,7 +1415,9 @@ class BaseNXOSIntfLine(NXOSCfgLine, BaseFactoryInterfaceLine):
 
     # This method is on BaseNXOSIntfLine()
     @logger.catch(reraise=True)
-    def in_ipv4_subnets(self, subnets: Union[Set[IPv4Obj], List[IPv4Obj], Tuple[IPv4Obj, ...]]=None) -> bool:
+    def in_ipv4_subnets(
+        self, subnets: Union[Set[IPv4Obj], List[IPv4Obj], Tuple[IPv4Obj, ...]] = None
+    ) -> bool:
         r"""
         :return: Whether the interface is in a sequence or set of ccp_util.IPv4Obj objects
         :rtype: bool
@@ -1623,7 +1627,7 @@ class BaseNXOSIntfLine(NXOSCfgLine, BaseFactoryInterfaceLine):
     # This method is on BaseNXOSIntfLine()
     @property
     @logger.catch(reraise=True)
-    def ip_helper_addresses(self) -> List[Dict[str,str]]:
+    def ip_helper_addresses(self) -> List[Dict[str, str]]:
         r"""
         :return: A sequence of dicts with IP helper-addresses.  Each helper-address is in a dictionary.
         :rtype: List[Dict[str,str]]
@@ -1659,15 +1663,15 @@ class BaseNXOSIntfLine(NXOSCfgLine, BaseFactoryInterfaceLine):
                     r"ip\s+helper-address\s+vrf\s+(\S+)", default=""
                 )
                 if global_addr:
-                    retval.append({"addr": addr, "vrf": vrf, "scope": 'global'})
+                    retval.append({"addr": addr, "vrf": vrf, "scope": "global"})
                 else:
-                    retval.append({"addr": addr, "vrf": vrf, "scope": 'local'})
+                    retval.append({"addr": addr, "vrf": vrf, "scope": "local"})
         return retval
 
     # This method is on BaseNXOSIntfLine()
     @property
     @logger.catch(reraise=True)
-    def ipv6_dhcp_server(self) -> List[Dict[str,str]]:
+    def ipv6_dhcp_server(self) -> List[Dict[str, str]]:
         r"""
         :return: A sequence of dicts with IPv6 dhcp server.  Each address is in a dictionary.
         :rtype: List[Dict[str,str]]
@@ -1786,7 +1790,7 @@ class BaseNXOSIntfLine(NXOSCfgLine, BaseFactoryInterfaceLine):
         ##   default value is True
         for obj in self.children:
             switch = obj.re_match(r"^\s*(switchport\snoneg\S*)\s*$")
-            if (switch is not None):
+            if switch is not None:
                 return False
         return True
 
@@ -1836,7 +1840,13 @@ class BaseNXOSIntfLine(NXOSCfgLine, BaseFactoryInterfaceLine):
         ## Iterate over switchport trunk statements
         for obj in self.children:
 
-            if obj.text.split()[0:5] == ["switchport", "trunk", "allowed", "vlan", "add"]:
+            if obj.text.split()[0:5] == [
+                "switchport",
+                "trunk",
+                "allowed",
+                "vlan",
+                "add",
+            ]:
                 add_str = obj.re_match_typed(
                     r"^\s+switchport\s+trunk\s+allowed\s+vlan\s+add\s+(\d[\d\-\,\s]*)$",
                     default="_nomatch_",
@@ -1848,7 +1858,13 @@ class BaseNXOSIntfLine(NXOSCfgLine, BaseFactoryInterfaceLine):
                     else:
                         vdict["add"] += f",{add_str}"
 
-            elif obj.text.split()[0:5] == ["switchport", "trunk", "allowed", "vlan", "except"]:
+            elif obj.text.split()[0:5] == [
+                "switchport",
+                "trunk",
+                "allowed",
+                "vlan",
+                "except",
+            ]:
                 exc_str = obj.re_match_typed(
                     r"^\s+switchport\s+trunk\s+allowed\s+vlan\s+except\s+(\d[\d\-\,\s]*)$",
                     default="_nomatch_",
@@ -1860,7 +1876,13 @@ class BaseNXOSIntfLine(NXOSCfgLine, BaseFactoryInterfaceLine):
                     else:
                         vdict["except"] += f",{exc_str}"
 
-            elif obj.text.split()[0:5] == ["switchport", "trunk", "allowed", "vlan", "remove"]:
+            elif obj.text.split()[0:5] == [
+                "switchport",
+                "trunk",
+                "allowed",
+                "vlan",
+                "remove",
+            ]:
                 rem_str = obj.re_match_typed(
                     r"^\s+switchport\s+trunk\s+allowed\s+vlan\s+remove\s+(\d[\d\-\,\s]*)$",
                     default="_nomatch_",
@@ -1958,7 +1980,12 @@ class BaseNXOSIntfLine(NXOSCfgLine, BaseFactoryInterfaceLine):
             default_val = -1
         for _obj in self.children:
             _parts = _obj.text.strip().split()
-            if len(_parts) == 5 and _parts[0:4] == ["switchport", "trunk", "native", "vlan"]:
+            if len(_parts) == 5 and _parts[0:4] == [
+                "switchport",
+                "trunk",
+                "native",
+                "vlan",
+            ]:
                 # return the vlan integer from 'switchport trunk native vlan 911'
                 return int(_parts[4])
         return default_val
@@ -1975,7 +2002,11 @@ class BaseNXOSIntfLine(NXOSCfgLine, BaseFactoryInterfaceLine):
         """
         for _obj in self.children:
             _parts = _obj.text.strip().split()
-            if len(_parts) == 3 and _parts[0:3] == ["no", "cdp", "enable",]:
+            if len(_parts) == 3 and _parts[0:3] == [
+                "no",
+                "cdp",
+                "enable",
+            ]:
                 return True
         return False
 
@@ -2019,7 +2050,7 @@ class BaseNXOSIntfLine(NXOSCfgLine, BaseFactoryInterfaceLine):
     # This method is on BaseNXOSIntfLine()
     @property
     @logger.catch(reraise=True)
-    def hsrp_ip_addr(self) -> Dict[int,str]:
+    def hsrp_ip_addr(self) -> Dict[int, str]:
         """
         :return: A dict keyed by integer HSRP group number with a string ipv4 address, default to an empty dict
         :rtype: Dict[int,str]
@@ -2052,7 +2083,7 @@ class BaseNXOSIntfLine(NXOSCfgLine, BaseFactoryInterfaceLine):
     # This method is on BaseFactoryInterfaceLine()
     @property
     @logger.catch(reraise=True)
-    def hsrp_ip_addr_secondary(self) -> Dict[int,str]:
+    def hsrp_ip_addr_secondary(self) -> Dict[int, str]:
         """
         :return: A dict keyed by integer HSRP group number with a comma-separated string secondary ipv4 address, default to an empty dict
         :rtype: Dict[int,str]
@@ -2063,7 +2094,7 @@ class BaseNXOSIntfLine(NXOSCfgLine, BaseFactoryInterfaceLine):
     # This method is on BaseNXOSIntfLine()
     @property
     @logger.catch(reraise=True)
-    def hsrp_priority(self) -> Dict[int,int]:
+    def hsrp_priority(self) -> Dict[int, int]:
         """
         :return: A dict keyed by integer HSRP group number with an integer HSRP priority per-group
         :rtype: Dict[int,int]
@@ -2131,12 +2162,20 @@ class BaseNXOSIntfLine(NXOSCfgLine, BaseFactoryInterfaceLine):
         #   standby 110 authentication md5 key-chain KEYCHAINNAME
         for cmd in self.all_children:
             parts = cmd.split()
-            if cmd[0] == "standby" and cmd[1] == "authentication" and cmd[3] == "key-chain":
+            if (
+                cmd[0] == "standby"
+                and cmd[1] == "authentication"
+                and cmd[3] == "key-chain"
+            ):
                 # Standby with no explicit group number
                 hsrp_group = 0
                 hsrp_auth_name = cmd[4]
                 retval[hsrp_group] = hsrp_auth_name
-            elif cmd[0] == "standby" and cmd[2] == "authentication" and cmd[4] == "key-chain":
+            elif (
+                cmd[0] == "standby"
+                and cmd[2] == "authentication"
+                and cmd[4] == "key-chain"
+            ):
                 # Standby with an explicit group number
                 hsrp_group = int(cmd[1])
                 hsrp_auth_name = cmd[5]
@@ -2157,7 +2196,7 @@ class BaseNXOSIntfLine(NXOSCfgLine, BaseFactoryInterfaceLine):
         retval = self.re_match_iter_typed(
             r"^\s*mac\saccess-group\s+(?P<group_number>\S+)\s+in\s*$",
             groupdict={"group_number": str},
-            default=""
+            default="",
         )
         return retval["group_number"]
 
@@ -2172,7 +2211,7 @@ class BaseNXOSIntfLine(NXOSCfgLine, BaseFactoryInterfaceLine):
         retval = self.re_match_iter_typed(
             r"^\s*mac\saccess-group\s+(?P<group_number>\S+)\s+out\s*$",
             groupdict={"group_number": str},
-            default=""
+            default="",
         )
         return retval["group_number"]
 
@@ -2274,6 +2313,7 @@ class BaseNXOSIntfLine(NXOSCfgLine, BaseFactoryInterfaceLine):
         """
         return self.ipv6_trafficfilter_out
 
+
 ##
 ##-------------  NXOS Interface Object
 ##
@@ -2292,7 +2332,7 @@ class NXOSIntfLine(BaseNXOSIntfLine):
         --------
         All :class:`ciscoconfparse2.models_nxos.NXOSIntfLine` methods are still considered beta-quality, until this notice is removed.  The behavior of APIs on this object could change at any time.
         """
-        super(NXOSIntfLine, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.feature = "interface"
 
     @logger.catch(reraise=True)
@@ -2312,6 +2352,7 @@ class NXOSIntfLine(BaseNXOSIntfLine):
     @logger.catch(reraise=True)
     def is_object_for(cls, all_lines, line, index=None, re=re):
         return cls.is_object_for_interface(line)
+
 
 ##
 ##-------------  NXOS Interface Globals
@@ -2383,13 +2424,14 @@ class NXOSIntfGlobal(NXOSCfgLine):
             return True
         return False
 
+
 ##
 ##-------------  NXOS vPC line
 ##
 @attrs.define(repr=False, slots=False)
 class NXOSvPCLine(BaseCfgLine):
     def __init__(self, *args, **kwargs):
-        super(NXOSvPCLine, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.feature = "vpc"
 
     @logger.catch(reraise=True)
@@ -2403,7 +2445,6 @@ class NXOSvPCLine(BaseCfgLine):
     @logger.catch(reraise=True)
     def __hash__(self):
         return self.get_unique_identifier()
-
 
     def __repr__(self):
         return "<{} # {} '{}'>".format(self.classname, self.linenum, self.vpc_domain_id)
@@ -2543,8 +2584,9 @@ class NXOSvPCLine(BaseCfgLine):
         }
         return retval
 
+
 #
-#-------------  NXOS Access Line
+# -------------  NXOS Access Line
 #
 
 
@@ -2552,7 +2594,7 @@ class NXOSvPCLine(BaseCfgLine):
 class NXOSAccessLine(NXOSCfgLine):
     @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):
-        super(NXOSAccessLine, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.feature = "access line"
 
     @logger.catch(reraise=True)
@@ -2568,7 +2610,7 @@ class NXOSAccessLine(NXOSCfgLine):
         return self.get_unique_identifier()
 
     def __repr__(self):
-        return "<%s # %s '%s' info: '%s'>" % (
+        return "<{} # {} '{}' info: '{}'>".format(
             self.classname,
             self.linenum,
             self.name,
@@ -2645,10 +2687,10 @@ class NXOSAccessLine(NXOSCfgLine):
 class BaseNXOSRouteLine(NXOSCfgLine):
     @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):
-        super(BaseNXOSRouteLine, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def __repr__(self):
-        return "<%s # %s '%s' info: '%s'>" % (
+        return "<{} # {} '{}' info: '{}'>".format(
             self.classname,
             self.linenum,
             self.network,
@@ -2740,10 +2782,10 @@ _RE_IP_ROUTE = re.compile(
 _RE_IPV6_ROUTE = re.compile(
     r"""^ipv6\s+route
 (?:\s+vrf\s+(?P<vrf>\S+))?
-(?:\s+(?P<prefix>{0})\/(?P<masklength>\d+))    # Prefix detection
+(?:\s+(?P<prefix>{})\/(?P<masklength>\d+))    # Prefix detection
 (?:
-  (?:\s+(?P<nh_addr1>{1}))
-  |(?:\s+(?P<nh_intf>\S+(?:\s+\d\S*?\/\S+)?)(?:\s+(?P<nh_addr2>{2}))?)
+  (?:\s+(?P<nh_addr1>{}))
+  |(?:\s+(?P<nh_intf>\S+(?:\s+\d\S*?\/\S+)?)(?:\s+(?P<nh_addr2>{}))?)
 )
 (?:\s+nexthop-vrf\s+(?P<nexthop_vrf>\S+))?
 (?:\s+(?P<ad>\d+))?              # Administrative distance
@@ -2767,23 +2809,23 @@ class NXOSRouteLine(NXOSCfgLine):
 
     @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):
-        super(NXOSRouteLine, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         if "ipv6" in self.text[0:4]:
             self.feature = "ipv6 route"
             self._address_family = "ipv6"
             mm = _RE_IPV6_ROUTE.search(self.text)
-            if (mm is not None):
+            if mm is not None:
                 self.route_info = mm.groupdict()
             else:
-                raise ValueError("Could not parse '{0}'".format(self.text))
+                raise ValueError("Could not parse '{}'".format(self.text))
         else:
             self.feature = "ip route"
             self._address_family = "ip"
             mm = _RE_IP_ROUTE.search(self.text)
-            if (mm is not None):
+            if mm is not None:
                 self.route_info = mm.groupdict()
             else:
-                raise ValueError("Could not parse '{0}'".format(self.text))
+                raise ValueError("Could not parse '{}'".format(self.text))
 
     @logger.catch(reraise=True)
     def __eq__(self, other):
@@ -2807,7 +2849,7 @@ class NXOSRouteLine(NXOSCfgLine):
     @property
     @logger.catch(reraise=True)
     def vrf(self):
-        if (self.route_info["vrf"] is not None):
+        if self.route_info["vrf"] is not None:
             return self.route_info["vrf"]
         else:
             return ""
@@ -2855,11 +2897,13 @@ class NXOSRouteLine(NXOSCfgLine):
     def network_object(self):
         try:
             if self._address_family == "ip":
-                return IPv4Obj("%s/%s" % (self.network, self.netmask), strict=False)
+                return IPv4Obj("{}/{}".format(self.network, self.netmask), strict=False)
             elif self._address_family == "ipv6":
-                return IPv6Obj("%s/%s" % (self.network, self.masklen))
+                return IPv6Obj("{}/{}".format(self.network, self.masklen))
         except BaseException:
-            logger.critical("Found _address_family = '{}''".format(self._address_family))
+            logger.critical(
+                "Found _address_family = '{}''".format(self._address_family)
+            )
             return None
 
     @property
@@ -2912,13 +2956,13 @@ class NXOSRouteLine(NXOSCfgLine):
         elif self._address_family == "ipv6":
             ## ipv6 uses nexthop_vrf
             raise ValueError(
-                "[FATAL] ipv6 doesn't support a global_next_hop for '{0}'".format(
+                "[FATAL] ipv6 doesn't support a global_next_hop for '{}'".format(
                     self.text
                 )
             )
         else:
             raise ValueError(
-                "[FATAL] Could not identify global next-hop for '{0}'".format(self.text)
+                "[FATAL] Could not identify global next-hop for '{}'".format(self.text)
             )
 
     @property
@@ -2928,7 +2972,7 @@ class NXOSRouteLine(NXOSCfgLine):
             return self.route_info["nexthop_vrf"] or ""
         else:
             raise ValueError(
-                "[FATAL] ip doesn't support a global_next_hop for '{0}'".format(
+                "[FATAL] ip doesn't support a global_next_hop for '{}'".format(
                     self.text
                 )
             )

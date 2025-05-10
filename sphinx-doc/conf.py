@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # ciscoconfparse2 documentation build configuration file, created by
 # sphinx-quickstart on Fri Oct 16 17:50:54 2009.
@@ -18,7 +17,7 @@ import time
 sys.path.insert(0, os.path.join(os.path.abspath(os.path.dirname(__file__)), ".."))
 
 # Import sphinx-rtd-theme to ensure pip installed it...
-#import sphinx_rtd_theme
+# import sphinx_rtd_theme
 
 from sphinx.ext.autodoc import AttributeDocumenter, ClassLevelDocumenter
 
@@ -107,9 +106,10 @@ source_suffix = [".rst", ".md"]
 master_doc = "index"
 
 # General information about the project.
-project = u"ciscoconfparse2"
-copyright = u"2007-%s, %s" % (
-    time.strftime("%Y"), __author__,
+project = "ciscoconfparse2"
+copyright = "2007-{}, {}".format(
+    time.strftime("%Y"),
+    __author__,
 )
 
 # The version info for the project you're documenting, acts as replacement for
@@ -173,7 +173,7 @@ pygments_style = "tango"
 # The theme to use for HTML and HTML Help pages.  Major themes that come with
 # Sphinx are currently 'default' and 'sphinxdoc'.
 html_theme = "sphinx_rtd_theme"
-html_static_path = ['_static']
+html_static_path = ["_static"]
 html_logo = "ccp_logo_bw_w400px.png"
 
 # Theme options are theme-specific and customize the look and feel of a theme

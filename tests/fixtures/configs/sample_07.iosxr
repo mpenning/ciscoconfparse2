@@ -11,7 +11,7 @@ banner exec /
 banner login /
 *******************************************************************************
 *
-*         
+*
 *******************************************************************************
 /
 logging console debugging
@@ -143,161 +143,161 @@ ipv4 access-list ACL-IPV4-MGMT-ACCESS
 class-map match-any CM-NQ-QG0-IN
  match mpls experimental topmost 0
  end-class-map
-! 
+!
 class-map match-any CM-NQ-QG1-IN
- match mpls experimental topmost 1 
+ match mpls experimental topmost 1
  end-class-map
-! 
+!
 class-map match-any CM-NQ-QG2-IN
- match mpls experimental topmost 2 
+ match mpls experimental topmost 2
  end-class-map
-! 
+!
 class-map match-any CM-NQ-QG3-IN
- match mpls experimental topmost 3 
+ match mpls experimental topmost 3
  end-class-map
-! 
+!
 class-map match-any CM-NQ-QG4-IN
- match mpls experimental topmost 4 
+ match mpls experimental topmost 4
  end-class-map
-! 
+!
 class-map match-any CM-NQ-QG5-IN
- match mpls experimental topmost 5 
+ match mpls experimental topmost 5
  end-class-map
-! 
+!
 class-map match-any CM-NQ-QG6-IN
- match mpls experimental topmost 6 
- match precedence 6 
+ match mpls experimental topmost 6
+ match precedence 6
  end-class-map
-! 
+!
 class-map match-any CM-NQ-QG7-IN
- match mpls experimental topmost 7 
- match precedence 7 
+ match mpls experimental topmost 7
+ match precedence 7
  end-class-map
-! 
+!
 class-map match-any CM-NQ-QG0-OUT
- match qos-group 0 
+ match qos-group 0
  end-class-map
-! 
+!
 class-map match-any CM-NQ-QG1-OUT
- match qos-group 1 
+ match qos-group 1
  end-class-map
-! 
+!
 class-map match-any CM-NQ-QG2-OUT
- match qos-group 2 
+ match qos-group 2
  end-class-map
-! 
+!
 class-map match-any CM-NQ-QG3-OUT
- match qos-group 3 
+ match qos-group 3
  end-class-map
-! 
+!
 class-map match-any CM-NQ-QG4-OUT
- match qos-group 4 
+ match qos-group 4
  end-class-map
-! 
+!
 class-map match-any CM-NQ-QG5-OUT
- match qos-group 5 
+ match qos-group 5
  end-class-map
-! 
+!
 class-map match-any CM-NQ-QG6-OUT
- match qos-group 6 
+ match qos-group 6
  end-class-map
-! 
+!
 class-map match-any CM-NQ-QG67-IN
- match mpls experimental topmost 6 7 
- match precedence 6 7 
+ match mpls experimental topmost 6 7
+ match precedence 6 7
  end-class-map
-! 
+!
 class-map match-any CM-NQ-QG7-OUT
- match qos-group 7 
+ match qos-group 7
  end-class-map
-! 
+!
 class-map match-any CM-NQ-QG67-OUT
- match qos-group 6 7 
+ match qos-group 6 7
  end-class-map
-! 
+!
 class-map type traffic match-all CM-FS-IPV6-TEST-DROP
- match packet length 200-300 
+ match packet length 200-300
  match destination-address ipv6 2001:db8::/32
  end-class-map
-! 
+!
 class-map type traffic match-all CM-FS-IPV6-TEST-DIVERT
- match packet length 400-500 
+ match packet length 400-500
  match destination-address ipv6 2001:db8::/32
  end-class-map
-! 
+!
 policy-map PM-NQ-CORE-IN
  class CM-NQ-QG67-IN
   set qos-group 7
-  priority level 2 
- ! 
+  priority level 2
+ !
  class CM-NQ-QG5-IN
   set qos-group 5
-  priority level 1 
- ! 
+  priority level 1
+ !
  class CM-NQ-QG4-IN
   set qos-group 4
- ! 
+ !
  class CM-NQ-QG3-IN
   set qos-group 3
- ! 
+ !
  class CM-NQ-QG2-IN
   set qos-group 2
- ! 
+ !
  class CM-NQ-QG1-IN
   set qos-group 1
- ! 
+ !
  class CM-NQ-QG0-IN
   set qos-group 0
- ! 
+ !
  class class-default
- ! 
+ !
  end-policy-map
-! 
+!
 policy-map PM-NQ-CORE-OUT
  class CM-NQ-QG67-OUT
-  priority level 2 
-  police rate percent 5 
-  ! 
- ! 
+  priority level 2
+  police rate percent 5
+  !
+ !
  class CM-NQ-QG5-OUT
-  priority level 1 
-  police rate percent 20 
+  priority level 1
+  police rate percent 20
    exceed-action drop
-  ! 
- ! 
+  !
+ !
  class CM-NQ-QG4-OUT
-  bandwidth remaining percent 25 
-  random-detect default 
- ! 
+  bandwidth remaining percent 25
+  random-detect default
+ !
  class CM-NQ-QG3-OUT
-  bandwidth remaining percent 20 
-  random-detect default 
- ! 
+  bandwidth remaining percent 20
+  random-detect default
+ !
  class CM-NQ-QG2-OUT
-  bandwidth remaining percent 15 
-  random-detect default 
- ! 
+  bandwidth remaining percent 15
+  random-detect default
+ !
  class CM-NQ-QG1-OUT
-  bandwidth remaining percent 5 
-  random-detect default 
- ! 
+  bandwidth remaining percent 5
+  random-detect default
+ !
  class class-default
-  bandwidth remaining percent 35 
-  random-detect default 
- ! 
+  bandwidth remaining percent 35
+  random-detect default
+ !
  end-policy-map
-! 
+!
 policy-map type pbr PM-IPV6-FLOWSPEC
- class type traffic CM-FS-IPV6-TEST-DROP 
+ class type traffic CM-FS-IPV6-TEST-DROP
   drop
- ! 
- class type traffic CM-FS-IPV6-TEST-DIVERT 
+ !
+ class type traffic CM-FS-IPV6-TEST-DIVERT
   redirect nexthop route-target 64512:10001120
- ! 
- class type traffic class-default 
- ! 
+ !
+ class type traffic class-default
+ !
  end-policy-map
-! 
+!
 flow exporter-map NF-EM-boto1
  version v9
   template timeout 60
@@ -347,19 +347,19 @@ sampler-map NF-SM-1-512
  random 1 out-of 512
 !
 interface Loopback0
- description IP-for-ServicesControlPlane and Mgmt  
+ description IP-for-ServicesControlPlane and Mgmt
  ipv4 address 233.252.151.10 255.255.255.255
  ipv6 address 2001:db8:fffe::10/128
  ipv6 enable
  ipv4 flowspec disable
 !
 interface Loopback1
- description RR-Loopback  
+ description RR-Loopback
  ipv4 address 233.252.151.0 255.255.255.255
  ipv6 address 2001:db8:fffe::/128
 !
 interface MgmtEth0/RSP0/CPU0/0
- description ACME Outband MGMT Interface  
+ description ACME Outband MGMT Interface
  vrf MGMT-VRF
  ipv4 address 172.29.15.17 255.255.255.192
 !
@@ -367,7 +367,7 @@ interface MgmtEth0/RSP0/CPU0/1
  shutdown
 !
 interface TenGigE0/0/2/0
- description LAB_ASR9010@Te0/3/1/7  
+ description LAB_ASR9010@Te0/3/1/7
  cdp
  mtu 9114
  service-policy input PM-NQ-CORE-IN
@@ -382,7 +382,7 @@ interface TenGigE0/0/2/0
  ipv4 flowspec disable
 !
 interface TenGigE0/0/2/1
- description LAB_ASR9006@Te0/1/0/1  
+ description LAB_ASR9006@Te0/1/0/1
  cdp
  mtu 9114
  service-policy input PM-NQ-CORE-IN
@@ -779,14 +779,14 @@ router bgp 65413
  !
  neighbor-group NG-IPV4-RTBHC
   use session-group SG-EXT-MH
-  description RTBH ClieACME  
+  description RTBH ClieACME
   address-family ipv4 unicast
    use af-group AF-IPV4-RTBH
   !
  !
  neighbor-group NG-IPV6-RTBHC
   use session-group SG-EXT-MH
-  description RTBH ClieACME  
+  description RTBH ClieACME
   address-family ipv6 unicast
    use af-group AF-IPV6-RTBH
   !
@@ -845,7 +845,7 @@ router bgp 65413
  !
  neighbor-group NG-FS-IPV4-INJECT
   use session-group SG-EXT-MH
-  description FLowSpec Inject ClieACME  
+  description FLowSpec Inject ClieACME
   address-family ipv4 flowspec
    use af-group AF-FS-IPV4-EXT
    maximum-prefix 3000 75
@@ -853,7 +853,7 @@ router bgp 65413
  !
  neighbor-group NG-FS-IPV6-INJECT
   use session-group SG-EXT-MH
-  description FLowSpec Inject ClieACME  
+  description FLowSpec Inject ClieACME
   address-family ipv6 flowspec
    use af-group AF-FS-IPV6-EXT
    maximum-prefix 3000 75
@@ -875,143 +875,143 @@ router bgp 65413
  neighbor 233.252.151.2
   use neighbor-group NG-RRC-IPV4-FF
   password encrypted 11123234107919111111111158
-  description LAB_ASR9010  
+  description LAB_ASR9010
  !
  neighbor 233.252.151.3
   use neighbor-group NG-RRC-IPV4-FF
   password encrypted 11123234107919111111111158
-  description LAB_ASR9006  
+  description LAB_ASR9006
  !
  neighbor 233.252.151.4
   use neighbor-group NG-RRC-IPV4-NFF
   password encrypted 11123234107919111111111158
-  description LAB_NCS540  
+  description LAB_NCS540
  !
  neighbor 233.252.151.5
   use neighbor-group NG-RRC-IPV4-NFF
   password encrypted 070B
-  description LAB_ASR920  
+  description LAB_ASR920
  !
  neighbor 233.252.151.6
   use neighbor-group NG-RRC-IPV4-NFF
   password encrypted 070B
-  description LAB_9407  
+  description LAB_9407
  !
  neighbor 233.252.151.7
   use neighbor-group NG-RRC-IPV4-NFF
   password encrypted 070B
-  description LAB_4500  
+  description LAB_4500
  !
  neighbor 233.252.151.8
   use neighbor-group NG-RRC-IPV4-NFF
   password encrypted 070B
-  description LAB_C3650  
+  description LAB_C3650
  !
  neighbor 233.252.151.13
   use neighbor-group NG-RRC-IPV4-FF
   password encrypted 11123234107919111111111158
-  description LAB_8200  
+  description LAB_8200
  !
  neighbor 233.252.151.14
   use neighbor-group NG-RRC-IPV4-FF
   password encrypted 11123234107919111111111158
-  description LAB_NCS_573C_2  
+  description LAB_NCS_573C_2
  !
  neighbor 233.252.151.15
   use neighbor-group NG-RRC-IPV4-NFF
   password encrypted 070B
-  description LAB_9300  
+  description LAB_9300
  !
  neighbor 233.252.151.16
   use neighbor-group NG-RRC-IPV4-FF
   password encrypted 11123234107919111111111158
-  description LAB_NCS_573C  
+  description LAB_NCS_573C
  !
  neighbor 233.252.151.17
   use neighbor-group NG-RRC-IPV4-FF
   password encrypted 11123234107919111111111158
-  description LAB_8200_2  
+  description LAB_8200_2
  !
  neighbor 233.252.151.19
   use neighbor-group NG-RRC-IPV4-NFF
   password encrypted 11123234107919111111111158
-  description LAB_NCS540-28Z4C_PE  
+  description LAB_NCS540-28Z4C_PE
  !
  neighbor 233.252.151.20
   use neighbor-group NG-RRC-IPV4-NFF
   password encrypted 070B
-  description LAB_9300  
+  description LAB_9300
  !
  neighbor 2001:db8::3543
   use neighbor-group NG-RRC-IPV6-NFF
   password encrypted 00301C15107919111111111158
-  description LAB_4500  
+  description LAB_4500
  !
  neighbor 2001:db8:fffe::2
   use neighbor-group NG-RRC-IPV6-NFF
   password encrypted 00301C15107919111111111158
-  description LAB_ASR9010  
+  description LAB_ASR9010
  !
  neighbor 2001:db8:fffe::3
   use neighbor-group NG-RRC-IPV6-FF
   password encrypted 00301C15107919111111111158
-  description LAB_ASR9006  
+  description LAB_ASR9006
  !
  neighbor 2001:db8:fffe::4
   use neighbor-group NG-RRC-IPV6-NFF
   password encrypted 010301C15107919091B73C1C58
-  description LAB_NCS540  
+  description LAB_NCS540
  !
  neighbor 2001:db8:fffe::5
   use neighbor-group NG-RRC-IPV6-NFF
   password encrypted 003091B731C1C01C1510791958
-  description LAB_ASR920  
+  description LAB_ASR920
  !
  neighbor 2001:db8:fffe::6
   use neighbor-group NG-RRC-IPV6-NFF
   password encrypted 0015107919091B731C1301CC58
-  description LAB_9407  
+  description LAB_9407
  !
  neighbor 2001:db8:fffe::8
   use neighbor-group NG-RRC-IPV6-NFF
   password encrypted 009091B7301C151079131C1C58
-  description LAB_C3650  
+  description LAB_C3650
  !
  neighbor 2001:db8:fffe::13
   use neighbor-group NG-RRC-IPV6-FF
   password encrypted 0030119091B73C1510791C1C58
-  description LAB_8200_1  
+  description LAB_8200_1
  !
  neighbor 2001:db8:fffe::14
   use neighbor-group NG-RRC-IPV6-FF
   password encrypted 00301B731CC151079190911C58
-  description LAB_NCS_573C_2  
+  description LAB_NCS_573C_2
  !
  neighbor 2001:db8:fffe::15
   use neighbor-group NG-RRC-IPV6-NFF
   password encrypted 003007919091C1511B731C1C58
-  description LAB_9300  
+  description LAB_9300
  !
  neighbor 2001:db8:fffe::16
   use neighbor-group NG-RRC-IPV6-FF
   password encrypted 00391909101C15107B731C1C58
-  description LAB_8200_2  
+  description LAB_8200_2
  !
  neighbor 2001:db8:fffe::19
   use neighbor-group NG-RRC-IPV6-NFF
   password encrypted 00301C19091B715107931C1C58
-  description LAB_NCS540-28Z4C_PE  
+  description LAB_NCS540-28Z4C_PE
  !
  neighbor 2001:db8:fffe::20
   use neighbor-group NG-RRC-IPV6-NFF
   password encrypted 00301C7919091B7151031C1C58
-  description LAB_9300  
+  description LAB_9300
  !
  neighbor 2001:db8:103:3084::249
   remote-as 65001
   use neighbor-group NG-FS-IPV6-INJECT
   shutdown
-  description FS BGP Session to abexabgp2.ACME.com - enable session on your needs  
+  description FS BGP Session to abexabgp2.ACME.com - enable session on your needs
   address-family ipv6 flowspec
    route-policy RP-FS-IPV6-FOO-FLOWSPEC-IN in
    route-policy RP-FS-IPV6-FOO-FLOWSPEC-OUT out

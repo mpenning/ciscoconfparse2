@@ -1321,4 +1321,3 @@ sys file ifile /Cli_Part/mylogo {
     cache-path /config/filestore/files_d/Cli_Part_d/ifile_d/:Cli_Part:mylogo_57032_1
     revision 1
 }
-

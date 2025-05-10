@@ -660,7 +660,7 @@ class CliApplication:
                 self.stdout.extend([obj.text for obj in branch])
 
         elif self.output_format == "original":
-            retval = set([])
+            retval = set()
             if len(self.args) == 1:
                 # Special case for the CLI script... if there is
                 # only one search term, find all children of it
@@ -726,7 +726,7 @@ class CliApplication:
 
         retval = []
 
-        _subnets = set([])
+        _subnets = set()
 
         for subnet in subnets.split(","):
             mode = -1
@@ -965,7 +965,7 @@ class CliApplication:
 
         retval = []
 
-        mac_regex_strs = set([])
+        mac_regex_strs = set()
 
         for _regex in mac_regex.split(","):
             mac_regex_strs.add(_regex)

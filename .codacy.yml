@@ -4,7 +4,7 @@ engines:
     enabled: true
     config:
       languages:
-      - python
+        - "python"
   bandit:
     enabled: true
   fixme:
@@ -14,12 +14,12 @@ engines:
   coverage:
     enabled: true
     excluded_paths:
-      - tests/**
+      - "tests/**"
 exclude_paths:
   - ".flake8"
-  - "**.md"
-  - "**.rst"
-  - "**.pdf"
-  - "**.jpg"
-  - "**.png"
-  - "**.gif"
+  - '**.md'
+  - '**.rst'
+  - '**.pdf'
+  - '**.jpg'
+  - '**.png'
+  - '**.gif'

@@ -124,7 +124,7 @@ That CLI command is the equivalent of running this
    ...                                           'address-family',
    ...                                           'default-information']):
    ...     print([obj.text for obj in branch])
-   ...     
+   ...
    >>>
 
 Example 4: Find branches as the original configuration
@@ -157,16 +157,16 @@ case that is local to the CLI script.
 
 .. note::
 
-   When searching with only one branch  search term, this is a special case of 
-   the CLI script.  If you only use one branch search term, all configuration 
-   children matching the configuation parent will be shown (the parent is 
+   When searching with only one branch  search term, this is a special case of
+   the CLI script.  If you only use one branch search term, all configuration
+   children matching the configuation parent will be shown (the parent is
    included as well).
 
 
 Example 5: Find IP addresses within a CIDR range
 ------------------------------------------------
 
-``ccp ipgrep`` can find IP addresses in a CIDR range.  By default, 
+``ccp ipgrep`` can find IP addresses in a CIDR range.  By default,
 ``ccp ipgrep`` splits words on whitespace and checks whether a word is an IP
 address and that it falls within the requested CIDR range.
 
@@ -209,13 +209,13 @@ All the options for ``ccp ipgrep`` are:
    required:
      ipgrep_file           Grep for IPs in these files, defaults to STDIN.
        -s SUBNETS, --subnets SUBNETS
-                           Comma-separated IPv4 and/or IPv6 addresses or prefixes, 
-                           such as '192.0.2.1,2001:db8::/32'. If the mask is not 
+                           Comma-separated IPv4 and/or IPv6 addresses or prefixes,
+                           such as '192.0.2.1,2001:db8::/32'. If the mask is not
                            specified, a host-mask assumed.
 
    optional:
      -w WORD_DELIMITER, --word_delimiter WORD_DELIMITER
-                           Word delimiter regular expression, defaults to all whitespace. 
+                           Word delimiter regular expression, defaults to all whitespace.
                            Join multiple regex delimiters with a pipe character.
      -l, --line            Enable line mode (return lines instead of only returning the IP)
      -u, --unique          Only print unique IPs (remove duplicates)

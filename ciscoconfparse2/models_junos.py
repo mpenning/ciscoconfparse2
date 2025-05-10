@@ -1,23 +1,24 @@
-r""" models_junos.py - Parse, Query, Build, and Modify Junos-style configurations
+r"""models_junos.py - Parse, Query, Build, and Modify Junos-style configurations
 
-     Copyright (C) 2023      David Michael Pennington
+Copyright (C) 2023      David Michael Pennington
 
-     This program is free software: you can redistribute it and/or modify
-     it under the terms of the GNU General Public License as published by
-     the Free Software Foundation, either version 3 of the License, or
-     (at your option) any later version.
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
 
-     This program is distributed in the hope that it will be useful,
-     but WITHOUT ANY WARRANTY; without even the implied warranty of
-     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-     GNU General Public License for more details.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
 
-     You should have received a copy of the GNU General Public License
-     along with this program.  If not, see <http://www.gnu.org/licenses/>.
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-     If you need to contact the author, you can do so by emailing:
-     mike [~at~] pennington [/dot\] net
+If you need to contact the author, you can do so by emailing:
+mike [~at~] pennington [/dot\] net
 """
+
 ### HUGE UGLY WARNING:
 ###   Anything in models_junos.py could change at any time, until I remove this
 ###   warning.  I have good reason to believe that these methods are stable and
@@ -41,6 +42,7 @@ DEFAULT_IPV4_ADDR_OBJ = IPv4Obj("0.0.0.1/32", strict=False)
 ##
 ##-------------  Junos Configuration line object
 ##
+
 
 @attrs.define(repr=False, slots=False)
 class JunosCfgLine(BaseCfgLine):
@@ -81,8 +83,7 @@ class JunosCfgLine(BaseCfgLine):
     def __init__(self, *args, **kwargs):
         r"""Accept an Junos line number and initialize family relationship
         attributes"""
-        super(JunosCfgLine, self).__init__(*args, **kwargs)
-
+        super().__init__(*args, **kwargs)
 
     # This method is on JunosCfgLine()
     @classmethod
@@ -362,7 +363,7 @@ class BaseJunosIntfLine(JunosCfgLine):
     # This method is on BaseJunosIntfLine()
     @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):
-        super(BaseJunosIntfLine, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     # This method is on BaseJunosIntfLine()
     def __repr__(self):
@@ -385,12 +386,9 @@ class BaseJunosIntfLine(JunosCfgLine):
     # This method is on BaseJunosIntfLine()
     @classmethod
     @logger.catch(reraise=True)
-    def is_object_for_interface(cls,
-                                all_lines: List[str],
-                                line: str,
-                                index: int=None,
-                                re=re
-                                ) -> bool:
+    def is_object_for_interface(
+        cls, all_lines: List[str], line: str, index: int = None, re=re
+    ) -> bool:
         """
         :param all_lines: A sequence of all text configuration lines
         :type all_lines: List[str]
@@ -503,7 +501,10 @@ class BaseJunosIntfLine(JunosCfgLine):
     @logger.catch(reraise=True)
     def is_switchport(self):
         for obj in self.parent.all_children:
-            if obj.parent.text.split()[0] == "unit" and obj.text.split()[0:2] == ["family", "ethernet-switching"]:
+            if obj.parent.text.split()[0] == "unit" and obj.text.split()[0:2] == [
+                "family",
+                "ethernet-switching",
+            ]:
                 return True
         return False
 
@@ -679,9 +680,7 @@ class BaseJunosIntfLine(JunosCfgLine):
     @property
     @logger.catch(reraise=True)
     def description(self):
-        """Return the current interface description string.
-
-        """
+        """Return the current interface description string."""
         retval = self.re_match_iter_typed(
             r"^\s*description\s+(\S.+)$", result_type=str, default=""
         )
@@ -705,6 +704,7 @@ class BaseJunosIntfLine(JunosCfgLine):
         )
         return retval
 
+
 ##
 ##-------------  IOS Interface Object
 ##
@@ -723,7 +723,7 @@ class JunosIntfLine(BaseJunosIntfLine):
         --------
         All :class:`~ciscoconfparse2.models_junos.JunosIntfLine` methods are still considered beta-quality, until this notice is removed.  The behavior of APIs on this object could change at any time.
         """
-        super(JunosIntfLine, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.feature = "interface"
 
     # This method is on JunosIntfLine()
@@ -731,6 +731,7 @@ class JunosIntfLine(BaseJunosIntfLine):
     @logger.catch(reraise=True)
     def is_object_for(cls, all_lines, line, index=None, re=re):
         return cls.is_object_for_interface(all_lines, line, index=index, re=re)
+
 
 ##
 ##-------------  Base Junos Route line object
@@ -817,7 +818,7 @@ class BaseJunosRouteLine(BaseCfgLine):
 class JunosRouteLine(BaseJunosRouteLine):
     @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):
-        super(JunosRouteLine, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         if "ipv6" in self.text:
             self.feature = "ipv6 route"
         else:

@@ -50,22 +50,40 @@ from typeguard import typechecked
 from ciscoconfparse2.__about__ import __version__
 from ciscoconfparse2.ccp_abc import BaseCfgLine
 from ciscoconfparse2.ccp_util import configure_loguru, enforce_valid_types
-from ciscoconfparse2.errors import (ConfigListItemDoesNotExist,
-                                    InvalidParameters, InvalidPassword,
-                                    RequirementFailure)
-from ciscoconfparse2.models_asa import (ASAAclLine, ASACfgLine,
-                                        ASAHostnameLine, ASAIntfGlobal,
-                                        ASAIntfLine, ASAName,
-                                        ASAObjGroupNetwork, ASAObjGroupService,
-                                        ASAObjNetwork, ASAObjService)
-from ciscoconfparse2.models_cisco import (IOSAccessLine, IOSCfgLine,
-                                          IOSIntfGlobal, IOSIntfLine,
-                                          IOSRouteLine)
+from ciscoconfparse2.errors import (
+    ConfigListItemDoesNotExist,
+    InvalidParameters,
+    InvalidPassword,
+    RequirementFailure,
+)
+from ciscoconfparse2.models_asa import (
+    ASAAclLine,
+    ASACfgLine,
+    ASAHostnameLine,
+    ASAIntfGlobal,
+    ASAIntfLine,
+    ASAName,
+    ASAObjGroupNetwork,
+    ASAObjGroupService,
+    ASAObjNetwork,
+    ASAObjService,
+)
+from ciscoconfparse2.models_cisco import (
+    IOSAccessLine,
+    IOSCfgLine,
+    IOSIntfGlobal,
+    IOSIntfLine,
+    IOSRouteLine,
+)
 from ciscoconfparse2.models_iosxr import IOSXRCfgLine, IOSXRIntfLine
 from ciscoconfparse2.models_junos import JunosCfgLine, JunosIntfLine
-from ciscoconfparse2.models_nxos import (NXOSAccessLine, NXOSCfgLine,
-                                         NXOSIntfGlobal, NXOSIntfLine,
-                                         NXOSvPCLine)
+from ciscoconfparse2.models_nxos import (
+    NXOSAccessLine,
+    NXOSCfgLine,
+    NXOSIntfGlobal,
+    NXOSIntfLine,
+    NXOSvPCLine,
+)
 
 if sys.version_info < (3, 9):
     version_error = "CiscoConfParse2 requires Python 3.9 or higher"
@@ -149,8 +167,8 @@ __status__ = "Production"
 @logger.catch(reraise=True)
 def initialize_globals():
     """Initialize ciscoconfparse2 global dunder-variables and a couple others."""
-    #global ENCODING
-    #global ACTIVE_LOGURU_HANDLERS
+    # global ENCODING
+    # global ACTIVE_LOGURU_HANDLERS
     global __author_email__
     global __author__
     global __copyright__
@@ -276,6 +294,7 @@ def initialize_ciscoconfparse2(
 # ALL ciscoconfparse2 global variables initizalization happens here...
 _, ACTIVE_LOGURU_HANDLERS = initialize_ciscoconfparse2()
 
+
 @traceParseAction
 def debug_pyparsing_action(tokens):
     logger.trace(f"Processing:", tokens)
@@ -365,7 +384,9 @@ class BraceParse:
                 OneOrMore(Word(printables, exclude_chars="{}") | White(" "))
             )
             if self.debug:
-                parseobj = nested_expr(opener="{", closer="}", content=valid_chars).addParseAction(debug_pyparsing_action)
+                parseobj = nested_expr(
+                    opener="{", closer="}", content=valid_chars
+                ).addParseAction(debug_pyparsing_action)
             else:
                 parseobj = nested_expr(opener="{", closer="}", content=valid_chars)
             # pyparsing_list is a nested-list of configuration statements where
@@ -2098,7 +2119,6 @@ class CiscoConfParse:
         self.encoding = encoding or ENCODING
         self.auto_commit = auto_commit
 
-
         if syntax not in ALL_VALID_SYNTAX:
             error = f"{syntax} is not a valid syntax."
             logger.error(error)
@@ -2153,7 +2173,6 @@ class CiscoConfParse:
             # Force logger removal in this package...
             logger.remove()
 
-
         ######################################################################
         # Check for valid syntax
         ######################################################################
@@ -2201,7 +2220,6 @@ class CiscoConfParse:
 
         # IMPORTANT this MUST not be a lie :-)...
         self.finished_config_parse = True
-
 
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
@@ -4227,6 +4245,7 @@ def config_line_factory(
         all_lines=all_lines,
         line=line,
     )
+
 
 if __name__ == "__main__":
     pass

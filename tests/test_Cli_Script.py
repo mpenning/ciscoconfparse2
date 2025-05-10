@@ -1,22 +1,22 @@
 r"""test_Cli_Script.py - Parse, Query, Build, and Modify IOS-style configs
 
-     Copyright (C) 2024-2025      David Michael Pennington
+Copyright (C) 2024-2025      David Michael Pennington
 
-     This program is free software: you can redistribute it and/or modify
-     it under the terms of the GNU General Public License as published by
-     the Free Software Foundation, either version 3 of the License, or
-     (at your option) any later version.
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
 
-     This program is distributed in the hope that it will be useful,
-     but WITHOUT ANY WARRANTY; without even the implied warranty of
-     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-     GNU General Public License for more details.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
 
-     You should have received a copy of the GNU General Public License
-     along with this program.  If not, see <http://www.gnu.org/licenses/>.
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-     If you need to contact the author, you can do so by emailing:
-     mike [~at~] pennington [.dot.] net
+If you need to contact the author, you can do so by emailing:
+mike [~at~] pennington [.dot.] net
 """
 
 from argparse import Namespace
@@ -30,63 +30,61 @@ def testValues_ccp_script_entry_cliapplication_searchmaceui_01():
     """Ensure that CliApplication() MACEUISearch() class can find one EUI64 address correctly with one match any regex"""
     search = MACEUISearch("dead.beef.0001.0001")
     assert search.mac_retval == EUI64Obj("dead.beef.0001.0001")
-    assert search.search_all_formats(mac_regex_strs=set(["."])) is True
+    assert search.search_all_formats(mac_regex_strs={"."}) is True
 
 
 def testValues_ccp_script_entry_cliapplication_searchmaceui_02():
     """Ensure that CliApplication() MACEUISearch() class can find one EUI64 address correctly with a two-byte case-insensitive regex"""
     search = MACEUISearch("dead.beef.0001.0001")
     assert search.mac_retval == EUI64Obj("dead.beef.0001.0001")
-    assert search.search_all_formats(mac_regex_strs=set(["de-ad"])) is True
-    assert search.search_all_formats(mac_regex_strs=set(["DE-AD"])) is True
-    assert search.search_all_formats(mac_regex_strs=set(["dE-Ad"])) is True
+    assert search.search_all_formats(mac_regex_strs={"de-ad"}) is True
+    assert search.search_all_formats(mac_regex_strs={"DE-AD"}) is True
+    assert search.search_all_formats(mac_regex_strs={"dE-Ad"}) is True
 
 
 def testValues_ccp_script_entry_cliapplication_searchmaceui_03():
     """Ensure that CliApplication() MACEUISearch() class can find one EUI64 dash-formatted address correctly"""
     search = MACEUISearch("dead.beef.0001.0001")
     assert search.mac_retval == EUI64Obj("dead.beef.0001.0001")
-    assert search.search_all_formats(mac_regex_strs=set(["de-ad-be-ef-00-01"])) is True
-    assert search.search_all_formats(mac_regex_strs=set(["ff-ff-ff-ff-ff-ff"])) is False
+    assert search.search_all_formats(mac_regex_strs={"de-ad-be-ef-00-01"}) is True
+    assert search.search_all_formats(mac_regex_strs={"ff-ff-ff-ff-ff-ff"}) is False
 
 
 def testValues_ccp_script_entry_cliapplication_searchmaceui_04():
     """Ensure that CliApplication() MACEUISearch() class can find one EUI64 colon-formatted address correctly"""
     search = MACEUISearch("dead.beef.0001.0001")
     assert search.mac_retval == EUI64Obj("dead.beef.0001.0001")
-    assert search.search_all_formats(mac_regex_strs=set(["de:ad:be:ef:00:01"])) is True
-    assert search.search_all_formats(mac_regex_strs=set(["ff:ff:ff:ff:ff:ff"])) is False
+    assert search.search_all_formats(mac_regex_strs={"de:ad:be:ef:00:01"}) is True
+    assert search.search_all_formats(mac_regex_strs={"ff:ff:ff:ff:ff:ff"}) is False
 
 
 def testValues_ccp_script_entry_cliapplication_searchmaceui_05():
     """Ensure that CliApplication() MACEUISearch() class can find one EUI64 cisco-dot-formatted address correctly"""
     search = MACEUISearch("dead.beef.0001.0001")
     assert search.mac_retval == EUI64Obj("dead.beef.0001.0001")
-    assert search.search_all_formats(mac_regex_strs=set(["dead.beef.0001"])) is True
-    assert search.search_all_formats(mac_regex_strs=set(["ffff.ffff.fff"])) is False
+    assert search.search_all_formats(mac_regex_strs={"dead.beef.0001"}) is True
+    assert search.search_all_formats(mac_regex_strs={"ffff.ffff.fff"}) is False
 
 
 def testValues_ccp_script_entry_cliapplication_searchmaceui_06():
     """Ensure that CliApplication() MACEUISearch() class can find one EUI64 address correctly with two regex"""
     search = MACEUISearch("dead.beef.0001.0001")
     assert search.mac_retval == EUI64Obj("dead.beef.0001.0001")
-    assert search.search_all_formats(mac_regex_strs=set(["foo", "."])) is True
+    assert search.search_all_formats(mac_regex_strs={"foo", "."}) is True
 
 
 def testValues_ccp_script_entry_cliapplication_searchmaceui_07():
     """Ensure that CliApplication() MACEUISearch() class can reject one EUI64 address correctly with one regex"""
     search = MACEUISearch("dead.beef.0001.0001")
     assert search.mac_retval == EUI64Obj("dead.beef.0001.0001")
-    assert (
-        search.search_all_formats(mac_regex_strs=set(["reject_any_mac_regex"])) is False
-    )
+    assert search.search_all_formats(mac_regex_strs={"reject_any_mac_regex"}) is False
 
 
 def testValues_ccp_script_entry_cliapplication_searchmaceui_07():
     """Ensure that CliApplication() MACEUISearch() class can reject one EUI48 / MAC address correctly with one regex"""
     search = MACEUISearch("dead.beef.0001")
     assert search.mac_retval == MACObj("dead.beef.0001")
-    assert search.search_all_formats(mac_regex_strs=set(["."])) is True
+    assert search.search_all_formats(mac_regex_strs={"."}) is True
 
 
 # find_ip46_addr_matches()

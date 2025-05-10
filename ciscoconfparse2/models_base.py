@@ -1,4 +1,3 @@
-from __future__ import absolute_import
 from typing import Union, Any, Set, List, Tuple, Dict
 import re
 
@@ -95,7 +94,7 @@ class BaseFactoryLine(BaseCfgLine):
     @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):
         r"""Accept an IOS line number and initialize family relationship attributes"""
-        super(BaseFactoryLine, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     @logger.catch(reraise=True)
     def __eq__(self, other) -> bool:
@@ -120,11 +119,9 @@ class BaseFactoryLine(BaseCfgLine):
 
     @classmethod
     @logger.catch(reraise=True)
-    def is_object_for(cls,
-                      all_lines: List[str],
-                      line: str,
-                      index: int=None,
-                      re: re.Pattern=re) -> bool:
+    def is_object_for(
+        cls, all_lines: List[str], line: str, index: int = None, re: re.Pattern = re
+    ) -> bool:
         """Return True if this object should be used for a given configuration line; otherwise return False"""
         raise NotImplementedError()
 
@@ -192,7 +189,6 @@ class BaseFactoryLine(BaseCfgLine):
         """
         raise NotImplementedError()
 
-
     @property
     @logger.catch(reraise=True)
     def is_virtual_intf(self) -> bool:
@@ -238,6 +234,7 @@ class BaseFactoryLine(BaseCfgLine):
         """
         raise NotImplementedError()
 
+
 ##
 ##-------------  IOS Interface ABC
 ##
@@ -258,7 +255,7 @@ class BaseFactoryInterfaceLine(BaseFactoryLine):
 
     @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):
-        super(BaseFactoryInterfaceLine, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.ifindex = None  # Optional, for user use
         self.default_ipv4_addr_object = IPv4Obj()
         self.default_ipv6_addr_object = IPv6Obj()
@@ -333,11 +330,9 @@ class BaseFactoryInterfaceLine(BaseFactoryLine):
     # This method is on BaseFactoryInterfaceLine()
     @classmethod
     @logger.catch(reraise=True)
-    def is_object_for(cls,
-                      all_lines: List[str],
-                      line: str,
-                      index: int=None,
-                      re: re.Pattern=re) -> bool:
+    def is_object_for(
+        cls, all_lines: List[str], line: str, index: int = None, re: re.Pattern = re
+    ) -> bool:
         """Return a boolean for whether this object should be used based on the inputs"""
         raise NotImplementedError()
 
@@ -404,7 +399,6 @@ class BaseFactoryInterfaceLine(BaseFactoryLine):
            ordinal_list should silently fail (returning an empty python tuple) if the interface doesn't parse correctly
         """
         raise NotImplementedError()
-
 
     # This method is on BaseFactoryInterfaceLine()
     @property
@@ -519,7 +513,7 @@ class BaseFactoryInterfaceLine(BaseFactoryLine):
     # This method is on BaseFactoryInterfaceLine()
     @property
     @logger.catch(reraise=True)
-    def ipv6_addr_objects(self) -> Dict[str,List[IPv6Obj]]:
+    def ipv6_addr_objects(self) -> Dict[str, List[IPv6Obj]]:
         r"""
         :return: A Dict of :class:`ccp_util.IPv6Obj` objects representing all IPv6 addresses on this interface, default to {}
         :rtype: IPv6Obj
@@ -775,7 +769,7 @@ class BaseFactoryInterfaceLine(BaseFactoryLine):
 
     # This method is on BaseFactoryInterfaceLine()
     @logger.catch(reraise=True)
-    def in_ipv4_subnet(self, ipv4network: IPv4Obj=None, strict: bool=False) -> bool:
+    def in_ipv4_subnet(self, ipv4network: IPv4Obj = None, strict: bool = False) -> bool:
         r"""
         :return: Whether the interface is in a :class:`~ciscoconfparse2.ccp_util.IPv4Obj` subnet, default to False.
         :rtype: bool
@@ -784,7 +778,9 @@ class BaseFactoryInterfaceLine(BaseFactoryLine):
 
     # This method is on BaseFactoryInterfaceLine()
     @logger.catch(reraise=True)
-    def in_ipv4_subnets(self, subnets: Union[Set[IPv4Obj], List[IPv4Obj], Tuple[IPv4Obj, ...]]=None) -> bool:
+    def in_ipv4_subnets(
+        self, subnets: Union[Set[IPv4Obj], List[IPv4Obj], Tuple[IPv4Obj, ...]] = None
+    ) -> bool:
         r"""
         :return: Whether the interface is in a sequence or set of ccp_util.IPv4Obj objects
         :rtype: bool
@@ -874,7 +870,7 @@ class BaseFactoryInterfaceLine(BaseFactoryLine):
     # This method is on BaseFactoryInterfaceLine()
     @property
     @logger.catch(reraise=True)
-    def ip_helper_addresses(self) -> List[Dict[str,str]]:
+    def ip_helper_addresses(self) -> List[Dict[str, str]]:
         r"""
         :return: A sequence of dicts with IP helper-addresses.  Each helper-address is in a dictionary.
         :rtype: List[Dict[str,str]]
@@ -884,7 +880,7 @@ class BaseFactoryInterfaceLine(BaseFactoryLine):
     # This method is on BaseFactoryInterfaceLine()
     @property
     @logger.catch(reraise=True)
-    def ipv6_dhcp_server(self) -> List[Dict[str,str]]:
+    def ipv6_dhcp_server(self) -> List[Dict[str, str]]:
         r"""
         :return: A sequence of dicts with IPv6 dhcp server.  Each address is in a dictionary.
         :rtype: List[Dict[str,str]]
@@ -1050,7 +1046,7 @@ class BaseFactoryInterfaceLine(BaseFactoryLine):
     # This method is on BaseFactoryInterfaceLine()
     @property
     @logger.catch(reraise=True)
-    def hsrp_ip_addr(self) -> Dict[int,str]:
+    def hsrp_ip_addr(self) -> Dict[int, str]:
         """
         :return: A dict keyed by integer HSRP group number with a string ipv4 address, default to an empty dict
         :rtype: Dict[int,str]
@@ -1060,7 +1056,7 @@ class BaseFactoryInterfaceLine(BaseFactoryLine):
     # This method is on BaseFactoryInterfaceLine()
     @property
     @logger.catch(reraise=True)
-    def hsrp_ip_addr_secondary(self) -> Dict[int,str]:
+    def hsrp_ip_addr_secondary(self) -> Dict[int, str]:
         """
         :return: A dict keyed by integer HSRP group number with a comma-separated string secondary ipv4 address, default to an empty dict
         :rtype: Dict[int,str]
@@ -1070,7 +1066,7 @@ class BaseFactoryInterfaceLine(BaseFactoryLine):
     # This method is on BaseFactoryInterfaceLine()
     @property
     @logger.catch(reraise=True)
-    def hsrp_priority(self) -> Dict[int,int]:
+    def hsrp_priority(self) -> Dict[int, int]:
         """
         :return: A dict keyed by integer HSRP group number with an integer HSRP priority per-group
         :rtype: Dict[int,int]
@@ -1080,7 +1076,7 @@ class BaseFactoryInterfaceLine(BaseFactoryLine):
     # This method is on BaseFactoryInterfaceLine()
     @property
     @logger.catch(reraise=True)
-    def hsrp_hello_timer(self) -> Dict[int,float]:
+    def hsrp_hello_timer(self) -> Dict[int, float]:
         """
         :return: A dict keyed by integer HSRP group number with an integer HSRP hello timer
         :rtype: Dict[int,float]
@@ -1090,7 +1086,7 @@ class BaseFactoryInterfaceLine(BaseFactoryLine):
     # This method is on BaseFactoryInterfaceLine()
     @property
     @logger.catch(reraise=True)
-    def hsrp_hold_timer(self) -> Dict[int,float]:
+    def hsrp_hold_timer(self) -> Dict[int, float]:
         """
         :return: A dict keyed by integer HSRP group number with an integer HSRP hold timer
         :rtype: Dict[int,float]
@@ -1100,7 +1096,7 @@ class BaseFactoryInterfaceLine(BaseFactoryLine):
     # This method is on BaseFactoryInterfaceLine()
     @property
     @logger.catch(reraise=True)
-    def hsrp_usebia(self) -> Dict[int,bool]:
+    def hsrp_usebia(self) -> Dict[int, bool]:
         """
         :return: A dict keyed by integer HSRP group number with a bool value for whether the group is configured with use-bia
         :rtype: Dict[int,bool]
@@ -1110,7 +1106,7 @@ class BaseFactoryInterfaceLine(BaseFactoryLine):
     # This method is on BaseFactoryInterfaceLine()
     @property
     @logger.catch(reraise=True)
-    def hsrp_preempt(self) -> Dict[int,bool]:
+    def hsrp_preempt(self) -> Dict[int, bool]:
         """
         :return: A dict keyed by integer HSRP group number with a bool value for whether the group is configured with preempt
         :rtype: Dict[int,bool]
@@ -1120,7 +1116,7 @@ class BaseFactoryInterfaceLine(BaseFactoryLine):
     # This method is on BaseFactoryInterfaceLine()
     @property
     @logger.catch(reraise=True)
-    def hsrp_authentication_md5_keychain(self) -> Dict[int,bool]:
+    def hsrp_authentication_md5_keychain(self) -> Dict[int, bool]:
         """
         :return: A dict keyed by integer HSRP group number with a string value of the HSRP authentication key-chain name
         :rtype: Dict[int,str]
@@ -1138,7 +1134,6 @@ class BaseFactoryInterfaceLine(BaseFactoryLine):
         :rtype: bool
         """
         raise NotImplementedError()
-
 
     # This method is on BaseFactoryInterfaceLine()
     @property
@@ -1236,6 +1231,7 @@ class BaseFactoryInterfaceLine(BaseFactoryLine):
         """
         return self.ipv6_trafficfilter_out
 
+
 ##
 ##-------------  IOS Interface Object
 ##
@@ -1254,7 +1250,7 @@ class IOSIntfLine(BaseFactoryInterfaceLine):
         --------
         All :class:`~ciscoconfparse2.models_cisco.IOSIntfLine` methods are still considered beta-quality, until this notice is removed.  The behavior of APIs on this object could change at any time.
         """
-        super(IOSIntfLine, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.feature = "interface"
 
     # This method is on IOSIntfLine()
@@ -1277,6 +1273,7 @@ class IOSIntfLine(BaseFactoryInterfaceLine):
     @logger.catch(reraise=True)
     def is_object_for(cls, all_lines, line, index=None, re=re):
         return cls.is_object_for_interface(line)
+
 
 ##
 ##-------------  IOS Interface Globals
@@ -1342,8 +1339,9 @@ class IOSIntfGlobal(BaseFactoryLine):
     def has_stp_mode_rapidpvst(self):
         raise NotImplementedError()
 
+
 #
-#-------------  IOS Access Line
+# -------------  IOS Access Line
 #
 
 
@@ -1353,7 +1351,7 @@ class IOSAccessLine(BaseFactoryLine):
     # This method is on IOSAccessLine()
     @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):
-        super(IOSAccessLine, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.feature = "access line"
 
     # This method is on IOSAccessLine()
@@ -1374,7 +1372,7 @@ class IOSAccessLine(BaseFactoryLine):
     # This method is on IOSAccessLine()
     @logger.catch(reraise=True)
     def __repr__(self):
-        return "<%s # %s '%s' info: '%s'>" % (
+        return "<{} # {} '{}' info: '{}'>".format(
             self.classname,
             self.linenum,
             self.name,
@@ -1427,6 +1425,7 @@ class IOSAccessLine(BaseFactoryLine):
     def parse_exectimeout(self):
         raise NotImplementedError()
 
+
 ##
 ##-------------  Base IOS Route line object
 ##
@@ -1437,7 +1436,7 @@ class BaseIOSRouteLine(BaseFactoryLine):
     # This method is on BaseIOSRouteLine()
     @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):
-        super(BaseIOSRouteLine, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     # This method is on BaseIOSRouteLine()
     @property
@@ -1448,7 +1447,7 @@ class BaseIOSRouteLine(BaseFactoryLine):
     # This method is on BaseIOSRouteLine()
     @logger.catch(reraise=True)
     def __repr__(self):
-        return "<%s # %s '%s' info: '%s'>" % (
+        return "<{} # {} '{}' info: '{}'>".format(
             self.classname,
             self.linenum,
             self.network_object,
@@ -1539,10 +1538,10 @@ _RE_IP_ROUTE = re.compile(
 _RE_IPV6_ROUTE = re.compile(
     r"""^ipv6\s+route
 (?:\s+vrf\s+(?P<vrf>\S+))?
-(?:\s+(?P<prefix>{0})\/(?P<masklength>\d+))    # Prefix detection
+(?:\s+(?P<prefix>{})\/(?P<masklength>\d+))    # Prefix detection
 (?:
-(?:\s+(?P<nh_addr1>{1}))
-|(?:\s+(?P<nh_intf>\S+(?:\s+\d\S*?\/\S+)?)(?:\s+(?P<nh_addr2>{2}))?)
+(?:\s+(?P<nh_addr1>{}))
+|(?:\s+(?P<nh_intf>\S+(?:\s+\d\S*?\/\S+)?)(?:\s+(?P<nh_addr2>{}))?)
 )
 (?:\s+nexthop-vrf\s+(?P<nexthop_vrf>\S+))?
 (?:\s+(?P<ad>\d+))?              # Administrative distance
@@ -1567,7 +1566,7 @@ class IOSRouteLine(BaseFactoryLine):
     # This method is on IOSRouteLine()
     @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):
-        super(IOSRouteLine, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         pass
 
     # This method is on IOSRouteLine()
@@ -1702,5 +1701,3 @@ class IOSRouteLine(BaseFactoryLine):
     @logger.catch(reraise=True)
     def tag(self):
         raise NotImplementedError()
-
-

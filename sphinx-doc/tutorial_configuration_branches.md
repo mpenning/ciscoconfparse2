@@ -36,4 +36,3 @@ As you can see, with one query we got three config statements:
 * The grandchild: `  remote-as 65534`
 
 There may be times when it's better to avoid looping through individual children and just get the whole configuration branch all at once.
-

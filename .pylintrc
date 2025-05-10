@@ -766,4 +766,3 @@ min-public-methods=2
 # "BaseException, Exception".
 overgeneral-exceptions=builtins.BaseException,
                        builtins.Exception
-

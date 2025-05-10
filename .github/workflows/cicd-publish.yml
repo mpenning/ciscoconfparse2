@@ -1,64 +1,53 @@
+---
 on:
   push:
     tags:
-      - "[0-9]+.[0-9]+.[0-9]+"
-      - "[0-9]+.[0-9]+.[0-9]+.post[0-9]+"
-      - "[0-9]+.[0-9]+.[0-9]+[a-b][0-9]+"
-      - "[0-9]+.[0-9]+.[0-9]+rc[0-9]+"
+      - '[0-9]+.[0-9]+.[0-9]+'
+      - '[0-9]+.[0-9]+.[0-9]+.post[0-9]+'
+      - '[0-9]+.[0-9]+.[0-9]+[a-b][0-9]+'
+      - '[0-9]+.[0-9]+.[0-9]+rc[0-9]+'
     branches:
-      - main
-
+      - 'main'
 defaults:
   run:
-    shell: bash
-
+    shell: 'bash'
 jobs:
   python-artifacts:
-    name: Job to build wheel and source distribution files
-    runs-on: ubuntu-latest
-    environment: release
+    name: 'Job to build wheel and source distribution files'
+    runs-on: 'ubuntu-latest'
+    environment: 'release'
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-
-    - name: Install build frontend
-      run: pip install hatch
-
-    - name: Create packages in dist/ with hatch
-      run: hatch build
-
-    - name: Upload package artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: python-artifacts
-        path: dist/*
-        if-no-files-found: error
-
+      - name: 'Checkout code'
+        uses: 'actions/checkout@v4'
+        with:
+          fetch-depth: 0
+      - name: 'Install build frontend'
+        run: 'pip install hatch'
+      - name: 'Create packages in dist/ with hatch'
+        run: 'hatch build'
+      - name: 'Upload package artifacts'
+        uses: 'actions/upload-artifact@v4'
+        with:
+          name: 'python-artifacts'
+          path: 'dist/*'
+          if-no-files-found: 'error'
   pypi-publish:
-    name: Upload release to PyPI
-    if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags')
+    name: 'Upload release to PyPI'
+    if: 'github.event_name == ''push'' && startsWith(github.event.ref, ''refs/tags'')'
     needs:
-    - python-artifacts
-    runs-on: ubuntu-latest
-
+      - 'python-artifacts'
+    runs-on: 'ubuntu-latest'
     permissions:
-      contents: write
-      id-token: write
-
+      contents: 'write'
+      id-token: 'write'
     environment:
-      name: pypi
-      url: https://pypi.org/p/ciscoconfparse2
-
+      name: 'pypi'
+      url: 'https://pypi.org/p/ciscoconfparse2'
     steps:
-    - name: Retrieve package artifacts from build job
-      uses: actions/download-artifact@v4
-      with:
-        name: python-artifacts
-        path: dist
-
-    - name: Upload packages to PYPI
-      uses: pypa/gh-action-pypi-publish@v1.12.4
-
-
+      - name: 'Retrieve package artifacts from build job'
+        uses: 'actions/download-artifact@v4'
+        with:
+          name: 'python-artifacts'
+          path: 'dist'
+      - name: 'Upload packages to PYPI'
+        uses: 'pypa/gh-action-pypi-publish@v1.12.4'

@@ -5,6 +5,5 @@ extraction:
     python_setup:
       version: 3
       setup_py: false
-
 queries:
-- exclude: py/property-in-old-style-class
+  - exclude: "py/property-in-old-style-class"

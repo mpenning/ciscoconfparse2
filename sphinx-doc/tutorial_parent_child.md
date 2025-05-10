@@ -2,7 +2,7 @@
 
 ## IOS Parent-child relationships
 
-As we saw in a previous section, {class}`~ciscoconfparse2.CiscoConfParse()` reads an 
+As we saw in a previous section, {class}`~ciscoconfparse2.CiscoConfParse()` reads an
 IOS configuration and breaks it into a list of parent-child relationships.  Used correctly, these
 relationships can reveal a lot of useful information.  The concept of IOS
 parent and child is pretty intuitive, but we'll go through a another example

@@ -17,4 +17,3 @@ all:
 	cargo build --release
 	cp target/release/deploy_docs .
 	rm -rf target/
-

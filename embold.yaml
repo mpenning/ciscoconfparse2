@@ -1,35 +1,30 @@
 ---
 version: 1
-
 # Please visit https://docs.embold.io/v2-quick-start-guide/#default-configurations
 #  to know more about configurations available
-
 sources:
-  #Files or Directories to be Excluded are mentioned in exclusions
+  # Files or Directories to be Excluded are mentioned in exclusions
   exclusions:
-    - 'ciscoconfparse2/models_asa.py'
-    - 'ciscoconfparse2/models_cisco.py'
-    - 'ciscoconfparse2/models_nxos.py'
-    - 'ciscoconfparse2/models_iosxr.py'
-    - 'ciscoconfparse2/models_junos.py'
-    - 'ciscoconfparse2/protocol_values.py'
-    - 'ciscoconfparse2/errors.py'
-    - 'tests/*py'
-    - 'sphinx-doc/*py'
-    - '.git/'
-    - '.github/'
-
+    - ciscoconfparse2/models_asa.py
+    - ciscoconfparse2/models_cisco.py
+    - ciscoconfparse2/models_nxos.py
+    - ciscoconfparse2/models_iosxr.py
+    - ciscoconfparse2/models_junos.py
+    - ciscoconfparse2/protocol_values.py
+    - ciscoconfparse2/errors.py
+    - tests/*py
+    - sphinx-doc/*py
+    - .git/
+    - .github/
 # Specify the languages you would like to Scan. Default is all Detected
-languages: 'Python'
-
-
+languages: "Python"
 # Define modules one would like to run or disable. This is enough for Basic Users
 # Get List of Modules (Which are Default Enabled/Disabled) at the documentation link above
 modules:
-  - name: pmd
+  - name: "pmd"
     enabled: false
-  - name: Pylint
+  - name: "Pylint"
     enabled: true
     rules:
-      - key: 'E0401-unableToImportModule'
+      - key: "E0401-unableToImportModule"
         enabled: false

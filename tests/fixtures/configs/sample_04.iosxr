@@ -37,7 +37,7 @@ end-set
 !
 community-set peering_ipv6_prefixes
   65001:66
-end-set   
+end-set
 !
 route-policy public_v4_peering_egress
   if community matches-any public_ipv4_prefixes then
@@ -82,7 +82,7 @@ router bgp 65001
   address-family ipv4 unicast
    route-policy public_v4_peering_ingress in
    route-policy public_v4_peering_egress out
-  !       
+  !
  !
  neighbor-group public_v6_peers
   address-family ipv6 unicast

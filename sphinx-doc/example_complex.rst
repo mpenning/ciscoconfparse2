@@ -22,7 +22,7 @@ Save this code in a file named example.py
        :rtype: str
        """
 
-       # intf_obj is an BaseCfgLine() subclass containing 
+       # intf_obj is an BaseCfgLine() subclass containing
        #   something like 'interface Loopback0'
        intf_name = " ".join(intf_obj.split()[1:])
 
@@ -83,5 +83,3 @@ That will print a CSV with detailed interface information in it:
    FastEtheret1/2,not_shutdown,,switchport,access,12,[switchport to the IDF media converter]
    Virtual-Template1,not_shutdown,0.0.0.1/32,not_switched,,,
    Dialer1,not_shutdown,0.0.0.1/32,not_switched,,,[IPv4 and IPv6 OSPF Transit via WAN Dialer: NAT_ CBWFQ interface]
-
-
