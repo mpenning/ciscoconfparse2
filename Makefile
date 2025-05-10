@@ -54,6 +54,7 @@ cicd:
 	yamlfix .github/workflows/
 	# Run pre-commit on all files...
 	pre-commit run -a
+	-git commit --all -m "chore: pre-commit changes"
 	# upgrade packaging infra and ciscoconfparse2 dependencies...
 	make dep
 	-git commit --all -m "Version $$VERSION"
