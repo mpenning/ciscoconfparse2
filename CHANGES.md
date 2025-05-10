@@ -4,6 +4,13 @@
 - Summary:
     - Insert something here
 
+## Version: 0.8.15
+
+- Released: 2025-05-10
+- Summary:
+    - Remove duplicate SonarCloud workflow scanner
+    - Add automatic Github Release on git tag
+
 ## Version: 0.8.14
 
 - Released: 2025-05-10
