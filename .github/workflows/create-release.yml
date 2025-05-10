@@ -5,7 +5,7 @@ on:
     tags:
       - "*.*.*"
 jobs:
-  build:
+  create-release:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
