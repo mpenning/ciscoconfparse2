@@ -4,6 +4,12 @@
 - Summary:
     - Insert something here
 
+## Version: 0.8.13
+
+- Released: 2025-05-10
+- Summary:
+    - Update loguru package name and add more debug logging
+
 ## Version: 0.8.12
 
 - Released: 2025-05-10
