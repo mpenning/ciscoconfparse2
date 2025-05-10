@@ -4,6 +4,12 @@
 - Summary:
     - Insert something here
 
+## Version: 0.8.14
+
+- Released: 2025-05-10
+- Summary:
+    - Refactor loguru handlers code
+
 ## Version: 0.8.13
 
 - Released: 2025-05-10
