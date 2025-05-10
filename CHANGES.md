@@ -4,6 +4,12 @@
 - Summary:
     - Insert something here
 
+## Version: 0.8.11
+
+- Released: 2025-05-10
+- Summary:
+    - Revert loguru error on pyparsing failure
+
 ## Version: 0.8.10
 
 - Released: 2025-05-10
