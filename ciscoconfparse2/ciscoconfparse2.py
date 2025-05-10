@@ -43,6 +43,8 @@ import yaml  # import for pyyaml
 from loguru import logger
 from passlib.hash import cisco_type7, md5_crypt
 from pyparsing import Combine, OneOrMore, White, Word, nested_expr, printables
+from pyparsing import ParseException
+from pyparsing import traceParseAction
 from typeguard import typechecked
 
 from ciscoconfparse2.__about__ import __version__
@@ -274,6 +276,10 @@ def initialize_ciscoconfparse2(
 # ALL ciscoconfparse2 global variables initizalization happens here...
 _, ACTIVE_LOGURU_HANDLERS = initialize_ciscoconfparse2()
 
+@traceParseAction
+def debug_pyparsing_action(tokens):
+    logger.trace(f"Processing:", tokens)
+    return tokens
 
 @attrs.define(repr=False, slots=False)
 class BraceParse:
@@ -287,6 +293,7 @@ class BraceParse:
     config_objs: list = None
     semicolon_end: bool = False
     current_linenum: int = False
+    debug: bool = False
 
     @logger.catch(reraise=True)
     @typechecked
@@ -296,6 +303,7 @@ class BraceParse:
         comment_delimiters: Optional[list] = None,
         stop_width: int = 4,
         semicolon_end: bool = False,
+        debug: bool = False,
     ) -> None:
         """
         :param config_txt: Brace-delimited configuration lines to be parsed
@@ -305,6 +313,7 @@ class BraceParse:
         :param stop_width: Number of spaces per indent-level, defaults to 4
         :type stop_width: int
         :param semicolon_end: Whether semicolons are allowed at the end of a line
+        :param debug: Whether debugging should be enabled
         :type semicolon_end: bool
         """
         if not isinstance(config_txt, str):
@@ -314,6 +323,8 @@ class BraceParse:
 
         if comment_delimiters is None:
             comment_delimiters = ["#"]
+
+        self.debug = bool(debug)
 
         enforce_valid_types(
             config_txt, (str,), "config_txt parameter must be a string."
@@ -341,18 +352,28 @@ class BraceParse:
         pyparsing_list = self.parse_braces_to_nested_list(config_txt)
         self.unpack_nested_list_to_config_objs(-1, pyparsing_list)
 
-    @logger.catch(reraise=True)
+    @logger.catch(reraise=False)
     def parse_braces_to_nested_list(self, config_txt: str):
         """Parse the brace-delimted configuration and return a nested list (via pyparsing)"""
+
+        pyparsing_list = []
+
         # Define valid pyparsing characters for the JunOS lines... use all
         # non-brace printable characters, except curly-braces plus whitespace
         valid_chars = Combine(
-            OneOrMore(Word(printables, exclude_chars="{}") | White(" "))
-        )
-        parseobj = nested_expr(opener="{", closer="}", content=valid_chars)
-        # pyparsing_list is a nested-list of configuration statements where
-        # a nested list is appended for every JunOS indent level
-        pyparsing_list = parseobj.parse_string("{" + config_txt + "}").as_list()[0]
+            OneOrMore(White("") | Word(printables, exclude_chars="{}")))
+        try:
+            if self.debug:
+                parseobj = nested_expr(opener="{", closer="}", content=valid_chars).addParseAction(debug_pyparsing_action)
+            else:
+                parseobj = nested_expr(opener="{", closer="}", content=valid_chars)
+
+            # pyparsing_list is a nested-list of configuration statements where
+            # a nested list is appended for every JunOS indent level
+            pyparsing_list = parseobj.parse_string("{" + config_txt + "}").as_list()[0]
+        except ParseException as eee:
+            logger.critical(eee)
+            raise
 
         # pyparsing_list is a simple nested-list of text strings...
         return pyparsing_list
@@ -579,6 +600,7 @@ def convert_junos_to_ios(
         config_txt=config_txt,
         comment_delimiters=comment_delimiters,
         stop_width=stop_width,
+        debug=bool(debug),
     )
     return [ii.text for ii in braceobj.get_junoscfgline_list()]
 
