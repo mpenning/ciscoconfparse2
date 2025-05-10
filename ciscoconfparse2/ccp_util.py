@@ -307,8 +307,11 @@ def ccp_logger_control(
     package_name = "ciscoconfparse2.ccp_util"
 
     # Remove all loggers by default
+    #   This is an internal loguru endpoint that may not
+    #   always exist...
+    loguru_handlers = logger._core.handlers
     if debug > 0:
-        logger.info(f"ccp_util Remove loguru handlers: {logger._core.handlers}")
+        logger.info(f"ccp_util Remove loguru handlers: {loguru_handlers}")
     logger.remove()
 
     if read_only is True:
