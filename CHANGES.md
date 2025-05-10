@@ -4,6 +4,14 @@
 - Summary:
     - Insert something here
 
+## Version: 0.8.17
+
+- Released: 2025-05-10
+- Summary:
+    - Port .pre-commit-config.yaml from ciscoconfparse
+    - Run pre-commit and commit changes in Makefile
+    - Run yamlfix and commit changes in Makefile
+
 ## Version: 0.8.16
 
 - Released: 2025-05-10
