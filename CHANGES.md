@@ -4,6 +4,12 @@
 - Summary:
     - Insert something here
 
+## Version: 0.8.16
+
+- Released: 2025-05-10
+- Summary:
+    - Rename create release workflow
+
 ## Version: 0.8.15
 
 - Released: 2025-05-10
