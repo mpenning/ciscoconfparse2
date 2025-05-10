@@ -4,15 +4,21 @@
 - Summary:
     - Insert something here
 
+## Version: 0.8.10
+
+- Released: 2025-05-10
+- Summary:
+    - Add loguru error on pyparsing failure
+
 ## Version: 0.8.9
 
-- Released: 2025-03-02
+- Released: 2025-05-04
 - Summary:
     - Fix SonarCloud password hash iteration alert
 
 ## Version: 0.8.8
 
-- Released: 2025-03-02
+- Released: 2025-05-04
 - Summary:
     - Fix CiscoConfParse(loguru=False)
 
