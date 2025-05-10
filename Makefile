@@ -49,6 +49,11 @@ install_build:
 cicd:
 	@echo "$(COL_CYAN)>> Use CI/CD to publish ciscoconfparse2 pypi artifacts$(COL_END)"
 	make clean
+	# yamlfix doesn't understand pyproject.toml config
+	#     if used in pre-commit...
+	yamlfix .github/workflows/
+	# Run pre-commit on all files...
+	pre-commit run -a
 	# upgrade packaging infra and ciscoconfparse2 dependencies...
 	make dep
 	-git commit --all -m "Version $$VERSION"
