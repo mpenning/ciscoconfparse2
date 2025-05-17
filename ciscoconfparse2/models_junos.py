@@ -387,7 +387,7 @@ class BaseJunosIntfLine(JunosCfgLine):
     @classmethod
     @logger.catch(reraise=True)
     def is_object_for_interface(
-        cls, all_lines: List[str], line: str, index: int = None, re=re
+        cls, all_lines: list[str], line: str, index: int = None, re=re
     ) -> bool:
         """
         :param all_lines: A sequence of all text configuration lines
@@ -890,9 +890,9 @@ class JunosRouteLine(BaseJunosRouteLine):
     def network_object(self):
         try:
             if self.address_family == "ip":
-                return IPv4Obj("{}/{}".format(self.network, self.netmask), strict=False)
+                return IPv4Obj(f"{self.network}/{self.netmask}", strict=False)
             elif self.address_family == "ipv6":
-                return ipaddress.IPv6Network("{}/{}".format(self.network, self.netmask))
+                return ipaddress.IPv6Network(f"{self.network}/{self.netmask}")
         except BaseException:
             return None
 

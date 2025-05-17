@@ -3061,7 +3061,7 @@ class CiscoIOSInterface:
     interface_dict: dict = None
     debug: bool = None
     initialized: bool = False
-    _list: List = []
+    _list: list = []
     _prefix: str = None
     _digit_separator: str = None
     _number: str = None
@@ -4128,7 +4128,7 @@ class CiscoIOSXRInterface:
     interface_dict: dict = None
     debug: bool = None
     initialized: bool = False
-    _list: List = []
+    _list: list = []
     _prefix: str = None
     _digit_separator: str = None
     _number: str = None

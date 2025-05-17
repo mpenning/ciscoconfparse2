@@ -63,7 +63,7 @@ class ArgParser:
     """
 
     input_str: str
-    argv: List
+    argv: list
     parser: ArgumentParser
     subparsers: _SubParsersAction
 
@@ -456,11 +456,11 @@ class CliApplication:
     console: RichConsole
     subparser_name: str
     args: Namespace
-    stdout: List[str]
+    stdout: list[str]
 
     syntax: str
     output_format: str
-    file_list: List[str]
+    file_list: list[str]
     diff_method: str
     all_children: bool
     unique: bool
@@ -785,9 +785,9 @@ class CliApplication:
     def find_ip46_addr_matches(
         self,
         subnets: set[Union[IPv4Obj, IPv6Obj]],
-        potential_matches: List[str],
+        potential_matches: list[str],
         unique_matches: bool,
-    ) -> List:
+    ) -> list:
         """Walk the IPv4 / IPv6 instances in potential_matches, return the list of addrs matching subnet"""
 
         retval = []
@@ -911,9 +911,9 @@ class CliApplication:
     def find_ip46_line_matches(
         self,
         subnets: set[Union[IPv4Obj, IPv6Obj]],
-        potential_matches: List[str],
+        potential_matches: list[str],
         unique_matches: bool,
-    ) -> List:
+    ) -> list:
         """Walk the IPv4 / IPv6 instances in potential_matches, return the list of lines with a word matching subnet"""
         retval = []
 
@@ -1002,9 +1002,9 @@ class CliApplication:
     def find_maceui_addr_matches(
         self,
         mac_regex_strs: set[str],
-        potential_matches: List[str],
+        potential_matches: list[str],
         unique_matches: bool,
-    ) -> List:
+    ) -> list:
         """Walk the MAC / EUI64 instances in potential_matches, return the list of addrs matching mac_regex_strs"""
         retval = []
 
@@ -1024,9 +1024,9 @@ class CliApplication:
     def find_maceui_line_matches(
         self,
         mac_regex_strs: set[str],
-        potential_matches: List[str],
+        potential_matches: list[str],
         unique_matches: bool = False,
-    ) -> List:
+    ) -> list:
         """Walk the MAC / EUI64 instances in potential_matches, return the list of lines matching mac_regex_strs"""
         retval = []
         for line in potential_matches:
@@ -1085,12 +1085,12 @@ class MACEUISearch:
     """Accept one string word, and search it for all mac regex strings.  If there is a match, classify as matching a MAC / EUI64 word or not.  If a mac-address is found, store the resulting MACObj() or EUI64Obj() instance in mac_retval."""
 
     word: str
-    mac_regex_strs: Set[str]
+    mac_regex_strs: set[str]
     mac_retval: Union[None, MACObj, EUI64Obj]
 
     @logger.catch(reraise=True)
     @typechecked
-    def __init__(self, word: str, mac_regex_strs: Union[None, Set[str]] = None):
+    def __init__(self, word: str, mac_regex_strs: Union[None, set[str]] = None):
         self.word = word
         self.mac_regex_strs = mac_regex_strs
         self.mac_retval = None
@@ -1113,7 +1113,7 @@ class MACEUISearch:
 
     @logger.catch(reraise=True)
     @typechecked
-    def search_all_formats(self, mac_regex_strs: Set[str]) -> bool:
+    def search_all_formats(self, mac_regex_strs: set[str]) -> bool:
         """Search self.word for a mac addresses matching any of the strings in the mac_regex_strs set"""
 
         if self.mac_retval is None:

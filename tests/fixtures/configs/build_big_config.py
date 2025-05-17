@@ -5,13 +5,13 @@ if sys.argv[1] == "1":
     print("!")
     print("!")
     for vlan in range(1, 4095):
-        print("vlan {}".format(vlan))
-        print(" name VLAN_{}".format(vlan))
+        print(f"vlan {vlan}")
+        print(f" name VLAN_{vlan}")
         print("!")
     print("!")
     for slot in range(1, 14):
         for port in range(1, 49):
-            print("interface GigabitEthernet {}/{}".format(slot, port))
+            print(f"interface GigabitEthernet {slot}/{port}")
             # nosec will silence warnings about python random cryptographic inadequacy
             mode = choice(["trunk", "access"])  # nosec
             if mode == "trunk":
@@ -19,28 +19,26 @@ if sys.argv[1] == "1":
                 print(" switchport trunk encapsulation dot1q")
                 print(" switchport mode trunk")
                 # nosec will silence warnings about python random cryptographic inadequacy
-                print(
-                    " switchport trunk allowed vlan 1-{}".format(randint(2, 4094))
-                )  # nosec
+                print(f" switchport trunk allowed vlan 1-{randint(2, 4094)}")  # nosec
                 print(" switchport nonnegotiate")
                 print(" spanning-tree guard root")
                 print("!")
             elif mode == "access":
                 print(" switchport")
                 # nosec will silence warnings about python random cryptographic inadequacy
-                print(" switchport access vlan {}".format(randint(2, 4094)))  # nosec
+                print(f" switchport access vlan {randint(2, 4094)}")  # nosec
                 print(" switchport mode access")
                 print(" switchport nonnegotiate")
                 print(" spanning-tree portfast")
                 print("!")
     for vlan in range(1, 4095):
-        print("interface Vlan {}".format(vlan))
+        print(f"interface Vlan {vlan}")
         print(" no shutdown")
         # nosec will silence warnings about python random cryptographic inadequacy
         mode = choice(["global", "vrf"])  # nosec
         if mode == "vrf":
-            print("ip vrf forwarding VRF_{}".format(vlan))
-        print(" description Layer3 SVI: vlan {}".format(vlan))
+            print(f"ip vrf forwarding VRF_{vlan}")
+        print(f" description Layer3 SVI: vlan {vlan}")
         print(
             " ip address {}.{}.{}.0 255.255.255.0".format(
                 randint(1, 224), randint(1, 255), randint(1, 255)  # nosec
