@@ -137,7 +137,7 @@ complex queries about these relationships.
 
 In late 2023, I started a rewrite because [ciscoconfparse][64] is too large
 and has some defaults that I wish it didn't have.  I froze
-[ciscoconfparse][64] PYPI releases at [version 1.9.41][65]; there will be no
+[ciscoconfparse][64] PYPI releases at [version 1.9.52][65]; there will be no
 more [ciscoconfparse][64] PYPI releases.
 
 What do you do?  Upgrade to [ciscoconfparse2][17]!
@@ -175,17 +175,19 @@ Here's why, it:
 - [tomlkit](https://github.com/sdispater/tomlkit)
 - [dnspython](https://github.com/rthalley/dnspython)
 - [`hier_config`](https://github.com/netdevops/hier_config)
+- [`scrypt`](https://github.com/holgern/py-scrypt)
 - [`PyYAML`](https://github.com/yaml/pyyaml)
+- [`macaddress`](https://github.com/mentalisttraceur/python-macaddress)
 - [`pyparsing`](https://github.com/pyparsing/pyparsing)
-- [typeguard](https://github.com/agronholm/typeguard)
+- [`traitlets`](https://github.com/ipython/traitlets)
+- [`rich`](https://github.com/Textualize/rich)
+- [`typeguard`](https://github.com/agronholm/typeguard)
 - [loguru](https://github.com/Delgan/loguru)
 
 
 ## Pre-requisites
 
-[The ciscoconfparse2 python package][3] requires Python versions 3.7+.
-
-Type-hinting (work-in-progress) targets Python3.9+ due to the need for `tuple[str, ...]` hints.
+[The ciscoconfparse2 python package][3] requires Python versions 3.9+.
 
 ## What is the pythonic way of handling script credentials?
 
@@ -290,7 +292,7 @@ The word \"Cisco\" is a registered trademark of [Cisco Systems][27].
   [62]: https://sonarcloud.io/summary/new_code?id=mpenning_ciscoconfparse2
   [63]: https://docs.pytest.org/en/
   [64]: https://github.com/mpenning/ciscoconfparse
-  [65]: https://pypi.org/project/ciscoconfparse/1.9.41/
+  [65]: https://pypi.org/project/ciscoconfparse/1.9.52/
   [66]: https://raw.githubusercontent.com/mpenning/ciscoconfparse2/main/sphinx-doc/_static/ciscoconfparse_logo_bw_01.png
   [67]: http://www.pennington.net/py/ciscoconfparse2/cli.html
   [68]: https://img.shields.io/badge/%F0%9F%A5%9A-Hatch-4051b5.svg
