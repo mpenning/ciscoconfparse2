@@ -10,6 +10,8 @@
 - Summary:
     - Add dependabot runs on a dedicated `dependabot-pr` branch
     - Bump `heir_config` to version 2.3.1
+    - Bump `typeguard` to version 4.4.2
+    - Bump development dependencies
     - Add a `router isis` Diff test
 
 ## Version: 0.8.17
