@@ -68,6 +68,7 @@ dev = [
   "twine>=4.0.2",
   "pytest>=7.4.3",
   "pre-commit==4.2.0",
+  "black>=25.1.0",
   "pyupgrade>=3.19.1",
   "yamlfix==1.17.0",
   "pylama==8.4.1",
