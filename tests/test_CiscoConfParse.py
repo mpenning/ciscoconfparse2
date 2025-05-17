@@ -2410,6 +2410,7 @@ def testValues_Diff_12():
     )
     assert uut.get_diff() == []
 
+
 def testValues_Diff_13():
     """Test that string diffs for isis are correctly rendered"""
 
@@ -2435,7 +2436,6 @@ def testValues_Diff_13():
 
     uut = Diff(old_config=before_config, new_config=after_config)
     assert uut.get_diff() == correct_result
-
 
 
 def testValues_ignore_ws():
