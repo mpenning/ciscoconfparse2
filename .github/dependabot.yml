@@ -9,10 +9,10 @@ updates:
   target-branch: dependabot-pr
   ignore:
     dependency-name: hier-config
-    versions: 
+    versions:
     - "^3.*.*"
     dependency-name: Sphinx
-    versions: 
+    versions:
     - "^7.*.*"
   groups:
     python-packages:
