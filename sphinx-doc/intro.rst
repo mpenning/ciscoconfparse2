@@ -62,7 +62,7 @@ After many years of updates, `ciscoconfparse`_ grew too large. `ciscoconfparse2`
 - Streamlines the API on a simpler user interface.
 - Removes legacy and flawed methods from the original (*this could be a breaking change for old scripts*).
 - Defaults ``ignore_blank_lines=False`` (*this could be a breaking change for old scripts*).
-- Adds the concept of change commits; this is a config-modification safety feature that `ciscoconfparse`_ lacks
+- Adds the concept of change commits; this is a config-modification performance feature that `ciscoconfparse`_ lacks
 - Is better at handling multiple-child-level configurations (such as IOS XR and JunOS)
 - Can search for parents and children using an arbitrary-length list of ancestors
 - Adds an ``auto_commit`` keyword, which defaults ``True``; however, many loading thousands of configuration lines could be slow with ``auto_commit=True``.
