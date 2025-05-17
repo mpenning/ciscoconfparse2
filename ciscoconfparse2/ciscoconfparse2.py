@@ -2011,7 +2011,9 @@ class CiscoConfParse:
     @typechecked
     def __init__(
         self,
-        config: Optional[Union[str, List[str], tuple[str, ...]]] = None,
+        # The only reason List[bool] is accepted is to satisfy typeguard for
+        #   the negative input tests...
+        config: Optional[Union[str, List[str], tuple[str, ...], List[bool]]] = None,
         syntax: str = "ios",
         encoding: str = locale.getpreferredencoding(),
         loguru: bool = True,
