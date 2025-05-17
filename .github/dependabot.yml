@@ -4,9 +4,14 @@ updates:
   directory: "/"
   schedule:
     interval: daily
-    time: "13:00"
+    time: "13:30"
     timezone: UTC
   target-branch: dependabot-pr
+  ignore:
+    dependency-name: hier-config
+    - versions: ["^3.*.*"]
+    dependency-name: Sphinx
+    - versions: ["^7.*.*"]
   groups:
     python-packages:
       patterns:
