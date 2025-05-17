@@ -53,8 +53,8 @@ cicd:
 	#     if used in pre-commit...
 	yamlfix .github/workflows/
 	-git commit --all -m "chore: yamlfix changes"
-	# Run pre-commit on all files...
-	pre-commit run -a
+	# Run pre-commit on all files... ignore failures, which should be auto-fixed
+	-pre-commit run -a
 	-git commit --all -m "chore: pre-commit changes"
 	# upgrade packaging infra and ciscoconfparse2 dependencies...
 	make dep
