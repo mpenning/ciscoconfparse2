@@ -13,6 +13,8 @@
     - Bump `typeguard` to version 4.4.2
     - Bump development dependencies
     - Add a `router isis` Diff test
+    - Update to Sphinx version 8.x
+    - Fix some documentation build bugs
 
 ## Version: 0.8.17
 
