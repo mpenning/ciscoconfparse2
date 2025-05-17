@@ -4,6 +4,15 @@
 - Summary:
     - Insert something here
 
+## Version: 0.8.20
+
+- Released: 2025-05-17
+- Summary:
+    - Add initial context-manager support to `CiscoConfParse()`
+    - Add initial context-manager support to `ConfigList()`
+    - Remove support for the `ConfigList().CiscoConfParse` attribute
+    - Implement `traitlets` on non-container objects instead of typeguard
+
 ## Version: 0.8.19
 
 - Released: 2025-05-17
