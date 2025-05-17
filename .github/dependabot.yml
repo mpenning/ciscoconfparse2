@@ -1,0 +1,13 @@
+version: 2
+updates:
+- package-ecosystem: pip
+  directory: "/"
+  schedule:
+    interval: daily
+    time: 13:00
+    timezone: UTC
+  target-branch: dependabot-pr
+  groups:
+    python-packages:
+      patterns:
+        - "*"
