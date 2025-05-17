@@ -2512,7 +2512,7 @@ class CiscoConfParse:
     @logger.catch(reraise=True)
     def openargs(self) -> dict[str, Union[str, None]]:
         """
-        Fix Py3.5 deprecation of universal newlines
+        Originally used to fix Py3.5 deprecation of universal newlines
 
         .. note::
 
