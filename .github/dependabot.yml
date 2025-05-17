@@ -8,12 +8,12 @@ updates:
     timezone: UTC
   target-branch: dependabot-pr
   ignore:
-    dependency-name: hier-config
-    versions:
-    - "^3.*.*"
-    dependency-name: Sphinx
-    versions:
-    - "^7.*.*"
+    - dependency-name: hier-config
+      versions:
+      - "^3.*.*"
+    - dependency-name: Sphinx
+      versions:
+      - "^7.*.*"
   groups:
     python-packages:
       patterns:
