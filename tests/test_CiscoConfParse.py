@@ -2410,6 +2410,33 @@ def testValues_Diff_12():
     )
     assert uut.get_diff() == []
 
+def testValues_Diff_13():
+    """Test that string diffs for isis are correctly rendered"""
+
+    before_config = """
+    router isis 1
+      net 49.0000.0000.0000.AAAA.00
+      metric-style wide
+      is-type level-2-only
+    !
+    """
+
+    after_config = """
+    router isis 1
+      net 50.0000.0000.0000.AAAA.00
+      is-type level-2-only
+    !
+    """
+
+    correct_result = """router isis 1
+  no net 49.0000.0000.0000.AAAA.00
+  no metric-style wide
+  net 50.0000.0000.0000.AAAA.00""".splitlines()
+
+    uut = Diff(old_config=before_config, new_config=after_config)
+    assert uut.get_diff() == correct_result
+
+
 
 def testValues_ignore_ws():
     config = ["set snmp community read-only     myreadonlystring"]
