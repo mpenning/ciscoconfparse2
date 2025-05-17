@@ -4,6 +4,14 @@
 - Summary:
     - Insert something here
 
+## Version: 0.8.18
+
+- Released: 2025-05-17
+- Summary:
+    - Add dependabot runs on a dedicated `dependabot-pr` branch
+    - Bump `heir_config` to version 2.3.1
+    - Add a `router isis` Diff test
+
 ## Version: 0.8.17
 
 - Released: 2025-05-10
