@@ -10,10 +10,10 @@ updates:
   ignore:
     - dependency-name: hier-config
       versions:
-      - "^3.*.*"
+      - "3.*.*"
     - dependency-name: Sphinx
       versions:
-      - "^7.*.*"
+      - "7.*.*"
   groups:
     python-packages:
       patterns:
