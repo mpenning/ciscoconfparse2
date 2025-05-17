@@ -619,7 +619,7 @@ def convert_junos_to_ios(
 
 
 # ConfigList() breaks unless @attrs.define(slots=True) (which is the default)
-@attrs.define(repr=False)
+@attrs.define(repr=False, slots=False)
 class ConfigList(UserList):
     """A custom list to hold :class:`~ciscoconfparse2.ccp_abc.BaseCfgLine` objects.  Most users will never need to use this class directly."""
 
@@ -752,13 +752,8 @@ class ConfigList(UserList):
         if syntax not in ALL_VALID_SYNTAX:
             raise RequirementFailure()
 
-        ciscoconfparse_kwarg_val = kwargs.get("CiscoConfParse", None)
         ccp_ref_kwarg_val = kwargs.get("ccp_ref", None)
-        if ciscoconfparse_kwarg_val is not None:
-            logger.warning(
-                "The CiscoConfParse keyword will be deprecated soon.  Please use ccp_ref instead",
-            )
-        ccp_value = ccp_ref_kwarg_val or ciscoconfparse_kwarg_val
+        ccp_value = ccp_ref_kwarg_val
 
         self.initlist = initlist
         self.comment_delimiters = comment_delimiters
@@ -778,9 +773,6 @@ class ConfigList(UserList):
         # commit checkpoint value and copy them when a commit
         # operation happens
         self.commit_checkpoint = 0
-        self.CiscoConfParse = (
-            ccp_value  # FIXME - CiscoConfParse attribute should go away soon
-        )
 
         # Removed this portion of __init__() in 1.7.16...
         if getattr(initlist, "__iter__", False) is not False:
@@ -924,17 +916,13 @@ class ConfigList(UserList):
     @logger.catch(reraise=True)
     def __exit__(self, *args, **kwargs):
         # FIXME: *with* statements dont work
-        self.data[0].confobj.CiscoConfParse.commit()
+        self.data[0].confobj.ccp_ref.commit()
 
     # This method is on ConfigList()
     @logger.catch(reraise=True)
     def __getattribute__(self, arg) -> Any:
         """Call arg on ConfigList() object, and if that fails, call arg from the ccp_ref attribute"""
         # Try a method call on ASAConfigList()
-
-        # Rewrite self.CiscoConfParse to self.ccp_ref
-        if arg == "CiscoConfParse":
-            arg = "ccp_ref"
 
         try:
             return object.__getattribute__(self, arg)
@@ -2222,6 +2210,16 @@ class CiscoConfParse:
             error = f"Cannot parse config=`{config_lines}`"
             logger.critical(error)
             raise ValueError(error)
+
+    # This method is on CiscoConfParse()
+    @logger.catch(reraise=True)
+    def __enter__(self) -> BaseCfgLine:
+        return self
+
+    # This method is on CiscoConfParse()
+    @logger.catch(reraise=True)
+    def __exit__(self, *args, **kwargs):
+        pass
 
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
