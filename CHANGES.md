@@ -4,6 +4,12 @@
 - Summary:
     - Insert something here
 
+## Version: 0.8.19
+
+- Released: 2025-05-17
+- Summary:
+    - Make dev dependencies explicit
+
 ## Version: 0.8.18
 
 - Released: 2025-05-17
