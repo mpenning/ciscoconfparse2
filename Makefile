@@ -49,6 +49,7 @@ install_build:
 cicd:
 	@echo "$(COL_CYAN)>> Use CI/CD to publish ciscoconfparse2 pypi artifacts$(COL_END)"
 	make clean
+	-git commit --all -m "chore: commit changes I forgot before running 'make cicd'"
 	# yamlfix doesn't understand pyproject.toml config
 	#     if used in pre-commit...
 	yamlfix .github/workflows/
