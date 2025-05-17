@@ -34,12 +34,13 @@ import sys
 import time
 from collections import UserList
 from collections.abc import Sequence
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Optional, Union
 
 import attrs
 import hier_config
 import scrypt
 import yaml  # import for pyyaml
+from traitlets import HasTraits, Instance, Unicode, Bool, List, CInt
 from loguru import logger
 from passlib.hash import cisco_type7, md5_crypt
 from pyparsing import Combine, OneOrMore, White, Word, nested_expr, printables
@@ -293,22 +294,20 @@ def debug_pyparsing_action(tokens):
     return tokens
 
 
-@attrs.define(repr=False, slots=False)
-class BraceParse:
+class BraceParse(HasTraits):
     """
     Parse brace-delimited configurations.
     """
 
-    config_txt: str = None
-    comment_delimiters: list = None
-    stop_width: int = 4
-    config_objs: list = None
-    semicolon_end: bool = False
-    current_linenum: int = False
-    debug: bool = False
+    config_txt = Unicode()
+    comment_delimiters = List()
+    stop_width = CInt(default_value=4)
+    config_objs = List()
+    semicolon_end = Bool()
+    current_linenum = CInt()
+    debug = Bool()
 
     @logger.catch(reraise=True)
-    @typechecked
     def __init__(
         self,
         config_txt: Optional[str] = None,
@@ -328,6 +327,7 @@ class BraceParse:
         :param debug: Whether debugging should be enabled
         :type semicolon_end: bool
         """
+        super().__init__()
         if not isinstance(config_txt, str):
             error = f"BraceParse() must be called with a JunOS-style text configuration; however, {type(config_txt)} was received"
             logger.critical(error)
@@ -618,7 +618,7 @@ def convert_junos_to_ios(
     return [ii.text for ii in braceobj.get_junoscfgline_list()]
 
 
-# ConfigList() breaks unless @attrs.define(slots=True) (which is the default)
+# ConfigList() used to break with slots=False...
 @attrs.define(repr=False, slots=False)
 class ConfigList(UserList):
     """A custom list to hold :class:`~ciscoconfparse2.ccp_abc.BaseCfgLine` objects.  Most users will never need to use this class directly."""
@@ -3728,13 +3728,12 @@ class Branch(UserList):
         return f"""<Branch({branch_contents})>"""
 
 
-@attrs.define(repr=False, slots=False)
-class Diff:
+class Diff(HasTraits):
     """
     A class to implement diff operations with hier_config
     """
 
-    host: str = None
+    host = Instance(hier_config.Host)
 
     @logger.catch(reraise=True)
     def __init__(
@@ -3753,6 +3752,7 @@ class Diff:
         :param syntax: The configuration type.  Default: 'ios'.
         :param syntax: ciscoconfparse2.Diff
         """
+        super().__init__()
         hostname = None
 
         ######################################################################
@@ -3875,11 +3875,16 @@ class Diff:
 #########################################################################3
 
 
-class DiffObject:
+class DiffObject(HasTraits):
     """This object should be used at every level of hierarchy"""
+
+    level = CInt()
+    nonparents = List()
+    parents = List()
 
     @logger.catch(reraise=True)
     def __init__(self, level, nonparents, parents):
+        super().__init__()
         self.level = level
         self.nonparents = nonparents
         self.parents = parents
@@ -3889,7 +3894,7 @@ class DiffObject:
         return f"<DiffObject level: {self.level}>"
 
 
-class CiscoPassword:
+class CiscoPassword(HasTraits):
     """Encrypt all cisco password types and decrypt cisco type 7 passwords.
 
     Cisco Encryption type 7, 8, and 9 code inspired by this MIT-licensed repo:
@@ -3900,9 +3905,11 @@ class CiscoPassword:
     std_b64chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
     cisco_b64chars = "./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
     b64table = str.maketrans(std_b64chars, cisco_b64chars)
+    ep = Unicode()
 
     @logger.catch(reraise=True)
     def __init__(self, ep=""):
+        super().__init__()
         self.ep = ep
 
     @logger.catch(reraise=True)

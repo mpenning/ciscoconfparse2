@@ -13,6 +13,7 @@ dependencies = [
   "scrypt==0.8.27",
   "dnspython>=2.6.1",
   "macaddress==2.0.2",
+  "traitlets==5.14.3",
   "loguru>=0.7.2",
   "tomlkit==0.13.2",
   "hier_config==2.3.1",
