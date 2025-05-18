@@ -62,9 +62,10 @@ from hypothesis import given, strategies
 
 sys.path.insert(0, "..")
 
+
 def hypothesis_library_missing():
     """Return True if hypothesis is missing"""
-    return importlib.util.find_spec('hypothesis') is None
+    return importlib.util.find_spec("hypothesis") is None
 
 
 def testValues_pickle_01():
@@ -196,7 +197,9 @@ def testL4Object_asa_lt02():
     assert pp.port_list == sorted(range(1, 7))
 
 
-@pytest.mark.skipif(hypothesis_library_missing(), reason="hypothesis library is missing")
+@pytest.mark.skipif(
+    hypothesis_library_missing(), reason="hypothesis library is missing"
+)
 @given(
     strategies.ip_addresses(),  # random_addr
     strategies.integers(min_value=1, max_value=32),  # random_v4_mask
@@ -207,11 +210,11 @@ def test_IPv4Obj_IPv6Obj_hypothesis(random_addr, random_v4_mask, random_v6_mask)
 
     try:
         import hypothesis
+
         has_hypothesis = True
     except ImportError:
-        # Bypass the test if 
+        # Bypass the test if
         return True
-
 
     # random_addr could be either v4 or v6
     try:
