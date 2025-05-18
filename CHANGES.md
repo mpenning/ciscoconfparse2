@@ -4,6 +4,12 @@
 - Summary:
     - Insert something here
 
+## Version: 0.8.21
+
+- Released: 2025-05-17
+- Summary:
+    - Add hypothesis `IPv4Obj()` and `IPv6Obj()` tests
+
 ## Version: 0.8.20
 
 - Released: 2025-05-17
