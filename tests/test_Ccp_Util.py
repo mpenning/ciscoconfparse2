@@ -663,6 +663,9 @@ def testIPv6Obj_recursive():
     assert str(obj.ip_object) == "fe80:a:b:c:d:e:0:1"
     assert obj.prefixlen == 64
 
+def testIPv6Obj_v4_embedded_in_v6_cidr():
+    """Ensure that IP4 embeddedd in IPv6 as CIDR parses"""
+    assert IPv6Obj("::ffff:0.0.0.0/1").as_cidr_net == "::/1"
 
 def testIPv6Obj_neq_01():
     """Simple in-equality test fail (ref - Github issue #180)"""
