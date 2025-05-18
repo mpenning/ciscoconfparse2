@@ -58,12 +58,17 @@ jobs:
           python -m pip install --upgrade pip
           pip install -U uv
           true  ###############################################################
+          true  # install the package with pip, uv pip install scrypt==0.8.27
+          true  #     seems to fail on mac
+          true  ###############################################################
+          pip install .
+          true  ###############################################################
           true  #     Install all dependencies, including dev deps
           true  #         then install ourself
           true  #
           true  #     Use --system to install to the test runner system python
           true  ###############################################################
-          uv pip install --system -r pyproject.toml --extra dev .
+          uv pip install --system -r pyproject.toml --extra dev
           true  ###############################################################
           true  #     Install ourself
           true  ###############################################################
