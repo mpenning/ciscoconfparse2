@@ -9,6 +9,7 @@
 - Released: 2025-05-17
 - Summary:
     - Add hypothesis `IPv4Obj()` and `IPv6Obj()` tests
+    - Remove unused sshd mock
 
 ## Version: 0.8.20
 

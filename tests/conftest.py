@@ -1575,22 +1575,3 @@ def parse_sample_09_ios_factory(request):
     parse = CiscoConfParse("fixtures/configs/sample_09.ios", syntax="ios", factory=True)
 
     yield parse
-
-
-@pytest.mark.skipif(sys.version_info[0] >= 3, reason="No Python3 MockSSH support")
-@pytest.mark.skipif(
-    "windows" in platform.system().lower(), reason="No Windows MockSSH support"
-)
-@pytest.fixture(scope="session")
-def cisco_sshd_mocked(request):
-    """Mock Cisco IOS SSH"""
-    from fixtures.devices.mock_cisco import start_cisco_mock, stop_cisco_mock
-
-    try:
-        ## Start the SSH Server
-        start_cisco_mock()
-        yield True
-    except:
-        yield False
-        stop_cisco_mock()
-    stop_cisco_mock()
