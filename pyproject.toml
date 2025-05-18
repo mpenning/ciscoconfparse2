@@ -24,6 +24,8 @@ dependencies = [
   "rich>=13.6.0",
   # passlib uses crypt
   "passlib==1.7.4",
+  # Hypothesis for hard-core ip_address tests
+  "hypothesis==6.131.18",
 
   # Using crypt-r as a replacement for crypt in Python3.13+
   # NOTE: crypt-r is not available for python 3.10 and lower so keeping
@@ -71,7 +73,6 @@ dev = [
   "pytest>=8.3.5",
   "pre-commit==4.2.0",
   "black==25.1.0",
-  "hypothesis==6.131.18",
   "pyupgrade==3.19.1",
   "yamlfix==1.17.0",
   "pylama==8.4.1",

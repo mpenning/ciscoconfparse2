@@ -58,7 +58,8 @@ from ciscoconfparse2.ccp_util import collapse_addresses as ccp_collapse_addresse
 from ciscoconfparse2.ccp_util import ip_factory
 from loguru import logger
 from macaddress import EUI48, EUI64, MAC, OUI
-from hypothesis import given, strategies
+
+from hypothesis import given, strategies, reproduce_failure
 
 sys.path.insert(0, "..")
 
@@ -207,14 +208,6 @@ def testL4Object_asa_lt02():
 )
 def test_IPv4Obj_IPv6Obj_hypothesis(random_addr, random_v4_mask, random_v6_mask):
     """Use hypothesis to test random IPv4 addresses."""
-
-    try:
-        import hypothesis
-
-        has_hypothesis = True
-    except ImportError:
-        # Bypass the test if
-        return True
 
     # random_addr could be either v4 or v6
     try:
