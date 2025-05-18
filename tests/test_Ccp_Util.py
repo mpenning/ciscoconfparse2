@@ -192,9 +192,9 @@ def testL4Object_asa_lt02():
 
 
 @given(
-    strategies.ip_addresses(), # random_addr
+    strategies.ip_addresses(),  # random_addr
     strategies.integers(min_value=1, max_value=32),  # random_v4_mask
-    strategies.integers(min_value=1, max_value=128), # random_v6_mask
+    strategies.integers(min_value=1, max_value=128),  # random_v6_mask
 )
 def test_IPv4Obj_IPv6Obj_hypothesis(random_addr, random_v4_mask, random_v6_mask):
     """Use hypothesis to test random IPv4 addresses."""
