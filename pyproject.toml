@@ -74,7 +74,7 @@ dev = [
   "pyupgrade==3.19.1",
   "yamlfix==1.17.0",
   "pylama==8.4.1",
-  "pylint>=3.3.7",
+  "pylint==3.3.7",
   "coverage>=7.3.2",
   "pytest-cov>=4.1.0",
   "pyroma==4.2",
