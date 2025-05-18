@@ -223,7 +223,7 @@ def test_IPv4Obj_IPv6Obj_hypothesis(random_addr, random_v4_mask, random_v6_mask)
         assert uut4.as_cidr_addr == f"{random_addr}/{random_v4_mask}"
         _ = uut4.as_cidr_net
         _ = uut4.network
-    except ValueError:
+    except (ValueError, ipaddress.AddressValueError):
         uut6 = IPv6Obj(f"{random_addr}/{random_v6_mask}")
         _ = uut6.as_binary_tuple
         assert uut6.as_cidr_addr == f"{random_addr}/{random_v6_mask}"
