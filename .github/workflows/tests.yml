@@ -51,6 +51,9 @@ jobs:
       - name: 'Install dependencies on macos and fix scrypt install with CFLAGS / LDFLAGS'
         if: '${{ matrix.os == ''macos-latest'' }}'
         run: |
+          true  # Fix macos scrypt imports manually because they throw errors otherwise
+          export CFLAGS="-I$(brew --prefix openssl)/include"
+          export LDFLAGS="-L$(brew --prefix openssl)/lib"
           true  ###############################################################
           true  # install pip, and uv
           true  #     asterisk globbing is fragile
@@ -58,24 +61,12 @@ jobs:
           python -m pip install --upgrade pip
           pip install -U uv
           true  ###############################################################
-          true  # install the package with pip, uv pip install scrypt==0.8.27
-          true  #     seems to fail on mac
-          true  ###############################################################
-          pip install .
-          true  ###############################################################
           true  #     Install all dependencies, including dev deps
           true  #         then install ourself
           true  #
           true  #     Use --system to install to the test runner system python
           true  ###############################################################
-          uv pip install --system -r pyproject.toml --extra dev
-          true  ###############################################################
-          true  #     Install ourself
-          true  ###############################################################
-          true  # Fix macos scrypt imports manually because they throw errors otherwise
-          export CFLAGS="-I$(brew --prefix openssl)/include"
-          export LDFLAGS="-L$(brew --prefix openssl)/lib"
-          pip install -U .
+          uv pip install --system -r pyproject.toml --extra dev .
       - name: 'Install dependencies on Ubuntu Linux / Windows'
         if: '${{ matrix.os != ''macos-latest'' }}'
         run: |
