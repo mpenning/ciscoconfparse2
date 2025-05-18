@@ -57,6 +57,7 @@ from ciscoconfparse2.ccp_util import collapse_addresses as ccp_collapse_addresse
 from ciscoconfparse2.ccp_util import ip_factory
 from loguru import logger
 from macaddress import EUI48, EUI64, MAC, OUI
+from hypothesis import given, strategies
 
 sys.path.insert(0, "..")
 
@@ -188,6 +189,29 @@ def testL4Object_asa_lt02():
     pp = L4Object(protocol="tcp", port_spec="lt 7", syntax="asa")
     assert pp.protocol == "tcp"
     assert pp.port_list == sorted(range(1, 7))
+
+
+@given(
+    strategies.ip_addresses(), # random_addr
+    strategies.integers(min_value=1, max_value=32),  # random_v4_mask
+    strategies.integers(min_value=1, max_value=128), # random_v6_mask
+)
+def test_IPv4Obj_IPv6Obj_hypothesis(random_addr, random_v4_mask, random_v6_mask):
+    """Use hypothesis to test random IPv4 addresses."""
+
+    # random_addr could be either v4 or v6
+    try:
+        uut4 = IPv4Obj(f"{random_addr}/{random_v4_mask}")
+        _ = uut4.as_binary_tuple
+        assert uut4.as_cidr_addr == f"{random_addr}/{random_v4_mask}"
+        _ = uut4.as_cidr_net
+        _ = uut4.network
+    except ValueError:
+        uut6 = IPv6Obj(f"{random_addr}/{random_v6_mask}")
+        _ = uut6.as_binary_tuple
+        assert uut6.as_cidr_addr == f"{random_addr}/{random_v6_mask}"
+        _ = uut6.as_cidr_net
+        _ = uut6.network
 
 
 def testIPv4Obj_contains_01():

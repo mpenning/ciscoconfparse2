@@ -71,6 +71,7 @@ dev = [
   "pytest>=8.3.5",
   "pre-commit==4.2.0",
   "black==25.1.0",
+  "hypothesis==6.131.18",
   "pyupgrade==3.19.1",
   "yamlfix==1.17.0",
   "pylama==8.4.1",
