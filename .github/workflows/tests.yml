@@ -69,16 +69,16 @@ jobs:
         if: '${{ matrix.os != ''macos-latest'' }}'
         run: |
           true  ###############################################################
-          true  # install pip, pytest, and python packages
-          true  #     asterisk globbing is fragile, so don't use asterisk path
-          true  #     globs.  Just call out individual files, below.
+          true  # install pip, and uv
+          true  #     asterisk globbing is fragile
           true  ###############################################################
           python -m pip install --upgrade pip
-          pip install -U pytest
+          pip install -U uv
           true  ###############################################################
-          true  #     Install ourself
+          true  #     Install all dependencies, including dev deps
+          true  #         then install ourself
           true  ###############################################################
-          pip install -U .
+          uv pip install -r pyproject.toml --extra dev .
       - name: 'Run pytest'
         run: |-
           true  ###############################################################
