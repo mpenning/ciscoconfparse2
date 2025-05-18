@@ -77,8 +77,10 @@ jobs:
           true  ###############################################################
           true  #     Install all dependencies, including dev deps
           true  #         then install ourself
+          true  #
+          true  #     Use --system to install to the test runner system python
           true  ###############################################################
-          uv pip install -r pyproject.toml --extra dev .
+          uv pip install --system -r pyproject.toml --extra dev .
       - name: 'Run pytest'
         run: |-
           true  ###############################################################
