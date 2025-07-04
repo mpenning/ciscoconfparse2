@@ -4,6 +4,12 @@
 - Summary:
     - Insert something here
 
+## Version: 0.8.22
+
+- Released: 2025-07-04
+- Summary:
+    - attempting to retire use of passlib==1.7.4, which is now unmaintained.  [`libpass`][2] will be used instead...
+
 ## Version: 0.8.21
 
 - Released: 2025-07-04
@@ -865,3 +871,4 @@
     - Start new project as `ciscoconfparse2` from the original `ciscoconfparse` version 1.9.51
 
 [1]: http://www.pennington.net/py/ciscoconfparse2/
+[2]: https://github.com/notypecheck/passlib
