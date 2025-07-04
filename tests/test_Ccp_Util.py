@@ -658,7 +658,7 @@ def testIPv6Obj_recursive():
 
 
 def testIPv6Obj_v4_embedded_in_v6_cidr():
-    """Ensure that IP4 embeddedd in IPv6 as CIDR parses"""
+    """Ensure that IPv4 mapped in IPv6 as CIDR parses"""
     assert IPv6Obj("::ffff:0.0.0.0/1").as_cidr_net == "::/1"
 
 
