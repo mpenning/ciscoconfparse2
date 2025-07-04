@@ -6,10 +6,13 @@
 
 ## Version: 0.8.21
 
-- Released: 2025-05-17
+- Released: 2025-07-04
 - Summary:
     - Add hypothesis `IPv4Obj()` and `IPv6Obj()` tests
     - Remove unused sshd mock
+    - Remove tomlkit and tox as dev dependencies
+    - Update typeguard to the latest version
+    - Remove `requirements/` directory
 
 ## Version: 0.8.20
 

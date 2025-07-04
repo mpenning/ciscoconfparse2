@@ -172,7 +172,6 @@ Here's why, it:
 - [Python 3](https://python.org/)
 - [attrs](https://github.com/python-attrs/attrs)
 - [passlib](https://github.com/glic3rinu/passlib)
-- [tomlkit](https://github.com/sdispater/tomlkit)
 - [dnspython](https://github.com/rthalley/dnspython)
 - [`hier_config`](https://github.com/netdevops/hier_config)
 - [`scrypt`](https://github.com/holgern/py-scrypt)
