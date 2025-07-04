@@ -87,7 +87,7 @@ dev = [
 doc = [
   "Sphinx==8.2.3",
   "sphinx-rtd-theme>=2.0.0",
-  "numpydoc==1.5.0",
+  "numpydoc==1.9.0",
   "pydocstyle==6.3.0",
 ]
 
