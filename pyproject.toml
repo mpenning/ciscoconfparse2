@@ -15,11 +15,10 @@ dependencies = [
   "macaddress==2.0.2",
   "traitlets==5.14.3",
   "loguru>=0.7.2",
-  "tomlkit==0.13.2",
   "hier_config==2.3.1",
   "pyparsing==3.2.3",
   # NOTE changing typeguard versions may require code / test changes
-  "typeguard==4.4.2",
+  "typeguard==4.4.4",
   "PyYAML>=6.0.2",
   "rich>=13.6.0",
   # passlib uses crypt
@@ -84,7 +83,6 @@ dev = [
   "fabric==3.2.2",
   "commitizen>=2.40.0",
   "python-lsp-server>=1.12.2",
-  "tox==4.11.3",
 ]
 doc = [
   "Sphinx==8.2.3",
