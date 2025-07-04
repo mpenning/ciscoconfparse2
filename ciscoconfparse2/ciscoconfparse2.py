@@ -42,11 +42,14 @@ import scrypt
 import yaml  # import for pyyaml
 from traitlets import HasTraits, Instance, Unicode, Bool, List, CInt
 from loguru import logger
-from passlib.hash import cisco_type7, md5_crypt
 from pyparsing import Combine, OneOrMore, White, Word, nested_expr, printables
 from pyparsing import ParseException
 from pyparsing import traceParseAction
 from typeguard import typechecked
+
+# NOTE we are using libpass instead of passlib, but libpass imports as passlib
+#     ref: https://github.com/notypecheck/passlib
+from passlib.hash import cisco_type7, md5_crypt
 
 from ciscoconfparse2.__about__ import __version__
 from ciscoconfparse2.ccp_abc import BaseCfgLine
