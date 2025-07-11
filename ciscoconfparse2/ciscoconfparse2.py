@@ -38,7 +38,7 @@ from typing import Any, Callable, Optional, Union
 
 import attrs
 import hier_config
-import scrypt
+from cryptography.hazmat.primitives.kdf.scrypt import Scrypt
 import yaml  # import for pyyaml
 from traitlets import HasTraits, Instance, Unicode, Bool, List, CInt
 from loguru import logger
@@ -4117,8 +4117,18 @@ class CiscoPassword(HasTraits):
         for _ in range(14):
             salt_chars.append(random.choice(self.cisco_b64chars))
         salt = "".join(salt_chars)
-        # Create the hash
-        _hash = scrypt.scrypt.hash(pwd.encode(), salt.encode(), 16384, 1, 1, 32)
+
+        # Create the hash using cryptography's Scrypt implementation
+        # Parameters match Cisco's type 9 implementation: N=16384, r=1, p=1, key_length=32
+        kdf = Scrypt(
+            salt=salt.encode(),
+            length=32,
+            n=16384,
+            r=1,
+            p=1
+        )
+        _hash = kdf.derive(pwd.encode())
+
         # Convert the hash from Standard Base64 to Cisco Base64
         hash_c64 = base64.b64encode(_hash).decode().translate(self.b64table)[:-1]
         # Print the hash in the Cisco IOS CLI format
