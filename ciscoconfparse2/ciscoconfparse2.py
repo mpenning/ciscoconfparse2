@@ -4083,7 +4083,7 @@ class CiscoPassword(HasTraits):
         self.pwd_check(pwd)
         salt_chars = []
         for _ in range(14):
-            salt_chars.append(random.choice(self.cisco_b64chars))
+            salt_chars.append(random.SystemRandom().choice(self.cisco_b64chars))
         salt = "".join(salt_chars)
         # Create the hash
         _hash = hashlib.pbkdf2_hmac("sha256", pwd.encode(), salt.encode(), 100000, 32)

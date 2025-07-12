@@ -4,6 +4,12 @@
 - Summary:
     - Insert something here
 
+## Version: 0.8.28
+
+- Released: 2025-07-12
+- Summary:
+    - Use a better random number generator to create the salt for Cisco Type 8 passwords (Type 9 scrypt passwords already use a better random number generator)
+
 ## Version: 0.8.27
 
 - Released: 2025-07-12
