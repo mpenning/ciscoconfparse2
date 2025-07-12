@@ -36,12 +36,8 @@ from collections import UserList
 from collections.abc import Sequence
 from typing import Any, Callable, Optional, Union
 
-# FIXME
-from cryptography.hazmat.primitives.kdf.scrypt import Scrypt
-
 import attrs
 import hier_config
-import scrypt
 import yaml  # import for pyyaml
 from traitlets import HasTraits, Instance, Unicode, Bool, List, CInt
 from loguru import logger
