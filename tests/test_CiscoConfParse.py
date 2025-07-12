@@ -23,11 +23,7 @@ import pickle
 from copy import deepcopy
 from itertools import repeat
 from operator import attrgetter
-
-try:
-    from unittest.mock import patch
-except ImportError:
-    from unittest.mock import patch
+from unittest.mock import patch
 
 import os
 import re
