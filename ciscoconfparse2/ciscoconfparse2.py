@@ -4120,7 +4120,9 @@ class CiscoPassword(HasTraits):
             salt_chars.append(random.SystemRandom().choice(self.cisco_b64chars))
         salt = "".join(salt_chars)
         # Create the hash
-        _hash = hashlib.scrypt(pwd.encode(), salt=salt.encode(), n=2**14, r=1, p=1, dklen=32)
+        _hash = hashlib.scrypt(
+            pwd.encode(), salt=salt.encode(), n=2**14, r=1, p=1, dklen=32
+        )
         # Convert the hash from Standard Base64 to Cisco Base64
         hash_c64 = base64.b64encode(_hash).decode().translate(self.b64table)[:-1]
         # Print the hash in the Cisco IOS CLI format
