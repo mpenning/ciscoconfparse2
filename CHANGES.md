@@ -4,6 +4,12 @@
 - Summary:
     - Insert something here
 
+## Version: 0.8.24
+
+- Released: 2025-07-12
+- Summary:
+    - Remove scrypt and cryptography imports
+
 ## Version: 0.8.23
 
 - Released: 2025-07-12
