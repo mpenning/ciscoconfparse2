@@ -48,26 +48,7 @@ jobs:
           python-version: '${{ matrix.python }}'
       - name: 'Display Python version'
         run: 'python -c ''import sys; print(sys.version)'''
-      - name: 'Install dependencies on macos and fix scrypt install with CFLAGS / LDFLAGS'
-        if: '${{ matrix.os == ''macos-latest'' }}'
-        run: |
-          true  # Fix macos scrypt imports manually because they throw errors otherwise
-          export CFLAGS="-I$(brew --prefix openssl)/include"
-          export LDFLAGS="-L$(brew --prefix openssl)/lib"
-          true  ###############################################################
-          true  # install pip, and uv
-          true  #     asterisk globbing is fragile
-          true  ###############################################################
-          python -m pip install --upgrade pip
-          pip install -U uv
-          true  ###############################################################
-          true  #     Install all dependencies, including dev deps
-          true  #         then install ourself
-          true  #
-          true  #     Use --system to install to the test runner system python
-          true  ###############################################################
-          uv pip install --system -r pyproject.toml --extra dev .
-      - name: 'Install dependencies on Ubuntu Linux / Windows'
+      - name: 'Install dependencies on Ubuntu Linux / Windows / MacOS'
         if: '${{ matrix.os != ''macos-latest'' }}'
         run: |
           true  ###############################################################
