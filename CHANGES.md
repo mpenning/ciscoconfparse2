@@ -4,6 +4,12 @@
 - Summary:
     - Insert something here
 
+## Version: 0.8.26
+
+- Released: 2025-07-12
+- Summary:
+    - Silence SonarQube warnings about scrypt() r being too low.  It seems that Cisco IOS requires r=1
+
 ## Version: 0.8.25
 
 - Released: 2025-07-12

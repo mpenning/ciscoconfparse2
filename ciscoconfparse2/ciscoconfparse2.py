@@ -4116,7 +4116,7 @@ class CiscoPassword(HasTraits):
             salt_chars.append(random.SystemRandom().choice(self.cisco_b64chars))
         salt = "".join(salt_chars)
         # Create the hash
-        _hash = hashlib.scrypt(
+        _hash = hashlib.scrypt( # NOSONAR
             pwd.encode(), salt=salt.encode(), n=2**14, r=1, p=1, dklen=32
         )
         # Convert the hash from Standard Base64 to Cisco Base64
