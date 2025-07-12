@@ -4,6 +4,12 @@
 - Summary:
     - Insert something here
 
+## Version: 0.8.23
+
+- Released: 2025-07-12
+- Summary:
+    - Replace https://pypi.org/project/scrypt/ with `hashlib.scrypt()`
+
 ## Version: 0.8.22
 
 - Released: 2025-07-04
