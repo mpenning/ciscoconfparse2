@@ -4,6 +4,12 @@
 - Summary:
     - Insert something here
 
+## Version: 0.8.25
+
+- Released: 2025-07-12
+- Summary:
+    - Add MacOS back into the test matrix
+
 ## Version: 0.8.24
 
 - Released: 2025-07-12
