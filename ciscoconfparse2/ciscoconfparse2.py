@@ -3912,10 +3912,14 @@ class CiscoPassword(HasTraits):
     @logger.catch(reraise=True)
     def __init__(self, ep=""):
         super().__init__()
+        if ep != "":
+            logger.warning(
+                "In the future, calling CiscoPassword() with a string will be deprecated."
+            )
         self.ep = ep
 
     @logger.catch(reraise=True)
-    def pwd_check(self, pwd):
+    def pwd_check(self, pwd: str):
         """
         Checks cleartext password for invalid characters
 
@@ -3933,7 +3937,7 @@ class CiscoPassword(HasTraits):
             )
 
     @logger.catch(reraise=True)
-    def encrypt_type_7(self, pwd):
+    def encrypt_type_7(self, pwd: str):
         """
         Hashes cleartext password to Cisco type 7
 
@@ -3954,7 +3958,7 @@ class CiscoPassword(HasTraits):
         return cisco_type7.hash(pwd)
 
     @logger.catch(reraise=True)
-    def decrypt_type_7(self, ep=""):
+    def decrypt_type_7(self, ep: str = ""):
         """Cisco Type 7 password decryption.  Converted from perl code that was
         written by jbash [~at~] cisco.com; enhancements suggested by
         rucjain [~at~] cisco.com
@@ -4045,7 +4049,7 @@ class CiscoPassword(HasTraits):
         return dp
 
     @logger.catch(reraise=True)
-    def decrypt_type_5(self, pwd):
+    def decrypt_type_5(self, pwd: str):
         """
         Un-implemented function added for consistency
         """
@@ -4062,14 +4066,14 @@ class CiscoPassword(HasTraits):
         self.pwd_check(pwd)
         return md5_crypt.using(salt_size=4).hash(pwd)
 
-    def decrypt_type_8(self, pwd):
+    def decrypt_type_8(self, pwd: str):
         """
         Un-implemented function added for consistency
         """
         raise NotImplementedError()
 
     @logger.catch(reraise=True)
-    def encrypt_type_8(self, pwd):
+    def encrypt_type_8(self, pwd: str):
         """
         Hashes cleartext password to Cisco type 8
 
@@ -4094,7 +4098,7 @@ class CiscoPassword(HasTraits):
 
         return hash_string
 
-    def decrypt_type_9(self, pwd):
+    def decrypt_type_9(self, pwd: str):
         """
         Un-implemented function added for consistency
         """
@@ -4117,7 +4121,15 @@ class CiscoPassword(HasTraits):
         salt = "".join(salt_chars)
         # Create the hash
         _hash = hashlib.scrypt(  # NOSONAR
-            pwd.encode(), salt=salt.encode(), n=2**14, r=1, p=1, dklen=32  # NOSONAR
+            # The scrypt() r parameter is typically recommended to be greater than 1,
+            # but I can't make r>1 work under Cisco IOS.  Silence the SonarQube
+            # alert for r == 1.
+            pwd.encode(),
+            salt=salt.encode(),
+            n=2**14,
+            r=1,
+            p=1,
+            dklen=32,  # NOSONAR
         )
         # Convert the hash from Standard Base64 to Cisco Base64
         hash_c64 = base64.b64encode(_hash).decode().translate(self.b64table)[:-1]
