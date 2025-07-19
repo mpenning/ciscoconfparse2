@@ -20,7 +20,6 @@ If you need to contact the author, you can do so by emailing:
 mike [~at~] pennington [.dot.] net
 """
 
-import argparse
 import base64
 import copy
 import hashlib
@@ -30,7 +29,6 @@ import os
 import pathlib
 import random
 import re
-import sys
 import time
 from collections import UserList
 from collections.abc import Sequence
