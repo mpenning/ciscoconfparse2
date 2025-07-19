@@ -171,10 +171,9 @@ Here's why, it:
 
 - [Python 3](https://python.org/)
 - [attrs](https://github.com/python-attrs/attrs)
-- [passlib](https://github.com/glic3rinu/passlib)
+- [libpass](https://github.com/notypecheck/passlib)
 - [dnspython](https://github.com/rthalley/dnspython)
 - [`hier_config`](https://github.com/netdevops/hier_config)
-- [`scrypt`](https://github.com/holgern/py-scrypt)
 - [`PyYAML`](https://github.com/yaml/pyyaml)
 - [`macaddress`](https://github.com/mentalisttraceur/python-macaddress)
 - [`pyparsing`](https://github.com/pyparsing/pyparsing)
