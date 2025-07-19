@@ -12,11 +12,11 @@ This part of the documentation covers all the significant Python classes and met
 :caption: 'Contents:'
 :maxdepth: 4
 
-api_CiscoConfParse.rst
-api_ConfigList.rst
-api_Ccp_Abc.rst
-api_Models_Cisco.rst
-api_Models_Nxos.rst
-api_ccp_util.rst
-api_CiscoPassword.rst
+api_CiscoConfParse.md
+api_ConfigList.md
+api_Ccp_Abc.md
+api_Models_Cisco.md
+api_Models_Nxos.md
+api_ccp_util.md
+api_CiscoPassword.md
 ```

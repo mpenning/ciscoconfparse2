@@ -9,14 +9,6 @@ installation.md
 cli.md
 examples.md
 tutorial.md
-legacy_syntax.md
-syntax_factory_intro.md
-syntax.md
-syntax_ios.md
-syntax_nxos.md
-syntax_iosxr.md
-syntax_asa.md
-factory.md
 development.md
 api.md
 ```
