@@ -151,7 +151,7 @@ Here's why, it:
 - Defaults `ignore_blank_lines=False` (this could be a breaking change for old scripts).
 - Is better at handling multiple-child-level configurations (such as IOS XR and JunOS)
 - Can search for parents and children using an *arbitrary list of ancestors*
-- Adds the concept of change commits; this is a config-modification safety feature that [ciscoconfparse][64] lacks
+- Adds the concept of change commits; this is a config-modification performance feature that [ciscoconfparse][64] lacks
 - Adds an `auto_commit` keyword, which defaults True
 - Documents much more of the API
 - Intentionally requires a different import statement to minimize confusion between the original and [ciscoconfparse2][17]
