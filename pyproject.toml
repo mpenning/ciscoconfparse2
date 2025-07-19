@@ -20,17 +20,11 @@ dependencies = [
   "typeguard==4.4.4",
   "PyYAML>=6.0.2",
   "rich>=13.6.0",
-  # passlib uses crypt
   # "passlib==1.7.4",   <-- deprecating passlib (now unmaintained) in favor of libpass
   #     https://github.com/notypecheck/passlib
   "libpass==1.9.1",
   # Hypothesis for hard-core ip_address tests
   "hypothesis==6.131.18",
-
-  # Using crypt-r as a replacement for crypt in Python3.13+
-  # NOTE: crypt-r is not available for python 3.10 and lower so keeping
-  # as a dependency may not be possible
-  # "crypt-r>=3.13.1",
 ]
 authors = [
   { name = "Mike Pennington", email = "mike@pennington.net" },
