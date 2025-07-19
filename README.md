@@ -217,7 +217,7 @@ I will not. however, if it's truly a problem for your company, there are commerc
 
 [ciscoconfparse2][3] is licensed [GPLv3][21]
 
-- Copyright (C) 2023-2024 David Michael Pennington
+- Copyright (C) 2025 David Michael Pennington
 
 The word \"Cisco\" is a registered trademark of [Cisco Systems][27].
 
