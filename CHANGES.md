@@ -4,6 +4,13 @@
 - Summary:
     - Insert something here
 
+## Version: 0.8.29
+
+- Released: 2025-07-19
+- Summary:
+    - Migrate documentation from reStructuredText to markdown (myST flavor)
+    - Warn users of `CiscoPassword()` class against usage which will soon be deprecated
+
 ## Version: 0.8.28
 
 - Released: 2025-07-12
