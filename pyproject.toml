@@ -10,7 +10,6 @@ dynamic = ["version"]
 dependencies = [
   # NOTE changing attrs versions may require code / test changes
   "attrs>24.3.0,<26.0.0",
-  "scrypt==0.9.4",
   "dnspython>=2.6.1",
   "macaddress==2.0.2",
   "loguru>=0.7.2",
