@@ -113,14 +113,14 @@ class BaseFactoryLine(BaseCfgLine):
         return self.get_unique_identifier()
 
     @classmethod
-    def from_list(cls, all_lines: List[str], line: str) -> BaseCfgLine:
+    def from_list(cls, all_lines: list[str], line: str) -> BaseCfgLine:
         """Helper-method to allow strictly positional *arg calls .i.e. IOSCfgLine([], 'hostname Foo')"""
         raise NotImplementedError()
 
     @classmethod
     @logger.catch(reraise=True)
     def is_object_for(
-        cls, all_lines: List[str], line: str, index: int = None, re: re.Pattern = re
+        cls, all_lines: list[str], line: str, index: int = None, re: re.Pattern = re
     ) -> bool:
         """Return True if this object should be used for a given configuration line; otherwise return False"""
         raise NotImplementedError()
@@ -290,7 +290,7 @@ class BaseFactoryInterfaceLine(BaseFactoryLine):
 
     # This method is on BaseFactoryInterfaceLine()
     @logger.catch(reraise=True)
-    def get_hsrp_groups(self) -> List[Any]:
+    def get_hsrp_groups(self) -> list[Any]:
         """
         :return: the sequence of configured HSRPInterfaceGroup() instances
         :rtype: List[Any]
@@ -331,7 +331,7 @@ class BaseFactoryInterfaceLine(BaseFactoryLine):
     @classmethod
     @logger.catch(reraise=True)
     def is_object_for(
-        cls, all_lines: List[str], line: str, index: int = None, re: re.Pattern = re
+        cls, all_lines: list[str], line: str, index: int = None, re: re.Pattern = re
     ) -> bool:
         """Return a boolean for whether this object should be used based on the inputs"""
         raise NotImplementedError()
@@ -513,7 +513,7 @@ class BaseFactoryInterfaceLine(BaseFactoryLine):
     # This method is on BaseFactoryInterfaceLine()
     @property
     @logger.catch(reraise=True)
-    def ipv6_addr_objects(self) -> Dict[str, List[IPv6Obj]]:
+    def ipv6_addr_objects(self) -> dict[str, list[IPv6Obj]]:
         r"""
         :return: A Dict of :class:`ccp_util.IPv6Obj` objects representing all IPv6 addresses on this interface, default to {}
         :rtype: IPv6Obj
@@ -779,7 +779,7 @@ class BaseFactoryInterfaceLine(BaseFactoryLine):
     # This method is on BaseFactoryInterfaceLine()
     @logger.catch(reraise=True)
     def in_ipv4_subnets(
-        self, subnets: Union[Set[IPv4Obj], List[IPv4Obj], Tuple[IPv4Obj, ...]] = None
+        self, subnets: Union[set[IPv4Obj], list[IPv4Obj], tuple[IPv4Obj, ...]] = None
     ) -> bool:
         r"""
         :return: Whether the interface is in a sequence or set of ccp_util.IPv4Obj objects
@@ -870,7 +870,7 @@ class BaseFactoryInterfaceLine(BaseFactoryLine):
     # This method is on BaseFactoryInterfaceLine()
     @property
     @logger.catch(reraise=True)
-    def ip_helper_addresses(self) -> List[Dict[str, str]]:
+    def ip_helper_addresses(self) -> list[dict[str, str]]:
         r"""
         :return: A sequence of dicts with IP helper-addresses.  Each helper-address is in a dictionary.
         :rtype: List[Dict[str,str]]
@@ -880,7 +880,7 @@ class BaseFactoryInterfaceLine(BaseFactoryLine):
     # This method is on BaseFactoryInterfaceLine()
     @property
     @logger.catch(reraise=True)
-    def ipv6_dhcp_server(self) -> List[Dict[str, str]]:
+    def ipv6_dhcp_server(self) -> list[dict[str, str]]:
         r"""
         :return: A sequence of dicts with IPv6 dhcp server.  Each address is in a dictionary.
         :rtype: List[Dict[str,str]]
@@ -1046,7 +1046,7 @@ class BaseFactoryInterfaceLine(BaseFactoryLine):
     # This method is on BaseFactoryInterfaceLine()
     @property
     @logger.catch(reraise=True)
-    def hsrp_ip_addr(self) -> Dict[int, str]:
+    def hsrp_ip_addr(self) -> dict[int, str]:
         """
         :return: A dict keyed by integer HSRP group number with a string ipv4 address, default to an empty dict
         :rtype: Dict[int,str]
@@ -1056,7 +1056,7 @@ class BaseFactoryInterfaceLine(BaseFactoryLine):
     # This method is on BaseFactoryInterfaceLine()
     @property
     @logger.catch(reraise=True)
-    def hsrp_ip_addr_secondary(self) -> Dict[int, str]:
+    def hsrp_ip_addr_secondary(self) -> dict[int, str]:
         """
         :return: A dict keyed by integer HSRP group number with a comma-separated string secondary ipv4 address, default to an empty dict
         :rtype: Dict[int,str]
@@ -1066,7 +1066,7 @@ class BaseFactoryInterfaceLine(BaseFactoryLine):
     # This method is on BaseFactoryInterfaceLine()
     @property
     @logger.catch(reraise=True)
-    def hsrp_priority(self) -> Dict[int, int]:
+    def hsrp_priority(self) -> dict[int, int]:
         """
         :return: A dict keyed by integer HSRP group number with an integer HSRP priority per-group
         :rtype: Dict[int,int]
@@ -1076,7 +1076,7 @@ class BaseFactoryInterfaceLine(BaseFactoryLine):
     # This method is on BaseFactoryInterfaceLine()
     @property
     @logger.catch(reraise=True)
-    def hsrp_hello_timer(self) -> Dict[int, float]:
+    def hsrp_hello_timer(self) -> dict[int, float]:
         """
         :return: A dict keyed by integer HSRP group number with an integer HSRP hello timer
         :rtype: Dict[int,float]
@@ -1086,7 +1086,7 @@ class BaseFactoryInterfaceLine(BaseFactoryLine):
     # This method is on BaseFactoryInterfaceLine()
     @property
     @logger.catch(reraise=True)
-    def hsrp_hold_timer(self) -> Dict[int, float]:
+    def hsrp_hold_timer(self) -> dict[int, float]:
         """
         :return: A dict keyed by integer HSRP group number with an integer HSRP hold timer
         :rtype: Dict[int,float]
@@ -1096,7 +1096,7 @@ class BaseFactoryInterfaceLine(BaseFactoryLine):
     # This method is on BaseFactoryInterfaceLine()
     @property
     @logger.catch(reraise=True)
-    def hsrp_usebia(self) -> Dict[int, bool]:
+    def hsrp_usebia(self) -> dict[int, bool]:
         """
         :return: A dict keyed by integer HSRP group number with a bool value for whether the group is configured with use-bia
         :rtype: Dict[int,bool]
@@ -1106,7 +1106,7 @@ class BaseFactoryInterfaceLine(BaseFactoryLine):
     # This method is on BaseFactoryInterfaceLine()
     @property
     @logger.catch(reraise=True)
-    def hsrp_preempt(self) -> Dict[int, bool]:
+    def hsrp_preempt(self) -> dict[int, bool]:
         """
         :return: A dict keyed by integer HSRP group number with a bool value for whether the group is configured with preempt
         :rtype: Dict[int,bool]
@@ -1116,7 +1116,7 @@ class BaseFactoryInterfaceLine(BaseFactoryLine):
     # This method is on BaseFactoryInterfaceLine()
     @property
     @logger.catch(reraise=True)
-    def hsrp_authentication_md5_keychain(self) -> Dict[int, bool]:
+    def hsrp_authentication_md5_keychain(self) -> dict[int, bool]:
         """
         :return: A dict keyed by integer HSRP group number with a string value of the HSRP authentication key-chain name
         :rtype: Dict[int,str]

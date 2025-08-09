@@ -40,7 +40,6 @@ from ciscoconfparse2.ccp_util import junos_unsupported
 from ciscoconfparse2.ccp_util import log_function_call
 from ciscoconfparse2.ccp_util import enforce_valid_types
 from ciscoconfparse2.ccp_util import fix_repeated_words
-from ciscoconfparse2.ccp_util import __ccp_re__
 from ciscoconfparse2.ccp_util import _get_ipv4
 from ciscoconfparse2.ccp_util import _get_ipv6
 from ciscoconfparse2.ccp_util import ip_factory

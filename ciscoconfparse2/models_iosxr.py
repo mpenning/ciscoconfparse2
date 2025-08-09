@@ -486,7 +486,7 @@ class BaseIOSXRIntfLine(IOSXRCfgLine, BaseFactoryInterfaceLine):
 
     # This method is on BaseIOSXRIntfLine()
     @logger.catch(reraise=True)
-    def get_hsrp_groups(self) -> List[HSRPInterfaceGroup]:
+    def get_hsrp_groups(self) -> list[HSRPInterfaceGroup]:
         """
         :return: the sequence of configured HSRPInterfaceGroup() instances
         :rtype: List[HSRPInterfaceGroup]
@@ -964,7 +964,7 @@ class BaseIOSXRIntfLine(IOSXRCfgLine, BaseFactoryInterfaceLine):
     # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
-    def ipv6_addr_objects(self) -> Dict[str, List[IPv6Obj]]:
+    def ipv6_addr_objects(self) -> dict[str, list[IPv6Obj]]:
         r"""
         :return: A Dict of :class:`ccp_util.IPv6Obj` objects representing the addresss on this interface, default to {}
         :rtype: IPv6Obj
@@ -1427,7 +1427,7 @@ class BaseIOSXRIntfLine(IOSXRCfgLine, BaseFactoryInterfaceLine):
     # This method is on BaseIOSXRIntfLine()
     @logger.catch(reraise=True)
     def in_ipv4_subnets(
-        self, subnets: Union[Set[IPv4Obj], List[IPv4Obj], Tuple[IPv4Obj, ...]] = None
+        self, subnets: Union[set[IPv4Obj], list[IPv4Obj], tuple[IPv4Obj, ...]] = None
     ) -> bool:
         r"""
         :return: Whether the interface is in a sequence or set of ccp_util.IPv4Obj objects
@@ -1638,7 +1638,7 @@ class BaseIOSXRIntfLine(IOSXRCfgLine, BaseFactoryInterfaceLine):
     # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
-    def ip_helper_addresses(self) -> List[Dict[str, str]]:
+    def ip_helper_addresses(self) -> list[dict[str, str]]:
         r"""
         :return: A sequence of dicts with IP helper-addresses.  Each helper-address is in a dictionary.
         :rtype: List[Dict[str,str]]
@@ -1682,7 +1682,7 @@ class BaseIOSXRIntfLine(IOSXRCfgLine, BaseFactoryInterfaceLine):
     # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
-    def ipv6_dhcp_server(self) -> List[Dict[str, str]]:
+    def ipv6_dhcp_server(self) -> list[dict[str, str]]:
         r"""
         :return: A sequence of dicts with IPv6 dhcp server.  Each address is in a dictionary.
         :rtype: List[Dict[str,str]]
@@ -2061,7 +2061,7 @@ class BaseIOSXRIntfLine(IOSXRCfgLine, BaseFactoryInterfaceLine):
     # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
-    def hsrp_ip_addr(self) -> Dict[int, str]:
+    def hsrp_ip_addr(self) -> dict[int, str]:
         """
         :return: A dict keyed by integer HSRP group number with a string ipv4 address, default to an empty dict
         :rtype: Dict[int,str]
@@ -2094,7 +2094,7 @@ class BaseIOSXRIntfLine(IOSXRCfgLine, BaseFactoryInterfaceLine):
     # This method is on BaseFactoryInterfaceLine()
     @property
     @logger.catch(reraise=True)
-    def hsrp_ip_addr_secondary(self) -> Dict[int, str]:
+    def hsrp_ip_addr_secondary(self) -> dict[int, str]:
         """
         :return: A dict keyed by integer HSRP group number with a comma-separated string secondary ipv4 address, default to an empty dict
         :rtype: Dict[int,str]
@@ -2105,7 +2105,7 @@ class BaseIOSXRIntfLine(IOSXRCfgLine, BaseFactoryInterfaceLine):
     # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
-    def hsrp_priority(self) -> Dict[int, int]:
+    def hsrp_priority(self) -> dict[int, int]:
         """
         :return: A dict keyed by integer HSRP group number with an integer HSRP priority per-group
         :rtype: Dict[int,int]
@@ -2458,7 +2458,7 @@ class IOSXRvPCLine(BaseCfgLine):
         return self.get_unique_identifier()
 
     def __repr__(self):
-        return "<{} # {} '{}'>".format(self.classname, self.linenum, self.vpc_domain_id)
+        return f"<{self.classname} # {self.linenum} '{self.vpc_domain_id}'>"
 
     @classmethod
     def is_object_for(cls, all_lines, line, index=None, re=re):
@@ -2828,7 +2828,7 @@ class IOSXRRouteLine(IOSXRCfgLine):
             if mm is not None:
                 self.route_info = mm.groupdict()
             else:
-                raise ValueError("Could not parse '{}'".format(self.text))
+                raise ValueError(f"Could not parse '{self.text}'")
         else:
             self.feature = "ip route"
             self._address_family = "ip"
@@ -2836,7 +2836,7 @@ class IOSXRRouteLine(IOSXRCfgLine):
             if mm is not None:
                 self.route_info = mm.groupdict()
             else:
-                raise ValueError("Could not parse '{}'".format(self.text))
+                raise ValueError(f"Could not parse '{self.text}'")
 
     @logger.catch(reraise=True)
     def __eq__(self, other):
@@ -2911,13 +2911,11 @@ class IOSXRRouteLine(IOSXRCfgLine):
     def network_object(self):
         try:
             if self._address_family == "ip":
-                return IPv4Obj("{}/{}".format(self.network, self.netmask), strict=False)
+                return IPv4Obj(f"{self.network}/{self.netmask}", strict=False)
             elif self._address_family == "ipv6":
-                return IPv6Obj("{}/{}".format(self.network, self.masklen))
+                return IPv6Obj(f"{self.network}/{self.masklen}")
         except BaseException:
-            logger.critical(
-                "Found _address_family = '{}''".format(self._address_family)
-            )
+            logger.critical(f"Found _address_family = '{self._address_family}''")
             return None
 
     @property
@@ -2979,7 +2977,7 @@ class IOSXRRouteLine(IOSXRCfgLine):
             )
         else:
             raise ValueError(
-                "[FATAL] Could not identify global next-hop for '{}'".format(self.text)
+                f"[FATAL] Could not identify global next-hop for '{self.text}'"
             )
 
     @property

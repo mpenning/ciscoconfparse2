@@ -308,7 +308,7 @@ class BaseASAIntfLine(ASACfgLine):
     def ipv4_addr_object(self):
         """Return a ccp_util.IPv4Obj object representing the address on this interface; if there is no address, return IPv4Obj()"""
         try:
-            return IPv4Obj("{}/{}".format(self.ipv4_addr, self.ipv4_netmask))
+            return IPv4Obj(f"{self.ipv4_addr}/{self.ipv4_netmask}")
         except BaseException:
             return self.default_ipv4_addr_object
 
@@ -339,7 +339,7 @@ class BaseASAIntfLine(ASACfgLine):
     def ipv4_standby_addr_object(self):
         """Return a ccp_util.IPv4Obj object representing the standby address on this interface; if there is no address, return IPv4Obj()"""
         try:
-            return IPv4Obj("{}/{}".format(self.ipv4_standby_addr, self.ipv4_netmask))
+            return IPv4Obj(f"{self.ipv4_standby_addr}/{self.ipv4_netmask}")
         except Exception:
             return self.default_ipv4_addr_object
 
@@ -356,7 +356,7 @@ class BaseASAIntfLine(ASACfgLine):
     def ip_network_object(self):
         try:
             return IPv4Obj(
-                "{}/{}".format(self.ipv4_addr, self.ipv4_netmask), strict=False
+                f"{self.ipv4_addr}/{self.ipv4_netmask}", strict=False
             ).network
         except AttributeError:
             err_text = f"{self.ipv4_addr}/{self.ipv4_netmask} does not have a .network attribute."
@@ -797,14 +797,14 @@ class ASAObjGroupNetwork(ASACfgLine):
                 )
                 if group_nets is None:
                     raise ValueError(
-                        "FATAL: Cannot find group-object named {}".format(self.name)
+                        f"FATAL: Cannot find group-object named {self.name}"
                     )
                 else:
                     retval.extend(group_nets.network_strings)
             elif "description " in obj.text:
                 pass
             else:
-                raise NotImplementedError("Cannot parse '{}'".format(obj.text))
+                raise NotImplementedError(f"Cannot parse '{obj.text}'")
         return retval
 
     @property
@@ -934,7 +934,7 @@ class ASAObjGroupService(ASACfgLine):
             elif svc_obj.get("operator", None):
                 op = svc_obj.get("operator", "")
                 port = svc_obj.get("p_port", "")
-                port_spec = "{} {}".format(op, port)
+                port_spec = f"{op} {port}"
 
                 if self.protocol_type == "tcp-udp":
                     retval.append(
@@ -963,15 +963,13 @@ class ASAObjGroupService(ASACfgLine):
                         )
                     )
                 if group_ports is None:
-                    raise ValueError(
-                        "FATAL: Cannot find group-object named {}".format(name)
-                    )
+                    raise ValueError(f"FATAL: Cannot find group-object named {name}")
                 else:
                     retval.extend(group_ports.ports)
             elif "description " in obj.text:
                 pass
             else:
-                raise NotImplementedError("Cannot parse '{}'".format(obj.text))
+                raise NotImplementedError(f"Cannot parse '{obj.text}'")
         return retval
 
 
@@ -1035,7 +1033,7 @@ class ASAIntfGlobal(BaseCfgLine):
 
     @logger.catch(reraise=True)
     def __repr__(self):
-        return "<{} # {} '{}'>".format(self.classname, self.linenum, self.text)
+        return f"<{self.classname} # {self.linenum} '{self.text}'>"
 
     @classmethod
     @logger.catch(reraise=True)
@@ -1071,7 +1069,7 @@ class ASAHostnameLine(BaseCfgLine):
 
     @logger.catch(reraise=True)
     def __repr__(self):
-        return "<{} # {} '{}'>".format(self.classname, self.linenum, self.hostname)
+        return f"<{self.classname} # {self.linenum} '{self.hostname}'>"
 
     @classmethod
     @logger.catch(reraise=True)
@@ -1452,7 +1450,7 @@ class ASAAclLine(ASACfgLine):
         if mm is not None:
             self._mm_results = mm.groupdict()  # All regex match results
         else:
-            raise ValueError("[FATAL] ASAAclLine() cannot parse text:'{}'".format(text))
+            raise ValueError(f"[FATAL] ASAAclLine() cannot parse text:'{text}'")
 
     @logger.catch(reraise=True)
     def __eq__(self, other):
@@ -1506,7 +1504,7 @@ class ASAAclLine(ASACfgLine):
             return "network"
         else:
             raise ValueError(
-                "Cannot parse ACL source address method for '{}'".format(self.text)
+                f"Cannot parse ACL source address method for '{self.text}'"
             )
 
     @property
@@ -1538,7 +1536,7 @@ class ASAAclLine(ASACfgLine):
             return "network"
         else:
             raise ValueError(
-                "Cannot parse ACL destination address method for '{}'".format(self.text)
+                f"Cannot parse ACL destination address method for '{self.text}'"
             )
 
     @property
@@ -1571,9 +1569,7 @@ class ASAAclLine(ASACfgLine):
             )
             return retval
         else:
-            raise ValueError(
-                "Cannot parse ACL protocol value for '{}'".format(self.text)
-            )
+            raise ValueError(f"Cannot parse ACL protocol value for '{self.text}'")
 
     @property
     @logger.catch(reraise=True)

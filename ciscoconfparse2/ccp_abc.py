@@ -497,7 +497,7 @@ class BaseCfgLine:
 
     # On BaseCfgLine()
     @property
-    def all_parents(self) -> List:
+    def all_parents(self) -> list:
         """
         :return: A sequence of all parent objects, not including this object
         :rtype: List[BaseCfgLine]
@@ -516,7 +516,7 @@ class BaseCfgLine:
 
     # On BaseCfgLine()
     @property
-    def all_children(self) -> List:
+    def all_children(self) -> list:
         """
         :return: A sequence of all child objects, not including this object
         :rtype: List[BaseCfgLine]
@@ -1112,7 +1112,7 @@ class BaseCfgLine:
 
     # On BaseCfgLine()
     @logger.catch(reraise=True)
-    def split(self, sep: str = None, maxsplit: int = -1) -> List[str]:
+    def split(self, sep: str = None, maxsplit: int = -1) -> list[str]:
         """
         Split ``text`` in-place
 
@@ -1680,7 +1680,7 @@ class BaseCfgLine:
         groupdict: dict = None,
         recurse: bool = True,
         debug: bool = False,
-    ) -> List[Any]:
+    ) -> list[Any]:
         r"""Use ``regex`` to search the children of
         :class:`~ciscoconfparse2.models_cisco.IOSCfgLine` text and return a list of the contents of
         objects matching the regular expression group, at the integer ``group`` index, cast as

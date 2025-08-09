@@ -10,23 +10,21 @@ dynamic = ["version"]
 dependencies = [
   # NOTE changing attrs versions may require code / test changes
   "attrs>24.3.0,<26.0.0",
-  "dnspython>=2.6.1",
+  "dnspython==2.7.0",
   "macaddress==2.0.2",
+  "traitlets==5.14.3",
   "loguru>=0.7.2",
-  "tomlkit==0.13.3",
   "hier_config==2.3.1",
-  "pyparsing>=3.2.1",
+  "pyparsing==3.2.3",
   # NOTE changing typeguard versions may require code / test changes
   "typeguard==4.4.4",
   "PyYAML>=6.0.2",
   "rich>=13.6.0",
-  # passlib uses crypt
-  "passlib==1.7.4",
-
-  # Using crypt-r as a replacement for crypt in Python3.13+
-  # NOTE: crypt-r is not available for python 3.10 and lower so keeping
-  # as a dependency may not be possible
-  # "crypt-r>=3.13.1",
+  # "passlib==1.7.4",   <-- deprecating passlib (now unmaintained) in favor of libpass
+  #     https://github.com/notypecheck/passlib
+  "libpass==1.9.1",
+  # Hypothesis for hard-core ip_address tests
+  "hypothesis==6.131.18",
 ]
 authors = [
   { name = "Mike Pennington", email = "mike@pennington.net" },
@@ -65,23 +63,28 @@ classifiers=[
 dev = [
   "wheel>=0.38.4",
   "twine>=4.0.2",
-  "pytest>=7.4.3",
+  "hatchling>=1.26.3",
+  "pytest>=8.3.5",
   "pre-commit==4.2.0",
+  "black==25.1.0",
+  "pyupgrade==3.19.1",
   "yamlfix==1.17.0",
   "pylama==8.4.1",
-  "pylint>=3.3.7",
+  "pylint==3.3.7",
   "coverage>=7.3.2",
   "pytest-cov>=4.1.0",
   "pyroma==5.0",
   "invoke==2.2.0",
   "fabric==3.2.2",
   "commitizen>=2.40.0",
-  "Sphinx==6.2.1",
+  "python-lsp-server>=1.12.2",
+  "tox==4.28.4",
+]
+doc = [
+  "Sphinx==8.2.3",
   "sphinx-rtd-theme>=2.0.0",
   "numpydoc==1.9.0",
   "pydocstyle==6.3.0",
-  "python-lsp-server>=1.12.2",
-  "tox==4.28.4",
 ]
 
 [project.scripts]

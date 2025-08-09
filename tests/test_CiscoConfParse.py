@@ -23,11 +23,7 @@ import pickle
 from copy import deepcopy
 from itertools import repeat
 from operator import attrgetter
-
-try:
-    from unittest.mock import patch
-except ImportError:
-    from unittest.mock import patch
+from unittest.mock import patch
 
 import os
 import re
@@ -43,6 +39,7 @@ from ciscoconfparse2.ciscoconfparse2 import (
     IOSCfgLine,
     IOSIntfLine,
 )
+from ciscoconfparse2.ciscoconfparse2 import ConfigList
 from ciscoconfparse2.errors import InvalidParameters
 from ciscoconfparse2.models_junos import JunosCfgLine
 from macaddress import EUI48, EUI64
@@ -3326,6 +3323,33 @@ def testValues_ConfigList_insert02(parse_c02):
     test_result = list(map(attrgetter("text"), configlist))
 
     assert test_result == correct_result
+
+
+def testValues_ConfigList_context_manager_01():
+    """Test a ConfigList context-manager"""
+    config = [
+        "!",
+        "hostname Foo",
+        "!",
+        "interface GigabitEthernet1/1",
+        " switchport access vlan 10",
+        "!",
+        "end",
+    ]
+    parse = CiscoConfParse(config)
+    with ConfigList(
+        initlist=config,
+        comment_delimiters=["!"],
+        debug=False,
+        factory=False,
+        ignore_blank_lines=True,
+        syntax="ios",
+        ccp_ref=parse,
+        auto_commit=True,
+    ) as conflist:
+        for idx, obj in enumerate(conflist):
+            if idx == 1:
+                assert obj.text == "hostname Foo"
 
 
 def test_BaseCfgLine_has_child_with(parse_c03):

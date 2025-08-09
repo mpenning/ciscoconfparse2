@@ -609,159 +609,6 @@ def fix_repeated_words(cmd="", word=""):
     return cmd
 
 
-# intentionally not configuring @attrs.define() on this object
-class __ccp_re__:
-    """
-    A wrapper around python's re.  This is an experimental object... it may
-    disappear at any time as long as this message exists.
-
-    self.regex = rf'{regex}'
-    self.compiled = re.compile(self.regex, flags=flags)
-    self.group = group
-    self.match_type = match_type
-    self.target_str = None
-    self.search_result = None
-    self.attempted_search = False
-
-    Parameters
-    ----------
-    regex : str
-        A string containing the regex string to be matched.  Default: r"".  This method is hard-coded to *always* use a python raw-string.
-    compiled: re.Pattern
-        This is a compiled regex pattern - `re.compiled(self.regex, flags=flags)`.
-    groups: dict
-        A dict keyed by the integer match group, or the named regex capture group.  The values in this dict
-
-
-    Examples
-    --------
-
-    >>> from ciscoconfparse2.ccp_util import ccp_re
-    >>> ## Parse from an integer...
-
-    """
-
-    @logger.catch(reraise=True)
-    def __init__(self, regex_str=r"", target_str=None, groups=None, flags=0, debug=0):
-        if not isinstance(regex_str, str):
-            raise ValueError
-
-        if not isinstance(flags, int):
-            raise ValueError
-
-        if not isinstance(debug, int):
-            raise ValueError
-
-        if isinstance(regex_str, str):
-            self.regex_str = regex_str
-            self.compiled = re.compile(self.regex, flags=flags)
-        else:
-            raise ValueError
-
-        self.attempted_search = False
-        if isinstance(target_str, str):
-            self.target_str = target_str
-            self.s(self.target_str)
-        else:
-            self.target_str = target_str
-
-        self.groups = groups
-        self.search_result = None
-
-    # do NOT wrap with @logger.catch(...)
-    def __repr__(self):
-        return f"""ccp_re({self.regex}, {self.target_str})"""
-
-    # do NOT wrap with @logger.catch(...)
-    def __str__(self):
-        return f"""ccp_re({self.regex}, {self.target_str})"""
-
-    # do NOT wrap with @logger.catch(...)
-    @property
-    def regex(self):
-        return r"""%s""" % self.regex_str
-
-    # do NOT wrap with @logger.catch(...)
-    @regex.setter
-    def regex(self, regex_str):
-        if not isinstance(regex_str, str):
-            raise ValueError
-
-        self.regex_str = regex_str
-        self.compiled = re.compile(regex_str)
-        self.attempted_search = False
-
-    # do NOT wrap with @logger.catch(...)
-    def s(self, target_str):
-        if self.attempted_search is not False:
-            raise RequirementFailure()
-        if not isinstance(target_str, str):
-            raise ValueError
-
-        self.attempted_search = True
-        self.search_result = self.compiled.search(target_str)
-        if isinstance(self.search_result, re.Match):
-            match_groups = self.search_result.groups()
-            if len(match_groups) > 0:
-                return match_groups
-            else:
-                # Return the whole string if there are no match groups
-                return target_str
-        else:
-            return None
-
-    # do NOT wrap with @logger.catch(...)
-    @property
-    def result(self):
-        raise NotImplementedError()
-
-    # do NOT wrap with @logger.catch(...)
-    @property
-    def captured(self):
-        rv_groups = list()
-        rv_groupdict = dict()
-
-        if (self.attempted_search is True) and (self.search_result is None):
-            error = (
-                ".search(r'%s') was attempted but the regex ('%s') did not capture anything"
-                % (self.target_str, self.regex)
-            )
-            logger.warning(error)
-
-        elif (self.attempted_search is True) and (
-            isinstance(self.search_result, re.Match) is True
-        ):
-
-            # rv_groups should be a list of capture group
-            rv_groups = list(self.search_result.groups())
-            # rv_groupdict should be a dictionary of named capture groups...
-            # if there are any named capture groups...
-            rv_groupdict = self.search_result.groupdict()
-
-            if (self.groups != {}) and isinstance(self.groups, dict):
-
-                # Cast types of the numerical regex match groups...
-                for idx, value in enumerate(rv_groups):
-                    # Lookup the match_type in the self.groups dictionary. regex
-                    # capture groups are indexed starting at 1, so we need to
-                    # offset the enumerate() idx value...
-                    match_type = self.groups.get(idx + 1, None)
-                    if match_type is not None:
-                        rv_groups[idx] = match_type(value)
-
-                # Cast types of the named regex match groups...
-                for re_name, value in rv_groupdict.items():
-                    match_type = self.groups.get(re_name, None)
-                    if match_type is not None:
-                        rv_groupdict[re_name] = match_type(value)
-
-        elif self.attempted_search is False:
-            error = ".search(r'%s') was NOT attempted yet." % (self.target_str)
-            logger.warning(error)
-
-        return rv_groups, rv_groupdict
-
-
 # do NOT wrap with @logger.catch(...)
 def _get_ipv4(val="", strict=False, stdlib=False, debug=0):
     """Return the requested IPv4 object to the caller.  This method heavily depends on IPv4Obj()"""
@@ -3061,7 +2908,7 @@ class CiscoIOSInterface:
     interface_dict: dict = None
     debug: bool = None
     initialized: bool = False
-    _list: List = []
+    _list: list = []
     _prefix: str = None
     _digit_separator: str = None
     _number: str = None
@@ -4128,7 +3975,7 @@ class CiscoIOSXRInterface:
     interface_dict: dict = None
     debug: bool = None
     initialized: bool = False
-    _list: List = []
+    _list: list = []
     _prefix: str = None
     _digit_separator: str = None
     _number: str = None

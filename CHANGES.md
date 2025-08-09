@@ -4,6 +4,80 @@
 - Summary:
     - Insert something here
 
+## Version: 0.8.29
+
+- Released: 2025-07-19
+- Summary:
+    - Migrate documentation from reStructuredText to markdown (myST flavor)
+    - Warn users of `CiscoPassword()` class against usage which will soon be deprecated
+
+## Version: 0.8.28
+
+- Released: 2025-07-12
+- Summary:
+    - Use a better random number generator to create the salt for Cisco Type 8 passwords (Type 9 scrypt passwords already use a better random number generator)
+
+## Version: 0.8.27
+
+- Released: 2025-07-12
+- Summary:
+    - Another attempt to silence SonarQube warnings about scrypt() r being too low.  It seems that Cisco IOS requires r=1
+
+## Version: 0.8.26
+
+- Released: 2025-07-12
+- Summary:
+    - Silence SonarQube warnings about scrypt() r being too low.  It seems that Cisco IOS requires r=1
+
+## Version: 0.8.25
+
+- Released: 2025-07-12
+- Summary:
+    - Add MacOS back into the test matrix
+
+## Version: 0.8.24
+
+- Released: 2025-07-12
+- Summary:
+    - Remove scrypt and cryptography imports
+
+## Version: 0.8.23
+
+- Released: 2025-07-12
+- Summary:
+    - Replace https://pypi.org/project/scrypt/ with `hashlib.scrypt()`
+
+## Version: 0.8.22
+
+- Released: 2025-07-04
+- Summary:
+    - attempting to retire use of passlib==1.7.4, which is now unmaintained.  [`libpass`][2] will be used instead...
+
+## Version: 0.8.21
+
+- Released: 2025-07-04
+- Summary:
+    - Add hypothesis `IPv4Obj()` and `IPv6Obj()` tests
+    - Remove unused sshd mock
+    - Remove tomlkit and tox as dev dependencies
+    - Update typeguard to the latest version
+    - Remove `requirements/` directory
+
+## Version: 0.8.20
+
+- Released: 2025-05-17
+- Summary:
+    - Add initial context-manager support to `CiscoConfParse()`
+    - Add initial context-manager support to `ConfigList()`
+    - Remove support for the `ConfigList().CiscoConfParse` attribute
+    - Implement `traitlets` on non-container objects instead of typeguard
+
+## Version: 0.8.19
+
+- Released: 2025-05-17
+- Summary:
+    - Make dev dependencies explicit
+
 ## Version: 0.8.18
 
 - Released: 2025-05-17
@@ -840,3 +914,4 @@
     - Start new project as `ciscoconfparse2` from the original `ciscoconfparse` version 1.9.51
 
 [1]: http://www.pennington.net/py/ciscoconfparse2/
+[2]: https://github.com/notypecheck/passlib

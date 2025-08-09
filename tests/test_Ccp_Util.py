@@ -39,6 +39,7 @@ import os
 import pickle
 import sys
 from ipaddress import IPv4Address, IPv4Network, IPv6Address, IPv6Network
+import importlib.util
 
 import pytest
 from ciscoconfparse2.ccp_util import (
@@ -58,7 +59,14 @@ from ciscoconfparse2.ccp_util import ip_factory
 from loguru import logger
 from macaddress import EUI48, EUI64, MAC, OUI
 
+from hypothesis import given, strategies, reproduce_failure
+
 sys.path.insert(0, "..")
+
+
+def hypothesis_library_missing():
+    """Return True if hypothesis is missing"""
+    return importlib.util.find_spec("hypothesis") is None
 
 
 def testValues_pickle_01():
@@ -188,6 +196,32 @@ def testL4Object_asa_lt02():
     pp = L4Object(protocol="tcp", port_spec="lt 7", syntax="asa")
     assert pp.protocol == "tcp"
     assert pp.port_list == sorted(range(1, 7))
+
+
+@pytest.mark.skipif(
+    hypothesis_library_missing(), reason="hypothesis library is missing"
+)
+@given(
+    strategies.ip_addresses(),  # random_addr
+    strategies.integers(min_value=1, max_value=32),  # random_v4_mask
+    strategies.integers(min_value=1, max_value=128),  # random_v6_mask
+)
+def test_IPv4Obj_IPv6Obj_hypothesis(random_addr, random_v4_mask, random_v6_mask):
+    """Use hypothesis to test random IPv4 addresses."""
+
+    # random_addr could be either v4 or v6
+    try:
+        uut4 = IPv4Obj(f"{random_addr}/{random_v4_mask}")
+        _ = uut4.as_binary_tuple
+        assert uut4.as_cidr_addr == f"{random_addr}/{random_v4_mask}"
+        _ = uut4.as_cidr_net
+        _ = uut4.network
+    except (ValueError, ipaddress.AddressValueError):
+        uut6 = IPv6Obj(f"{random_addr}/{random_v6_mask}")
+        _ = uut6.as_binary_tuple
+        assert uut6.as_cidr_addr == f"{random_addr}/{random_v6_mask}"
+        _ = uut6.as_cidr_net
+        _ = uut6.network
 
 
 def testIPv4Obj_contains_01():
@@ -621,6 +655,11 @@ def testIPv6Obj_recursive():
     obj = IPv6Obj(IPv6Obj("fe80:a:b:c:d:e::1/64"))
     assert str(obj.ip_object) == "fe80:a:b:c:d:e:0:1"
     assert obj.prefixlen == 64
+
+
+def testIPv6Obj_v4_embedded_in_v6_cidr():
+    """Ensure that IPv4 mapped in IPv6 as CIDR parses"""
+    assert IPv6Obj("::ffff:0.0.0.0/1").as_cidr_net == "::/1"
 
 
 def testIPv6Obj_neq_01():

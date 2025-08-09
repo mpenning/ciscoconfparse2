@@ -52,7 +52,6 @@ extensions = [
     "sphinx.ext.intersphinx",
     "sphinx.ext.autosummary",
     "sphinx.ext.autosectionlabel",
-    "numpydoc",
 ]
 autosectionlabel_prefix_document = True
 
@@ -107,7 +106,7 @@ master_doc = "index"
 
 # General information about the project.
 project = "ciscoconfparse2"
-copyright = "2007-{}, {}".format(
+copyright = "{} {}".format(
     time.strftime("%Y"),
     __author__,
 )

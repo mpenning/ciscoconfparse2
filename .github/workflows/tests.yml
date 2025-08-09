@@ -48,37 +48,24 @@ jobs:
           python-version: '${{ matrix.python }}'
       - name: 'Display Python version'
         run: 'python -c ''import sys; print(sys.version)'''
-      - name: 'Install dependencies on macos and fix scrypt install with CFLAGS / LDFLAGS'
-        if: '${{ matrix.os == ''macos-latest'' }}'
+      - name: "Install the latest version of uv"
+        uses: "astral-sh/setup-uv@v6"
+        with:
+          version: "latest"
+      - name: 'Install dependencies on Ubuntu Linux / Windows / MacOS'
         run: |
           true  ###############################################################
-          true  # install pip, pytest, and python packages
-          true  #     asterisk globbing is fragile, so don't use asterisk path
-          true  #     globs.  Just call out individual files, below.
+          true  # install pip
+          true  #     asterisk globbing is fragile
           true  ###############################################################
           python -m pip install --upgrade pip
-          pip install -U pytest
           true  ###############################################################
-          true  #     Install ourself
+          true  #     Install all dependencies, including dev deps
+          true  #         then install ourself
+          true  #
+          true  #     Use --system to install to the test runner system python
           true  ###############################################################
-          true  # Fix macos scrypt imports manually because they throw errors otherwise
-          export CFLAGS="-I$(brew --prefix openssl)/include"
-          export LDFLAGS="-L$(brew --prefix openssl)/lib"
-          pip install -U .
-      - name: 'Install dependencies on Ubuntu Linux / Windows'
-        if: '${{ matrix.os != ''macos-latest'' }}'
-        run: |
-          true  ###############################################################
-          true  # install pip, pytest, and python packages
-          true  #     asterisk globbing is fragile, so don't use asterisk path
-          true  #     globs.  Just call out individual files, below.
-          true  ###############################################################
-          python -m pip install --upgrade pip
-          pip install -U pytest
-          true  ###############################################################
-          true  #     Install ourself
-          true  ###############################################################
-          pip install -U .
+          uv pip install --system -r pyproject.toml --extra dev .
       - name: 'Run pytest'
         run: |-
           true  ###############################################################

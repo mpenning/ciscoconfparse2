@@ -4,21 +4,13 @@
 :caption: 'Contents:'
 :maxdepth: 4
 
-intro
-installation
-cli
-examples
+intro.md
+installation.md
+cli.md
+examples.md
 tutorial.md
-legacy_syntax
-syntax_factory_intro
-syntax
-syntax_ios
-syntax_nxos
-syntax_iosxr
-syntax_asa
-factory
 development.md
-api
+api.md
 ```
 
 ## Indices and tables

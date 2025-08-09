@@ -17,7 +17,7 @@ repos:
       - id: "pyupgrade"
         name: "Auto-standardize python syntax"
         args:
-          - "--py3-plus"
+          - "--py39-plus"
         language: "python"
         verbose: true
 

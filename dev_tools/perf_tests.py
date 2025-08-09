@@ -12,7 +12,7 @@ CONFIG_FILEPATH = None
 for base_dir, dirs, files in os.walk("../"):
     for filename in files:
         if filename == "sample_01.ios":
-            CONFIG_FILEPATH = "{}/{}".format(base_dir, filename)
+            CONFIG_FILEPATH = f"{base_dir}/{filename}"
             break
 
 if CONFIG_FILEPATH is None:
