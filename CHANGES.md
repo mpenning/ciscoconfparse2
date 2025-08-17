@@ -4,6 +4,7 @@
 - Summary:
     - Merge dependabot version recommendations
     - Bump actions/checkout to v5
+    - Remove fix-encoding-pragma from pre-commit-config.yaml
 
 ## Version: 0.8.29
 
