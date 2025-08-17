@@ -68,7 +68,7 @@ cicd:
 	git push origin main
 	# push tag to github origin, which triggers a github CICD action (see above)
 	-git push origin $$VERSION
-	git checkout develop
+	git checkout @{-1}                        # checkout the previous branch...
 	git pull origin main
 
 .PHONY: bump-version-patch

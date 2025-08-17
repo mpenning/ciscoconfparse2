@@ -2,7 +2,8 @@
 
 - Released: Not released
 - Summary:
-    - Insert something here
+    - Merge dependabot version recommendations
+    - Bump actions/checkout to v5
 
 ## Version: 0.8.29
 
