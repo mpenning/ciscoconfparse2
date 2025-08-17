@@ -10,6 +10,19 @@ jobs:
     steps:
       - name: 'Checkout'
         uses: 'actions/checkout@v5'
+      - name: Build sourcecode tar.gz
+        run: |
+          tar cvfz ciscoconfparse2.tar.gz .
+      - name: Build wheels with hatch
+        run: |
+          pip install -U hatch
+          hatch build
       - name: 'Release'
         uses: 'softprops/action-gh-release@v2'
         if: 'github.ref_type == ''tag'''
+        with:
+          files: |
+            'ciscoconfparse2.tar.gz'
+            'dist/*'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
