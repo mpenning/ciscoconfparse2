@@ -4,6 +4,12 @@
 - Summary:
     - Insert something here
 
+## Version: 0.8.34
+
+- Released: 2025-08-17
+- Summary:
+    - Add auto-generated release notes to the GitHub Release
+
 ## Version: 0.8.33
 
 - Released: 2025-08-17
