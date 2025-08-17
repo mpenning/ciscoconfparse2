@@ -2,6 +2,12 @@
 
 - Released: Not released
 - Summary:
+    - Insert something here
+
+## Version: 0.8.33
+
+- Released: 2025-08-17
+- Summary:
     - Merge dependabot version recommendations
     - Bump actions/checkout to v5
     - Remove fix-encoding-pragma from pre-commit-config.yaml
