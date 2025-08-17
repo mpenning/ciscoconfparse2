@@ -99,7 +99,7 @@ iterating in a loop (because two different interfaces have `parameter01`). Howev
 [ciscoconfparse2] can easily identify it by searching a list of elements with
 {py:meth}`~ciscoconfparse2.CiscoConfParse.find_child_objects`:
 
-```python
+```pycon
 >>> from ciscoconfparse2 import CiscoConfParse
 >>> # Assume we parsed the config into 'parse'
 >>> parse
@@ -114,7 +114,7 @@ iterating in a loop (because two different interfaces have `parameter01`). Howev
 However, you can still get multiple children by using a less-specific
 regex:
 
-```python
+```pycon
 >>>
 >>> # Expect to see a list of two children here... search across
 >>> # any Ethernet feature
@@ -124,7 +124,7 @@ regex:
 
 Finally, you can still get parent objects with {py:meth}`~ciscoconfparse2.CiscoConfParse.find_parent_objects`:
 
-```python
+```pycon
 >>> parse.find_parent_objects(["Ethernet", "feature01", "parameter"])
 [<IOSCfgLine # 3 'interface Ethernet0/1'>]
 ```
@@ -144,14 +144,15 @@ layer2 trunks; the interface name is stored on one line, and the trunk
 configuration is stored somewhere below the interface name. With
 ciscoconfparse, it's really this easy...
 
-```python
+```pycon
 >>> from ciscoconfparse2 import CiscoConfParse
->>> parse = CiscoConfParse('/tftpboot/largeConfig.conf', syntax='ios', factory=False)
+>>> parse = CiscoConfParse("/tftpboot/largeConfig.conf", syntax="ios", factory=False)
 >>>
 >>> # Find parent interfaces that are configured with 'switchport trunk'
 >>> dot1q_trunks = parse.find_parent_objects(["^interface", "switchport trunk"])
 >>> for intf in dot1q_trunks:
 ...     print(intf)
+...
 <IOSCfgLine # 217 'interface GigabitEthernet1/1'>
 <IOSCfgLine # 237 'interface GigabitEthernet1/2'>
 ...

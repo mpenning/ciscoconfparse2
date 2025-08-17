@@ -28,10 +28,10 @@ from ciscoconfparse2 import CiscoConfParse
 #     !
 
 # Search a configuration in the test fixutres directory
-parse = CiscoConfParse('tests/fixtures/configs/sample_02.ios', syntax='ios')
+parse = CiscoConfParse("tests/fixtures/configs/sample_02.ios", syntax="ios")
 
 # Find a parent line containing 'interface' and child line with 'shutdown'
-for intf_obj in parse.find_parent_objects(['interface', 'shutdown']):
+for intf_obj in parse.find_parent_objects(["interface", "shutdown"]):
     intf_name = " ".join(intf_obj.split()[1:])
     print(f"Shutdown: {intf_name}")
 ```

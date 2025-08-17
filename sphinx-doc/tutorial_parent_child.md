@@ -161,7 +161,7 @@ The assuming we use the configuration in the example above,
 configuration for matching config objects and stores a list of
 {class}`~ciscoconfparse2.models_cisco.IOSCfgLine` objects in `serial_objs`.
 
-```python
+```pycon
 >>> serial_objs
 [<IOSCfgLine # 14 'interface Serial1/0'>,
 <IOSCfgLine # 18 'interface Serial1/1'>,
@@ -251,7 +251,7 @@ running globally on this device.
 
 Results:
 
-```python
+```pycon
 >>> cdp_intfs
 [<IOSCfgLine # 14 'interface Serial1/0'>, <IOSCfgLine # 18 'interface Serial1/1'>, <IOSCfgLine # 23 'interface Serial1/2'>]
 ```

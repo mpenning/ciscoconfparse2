@@ -43,11 +43,12 @@ router bgp 65111
 That CLI command is the equivalent of running this
 {func}`~ciscoconfparse2.CiscoConfParse.find_parent_objects` script:
 
-```python
+```pycon
 >>> from ciscoconfparse2 import CiscoConfParse
->>> parse = CiscoConfParse('conf/path/or/file/glob.conf')
->>> for obj in parse.find_parent_objects(['router bgp'):
+>>> parse = CiscoConfParse("conf/path/or/file/glob.conf")
+>>> for obj in parse.find_parent_objects(["router bgp"]):
 ...     print(obj.text)
+...
 >>>
 ```
 
@@ -75,13 +76,14 @@ default-information originate
 That CLI command is the equivalent of running this
 {func}`~ciscoconfparse2.CiscoConfParse.find_child_objects` script:
 
-```python
+```pycon
 >>> from ciscoconfparse2 import CiscoConfParse
->>> parse = CiscoConfParse('conf/path/or/file/glob.conf')
->>> for obj in parse.find_child_objects(['router bgp',
-...                                      'address-family',
-...                                      'default-information']):
+>>> parse = CiscoConfParse("conf/path/or/file/glob.conf")
+>>> for obj in parse.find_child_objects(
+...     ["router bgp", "address-family", "default-information"]
+... ):
 ...     print(obj.text)
+...
 >>>
 ```
 
@@ -110,12 +112,12 @@ Output as   : raw_text
 That CLI command is the equivalent of running this
 {func}`~ciscoconfparse2.CiscoConfParse.find_object_branches` script:
 
-```python
+```pycon
 >>> from ciscoconfparse2 import CiscoConfParse
->>> parse = CiscoConfParse('conf/path/or/file/glob.conf')
->>> for branch in parse.find_object_branches(['router bgp',
-...                                           'address-family',
-...                                           'default-information']):
+>>> parse = CiscoConfParse("conf/path/or/file/glob.conf")
+>>> for branch in parse.find_object_branches(
+...     ["router bgp", "address-family", "default-information"]
+... ):
 ...     print([obj.text for obj in branch])
 ...
 >>>
