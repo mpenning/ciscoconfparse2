@@ -22,9 +22,9 @@ dependencies = [
   "rich>=13.6.0",
   # "passlib==1.7.4",   <-- deprecating passlib (now unmaintained) in favor of libpass
   #     https://github.com/notypecheck/passlib
-  "libpass==1.9.1",
+  "libpass==1.9.1.post0",
   # Hypothesis for hard-core ip_address tests
-  "hypothesis==6.131.18",
+  "hypothesis==6.137.2",
 ]
 authors = [
   { name = "Mike Pennington", email = "mike@pennington.net" },
@@ -65,12 +65,12 @@ dev = [
   "twine>=4.0.2",
   "hatchling>=1.26.3",
   "pytest>=8.3.5",
-  "pre-commit==4.2.0",
+  "pre-commit==4.3.0",
   "black==25.1.0",
-  "pyupgrade==3.19.1",
+  "pyupgrade==3.20.0",
   "yamlfix==1.17.0",
   "pylama==8.4.1",
-  "pylint==3.3.7",
+  "pylint==3.3.8",
   "coverage>=7.3.2",
   "pytest-cov>=4.1.0",
   "pyroma==5.0",
