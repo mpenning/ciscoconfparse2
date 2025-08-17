@@ -12,7 +12,7 @@ jobs:
         uses: 'actions/checkout@v5'
       - name: "Build sourcecode tar.gz"
         run: |
-          tar cvfz ciscoconfparse2.tar.gz .
+          tar cvfz /tmp/ciscoconfparse2.tar.gz .
       - name: "Build wheels with hatch"
         run: |
           pip install -U hatch
@@ -22,7 +22,7 @@ jobs:
         if: 'github.ref_type == ''tag'''
         with:
           files: |
-            'ciscoconfparse2.tar.gz'
+            '/tmp/ciscoconfparse2.tar.gz'
             'dist/*'
         env:
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
