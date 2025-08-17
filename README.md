@@ -22,11 +22,11 @@ Assume you have a bunch of interfaces in a configuration.  How do you find which
 
 One way is manually reading the whole Cisco IOS-XE configuration.  Another option is [ciscoconfparse2][17]
 
-```python
+```pycon
 >>> from ciscoconfparse2 import CiscoConfParse
 >>>
->>> parse = CiscoConfParse('/path/to/config/file')
->>> intf_cmds = parse.find_parent_objects(['interface', 'shutdown'])
+>>> parse = CiscoConfParse("/path/to/config/file")
+>>> intf_cmds = parse.find_parent_objects(["interface", "shutdown"])
 >>>
 >>> shut_intf_names = [" ".join(cmd.split()[1:]) for cmd in intf_cmds]
 >>>
@@ -68,12 +68,12 @@ You can generate the list of EBGP peers pretty quickly with this script:
 ```python
 from ciscoconfparse2 import CiscoConfParse
 
-parse = CiscoConfParse('/path/to/config/file')   # Or read directly from a list of strings
+parse = CiscoConfParse(
+    "/path/to/config/file"
+)  # Or read directly from a list of strings
 
 # Get all neighbor configuration branches
-branches = parse.find_object_branches(('router bgp',
-                                       'neighbor',
-                                       'remote-as'))
+branches = parse.find_object_branches(("router bgp", "neighbor", "remote-as"))
 
 # Get the local BGP ASN
 bgp_cmd = branches[0][0]
