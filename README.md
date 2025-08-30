@@ -156,13 +156,13 @@ Here's why, it:
 - Intentionally requires a different import statement to minimize confusion between the original and [ciscoconfparse2][17]
 - Vasly improves Cisco IOS diffs
 
-## More Cisco / Arista / Other vendor-specific parsers
+## Cisco and Other Vendor-Specific factory parsers
 
-Years ago, I introduced an alpha-quality feature called `factory`, where
+Years ago, I introduced a beta-quality feature called `factory`, where
 I built vendor-specific syntax parsers to extract values from Cisco and other
 vendor configs.
 
-This feature turned out to be a very bad design decision; however, it's also much
+This feature turned out to be a bad design decision; however, it's also much
 more popular than I imagined.
 
 Going forward I strongly discourage people from using `factory` features.  There
