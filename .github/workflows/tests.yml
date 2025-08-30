@@ -67,9 +67,10 @@ jobs:
           true  ###############################################################
           uv pip install --system -r pyproject.toml --extra dev .
       - name: 'Run pytest'
+        working-directory: tests
         run: |-
           true  ###############################################################
           true  # use pytest dot path because it's portable across
           true  #     windows and unix
           true  ###############################################################
-          cd tests && pytest .
+          pytest .
