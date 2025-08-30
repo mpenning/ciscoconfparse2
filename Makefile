@@ -229,6 +229,7 @@ clean:
 	-rm -rf .pytest_cache/
 	-rm -rf .eggs/
 	-rm -rf .cache/
+	-rm -rf sphinx-doc/_build
 	-rm -rf build/ dist/ ciscoconfparse2.egg-info/ setuptools*
 	-rm -rf artifacts/
 

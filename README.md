@@ -107,7 +107,6 @@ network configuration or text files.
 
 The API examples are [documented on the web][70]
 
-
 # Why
 
 [ciscoconfparse2][17] is a [Python][10] library
@@ -156,6 +155,21 @@ Here's why, it:
 - Documents much more of the API
 - Intentionally requires a different import statement to minimize confusion between the original and [ciscoconfparse2][17]
 - Vasly improves Cisco IOS diffs
+
+## More Cisco / Arista / Other vendor-specific parsers
+
+Years ago, I introduced an alpha-quality feature called `factory`, where
+I built vendor-specific syntax parsers to extract values from Cisco and other
+vendor configs.
+
+This feature turned out to be a very bad design decision; however, it's also much
+more popular than I imagined.
+
+Going forward I strongly discourage people from using `factory` features.  There
+will be no further development on vendor-specific `factory` parsers (such as
+[`models_cisco.py`][71]).
+
+I truly apologize for any disappointment.
 
 # Docs, Installation, and Dependencies
 
@@ -296,3 +310,4 @@ The word \"Cisco\" is a registered trademark of [Cisco Systems][27].
   [68]: https://img.shields.io/badge/%F0%9F%A5%9A-Hatch-4051b5.svg
   [69]: https://github.com/pypa/hatch
   [70]: http://www.pennington.net/py/ciscoconfparse2/examples.html
+  [71]: https://github.com/mpenning/ciscoconfparse2/blob/main/ciscoconfparse2/models_cisco.py
