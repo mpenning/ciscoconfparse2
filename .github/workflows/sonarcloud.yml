@@ -28,10 +28,10 @@ jobs:
       - name: 'Install pytest'
         run: 'pip install pytest'
       - name: 'Run coverage'
-        working-directory: tests
+        working-directory: "tests"
         run: 'coverage run -m pytest'
       - name: 'Generate xml'
-        working-directory: tests
+        working-directory: "tests"
         run: 'coverage xml -o coverage.xml'
       - name: 'Relocate the coverage report'
         run: 'mv tests/coverage.xml coverage.xml'
