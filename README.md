@@ -159,14 +159,14 @@ Here's why, it:
 ## More Cisco / Arista / Other vendor-specific parsers
 
 Years ago, I introduced an alpha-quality feature called `factory`, where
-I built vendor-specific syntax parsers to extract values from Cisco and other 
+I built vendor-specific syntax parsers to extract values from Cisco and other
 vendor configs.
 
 This feature turned out to be a very bad design decision; however, it's also much
 more popular than I imagined.
 
 Going forward I strongly discourage people from using `factory` features.  There
-will be no further development on vendor-specific `factory` parsers (such as 
+will be no further development on vendor-specific `factory` parsers (such as
 [`models_cisco.py`][71]).
 
 I truly apologize for any disappointment.
