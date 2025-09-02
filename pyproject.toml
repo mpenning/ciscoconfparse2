@@ -24,7 +24,7 @@ dependencies = [
   #     https://github.com/notypecheck/passlib
   "libpass==1.9.1.post0",
   # Hypothesis for hard-core ip_address tests
-  "hypothesis==6.137.2",
+  "hypothesis==6.138.13",
 ]
 authors = [
   { name = "Mike Pennington", email = "mike@pennington.net" },
@@ -78,7 +78,7 @@ dev = [
   "fabric==3.2.2",
   "commitizen>=2.40.0",
   "python-lsp-server>=1.12.2",
-  "tox==4.28.4",
+  "tox==4.29.0",
 ]
 doc = [
   "Sphinx==8.2.3",
