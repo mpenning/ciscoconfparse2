@@ -15,7 +15,7 @@ dependencies = [
   "traitlets==5.14.3",
   "loguru>=0.7.2",
   "hier_config==2.3.1",
-  "pyparsing==3.2.3",
+  "pyparsing==3.2.4",
   # NOTE changing typeguard versions may require code / test changes
   "typeguard==4.4.4",
   "PyYAML>=6.0.2",
@@ -24,7 +24,7 @@ dependencies = [
   #     https://github.com/notypecheck/passlib
   "libpass==1.9.1.post0",
   # Hypothesis for hard-core ip_address tests
-  "hypothesis==6.137.2",
+  "hypothesis==6.139.2",
 ]
 authors = [
   { name = "Mike Pennington", email = "mike@pennington.net" },
@@ -66,9 +66,9 @@ dev = [
   "hatchling>=1.26.3",
   "pytest>=8.3.5",
   "pre-commit==4.3.0",
-  "black==25.1.0",
+  "black==25.9.0",
   "pyupgrade==3.20.0",
-  "yamlfix==1.17.0",
+  "yamlfix==1.18.0",
   "pylama==8.4.1",
   "pylint==3.3.8",
   "coverage>=7.3.2",
@@ -78,7 +78,7 @@ dev = [
   "fabric==3.2.2",
   "commitizen>=2.40.0",
   "python-lsp-server>=1.12.2",
-  "tox==4.28.4",
+  "tox==4.30.2",
 ]
 doc = [
   "Sphinx==8.2.3",
