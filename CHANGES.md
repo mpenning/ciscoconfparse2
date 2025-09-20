@@ -6,6 +6,12 @@
 - Summary:
     - Insert something here
 
+## Version: 0.8.37
+
+- Released: 2025-08-17
+- Summary:
+    - Bump package versions
+
 ## Version: 0.8.34
 
 - Released: 2025-08-17
