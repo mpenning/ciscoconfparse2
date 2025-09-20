@@ -2,7 +2,7 @@
 
 # ciscoconfparse2
 
-[![git commits][41]][42] [![Version][2]][3] [![Downloads][6]][7] [![License][8]][9] [![Hatch project][68]][69]
+[![git commits][41]][42] [![Version][2]][3] [![Downloads][6]][72] [![License][8]][9] [![Hatch project][68]][69]
 
 [![SonarCloud][51]][52] [![SonarCloud Maintainability Rating][53]][54] [![SonarCloud Lines of Code][55]][56] [![SonarCloud Bugs][59]][60] [![SonarCloud Code Smells][57]][58] [![SonarCloud Tech Debt][61]][62]
 
@@ -311,3 +311,4 @@ The word \"Cisco\" is a registered trademark of [Cisco Systems][27].
   [69]: https://github.com/pypa/hatch
   [70]: http://www.pennington.net/py/ciscoconfparse2/examples.html
   [71]: https://github.com/mpenning/ciscoconfparse2/blob/main/ciscoconfparse2/models_cisco.py
+  [72]: https://clickpy.clickhouse.com/dashboard/ciscoconfparse2
