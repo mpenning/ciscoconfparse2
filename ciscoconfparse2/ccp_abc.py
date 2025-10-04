@@ -1169,7 +1169,6 @@ class BaseCfgLine:
         else:
             return self._text.rsplit(sep=sep, maxsplit=maxsplit)
 
-
     # On BaseCfgLine()
     @logger.catch(reraise=True)
     def get_regex_typed_dict(
