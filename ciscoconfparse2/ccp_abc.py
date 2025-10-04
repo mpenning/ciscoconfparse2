@@ -1169,29 +1169,6 @@ class BaseCfgLine:
         else:
             return self._text.rsplit(sep=sep, maxsplit=maxsplit)
 
-    # On BaseCfgLine()
-    @logger.catch(reraise=True)
-    def find_text_match(self, match_string: str, ignore_case=False, default=""):
-        """
-        Check this line (and all children) and return the first matching line if there
-        is a substring match.
-
-        This is similar to `re_match_iter_typed()`; however, this only considers substrings
-        for matching speed and it does not cast as a type.
-
-        If there is no match, the `default` is returned.
-        """
-        all_text = [self.text]
-        all_text.extend([obj.text for obj in self.all_children])
-
-        for line in all_text:
-            if not ignore_case:
-                if match_string in line:
-                    return line
-            else:
-                if match_string.lower() in line.lower():
-                    return line
-        return default
 
     # On BaseCfgLine()
     @logger.catch(reraise=True)

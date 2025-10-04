@@ -6,6 +6,13 @@
 - Summary:
     - Insert something here
 
+## Version: 0.8.41
+
+- Released: 2025-10-04
+- Summary:
+    - Remove `BaseCfgLine().find_text_match()`
+
+
 ## Version: 0.8.40
 
 - Released: 2025-10-04
