@@ -1045,6 +1045,22 @@ class BaseCfgLine:
             raise NotImplementedError(error)
 
     # On BaseCfgLine()
+    def count(self, sub: str, start=None, end=None) -> int:
+        """Return the count of the substring in BaseCfgLine().text"""
+
+        if start is None and end is None:
+            return self.text(sub)
+        elif start and end is None:
+            return self.text(sub, start=start)
+        elif start and end:
+            return self.text(sub, start=start, end=end)
+        else:
+            error = "unexpected condition"
+            logger.critical(error)
+            raise NotImplementedError(error)
+
+
+    # On BaseCfgLine()
     def replace(self, before, after, count=-1) -> str:
         """String replace ``before`` with ``after``
 
