@@ -1049,11 +1049,11 @@ class BaseCfgLine:
         """Return the count of the substring in BaseCfgLine().text"""
 
         if start is None and end is None:
-            return self.text(sub)
+            return self.text.count(sub)
         elif start and end is None:
-            return self.text(sub, start=start)
+            return self.text.count(sub, start=start)
         elif start and end:
-            return self.text(sub, start=start, end=end)
+            return self.text.count(sub, start=start, end=end)
         else:
             error = "unexpected condition"
             logger.critical(error)

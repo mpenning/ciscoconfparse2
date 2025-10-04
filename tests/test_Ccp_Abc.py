@@ -134,6 +134,10 @@ def testVal_BaseCfgLine_lt_01():
     obj02.linenum = 2
     assert obj01 < obj02
 
+def testVal_BaseCfgLine_count_01():
+    obj01 = BaseCfgLine(all_lines=None, line=" description Foo Bar Zar description")
+    assert obj01.count("on") == 2
+
 def testVal_BaseCfgLine_rsplit_01():
     """Test the rsplit() method of BaseCfgLine() objects"""
     obj01 = BaseCfgLine(all_lines=None, line=" description Foo Bar Zar description")
@@ -145,7 +149,6 @@ def testVal_BaseCfgLine_split_01():
     obj01 = BaseCfgLine(all_lines=None, line="hostname Foo")
     obj01.linenum = 1
     assert obj01.split() == ["hostname", "Foo"]
-
 
 def testVal_BaseCfgLine_contains_01():
     """Test the __contains__() method of BaseCfgLine() objects"""
