@@ -6,6 +6,18 @@
 - Summary:
     - Insert something here
 
+## Version: 0.8.39
+
+- Released: 2025-10-04
+- Summary:
+    - Bump hatch version
+
+## Version: 0.8.38
+
+- Released: 2025-10-04
+- Summary:
+    - Bump package versions
+
 ## Version: 0.8.37
 
 - Released: 2025-08-17
