@@ -6,6 +6,12 @@
 - Summary:
     - Insert something here
 
+## Version: 0.8.40
+
+- Released: 2025-10-04
+- Summary:
+    - Add `BaseCfgLine().count()`
+
 ## Version: 0.8.39
 
 - Released: 2025-10-04
