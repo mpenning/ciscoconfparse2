@@ -1059,7 +1059,6 @@ class BaseCfgLine:
             logger.critical(error)
             raise NotImplementedError(error)
 
-
     # On BaseCfgLine()
     def replace(self, before, after, count=-1) -> str:
         """String replace ``before`` with ``after``
