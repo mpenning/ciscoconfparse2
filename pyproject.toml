@@ -15,16 +15,16 @@ dependencies = [
   "traitlets==5.14.3",
   "loguru>=0.7.2",
   "hier_config==2.3.1",
-  "pyparsing==3.2.4",
+  "pyparsing==3.2.5",
   # NOTE changing typeguard versions may require code / test changes
   "typeguard==4.4.4",
   "PyYAML>=6.0.2",
   "rich>=13.6.0",
   # "passlib==1.7.4",   <-- deprecating passlib (now unmaintained) in favor of libpass
   #     https://github.com/notypecheck/passlib
-  "libpass==1.9.1.post0",
+  "libpass==1.9.2",
   # Hypothesis for hard-core ip_address tests
-  "hypothesis==6.139.2",
+  "hypothesis==6.140.2",
 ]
 authors = [
   { name = "Mike Pennington", email = "mike@pennington.net" },

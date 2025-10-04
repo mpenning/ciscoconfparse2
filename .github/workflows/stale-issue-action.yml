@@ -10,7 +10,7 @@ jobs:
   stale:
     runs-on: 'ubuntu-latest'
     steps:
-      - uses: 'actions/stale@v9'
+      - uses: 'actions/stale@v10'
         with:
           close-issue-message: >
             Due to inactivity, CiscoConfParse's maintainers are closing this
