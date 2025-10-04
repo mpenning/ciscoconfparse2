@@ -1134,6 +1134,28 @@ class BaseCfgLine:
 
     # On BaseCfgLine()
     @logger.catch(reraise=True)
+    def rsplit(self, sep: str = None, maxsplit: int = -1) -> list[str]:
+        """
+        Right split ``text`` in-place
+
+        .. note::
+
+           The original ``text`` in this object will be unmodified.
+
+        :param sep: Split text on the ``sep`` characters (by default, any whitespace)
+        :type sep: str
+        :param maxsplit: Maximum number of splits, default is -1 (no limit)
+        :type maxsplit: int
+        :return: A sequence of strings
+        :rtype: List[str]
+        """
+        if sep is None:
+            return self._text.rsplit(maxsplit=maxsplit)
+        else:
+            return self._text.rsplit(sep=sep, maxsplit=maxsplit)
+
+    # On BaseCfgLine()
+    @logger.catch(reraise=True)
     def get_regex_typed_dict(
         self,
         regex: re.Match = None,
