@@ -11,6 +11,7 @@
 - Released: 2025-10-04
 - Summary:
     - Add `BaseCfgLine().count()`
+    - Add `BaseCfgLine().find_text_match()`
 
 ## Version: 0.8.39
 
