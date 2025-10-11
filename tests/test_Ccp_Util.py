@@ -1201,11 +1201,13 @@ def test_CiscoRange_24():
         == result_correct
     )
 
+
 def test_CiscoRange_25():
     """If we ask for an int, ensure we get an int"""
     uut = CiscoRange("15-20", result_type=int)
     for value in uut:
         assert isinstance(value, int)
+
 
 def test_CiscoRange_26():
     """If we ask for a list of ints, ensure we get an int"""
