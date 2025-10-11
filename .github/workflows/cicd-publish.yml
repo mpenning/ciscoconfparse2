@@ -12,21 +12,21 @@ defaults:
   run:
     shell: 'bash'
 jobs:
-  python-artifacts:
+  prepare-python-artifacts:
     name: 'Job to build wheel and source distribution files'
     runs-on: 'ubuntu-latest'
     environment: 'release'
     steps:
       - name: 'Checkout code'
-        uses: 'actions/checkout@v4'
+        uses: 'actions/checkout@v5'
         with:
           fetch-depth: 0
       - name: 'Install build frontend'
         run: 'pip install hatch'
       - name: 'Create packages in dist/ with hatch'
         run: 'hatch build'
-      - name: 'Upload package artifacts'
-        uses: 'actions/upload-artifact@v4'
+      - name: 'Upload package artifacts to GitHub'
+        uses: 'actions/upload-artifact@v4.6.2'
         with:
           name: 'python-artifacts'
           path: 'dist/*'
@@ -35,7 +35,7 @@ jobs:
     name: 'Upload release to PyPI'
     if: 'github.event_name == ''push'' && startsWith(github.event.ref, ''refs/tags'')'
     needs:
-      - 'python-artifacts'
+      - 'prepare-python-artifacts'
     runs-on: 'ubuntu-latest'
     permissions:
       contents: 'write'
@@ -44,8 +44,8 @@ jobs:
       name: 'pypi'
       url: 'https://pypi.org/p/ciscoconfparse2'
     steps:
-      - name: 'Retrieve package artifacts from build job'
-        uses: 'actions/download-artifact@v4'
+      - name: 'Download artifacts from python-artifacts job'
+        uses: 'actions/download-artifact@v5'
         with:
           name: 'python-artifacts'
           path: 'dist'

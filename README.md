@@ -2,7 +2,7 @@
 
 # ciscoconfparse2
 
-[![git commits][41]][42] [![Version][2]][3] [![Downloads][6]][7] [![License][8]][9] [![Hatch project][68]][69]
+[![git commits][41]][42] [![Version][2]][3] [![Downloads][6]][72] [![License][8]][9] [![Hatch project][68]][69]
 
 [![SonarCloud][51]][52] [![SonarCloud Maintainability Rating][53]][54] [![SonarCloud Lines of Code][55]][56] [![SonarCloud Bugs][59]][60] [![SonarCloud Code Smells][57]][58] [![SonarCloud Tech Debt][61]][62]
 
@@ -22,11 +22,11 @@ Assume you have a bunch of interfaces in a configuration.  How do you find which
 
 One way is manually reading the whole Cisco IOS-XE configuration.  Another option is [ciscoconfparse2][17]
 
-```python
+```pycon
 >>> from ciscoconfparse2 import CiscoConfParse
 >>>
->>> parse = CiscoConfParse('/path/to/config/file')
->>> intf_cmds = parse.find_parent_objects(['interface', 'shutdown'])
+>>> parse = CiscoConfParse("/path/to/config/file")
+>>> intf_cmds = parse.find_parent_objects(["interface", "shutdown"])
 >>>
 >>> shut_intf_names = [" ".join(cmd.split()[1:]) for cmd in intf_cmds]
 >>>
@@ -68,12 +68,12 @@ You can generate the list of EBGP peers pretty quickly with this script:
 ```python
 from ciscoconfparse2 import CiscoConfParse
 
-parse = CiscoConfParse('/path/to/config/file')   # Or read directly from a list of strings
+parse = CiscoConfParse(
+    "/path/to/config/file"
+)  # Or read directly from a list of strings
 
 # Get all neighbor configuration branches
-branches = parse.find_object_branches(('router bgp',
-                                       'neighbor',
-                                       'remote-as'))
+branches = parse.find_object_branches(("router bgp", "neighbor", "remote-as"))
 
 # Get the local BGP ASN
 bgp_cmd = branches[0][0]
@@ -106,7 +106,6 @@ network configuration or text files.
 ## API Examples
 
 The API examples are [documented on the web][70]
-
 
 # Why
 
@@ -156,6 +155,21 @@ Here's why, it:
 - Documents much more of the API
 - Intentionally requires a different import statement to minimize confusion between the original and [ciscoconfparse2][17]
 - Vasly improves Cisco IOS diffs
+
+## Cisco and Other Vendor-Specific factory parsers
+
+Years ago, I introduced a beta-quality feature called `factory`, where
+I built vendor-specific syntax parsers to extract values from Cisco and other
+vendor configs.
+
+This feature turned out to be a bad design decision; however, it's also much
+more popular than I imagined.
+
+Going forward I strongly discourage people from using `factory` features.  There
+will be no further development on vendor-specific `factory` parsers (such as
+[`models_cisco.py`][71]).
+
+I truly apologize for any disappointment.
 
 # Docs, Installation, and Dependencies
 
@@ -296,3 +310,5 @@ The word \"Cisco\" is a registered trademark of [Cisco Systems][27].
   [68]: https://img.shields.io/badge/%F0%9F%A5%9A-Hatch-4051b5.svg
   [69]: https://github.com/pypa/hatch
   [70]: http://www.pennington.net/py/ciscoconfparse2/examples.html
+  [71]: https://github.com/mpenning/ciscoconfparse2/blob/main/ciscoconfparse2/models_cisco.py
+  [72]: https://clickpy.clickhouse.com/dashboard/ciscoconfparse2

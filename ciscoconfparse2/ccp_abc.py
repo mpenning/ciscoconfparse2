@@ -1045,6 +1045,21 @@ class BaseCfgLine:
             raise NotImplementedError(error)
 
     # On BaseCfgLine()
+    def count(self, sub: str, start=None, end=None) -> int:
+        """Return the count of the substring in BaseCfgLine().text"""
+
+        if start is None and end is None:
+            return self.text.count(sub)
+        elif start and end is None:
+            return self.text.count(sub, start=start)
+        elif start and end:
+            return self.text.count(sub, start=start, end=end)
+        else:
+            error = "unexpected condition"
+            logger.critical(error)
+            raise NotImplementedError(error)
+
+    # On BaseCfgLine()
     def replace(self, before, after, count=-1) -> str:
         """String replace ``before`` with ``after``
 
@@ -1131,6 +1146,28 @@ class BaseCfgLine:
             return self._text.split(maxsplit=maxsplit)
         else:
             return self._text.split(sep=sep, maxsplit=maxsplit)
+
+    # On BaseCfgLine()
+    @logger.catch(reraise=True)
+    def rsplit(self, sep: str = None, maxsplit: int = -1) -> list[str]:
+        """
+        Right split ``text`` in-place
+
+        .. note::
+
+           The original ``text`` in this object will be unmodified.
+
+        :param sep: Split text on the ``sep`` characters (by default, any whitespace)
+        :type sep: str
+        :param maxsplit: Maximum number of splits, default is -1 (no limit)
+        :type maxsplit: int
+        :return: A sequence of strings
+        :rtype: List[str]
+        """
+        if sep is None:
+            return self._text.rsplit(maxsplit=maxsplit)
+        else:
+            return self._text.rsplit(sep=sep, maxsplit=maxsplit)
 
     # On BaseCfgLine()
     @logger.catch(reraise=True)

@@ -68,7 +68,7 @@ cicd:
 	git push origin main
 	# push tag to github origin, which triggers a github CICD action (see above)
 	-git push origin $$VERSION
-	git checkout develop
+	git checkout @{-1}                        # checkout the previous branch...
 	git pull origin main
 
 .PHONY: bump-version-patch
@@ -229,6 +229,7 @@ clean:
 	-rm -rf .pytest_cache/
 	-rm -rf .eggs/
 	-rm -rf .cache/
+	-rm -rf sphinx-doc/_build
 	-rm -rf build/ dist/ ciscoconfparse2.egg-info/ setuptools*
 	-rm -rf artifacts/
 

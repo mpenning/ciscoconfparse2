@@ -63,7 +63,8 @@ classifiers=[
 dev = [
   "wheel>=0.38.4",
   "twine>=4.0.2",
-  "hatchling>=1.26.3",
+  "hatch>=1.14.2",
+  "hatchling>=1.27.0",
   "pytest>=8.3.5",
   "pre-commit==4.3.0",
   "black==25.9.0",
@@ -91,7 +92,7 @@ doc = [
 ccp = "ciscoconfparse2.cli_script:ccp_script_entry"
 
 [build-system]
-requires = ["hatchling>=1.26.3"]
+requires = ["hatchling>=1.27.0"]
 build-backend = "hatchling.build"
 
 [project.urls]

@@ -2882,6 +2882,7 @@ debug={debug},
         ignore_ws: bool = False,
         escape_chars: bool = False,
         reverse: bool = False,
+        default_value=None,
     ) -> list[BaseCfgLine]:
         """Find all :class:`~ciscoconfparse2.models_cisco.IOSCfgLine` objects whose text matches ``linespec`` and return the
         :class:`~ciscoconfparse2.models_cisco.IOSCfgLine` objects in a python list.

@@ -1,8 +1,56 @@
+# Versions
+
 ## Version: GIT HEAD
 
 - Released: Not released
 - Summary:
     - Insert something here
+
+## Version: 0.8.41
+
+- Released: 2025-10-04
+- Summary:
+    - Remove `BaseCfgLine().find_text_match()`
+
+
+## Version: 0.8.40
+
+- Released: 2025-10-04
+- Summary:
+    - Add `BaseCfgLine().count()`
+    - Add `BaseCfgLine().find_text_match()`
+
+## Version: 0.8.39
+
+- Released: 2025-10-04
+- Summary:
+    - Bump hatch version
+
+## Version: 0.8.38
+
+- Released: 2025-10-04
+- Summary:
+    - Bump package versions
+
+## Version: 0.8.37
+
+- Released: 2025-08-17
+- Summary:
+    - Bump package versions
+
+## Version: 0.8.34
+
+- Released: 2025-08-17
+- Summary:
+    - Add auto-generated release notes to the GitHub Release
+
+## Version: 0.8.33
+
+- Released: 2025-08-17
+- Summary:
+    - Merge dependabot version recommendations
+    - Bump actions/checkout to v5
+    - Remove fix-encoding-pragma from pre-commit-config.yaml
 
 ## Version: 0.8.29
 

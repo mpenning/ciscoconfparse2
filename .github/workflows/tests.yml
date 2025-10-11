@@ -42,7 +42,7 @@ jobs:
           - {name: 'PyPy', python: 'pypy-3.10', os: 'ubuntu-latest', tox: 'pypy310'}
           - {name: 'Minimum Versions', python: '3.11', os: 'ubuntu-latest', tox: 'py311'}
     steps:
-      - uses: 'actions/checkout@v4'
+      - uses: 'actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8'  # v5.0.0
       - uses: 'actions/setup-python@v6'
         with:
           python-version: '${{ matrix.python }}'
@@ -67,9 +67,10 @@ jobs:
           true  ###############################################################
           uv pip install --system -r pyproject.toml --extra dev .
       - name: 'Run pytest'
+        working-directory: "tests"
         run: |-
           true  ###############################################################
           true  # use pytest dot path because it's portable across
           true  #     windows and unix
           true  ###############################################################
-          cd tests && pytest .
+          pytest .

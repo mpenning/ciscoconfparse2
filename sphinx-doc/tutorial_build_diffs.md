@@ -65,11 +65,11 @@ interface Serial1/1
 The script below will build read the configurations from disk and check to see whether
 there are diffs.
 
-```python
+```pycon
 >>> from ciscoconfparse2.ciscoconfparse2 import Diff
 >>> # Parse the original configuration
->>> old_config = '/tftpboot/bucksnort_before.conf'
->>> new_config = '/tftpboot/bucksnort_after.conf'
+>>> old_config = "/tftpboot/bucksnort_before.conf"
+>>> new_config = "/tftpboot/bucksnort_after.conf"
 >>> diff = Diff(old_config=old_config, new_config=new_config)
 >>> diff.get_diff()
 ['interface Serial1/0', ' mpls ip']
@@ -88,11 +88,11 @@ interface Serial1/0
 
 The script below will build read the configurations from disk and build rollback diff configs.
 
-```python
+```pycon
 >>> from ciscoconfparse2.ciscoconfparse2 import Diff
 >>> # Parse the original configuration
->>> old_config = '/tftpboot/bucksnort_before.conf'
->>> new_config = '/tftpboot/bucksnort_after.conf'
+>>> old_config = "/tftpboot/bucksnort_before.conf"
+>>> new_config = "/tftpboot/bucksnort_after.conf"
 >>> diff = Diff(old_config=old_config, new_config=new_config)
 >>> diff.get_rollback()
 ['interface Serial1/0', ' mpls ip']

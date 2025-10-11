@@ -32,9 +32,7 @@ The following script should be used to extract the HSRP Groups from `GigabitEthe
 ```python
 from ciscoconfparse2 import CiscoConfParse
 
-parse = CiscoConfParse("/path/to/config/file",
-                       syntax="ios",
-                       factory=True)
+parse = CiscoConfParse("/path/to/config/file", syntax="ios", factory=True)
 
 hsrp_intf = parse.find_objects("interface GigabitEthernet1/0")[0]
 
