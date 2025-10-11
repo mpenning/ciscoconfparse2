@@ -22,9 +22,9 @@ dependencies = [
   "rich>=13.6.0",
   # "passlib==1.7.4",   <-- deprecating passlib (now unmaintained) in favor of libpass
   #     https://github.com/notypecheck/passlib
-  "libpass==1.9.2",
+  "libpass==1.9.3",
   # Hypothesis for hard-core ip_address tests
-  "hypothesis==6.140.2",
+  "hypothesis==6.140.3",
 ]
 authors = [
   { name = "Mike Pennington", email = "mike@pennington.net" },
@@ -68,10 +68,10 @@ dev = [
   "pytest>=8.3.5",
   "pre-commit==4.3.0",
   "black==25.9.0",
-  "pyupgrade==3.20.0",
+  "pyupgrade==3.21.0",
   "yamlfix==1.18.0",
   "pylama==8.4.1",
-  "pylint==3.3.8",
+  "pylint==3.3.9",
   "coverage>=7.3.2",
   "pytest-cov>=4.1.0",
   "pyroma==5.0",
@@ -79,7 +79,7 @@ dev = [
   "fabric==3.2.2",
   "commitizen>=2.40.0",
   "python-lsp-server>=1.12.2",
-  "tox==4.30.2",
+  "tox==4.30.3",
 ]
 doc = [
   "Sphinx==8.2.3",
