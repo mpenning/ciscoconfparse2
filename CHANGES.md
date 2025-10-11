@@ -6,6 +6,12 @@
 - Summary:
     - Insert something here
 
+## Version: 0.8.42
+
+- Released: 2025-10-11
+- Summary:
+    - Bump dependency versions
+
 ## Version: 0.8.41
 
 - Released: 2025-10-04
