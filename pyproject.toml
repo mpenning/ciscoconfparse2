@@ -24,7 +24,7 @@ dependencies = [
   #     https://github.com/notypecheck/passlib
   "libpass==1.9.3",
   # Hypothesis for hard-core ip_address tests
-  "hypothesis==6.141.0",
+  "hypothesis==6.141.1",
 ]
 authors = [
   { name = "Mike Pennington", email = "mike@pennington.net" },
