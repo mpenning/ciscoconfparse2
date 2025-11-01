@@ -26,7 +26,7 @@ jobs:
       - name: 'Create packages in dist/ with hatch'
         run: 'hatch build'
       - name: 'Upload package artifacts to GitHub'
-        uses: 'actions/upload-artifact@v4.6.2'
+        uses: 'actions/upload-artifact@v5.0.0'
         with:
           name: 'python-artifacts'
           path: 'dist/*'
