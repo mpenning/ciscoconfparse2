@@ -4,7 +4,13 @@
 
 - Released: Not released
 - Summary:
+    - To be determined
+
+## Version: 0.8.43
+
+- Summary:
     - Bump github workflows dependency versions
+    - Remove twine as a dev dependency (pypy builds failed with twine)
 
 ## Version: 0.8.42
 
