@@ -49,7 +49,7 @@ jobs:
       - name: 'Display Python version'
         run: 'python -c ''import sys; print(sys.version)'''
       - name: "Install the latest version of uv"
-        uses: "astral-sh/setup-uv@v6"
+        uses: "astral-sh/setup-uv@v7"
         with:
           version: "latest"
       - name: 'Install dependencies on Ubuntu Linux / Windows / MacOS'

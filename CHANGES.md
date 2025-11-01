@@ -4,7 +4,7 @@
 
 - Released: Not released
 - Summary:
-    - Insert something here
+    - Bump github workflows dependency versions
 
 ## Version: 0.8.42
 
