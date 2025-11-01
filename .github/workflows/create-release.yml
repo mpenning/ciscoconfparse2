@@ -29,6 +29,8 @@ jobs:
       contents: "write"
     steps:
       - uses: "actions/download-artifact@v6"
+        with:
+          name: artifact  # Create an artifact/ directory
       - name: "create release"
         run: "gh release create --generate-notes --repo ${{ github.repository }} ${{ github.ref_name }} artifact/*"
         env:

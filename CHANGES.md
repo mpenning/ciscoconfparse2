@@ -6,6 +6,11 @@
 - Summary:
     - To be determined
 
+## Version: 0.8.45
+
+- Summary:
+    - Hard-code `artifact/` directory with `download-artifact`
+
 ## Version: 0.8.44
 
 - Summary:
