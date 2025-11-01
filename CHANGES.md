@@ -6,6 +6,11 @@
 - Summary:
     - To be determined
 
+## Version: 0.8.44
+
+- Summary:
+    - Revert download-artifact to version 6.0
+
 ## Version: 0.8.43
 
 - Summary:
