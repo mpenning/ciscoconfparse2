@@ -6,7 +6,7 @@
 - Summary:
     - To be determined
 
-## Version: 0.8.46
+## Version: 0.8.47
 
 - Summary:
     - Fix syntax
