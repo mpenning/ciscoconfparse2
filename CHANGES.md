@@ -6,6 +6,11 @@
 - Summary:
     - To be determined
 
+## Version: 0.8.46
+
+- Summary:
+    - Fix syntax
+
 ## Version: 0.8.45
 
 - Summary:
