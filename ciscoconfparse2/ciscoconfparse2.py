@@ -636,7 +636,6 @@ class ConfigList(UserList):
     dna: str = "ConfigList"
     current_checkpoint: int = 0
     commit_checkpoint: int = 0
-    CiscoConfParse: Any = None
 
     @logger.catch(reraise=True)
     @typechecked
@@ -649,8 +648,9 @@ class ConfigList(UserList):
         # syntax="__undefined__",
         syntax: str = "ios",
         auto_commit: bool = True,
+        # ccp_ref should be an instance of CiscoConfParse
+        ccp_ref: Any = None,
         debug: int = 0,
-        **kwargs,
     ):
         """Initialize the class.
 
@@ -690,6 +690,8 @@ class ConfigList(UserList):
                 One of 'ios', 'nxos', 'asa', 'iosxr', or 'junos'
             auto_commit : bool
                 Whether to automatically commit changes to the configuration
+            ccp_ref : CiscoConfParse
+                The instance of the owning CiscoConfParse() instance
             debug : int
                 Debug level of this configuration instance
             ccp_ref : CiscoConfParse
@@ -713,47 +715,13 @@ class ConfigList(UserList):
             # IMPORTANT This check MUST come near the top of ConfigList()...
             raise ValueError
 
-        #######################################################################
-        # initialize the list with the correct BaseCfgLine() instances
-        #######################################################################
-        initobjs = []
-        for ii in initlist:
-            if isinstance(ii, str):
-                if bool(factory) is False:
-                    obj = CFGLINE[syntax](
-                        all_lines=[],
-                        line=ii,
-                    )
-                else:
-                    obj = config_line_factory(
-                        all_lines=[],
-                        line=ii,
-                        syntax=syntax,
-                    )
-                initobjs.append(obj)
-            elif isinstance(ii, BaseCfgLine):
-                initobjs.append(ii)
-            else:
-                raise ValueError()
-
-        #######################################################################
-        # Parse out CiscoConfParse and ccp_ref keywords...
-        #     FIXME the CiscoConfParse attribute / parameter should go away
-        #     use self.ccp_ref instead of self.CiscoConfParse
-        #######################################################################
-
-        # This assert is one of two fixes, intended to catch user error such as
-        # the problems that the submitter of Github issue #251 had.
-        # CiscoConfParse() could not read his configuration because he submitted
-        # a multi-line string...
-        #
-        # This check will explicitly catch some problems like that...
-
         if syntax not in ALL_VALID_SYNTAX:
             raise RequirementFailure()
 
-        ccp_ref_kwarg_val = kwargs.get("ccp_ref", None)
-        ccp_value = ccp_ref_kwarg_val
+        if ccp_ref is None:
+            error = f"ConfigList() must receive a valid CiscoConfParse() instance in the ccp_ref argument"
+            logger.error(error)
+            raise ValueError(error)
 
         self.initlist = initlist
         self.comment_delimiters = comment_delimiters
@@ -763,7 +731,7 @@ class ConfigList(UserList):
         self.auto_commit = auto_commit
         self.debug = debug
 
-        self.ccp_ref = ccp_value
+        self.ccp_ref = ccp_ref
         self.dna = "ConfigList"
         # current_checkpoint is the checkpoint value after a change
         # operation
@@ -774,7 +742,6 @@ class ConfigList(UserList):
         # operation happens
         self.commit_checkpoint = 0
 
-        # Removed this portion of __init__() in 1.7.16...
         if getattr(initlist, "__iter__", False) is not False:
             self.data = self.bootstrap(initlist, debug=debug)
 
@@ -1891,14 +1858,6 @@ class ConfigList(UserList):
         for idx, obj in enumerate(self.data):
             if (idx >= begin_index) and (not obj.is_comment):
                 yield obj
-
-    # This method is on ConfigList()
-    @logger.catch(reraise=True)
-    def reassign_linenums(self) -> None:
-        """Renumber the configuration line numbers"""
-        # Call this after any insertion or deletion
-        for idx, obj in enumerate(self.data):
-            obj.linenum = idx
 
     # This method is on ConfigList()
     @property
