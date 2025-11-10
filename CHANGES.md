@@ -6,6 +6,14 @@
 - Summary:
     - To be determined
 
+## Version: 0.8.48
+
+- Summary:
+    - Add explicit `ccp_ref` argument to `ConfigList()`
+    - Remove dead code in `ConfigList().reassign_linenums()`
+    - Remove dead code in `ConfigList().__init__()`
+    - Remove dead `kwargs` keyword for `ConfigList()`
+
 ## Version: 0.8.47
 
 - Summary:
