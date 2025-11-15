@@ -3324,6 +3324,7 @@ def testValues_ConfigList_insert02(parse_c02):
 
     assert test_result == correct_result
 
+
 def testValues_ConfigList_delete01():
     """
     Test that ConfigList() config line deletions work

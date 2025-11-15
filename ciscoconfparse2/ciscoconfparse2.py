@@ -1206,7 +1206,7 @@ class ConfigList(UserList):
         self.data.sort(cmp=cmp, key=key, reverse=reverse)
 
         # Rebuild / renumber items on the modified ConfigList()...
-        self.rebuild_after_modification(commit = self.auto_commit)
+        self.rebuild_after_modification(commit=self.auto_commit)
 
         if bool(self.auto_commit):
             # The config is not safe unless this is called after the append
@@ -1232,7 +1232,7 @@ class ConfigList(UserList):
             raise InvalidParameters(error)
 
         # Rebuild / renumber items on the modified ConfigList()...
-        self.rebuild_after_modification(commit = self.auto_commit)
+        self.rebuild_after_modification(commit=self.auto_commit)
 
         if bool(self.auto_commit):
             # The config is not safe unless this is called after the append
