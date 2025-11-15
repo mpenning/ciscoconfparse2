@@ -3332,9 +3332,14 @@ def testValues_ConfigList_delete01():
     config = "hostname foo\n!"
     parse = CiscoConfParse(config)
 
-    del parse.config_objs[1]
-
     assert parse.config_objs[0].text == "hostname foo"
+    assert parse.config_objs[0].linenum == 0
+
+    del parse.config_objs[0]
+
+    # Test that lines are deleted and correctly renumbered...
+    assert parse.config_objs[0].text == "!"
+    assert parse.config_objs[0].linenum == 0
     assert len(parse.config_objs) == 1
     assert len(parse.objs) == 1
 
