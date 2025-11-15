@@ -62,6 +62,7 @@ classifiers=[
 # Ensure wheel is upgraded... ref Github Issue #257
 dev = [
   "wheel>=0.38.4",
+  "twine>=4.0.2",
   "hatch>=1.14.2",
   "hatchling>=1.27.0",
   "pytest>=8.3.5",
