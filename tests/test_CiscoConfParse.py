@@ -3324,6 +3324,20 @@ def testValues_ConfigList_insert02(parse_c02):
 
     assert test_result == correct_result
 
+def testValues_ConfigList_delete01():
+    """
+    Test that ConfigList() config line deletions work
+    """
+
+    config = "hostname foo\n!"
+    parse = CiscoConfParse(config)
+
+    del parse.config_objs[1]
+
+    assert parse.config_objs[0].text == "hostname foo"
+    assert len(parse.config_objs) == 1
+    assert len(parse.objs) == 1
+
 
 def testValues_ConfigList_context_manager_01():
     """Test a ConfigList context-manager"""
