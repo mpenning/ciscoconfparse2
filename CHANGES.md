@@ -6,6 +6,11 @@
 - Summary:
     - To be determined
 
+## Version: 0.8.49
+
+- Summary:
+    - Update github workflows packages based on dependabot PRs
+
 ## Version: 0.8.48
 
 - Summary:
