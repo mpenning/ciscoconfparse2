@@ -767,6 +767,29 @@ class ConfigList(UserList):
         return f"""<ConfigList, syntax='{self.syntax}', comment_delimiters={self.comment_delimiters}, conf={self.data}>"""
 
     @logger.catch(reraise=True)
+    def rebuild_after_modification(self, commit: bool = False) -> list[str]:
+        """
+        Rebuild the configuration, and renumber lines.  Return a list of string config lines.
+        """
+
+        # Rebuild the modified configuration...
+        if len(self.data) == 0:
+            initlist = []
+        elif len(self.data) == 1:
+            initlist = [self.data[0].text]
+        else:
+            initlist = [ii.text for ii in self.data]
+
+        # Reparse the new configuration...
+        self.data = self.bootstrap(initlist, debug=self.debug)
+
+        if commit:
+            # Commit all changes...
+            self.ccp_ref.commit()
+
+        return initlist
+
+    @logger.catch(reraise=True)
     def __iter__(self):
         return iter(self.data)
 
@@ -818,11 +841,18 @@ class ConfigList(UserList):
     def __setitem__(self, idx, value) -> None:
         self.data[idx] = value
 
+        # Rebuild / renumber items on the modified ConfigList()...
+        self.rebuild_after_modification(commit=self.auto_commit)
+
     # This method is on ConfigList()
     @logger.catch(reraise=True)
     def __delitem__(self, idx) -> None:
+
+        # Delete the requested line...
         del self.data[idx]
-        self.data = self.bootstrap(self.text, debug=self.debug)
+
+        # Rebuild / renumber items on the modified ConfigList()...
+        self.rebuild_after_modification(commit=self.auto_commit)
 
     # This method is on ConfigList()
     @logger.catch(reraise=True)
@@ -852,9 +882,8 @@ class ConfigList(UserList):
         else:
             self.data += list(other)
 
-        if bool(self.auto_commit):
-            # The config is not safe unless this is called after the append
-            self.ccp_ref.commit()
+        # Rebuild / renumber items on the modified ConfigList()...
+        self.rebuild_after_modification(commit=self.auto_commit)
 
         return self
 
@@ -1021,6 +1050,9 @@ class ConfigList(UserList):
         """
         retval = self.data.pop(index)
 
+        # Rebuild / renumber items on the modified ConfigList()...
+        self.rebuild_after_modification(commit=self.auto_commit)
+
         if bool(self.auto_commit):
             # The config is not safe unless this is called after the append
             self.ccp_ref.commit()
@@ -1055,6 +1087,9 @@ class ConfigList(UserList):
         # Remove the parent...
         self.data.pop(idx)
 
+        # Rebuild / renumber items on the modified ConfigList()...
+        self.rebuild_after_modification(commit=self.auto_commit)
+
         if bool(self.auto_commit):
             # The config is not safe unless this is called after the append
             self.ccp_ref.commit()
@@ -1069,7 +1104,7 @@ class ConfigList(UserList):
         """
         self.data.clear()
 
-        self.data = self.bootstrap(self.as_text)
+        self.data = self.bootstrap([])
 
         if bool(self.auto_commit):
             # The config is not safe unless this is called after the append
@@ -1138,7 +1173,8 @@ class ConfigList(UserList):
         """
         self.data.reverse()
 
-        self.data = self.bootstrap(self.as_text)
+        # Rebuild / renumber items on the modified ConfigList()...
+        self.rebuild_after_modification(commit=self.auto_commit)
 
         if bool(self.auto_commit):
             # The config is not safe unless this is called after the append
@@ -1169,7 +1205,8 @@ class ConfigList(UserList):
         """
         self.data.sort(cmp=cmp, key=key, reverse=reverse)
 
-        self.data = self.bootstrap(self.as_text)
+        # Rebuild / renumber items on the modified ConfigList()...
+        self.rebuild_after_modification(commit = self.auto_commit)
 
         if bool(self.auto_commit):
             # The config is not safe unless this is called after the append
@@ -1194,7 +1231,8 @@ class ConfigList(UserList):
             logger.critical(error)
             raise InvalidParameters(error)
 
-        self.data = self.bootstrap(self.as_text, debug=self.debug)
+        # Rebuild / renumber items on the modified ConfigList()...
+        self.rebuild_after_modification(commit = self.auto_commit)
 
         if bool(self.auto_commit):
             # The config is not safe unless this is called after the append
