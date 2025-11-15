@@ -9,6 +9,7 @@
 ## Version: 0.8.48
 
 - Summary:
+    - Update manual delete of a `ConfigList()` item
     - Add explicit `ccp_ref` argument to `ConfigList()`
     - Remove dead code in `ConfigList().reassign_linenums()`
     - Remove dead code in `ConfigList().__init__()`
