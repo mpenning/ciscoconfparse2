@@ -6,6 +6,11 @@
 - Summary:
     - To be determined
 
+## Version: 0.8.51
+
+- Summary:
+    - Handle problems with Python 3.9
+
 ## Version: 0.8.50
 
 - Summary:
