@@ -2468,7 +2468,7 @@ class DNSResponse:
 
 
 @logger.catch(reraise=True)
-def dns_query(input_str="", query_type="", server="", timeout=2.0):
+def dns_query(input_str="", query_type="A", server="8.8.8.8", timeout=2.0):
     """A unified IPv4 & IPv6 DNS lookup interface; this is essentially just a wrapper around dnspython's API.  When you query a PTR record, you can use an IPv4 or IPv6 address (which will automatically be converted into an in-addr.arpa name.  This wrapper only supports a subset of DNS records: 'A', 'AAAA', 'CNAME', 'MX', 'NS', 'PTR', and 'TXT'
 
     Paremeters
@@ -2476,9 +2476,9 @@ def dns_query(input_str="", query_type="", server="", timeout=2.0):
     input_str : str
         A string containing the DNS record to lookup
     query_type : str
-        A string containing the DNS record type (SOA not supported)
+        A string containing the DNS record type (default is 'A'; SOA not supported)
     server : str
-        A string containing the fqdn or IP address of the dns server
+        A string containing the fqdn or IP address of the dns server (default is 8.8.8.8)
     timeout : float
         DNS lookup timeout duration (default: 2.0 seconds)
 
