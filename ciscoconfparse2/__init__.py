@@ -35,7 +35,6 @@ from ciscoconfparse2.ccp_util import as_text_list
 from ciscoconfparse2.ccp_util import junos_unsupported
 from ciscoconfparse2.ccp_util import log_function_call
 from ciscoconfparse2.ccp_util import enforce_valid_types
-from ciscoconfparse2.ccp_util import fix_repeated_words
 from ciscoconfparse2.ccp_util import _get_ipv4
 from ciscoconfparse2.ccp_util import _get_ipv6
 from ciscoconfparse2.ccp_util import ip_factory
@@ -43,7 +42,6 @@ from ciscoconfparse2.ccp_util import collapse_addresses
 from ciscoconfparse2.ccp_util import L4Object
 from ciscoconfparse2.ccp_util import DNSResponse
 from ciscoconfparse2.ccp_util import dns_query
-from ciscoconfparse2.ccp_util import check_valid_ipaddress
 
 
 from dns.resolver import Resolver

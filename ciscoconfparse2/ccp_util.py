@@ -2794,39 +2794,6 @@ def dns_query(input_str="", query_type="", server="", timeout=2.0):
     return retval
 
 
-@logger.catch(reraise=True)
-def check_valid_ipaddress(input_addr=None):
-    """
-    Accept an input string with an IPv4 or IPv6 address. If the address is
-    valid, return a tuple of:
-    (input_addr, ipaddr_family)
-
-    Throw an error if the address is not valid.
-    """
-    if not isinstance(input_addr, str):
-        raise ValueError
-
-    input_addr = input_addr.strip()
-    ipaddr_family = 0
-    try:
-        IPv4Obj(input_addr)
-        ipaddr_family = 4
-    except BaseException:
-        raise ValueError(input_addr)
-
-    if ipaddr_family == 0:
-        try:
-            IPv6Obj(input_addr)
-            ipaddr_family = 6
-        except BaseException:
-            raise ValueError(input_addr)
-
-    error = f"FATAL: '{input_addr}' is not a valid IPv4 or IPv6 address."
-    if not (ipaddr_family == 4 or ipaddr_family == 6):
-        raise RequirementFailure(error)
-    return (input_addr, ipaddr_family)
-
-
 @attrs.define(repr=False, slots=False)
 class CiscoIOSInterface:
     interface_name: str = None
