@@ -34,12 +34,9 @@ mike [~at~] pennington !dot! net
 # pragma warning disable S6395
 
 import copy
-import locale
 import os
 import re
-import shlex
 import socket
-import subprocess
 import sys
 import time
 from collections import UserList
