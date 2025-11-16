@@ -32,7 +32,8 @@ import re
 import time
 from collections import UserList
 from collections.abc import Sequence
-from typing import Any, Callable, Optional, Union
+from typing import Any, Optional, Union
+from collections.abc import Callable
 
 import attrs
 import hier_config
@@ -191,7 +192,7 @@ def initialize_globals():
 
 
 @logger.catch(reraise=True)
-def get_syntax_comment_delimiters(syntax: Optional[str] = None) -> list[str]:
+def get_syntax_comment_delimiters(syntax: str | None = None) -> list[str]:
     """Return a list of comment delimiters for the 'syntax' string in question
 
     :return: A sequence of string comment delimiters
@@ -310,8 +311,8 @@ class BraceParse(HasTraits):
     @logger.catch(reraise=True)
     def __init__(
         self,
-        config_txt: Optional[str] = None,
-        comment_delimiters: Optional[list] = None,
+        config_txt: str | None = None,
+        comment_delimiters: list | None = None,
         stop_width: int = 4,
         semicolon_end: bool = False,
         debug: bool = False,
@@ -435,9 +436,9 @@ def cfgobj_from_text(
     text_list: list[str],
     txt: str,
     idx: int,
-    syntax: Optional[str] = None,
-    comment_delimiters: Optional[list[str]] = None,
-    factory: Optional[bool] = None,
+    syntax: str | None = None,
+    comment_delimiters: list[str] | None = None,
+    factory: bool | None = None,
 ) -> BaseCfgLine:
     """Build a configuration object from configuration text, syntax, and factory inputs.
 
@@ -547,9 +548,9 @@ def build_space_tolerant_regex(linespec: str, encoding: str = "utf-8") -> str:
 # https://raw.githubusercontent.com/mpenning/ciscoconfparse/bb3f77436023873da344377d3c839387f5131e7f/ciscoconfparse/ciscoconfparse2.py
 @logger.catch(reraise=True)
 def convert_junos_to_ios(
-    input_list: Optional[list[str]] = None,
+    input_list: list[str] | None = None,
     stop_width: int = 4,
-    comment_delimiters: Optional[list[str]] = None,
+    comment_delimiters: list[str] | None = None,
     ignore_blank_lines: bool = False,
     debug: int = 0,
 ) -> list[str]:
@@ -621,8 +622,8 @@ def convert_junos_to_ios(
 class ConfigList(UserList):
     """A custom list to hold :class:`~ciscoconfparse2.ccp_abc.BaseCfgLine` objects.  Most users will never need to use this class directly."""
 
-    initlist: Optional[Union[list[str], tuple[str, ...]]] = None
-    comment_delimiters: Optional[list[str]] = None
+    initlist: list[str] | tuple[str, ...] | None = None
+    comment_delimiters: list[str] | None = None
     factory: bool = None
     ignore_blank_lines: bool = None
     syntax: str = None
@@ -640,8 +641,8 @@ class ConfigList(UserList):
     @typechecked
     def __init__(
         self,
-        initlist: Optional[Union[list[str], tuple[str, ...]]] = None,
-        comment_delimiters: Optional[list[str]] = None,
+        initlist: list[str] | tuple[str, ...] | None = None,
+        comment_delimiters: list[str] | None = None,
         factory: bool = False,
         ignore_blank_lines: bool = False,
         # syntax="__undefined__",
@@ -1195,8 +1196,8 @@ class ConfigList(UserList):
     @logger.catch(reraise=True)
     def sort(
         self,
-        cmp: Optional[Callable] = None,
-        key: Optional[Callable] = None,
+        cmp: Callable | None = None,
+        key: Callable | None = None,
         reverse: bool = False,
     ) -> None:
         """
@@ -1225,7 +1226,7 @@ class ConfigList(UserList):
 
     # This method is on ConfigList()
     @logger.catch(reraise=True)
-    def extend(self, other: Union[list[BaseCfgLine], tuple[BaseCfgLine, ...]]) -> None:
+    def extend(self, other: list[BaseCfgLine] | tuple[BaseCfgLine, ...]) -> None:
         """
         Extend the ConfigList with ``other``.
 
@@ -1252,7 +1253,7 @@ class ConfigList(UserList):
     # This method is on ConfigList()
     @logger.catch(reraise=True)
     def insert_before(
-        self, exist_val: Optional[str] = None, new_val: Optional[str] = None
+        self, exist_val: str | None = None, new_val: str | None = None
     ) -> None:
         """
         Insert new_val before all occurances of exist_val.
@@ -1348,7 +1349,7 @@ class ConfigList(UserList):
     # This method is on ConfigList()
     @logger.catch(reraise=True)
     def insert_after(
-        self, exist_val: Optional[str] = None, new_val: Optional[str] = None
+        self, exist_val: str | None = None, new_val: str | None = None
     ) -> None:
         """
         Insert new_val after all occurances of exist_val.
@@ -1449,7 +1450,7 @@ class ConfigList(UserList):
 
     # This method is on ConfigList()
     @logger.catch(reraise=True)
-    def insert(self, index: int, item: Union[BaseCfgLine, str]) -> None:
+    def insert(self, index: int, item: BaseCfgLine | str) -> None:
         """
         :param index: Index to insert ``item`` at
         :type index: int
@@ -1503,7 +1504,7 @@ class ConfigList(UserList):
 
     # This method is on ConfigList()
     @logger.catch(reraise=True)
-    def _banner_mark_regex(self, regex: Union[str, re.Pattern]) -> None:
+    def _banner_mark_regex(self, regex: str | re.Pattern) -> None:
         """
         :param regex: Find banner object children with `regex`` and build references
                       between banner parent / child objects.
@@ -1622,7 +1623,7 @@ class ConfigList(UserList):
         indent: int,
         max_indent: int,
         is_config_line: bool,
-    ) -> tuple[dict[int, BaseCfgLine], Union[BaseCfgLine, None]]:
+    ) -> tuple[dict[int, BaseCfgLine], BaseCfgLine | None]:
         """Use a family parent cache mapping to find the parent
         for a given indent level; maintain the cache mapping.
 
@@ -1668,12 +1669,12 @@ class ConfigList(UserList):
         self,
         retval: list[BaseCfgLine],
         parents_cache: dict[int, BaseCfgLine],
-        parent: Union[BaseCfgLine, None],
+        parent: BaseCfgLine | None,
         index: int,
         indent: int,
         obj: BaseCfgLine,
         debug: int,
-    ) -> tuple[list[BaseCfgLine], dict, Union[BaseCfgLine, None]]:
+    ) -> tuple[list[BaseCfgLine], dict, BaseCfgLine | None]:
         candidate_parent = None
         candidate_parent_idx = None
         # If indented, walk backwards and find the parent...
@@ -1711,7 +1712,7 @@ class ConfigList(UserList):
     # This method is on ConfigList()
     @logger.catch(reraise=True)
     def bootstrap(
-        self, text_list: Optional[list[str]] = None, debug: int = 0
+        self, text_list: list[str] | None = None, debug: int = 0
     ) -> list[BaseCfgLine]:
         """
         Accept a text list, and format into a list of BaseCfgLine() instances.
@@ -1863,7 +1864,7 @@ class ConfigList(UserList):
         _list: list[BaseCfgLine],
         idx: int,
         indent: int,
-        parentobj: Union[BaseCfgLine, None],
+        parentobj: BaseCfgLine | None,
         childobj: BaseCfgLine,
     ) -> None:
         """
@@ -2011,11 +2012,11 @@ class CiscoConfParse:
         self,
         # The only reason List[bool] is accepted is to satisfy typeguard for
         #   the negative input tests...
-        config: Optional[Union[str, list[str], tuple[str, ...], list[bool]]] = None,
+        config: str | list[str] | tuple[str, ...] | list[bool] | None = None,
         syntax: str = "ios",
         encoding: str = locale.getpreferredencoding(),
         loguru: bool = True,
-        comment_delimiters: Optional[list[str]] = None,
+        comment_delimiters: list[str] | None = None,
         auto_indent_width: int = -1,
         linesplit_rgx: str = r"\r*\n",
         ignore_blank_lines: bool = False,
@@ -2242,7 +2243,7 @@ class CiscoConfParse:
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
     def handle_ccp_brace_syntax(
-        self, tmp_lines: Optional[list] = None, syntax: Optional[str] = None
+        self, tmp_lines: list | None = None, syntax: str | None = None
     ) -> list[str]:
         """Deal with brace-delimited syntax issues, such as conditionally discarding junos closing brace-lines.
 
@@ -2284,7 +2285,7 @@ class CiscoConfParse:
 
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
-    def get_auto_indent_from_syntax(self, syntax: Optional[str] = None) -> int:
+    def get_auto_indent_from_syntax(self, syntax: str | None = None) -> int:
         """Return an auto indent for the 'syntax' string in question
 
         :param syntax: Syntax of the configuration lines
@@ -2338,7 +2339,7 @@ class CiscoConfParse:
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
     def read_config(
-        self, config: Union[None, tuple[str, ...], list[str], str, pathlib.Path]
+        self, config: None | tuple[str, ...] | list[str] | str | pathlib.Path
     ) -> list[str]:
         """
         Read `config` as a string, list, tuple or `pathlib.Path`
@@ -2406,7 +2407,7 @@ class CiscoConfParse:
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
     def read_config_file(
-        self, filepath: Optional[str] = None, linesplit_rgx: str = r"\r*\n"
+        self, filepath: str | None = None, linesplit_rgx: str = r"\r*\n"
     ) -> list[str]:
         """Read the config lines from the filepath.  Return the list of text configuration commands or raise an error.
 
@@ -2496,7 +2497,7 @@ class CiscoConfParse:
     @logger.catch(reraise=True)
     def check_ccp_input_good(
         self,
-        config: Optional[Union[list[str], tuple[str, ...]]] = None,
+        config: list[str] | tuple[str, ...] | None = None,
         _logger: Any = None,
     ) -> bool:
         """
@@ -2526,7 +2527,7 @@ class CiscoConfParse:
 
     @property
     @logger.catch(reraise=True)
-    def openargs(self) -> dict[str, Union[str, None]]:
+    def openargs(self) -> dict[str, str | None]:
         """
         Originally used to fix Py3.5 deprecation of universal newlines
 
@@ -2595,9 +2596,9 @@ class CiscoConfParse:
     @logger.catch(reraise=True)
     def _find_child_object_branches(
         self,
-        parent_obj: Union[IOSCfgLine, JunosCfgLine, None],
+        parent_obj: IOSCfgLine | JunosCfgLine | None,
         childspec: str,
-        regex_flags: Union[re.RegexFlag, int] = 0,
+        regex_flags: re.RegexFlag | int = 0,
         debug: int = 0,
     ) -> list:
         """
@@ -2655,8 +2656,8 @@ debug={debug},
     #   List[List[BaseCfgLine]]
     def find_object_branches(
         self,
-        branchspec: Union[tuple[str, ...], list[str]] = (),
-        regex_flags: Union[re.RegexFlag, int] = 0,
+        branchspec: tuple[str, ...] | list[str] = (),
+        regex_flags: re.RegexFlag | int = 0,
         regex_groups: bool = False,
         empty_branches: bool = False,
         reverse: bool = False,
@@ -2895,7 +2896,7 @@ debug={debug},
     @typechecked
     def find_objects(
         self,
-        linespec: Union[str, re.Pattern, BaseCfgLine, list[str], list[re.Pattern]],
+        linespec: str | re.Pattern | BaseCfgLine | list[str] | list[re.Pattern],
         exactmatch: bool = False,
         ignore_ws: bool = False,
         escape_chars: bool = False,
@@ -2985,8 +2986,8 @@ debug={debug},
     @typechecked
     def find_parent_objects(
         self,
-        parentspec: Union[str, re.Pattern, list[str]],
-        childspec: Union[str, None] = None,
+        parentspec: str | re.Pattern | list[str],
+        childspec: str | None = None,
         ignore_ws: bool = False,
         recurse: bool = True,
         escape_chars: bool = False,
@@ -3147,7 +3148,7 @@ debug={debug},
     def find_parent_objects_wo_child(
         self,
         parentspec,
-        childspec: Optional[str] = None,
+        childspec: str | None = None,
         ignore_ws: bool = False,
         recurse: bool = False,
         escape_chars: bool = False,
@@ -3757,8 +3758,8 @@ class Diff(HasTraits):
     @logger.catch(reraise=True)
     def __init__(
         self,
-        old_config: Union[str, list[str], tuple[str, ...]] = None,
-        new_config: Union[str, list[str], tuple[str, ...]] = None,
+        old_config: str | list[str] | tuple[str, ...] = None,
+        new_config: str | list[str] | tuple[str, ...] = None,
         syntax: str = "ios",
     ):
         """

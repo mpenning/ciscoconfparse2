@@ -49,7 +49,8 @@ from ipaddress import (
     IPv6Network,
 )
 from ipaddress import collapse_addresses as ipaddr_collapse_addresses
-from typing import Any, Callable, Optional, Union
+from typing import Any, Optional, Union
+from collections.abc import Callable
 
 import attrs
 from dns import query, reversename, zone
@@ -617,7 +618,7 @@ def collapse_addresses(network_list):
 @attrs.define(repr=False, slots=False)
 class IPv4Obj:
     dna: str = "IPv4Obj"
-    v4input: Optional[Union[str, int]] = None
+    v4input: str | int | None = None
     strict: bool = False
     debug: int = 0
 
@@ -629,7 +630,7 @@ class IPv4Obj:
     # This method is on IPv4Obj().  @logger.catch() breaks the __init__() method.
     def __init__(
         self,
-        v4input: Optional[Union[str, int]] = None,
+        v4input: str | int | None = None,
         strict: bool = False,
         debug: int = 0,
     ):
@@ -1444,7 +1445,7 @@ class IPv4Obj:
 @attrs.define(repr=False, slots=False)
 class IPv6Obj:
     dna: str = "IPv6Obj"
-    v6input: Optional[Union[str, int]] = None
+    v6input: str | int | None = None
     strict: bool = False
     debug: int = 0
 
@@ -1458,7 +1459,7 @@ class IPv6Obj:
     # This method is on IPv6Obj().  @logger.catch() breaks the __init__() method.
     def __init__(
         self,
-        v6input: Optional[Union[str, int]] = None,
+        v6input: str | int | None = None,
         strict: bool = False,
         debug: int = 0,
     ):
@@ -4905,8 +4906,8 @@ class CiscoRange(UserList):
     result_type: Callable = None
     default_iter_attr: str = None
     reverse: bool = None
-    begin_obj: Union[CiscoIOSInterface, CiscoIOSXRInterface] = None
-    this_obj: Union[CiscoIOSInterface, CiscoIOSXRInterface] = None
+    begin_obj: CiscoIOSInterface | CiscoIOSXRInterface = None
+    this_obj: CiscoIOSInterface | CiscoIOSXRInterface = None
     iterate_attribute: int = None
     range_str: str = None
     """Explode Cisco ranges into a list of explicit items... examples below...

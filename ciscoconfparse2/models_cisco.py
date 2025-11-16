@@ -1102,7 +1102,7 @@ class BaseIOSIntfLine(IOSCfgLine, BaseFactoryInterfaceLine):
     _INTF_NAME_REGEX = re.compile(_INTF_NAME_RE_STR)
 
     @property
-    def cisco_interface_object(self) -> Union[CiscoIOSInterface, CiscoIOSXRInterface]:
+    def cisco_interface_object(self) -> CiscoIOSInterface | CiscoIOSXRInterface:
         """Return a CiscoIOSInterface() instance for this interface
 
         :return: The interface name as a CiscoIOSInterface() / CiscoIOSXRInterface() instance, or '' if the object is not an interface.  The CiscoIOSInterface instance can be transparently cast as a string into a typical Cisco IOS name.
@@ -1979,7 +1979,7 @@ class BaseIOSIntfLine(IOSCfgLine, BaseFactoryInterfaceLine):
     # This method is on BaseIOSIntfLine()
     @logger.catch(reraise=True)
     def in_ipv4_subnets(
-        self, subnets: Union[set[IPv4Obj], list[IPv4Obj], tuple[IPv4Obj, ...]] = None
+        self, subnets: set[IPv4Obj] | list[IPv4Obj] | tuple[IPv4Obj, ...] = None
     ) -> bool:
         r"""
         :return: Whether the interface is in a sequence or set of ccp_util.IPv4Obj objects

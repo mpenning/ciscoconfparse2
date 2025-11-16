@@ -6,6 +6,11 @@
 - Summary:
     - To be determined
 
+## Version: 0.8.53
+
+- Summary:
+    - Run pre-commit for python 3.10+
+
 ## Version: 0.8.52
 
 - Summary:

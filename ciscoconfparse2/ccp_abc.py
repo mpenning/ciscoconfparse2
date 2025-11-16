@@ -1445,7 +1445,7 @@ class BaseCfgLine:
     @logger.catch(reraise=True)
     def re_match_typed(
         self,
-        regex: Union[str, re.Pattern],
+        regex: str | re.Pattern,
         group: int = 1,
         result_type: type = str,
         default: Any = "",
@@ -1527,7 +1527,7 @@ class BaseCfgLine:
     @logger.catch(reraise=True)
     def re_match_iter_typed(
         self,
-        regex: Union[str, re.Pattern],
+        regex: str | re.Pattern,
         group: int = 1,
         result_type: type = str,
         default: Any = "",
@@ -1715,7 +1715,7 @@ class BaseCfgLine:
     @logger.catch(reraise=True)
     def re_list_iter_typed(
         self,
-        regex: Union[str, re.Pattern],
+        regex: str | re.Pattern,
         group: int = 1,
         result_type: type = str,
         groupdict: dict = None,
@@ -1822,7 +1822,7 @@ class BaseCfgLine:
     @logger.catch(reraise=True)
     def re_list_iter_typed_groupdict_none(
         self,
-        regex: Union[str, re.Pattern],
+        regex: str | re.Pattern,
         group: int = 1,
         result_type: type = str,
         groupdict: dict = None,
@@ -1869,7 +1869,7 @@ class BaseCfgLine:
     @logger.catch(reraise=True)
     def re_list_iter_typed_groupdict_dict(
         self,
-        regex: Union[str, re.Pattern],
+        regex: str | re.Pattern,
         group: int = 1,
         result_type: type = str,
         groupdict: dict = None,

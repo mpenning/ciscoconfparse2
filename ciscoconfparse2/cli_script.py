@@ -714,7 +714,7 @@ class CliApplication:
     @typechecked
     def ipgrep_command(
         self,
-        subnets: Union[str, None],
+        subnets: str | None,
         text: str,
     ) -> bool:
         """grep for a subnet in the text"""
@@ -784,7 +784,7 @@ class CliApplication:
     @typechecked
     def find_ip46_addr_matches(
         self,
-        subnets: set[Union[IPv4Obj, IPv6Obj]],
+        subnets: set[IPv4Obj | IPv6Obj],
         potential_matches: list[str],
         unique_matches: bool,
     ) -> list:
@@ -862,7 +862,7 @@ class CliApplication:
 
     @logger.catch(reraise=True)
     @typechecked
-    def check_ip46_host_exclusion_args(self, addr: Union[IPv4Obj, IPv6Obj]) -> bool:
+    def check_ip46_host_exclusion_args(self, addr: IPv4Obj | IPv6Obj) -> bool:
         """Return True if addr is a host excluded by --exclude-hosts"""
 
         if self.exclude_hosts:
@@ -883,7 +883,7 @@ class CliApplication:
 
     @logger.catch(reraise=True)
     @typechecked
-    def check_ip46_net_exclusion_args(self, addr: Union[IPv4Obj, IPv6Obj]) -> bool:
+    def check_ip46_net_exclusion_args(self, addr: IPv4Obj | IPv6Obj) -> bool:
         """Return True if addr is a network excluded by --exclude-networks"""
 
         if self.exclude_networks:
@@ -910,7 +910,7 @@ class CliApplication:
     @typechecked
     def find_ip46_line_matches(
         self,
-        subnets: set[Union[IPv4Obj, IPv6Obj]],
+        subnets: set[IPv4Obj | IPv6Obj],
         potential_matches: list[str],
         unique_matches: bool,
     ) -> list:
@@ -958,7 +958,7 @@ class CliApplication:
     @typechecked
     def macgrep_command(
         self,
-        mac_regex: Union[str, None],
+        mac_regex: str | None,
         text: str,
     ) -> bool:
         """grep for a mac / EUI addresses in the text"""
@@ -1086,11 +1086,11 @@ class MACEUISearch:
 
     word: str
     mac_regex_strs: set[str]
-    mac_retval: Union[None, MACObj, EUI64Obj]
+    mac_retval: None | MACObj | EUI64Obj
 
     @logger.catch(reraise=True)
     @typechecked
-    def __init__(self, word: str, mac_regex_strs: Union[None, set[str]] = None):
+    def __init__(self, word: str, mac_regex_strs: None | set[str] = None):
         self.word = word
         self.mac_regex_strs = mac_regex_strs
         self.mac_retval = None
