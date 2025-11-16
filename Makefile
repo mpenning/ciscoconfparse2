@@ -123,18 +123,6 @@ tutorial:
 	@echo ">> building the ciscoconfparse2 tutorial"
 	rst2html5 --jquery --reveal-js --pretty-print-code --embed-stylesheet --embed-content --embed-images tutorial/ccp_tutorial.rst > tutorial/ccp_tutorial.html
 
-.PHONY: parse-ios
-parse-ios:
-	cd tests; python parse_test.py 1 | less -XR
-
-.PHONY: parse-ios-factory
-parse-ios-factory:
-	cd tests; python parse_test.py 2 | less -XR
-
-.PHONY: parse-ios-banner
-parse-iosxr-banner:
-	cd tests; python parse_test.py 3 | less -XR
-
 .PHONY: perf-acl
 perf-acl:
 	cd tests; python performance_case.py 5 | less -XR
