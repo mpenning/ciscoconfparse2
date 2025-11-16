@@ -62,14 +62,12 @@ from macaddress import EUI48, EUI64, MAC
 
 import ciscoconfparse2
 from ciscoconfparse2.errors import (
-    DNSTimeoutError,
     DuplicateMember,
     DynamicAddressException,
     InvalidCiscoInterface,
     InvalidCiscoRange,
     InvalidMember,
     InvalidParameters,
-    InvalidShellVariableMapping,
     ListItemMissingAttribute,
     MismatchedType,
     NoRegexMatch,
@@ -412,51 +410,6 @@ def configure_loguru(
 
 
 @logger.catch(reraise=True)
-def as_text_list(object_list):
-    """
-    This is a helper-function to convert a list of configuration objects into
-    a list of text config lines.
-
-    Examples
-    --------
-
-    >>> from ciscoconfparse2.ccp_util import as_text_list
-    >>> from ciscoconfparse2 import CiscoConfParse
-    >>>
-    >>> config = [
-    ... 'interface GigabitEthernet1/13',
-    ... '  ip address 192.0.2.1/30',
-    ... '  vrf member ThisRestrictedVrf',
-    ... '  no ip redirects',
-    ... '  no ipv6 redirects',
-    @logger.catch(reraise=True)
-    ... ]
-    >>> parse = CiscoConfParse(config)
-    >>> interface_object = parse.find_objects("^interface")[0]
-    >>> interface_config_objects = interface_object.all_children
-    >>> interface_config_objects
-    [<IOSCfgLine # 1 '  ip address 192.0.2.1/30' (parent is # 0)>, <IOSCfgLine # 2 '  vrf member ThisRestrictedVrf' (parent is # 0)>, <IOSCfgLine # 3 '  no ip redirects' (parent is # 0)>, <IOSCfgLine # 4 '  no ipv6 redirects' (parent is # 0)>]
-    >>>
-    >>> as_text_list(interface_config_objects)
-    ['  ip address 192.0.2.1/30', '  vrf member ThisRestrictedVrf', '  no ip redirects', '  no ipv6 redirects']
-    >>>
-
-    """
-    if not isinstance(object_list, Sequence):
-        raise ValueError
-
-    for obj in object_list:
-        if not isinstance(obj.linenum, int):
-            raise ValueError
-
-        if not isinstance(obj.text, str):
-            raise ValueError
-
-    # return [ii.text for ii in object_list]
-    return list(map(attrgetter("text"), object_list))
-
-
-@logger.catch(reraise=True)
 def junos_unsupported(func):
     """A function wrapper to warn junos users of unsupported features"""
 
@@ -475,49 +428,6 @@ def junos_unsupported(func):
         func(*args, **kwargs)
 
     return wrapper
-
-
-@logger.catch(reraise=True)
-def log_function_call(function=None, *args, **kwargs):
-    """A wrapper; this decorator uses loguru to log function calls.
-
-    Example
-    -------
-
-    @log_function_call
-    def testme(*args, **kwargs):
-        pass
-
-    """
-
-    @logger.catch(reraise=True)
-    def logging_decorator(ff):
-        @wraps(ff)
-        def wrapped_logging(*args, **kwargs):
-            if True:
-                if len(args) == 1 and len(kwargs) == 0 and callable(args[0]):
-                    # Called as @log_function_call
-                    logger.info("Type 1 log_function_call: %s()" % (ff.__qualname__))
-
-                else:
-                    logger.info(
-                        "Type 2 log_function_call: %s(%s, %s)"
-                        % (ff.__qualname__, args, kwargs)
-                    )
-
-            logger.info(
-                f"Type 3 log_function_call: {ff.__qualname__}({args}, {kwargs})"
-            )
-            return ff(*args, **kwargs)
-
-        return wrapped_logging
-
-    if function is not None:
-        logger.info("Type 4 log_function_call: %s()" % (function.__qualname__))
-        return logging_decorator(function)
-
-    logger.info("Type 5 log_function_call: %s()" % (function.__qualname__))
-    return logging_decorator
 
 
 def enforce_valid_types(var, var_types=None, error_str=None):
@@ -2591,8 +2501,25 @@ def dns_query(input_str="", query_type="", server="", timeout=2.0):
     """
 
     valid_records = {"A", "AAAA", "AXFR", "CNAME", "MX", "NS", "PTR", "TXT"}
+
+    if input_str.strip() == "":
+        error = "Empty input_str parameter is not supported. Enter a DNS Name to be resolved."
+        logger.error(error)
+        raise RequirementFailure(error)
+
+    if query_type.strip() == "":
+        error = f"Empty query_type parameter is not supported. Choose from {valid_records}"
+        logger.error(error)
+        raise RequirementFailure(error)
+
+    if server.strip() == "":
+        error = f"Empty server parameter is not supported. Use the IPv4 of a valid DNS Resolver."
+        logger.error(error)
+        raise RequirementFailure(error)
+
     query_type = query_type.upper()
     if query_type not in valid_records:
+        error = f"query_type parameter is not supported. Choose from {valid_records}"
         raise RequirementFailure()
     if server == "":
         raise RequirementFailure()
