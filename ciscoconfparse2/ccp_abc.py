@@ -18,7 +18,7 @@ mike [~at~] pennington [/dot\] net
 import math
 import re
 from collections.abc import Sequence
-from typing import Any, List, Union
+from typing import Any, Union
 
 import attrs
 from loguru import logger
