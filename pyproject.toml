@@ -64,7 +64,7 @@ dev = [
   "hatch>=1.15.1",
   "hatchling>=1.27.0",
   "pytest>=9.0.1",
-  "pre-commit==4.4.0",
+  "pre-commit>=4.3.0",
   "black==25.11.0",
   "pyupgrade==3.21.0",
   "yamlfix==1.19.0",
