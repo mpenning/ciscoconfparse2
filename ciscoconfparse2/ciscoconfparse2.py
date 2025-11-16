@@ -290,7 +290,7 @@ _, ACTIVE_LOGURU_HANDLERS = initialize_ciscoconfparse2()
 
 @traceParseAction
 def debug_pyparsing_action(tokens):
-    logger.trace(f"Processing:", tokens)
+    logger.trace(f"Processing: {tokens}")
     return tokens
 
 
@@ -719,7 +719,7 @@ class ConfigList(UserList):
             raise RequirementFailure()
 
         if ccp_ref is None:
-            error = f"ConfigList() must receive a valid CiscoConfParse() instance in the ccp_ref argument"
+            error = "ConfigList() must receive a valid CiscoConfParse() instance in the ccp_ref argument"
             logger.error(error)
             raise ValueError(error)
 
