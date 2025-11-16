@@ -10,6 +10,7 @@
 
 - Summary:
     - Remove `twine` as a dependency
+    - Remove `wheel` as a dependency
 
 ## Version: 0.8.49
 

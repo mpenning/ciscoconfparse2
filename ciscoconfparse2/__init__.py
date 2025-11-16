@@ -19,10 +19,6 @@ If you need to contact the author, you can do so by emailing:
 mike [~at~] pennington [.dot.] net
 """
 
-import sys
-
-from loguru import logger
-
 from ciscoconfparse2.cli_script import ccp_script_entry
 
 from ciscoconfparse2.ccp_util import PythonOptimizeCheck
