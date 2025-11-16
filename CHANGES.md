@@ -6,10 +6,10 @@
 - Summary:
     - To be determined
 
-## Version: 0.8.51
+## Version: 0.8.52
 
 - Summary:
-    - Handle problems with Python 3.9
+    - Deprecate Python 3.9 as supported
 
 ## Version: 0.8.50
 
