@@ -1,18 +1,6 @@
 DOCHOST ?= $(shell bash -c 'read -p "documentation host: " dochost; echo $$dochost')
 
-# dynamic ciscoconfparse2 VERSION detection (via version str in pyproject.toml)
-#
-# - at this point, I prefer printing in perl to set shell variables...
-#   - open './pyproject.toml' as $pyproject
-#   - loop over each line, assigned to $line
-#   - If we see the version string in a line, print it and end
 export VERSION := $(shell hatch version )
-
-
-# We must escape Makefile dollar signs as $$foo...
-export PING_STATUS := $(shell perl -e '@output = qx/ping -q -W0.5 -c1 4.2.2.2/; $$alloutput = join "", @output; if ( $$alloutput =~ /\s0\sreceived/ ) { print "failure"; } else { print "success"; }')
-
-export NUMBER_OF_CCP_TESTS := $(shell grep "def " tests/test*py | wc -l)
 
 # Makefile color codes...
 #     ref -> https://stackoverflow.com/a/5947802/667301
@@ -123,14 +111,6 @@ tutorial:
 	@echo ">> building the ciscoconfparse2 tutorial"
 	rst2html5 --jquery --reveal-js --pretty-print-code --embed-stylesheet --embed-content --embed-images tutorial/ccp_tutorial.rst > tutorial/ccp_tutorial.html
 
-.PHONY: perf-acl
-perf-acl:
-	cd tests; python performance_case.py 5 | less -XR
-
-.PHONY: perf-factory-intf
-perf-factory-intf:
-	cd tests; python performance_case.py 6 | less -XR
-
 .PHONY: flake
 flake:
 	flake8 --ignore E501,E226,E225,E221,E303,E302,E265,E128,E125,E124,E41,W291 --max-complexity 10 ciscoconfparse2 | less
@@ -160,11 +140,6 @@ rm-timestamp:
 timestamp:
 	@echo "$(COL_GREEN)>> Create .pip_dependency$(COL_END)"
 	$(shell touch .pip_dependency)
-
-.PHONY: ping
-ping:
-	@echo "$(COL_GREEN)>> ping to ensure internet connectivity$(COL_END)"
-	@if [ "$${PING_STATUS}" = 'success' ]; then return 0; else return 1; fi
 
 .PHONY: test
 test:
