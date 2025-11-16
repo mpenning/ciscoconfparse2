@@ -199,7 +199,7 @@ I truly apologize for any disappointment.
 
 ## Pre-requisites
 
-[The ciscoconfparse2 python package][3] requires Python versions 3.9+.
+[The ciscoconfparse2 python package][3] requires Python versions 3.10+.
 
 ## What is the pythonic way of handling script credentials?
 
