@@ -11,6 +11,7 @@
 - Summary:
     - Remove `twine` as a dependency
     - Remove `wheel` as a dependency
+    - Remove unused dependencies in `ciscoconfparse2/__init__.py`
 
 ## Version: 0.8.49
 
