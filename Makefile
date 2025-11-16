@@ -71,15 +71,6 @@ cicd:
 	git checkout @{-1}                        # checkout the previous branch...
 	git pull origin main
 
-.PHONY: bump-version-patch
-bump-version-patch:
-	$(shell python dev_tools/git_helper.py -I patch)
-
-.PHONY: bump-version-minor
-bump-version-minor:
-	$(shell python dev_tools/git_helper.py -I minor)
-
-
 .PHONY: repo-push
 repo-push:
 	@echo "$(COL_GREEN)>> git push and merge (w/o force) to ciscoconfparse2 main branch to github$(COL_END)"
