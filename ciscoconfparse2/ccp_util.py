@@ -225,64 +225,6 @@ class PythonOptimizeCheck:
             raise PythonOptimizeException(error)
 
 
-def run_this_posix_command(
-    cmd,
-    timeout=None,
-    shell=False,
-    cwd=None,
-    encoding=locale.getpreferredencoding(),
-    env=None,
-):
-    """
-    Run this POSIX command using subprocess.run().
-    """
-
-    if isinstance(env, dict):
-        for key, value in env.items:
-            if isinstance(key, str) and isinstance(value, (str, int, float)):
-                pass  # noqa
-            else:
-                error = (
-                    f"The ENV {key}: {value} {type(value)} mapping entry is invalid."
-                )
-                raise ValueError(error)
-    elif env is None:
-        pass  # noqa
-    else:
-        error = "`env` must be None or a dict of variable names / values."
-        logger.critical(error)
-        raise InvalidShellVariableMapping(error)
-
-    if not isinstance(cmd, str):
-        error = f"'{cmd}' must be a string"
-        logger.critical(error)
-
-    if shell is True:
-        cmdparts = cmd
-    else:
-        cmdparts = shlex.split(cmd)
-
-    output_namedtuple = subprocess.run(
-        cmdparts,
-        timeout=timeout,
-        capture_output=True,
-        shell=shell,
-        cwd=cwd,
-        encoding=encoding,
-    )
-    (return_code, stdout, stderr) = (
-        output_namedtuple.returncode,
-        output_namedtuple.stdout,
-        output_namedtuple.stderr,
-    )
-
-    if return_code > 0:
-        error = f"'{cmd}' failed: --> {stdout} <-- / --> {stderr} <--"
-        logger.critical(error)
-
-    return return_code, stdout, stderr
-
-
 @logger.catch(reraise=True)
 def ccp_logger_control(
     sink=sys.stderr,
@@ -2722,6 +2664,7 @@ def dns_query(input_str="", query_type="", server="", timeout=2.0):
         """This is a hack: return text of zone transfer, instead of axfr objs"""
         _zone = zone.from_xfr(query.xfr(server, input_str, lifetime=timeout))
         return [_zone[node].to_text(node) for node in _zone.nodes.keys()]
+
     elif query_type == "CNAME":
         try:
             answer = rr.query(input_str, query_type)
@@ -2750,6 +2693,7 @@ def dns_query(input_str="", query_type="", server="", timeout=2.0):
             response.has_error = True
             response.error_str = e
             retval.add(response)
+
     elif query_type == "MX":
         try:
             answer = rr.query(input_str, query_type)
@@ -2778,6 +2722,7 @@ def dns_query(input_str="", query_type="", server="", timeout=2.0):
             response.has_error = True
             response.error_str = e
             retval.add(response)
+
     elif query_type == "NS":
         try:
             answer = rr.query(input_str, query_type)
@@ -2806,6 +2751,7 @@ def dns_query(input_str="", query_type="", server="", timeout=2.0):
             response.has_error = True
             response.error_str = e
             retval.add(response)
+
     elif query_type == "PTR":
 
         try:
@@ -2887,7 +2833,7 @@ def check_valid_ipaddress(input_addr=None):
         IPv4Obj(input_addr)
         ipaddr_family = 4
     except BaseException:
-        raise ValueError(input_addr)
+ f       raise ValueError(input_addr)
 
     if ipaddr_family == 0:
         try:
