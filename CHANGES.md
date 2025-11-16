@@ -9,9 +9,13 @@
 ## Version: 0.8.50
 
 - Summary:
+    - Add Python 3.14 into the test matrix
+    - Improve `dns_query()` default values
     - Remove `twine` as a dependency
     - Remove `wheel` as a dependency
     - Remove unused dependencies in `ciscoconfparse2/__init__.py`
+    - Remove `run_this_posix_command()`
+    - Remediate many `pylama` errors and warnings
 
 ## Version: 0.8.49
 
