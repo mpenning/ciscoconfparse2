@@ -6,6 +6,11 @@
 - Summary:
     - To be determined
 
+## Version: 0.8.50
+
+- Summary:
+    - Remove `twine` as a dependency
+
 ## Version: 0.8.49
 
 - Summary:
