@@ -14,7 +14,7 @@
 ## Version: 0.8.52
 
 - Summary:
-    - Deprecate Python 3.9 as supported
+    - Officially deprecate Python 3.9 as supported
 
 ## Version: 0.8.50
 
@@ -26,6 +26,7 @@
     - Remove unused dependencies in `ciscoconfparse2/__init__.py`
     - Remove `run_this_posix_command()`
     - Remediate many `pylama` errors and warnings
+    - Python 3.9 is no longer supported
 
 ## Version: 0.8.49
 
