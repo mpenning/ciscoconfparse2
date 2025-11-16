@@ -445,8 +445,6 @@ def cfgobj_from_text(
     :type text_list: List[str]
     :param txt: The specific configuration string to evaluate
     :type txt: str
-    :param txt: The specific configuration string to evaluate
-    :type txt: str
     :param idx: Line-number to assign to the configuration object
     :type idx: int
     :param syntax: A valid configuration syntax
@@ -479,7 +477,7 @@ def cfgobj_from_text(
         logger.error(error)
         raise InvalidParameters(error)
 
-    # if not factory is **faster** than factory is False
+    # The idiom: 'and not factory' is **faster** than factory is False
     if syntax in ALL_VALID_SYNTAX and not factory:
         obj = CFGLINE[syntax](
             all_lines=text_list,
@@ -492,7 +490,7 @@ def cfgobj_from_text(
             logger.error(error)
             raise ValueError(error)
 
-    # if factory is **faster** than if factory is True
+    # The idiom 'and factory' is **faster** than if factory is True
     elif syntax in ALL_VALID_SYNTAX and factory:
         obj = config_line_factory(
             all_lines=text_list,
@@ -628,6 +626,7 @@ class ConfigList(UserList):
     factory: bool = None
     ignore_blank_lines: bool = None
     syntax: str = None
+    indent_width: int = 0
     auto_commit: bool = False
     debug: int = None
 
@@ -647,6 +646,7 @@ class ConfigList(UserList):
         ignore_blank_lines: bool = False,
         # syntax="__undefined__",
         syntax: str = "ios",
+        indent_width: int = 0,
         auto_commit: bool = True,
         # ccp_ref should be an instance of CiscoConfParse
         ccp_ref: Any = None,
@@ -667,6 +667,8 @@ class ConfigList(UserList):
         :type ignore_blank_lines: bool
         :param syntax: A valid configuration syntax, default to 'ios'.
         :type syntax: str
+        :param indent_width: The standard width to indent child lines (default: 0 for auto-detect).
+        :type indent_width: int
         :param auto_commit: Controls whether configuration changes are
                             automatically committed.
         :type auto_commit: bool
@@ -713,7 +715,9 @@ class ConfigList(UserList):
             initlist = []
         elif not isinstance(initlist, Sequence):
             # IMPORTANT This check MUST come near the top of ConfigList()...
-            raise ValueError
+            error = f"ConfigList().initlist must be an instance of Sequence, but got initlist: '{type(initlist)}'."
+            logger.error(error)
+            raise ValueError(error)
 
         if syntax not in ALL_VALID_SYNTAX:
             raise RequirementFailure()
@@ -742,14 +746,21 @@ class ConfigList(UserList):
         # operation happens
         self.commit_checkpoint = 0
 
+        ####################################################################
+        # Store initlist in self.data if initlist is a valid Sequence
+        ####################################################################
         if getattr(initlist, "__iter__", False) is not False:
-            self.data = self.bootstrap(initlist, debug=debug)
+            if len(initlist) == 0:
+                self.data = []
+
+            else:
+                self.data = self.bootstrap(initlist, debug=debug)
 
         else:
             self.data = []
 
         if self.debug > 0:
-            message = f"Create ConfigList() with {len(self.data)} elements"
+            message = f"Created ConfigList() with {len(self.data)} elements"
             logger.info(message)
 
         # Internal structures
@@ -1006,25 +1017,25 @@ class ConfigList(UserList):
 
     # This method is on ConfigList()
     @logger.catch(reraise=True)
-    def append(self, item: str) -> None:
-        """Append the BaseCfgLine() for ``item`` to the end of the ConfigList
+    def append(self, line: str) -> None:
+        """Append the BaseCfgLine() for ``line`` to the end of the ConfigList
 
         :param item: The value to append
-        :type item: str
+        :type line: str
         :rtype: None
         """
         if self.debug >= 1:
-            logger.debug(f"    ConfigList().append(item={item}) was called.")
+            logger.debug(f"    ConfigList().append(line={line}) was called.")
 
         if bool(self.factory) is False:
             obj = CFGLINE[self.syntax](
                 all_lines=self.as_text,
-                line=item,
+                line=line,
             )
         else:
             obj = config_line_factory(
                 all_lines=self.as_text,
-                line=item,
+                line=line,
                 syntax=self.syntax,
             )
 
@@ -1707,6 +1718,10 @@ class ConfigList(UserList):
 
         Parent / child relationships are assigned in this method.
 
+        This method includes special logic for handling IOS banners and macros.
+
+        This method modifies ConfigList().data
+
         :return: Sequence of BaseCfgLine() objects.
         :rtype: List[BaseCfgLine]
         """
@@ -1730,10 +1745,16 @@ class ConfigList(UserList):
         parent = None
         parents_cache = {}
         for idx, txt in enumerate(text_list):
+
             if self.debug >= 1:
                 logger.debug(f"    bootstrap() adding text cmd: '{txt}' at idx {idx}")
+
             if not isinstance(txt, str):
-                raise ValueError
+                error = (
+                    f"ConfigList().bootstrap() can only digest strings, not {type(txt)}"
+                )
+                logger.error(error)
+                raise ValueError(error)
 
             # Assign a custom *CfgLine() based on factory...
             obj = cfgobj_from_text(

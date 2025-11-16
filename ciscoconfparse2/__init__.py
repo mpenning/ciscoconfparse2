@@ -28,24 +28,15 @@ from ciscoconfparse2.ccp_util import IPv6Obj
 from ciscoconfparse2.ccp_util import MACObj, EUI64Obj
 from ciscoconfparse2.ccp_util import CiscoIOSInterface, CiscoIOSXRInterface
 from ciscoconfparse2.ccp_util import CiscoRange
-from ciscoconfparse2.ccp_util import run_this_posix_command
 from ciscoconfparse2.ccp_util import ccp_logger_control
 from ciscoconfparse2.ccp_util import configure_loguru
-from ciscoconfparse2.ccp_util import as_text_list
-from ciscoconfparse2.ccp_util import junos_unsupported
-from ciscoconfparse2.ccp_util import log_function_call
-from ciscoconfparse2.ccp_util import enforce_valid_types
 from ciscoconfparse2.ccp_util import _get_ipv4
 from ciscoconfparse2.ccp_util import _get_ipv6
 from ciscoconfparse2.ccp_util import ip_factory
 from ciscoconfparse2.ccp_util import collapse_addresses
 from ciscoconfparse2.ccp_util import L4Object
-from ciscoconfparse2.ccp_util import DNSResponse
 from ciscoconfparse2.ccp_util import dns_query
 
-
-from dns.resolver import Resolver
-from dns.exception import DNSException
 
 # Throw errors for PYTHONOPTIMIZE and `python -O ...` by executing
 #     PythonOptimizeCheck()...

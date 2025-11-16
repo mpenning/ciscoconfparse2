@@ -27,7 +27,7 @@ mike [~at~] pennington [/dot\] net
 ###
 ###   Use models_asa.py at your own risk.  You have been warned :-)
 
-from typing import Any, Union
+from typing import Any
 import ipaddress
 import re
 

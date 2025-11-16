@@ -622,7 +622,6 @@ routing-options {
 
 def testParse_invalid_filepath_01():
     """Test that ciscoconfparse2 raises an error if the filepath is invalid"""
-    # REMOVED caplog arg
 
     # Use a filename that should not exist...
     bad_filename = "./45faa63b-92e0-4449-a247-f20510d50c1b.txt"
@@ -631,19 +630,18 @@ def testParse_invalid_filepath_01():
     # ccp_logger_control(action="disable")  # Silence logs about the missing file error
 
     # Test that CiscoConfParse raises an error for an invalid filename...
-    with pytest.raises(FileNotFoundError, match=""):
+    with pytest.raises(FileNotFoundError):
         # Normally logs to stdout... using logging.CRITICAL to hide errors...
         CiscoConfParse(bad_filename)
 
 
 def testParse_invalid_filepath_02():
-    # FIXME
     bad_filename = "this is not a filename or list"
     # Ensure the bad filename does not exist...
     assert os.path.isfile(bad_filename) is False
 
     # Test that we get FileNotFoundError() from CiscoConfParse(bad_filename)
-    with pytest.raises(FileNotFoundError, match=""):
+    with pytest.raises(FileNotFoundError):
         CiscoConfParse(bad_filename)
 
 
@@ -3372,6 +3370,24 @@ def testValues_ConfigList_context_manager_01():
         for idx, obj in enumerate(conflist):
             if idx == 1:
                 assert obj.text == "hostname Foo"
+
+
+def testValues_ConfigList_error_on_None():
+    """
+    Test that an InvalidParameters error is raised if the configuration contains a non-string.
+    """
+    config = ["hostname foo", None]
+    with pytest.raises(InvalidParameters):
+        _ = CiscoConfParse(config)
+
+
+def testValues_ConfigList_error_on_BaseCfgLine():
+    """
+    Test that a ValueError is raised if the configuration contains a BaseCfgLine().
+    """
+    config = ["hostname foo", BaseCfgLine(text="interface Ethernet1/1")]
+    with pytest.raises(ValueError):
+        _ = CiscoConfParse(config)
 
 
 def test_BaseCfgLine_has_child_with(parse_c03):

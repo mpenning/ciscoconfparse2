@@ -41,7 +41,6 @@ import sys
 import time
 from collections import UserList
 from collections.abc import Sequence
-from functools import wraps
 from ipaddress import (
     AddressValueError,
     IPv4Address,
@@ -50,8 +49,7 @@ from ipaddress import (
     IPv6Network,
 )
 from ipaddress import collapse_addresses as ipaddr_collapse_addresses
-from operator import attrgetter
-from typing import Any, Callable, List, Optional, Union
+from typing import Any, Callable, Optional, Union
 
 import attrs
 from dns import query, reversename, zone
@@ -74,7 +72,6 @@ from ciscoconfparse2.errors import (
     PythonOptimizeException,
     RequirementFailure,
     UnexpectedType,
-    UntypedError,
 )
 from ciscoconfparse2.protocol_values import ASA_TCP_PORTS, ASA_UDP_PORTS
 
@@ -2508,7 +2505,9 @@ def dns_query(input_str="", query_type="A", server="8.8.8.8", timeout=2.0):
         raise RequirementFailure(error)
 
     if query_type.strip() == "":
-        error = f"Empty query_type parameter is not supported. Choose from {valid_records}"
+        error = (
+            f"Empty query_type parameter is not supported. Choose from {valid_records}"
+        )
         logger.error(error)
         raise RequirementFailure(error)
 

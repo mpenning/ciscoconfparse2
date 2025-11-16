@@ -684,9 +684,6 @@ class BaseCfgLine:
         if not isinstance(all_children, bool):
             raise ValueError("has_child_with() all_children must be a boolean")
 
-        # Old, crusty broken... fixed in 1.6.30...
-        # return bool(filter(methodcaller("re_search", linespec), self.children))
-        #
         # TODO - check whether using re_match_iter_typed() is faster than this:
         ll = linespec
         if all_children is False:
@@ -1609,7 +1606,7 @@ class BaseCfgLine:
         # Ref IOSIntfLine.has_dtp for an example of how to code around
         #   this while I build the API
         #    raise NotImplementedError
-        if debug is True:
+        if debug:
             logger.info(
                 f"{self}.re_match_iter_typed(`regex`={regex}, `group`={group}, `result_type`={result_type}, `recurse`={recurse}, `untyped_default`={untyped_default}, `default`='{default}', `groupdict`={groupdict}, `debug`={debug}) was called"
             )
@@ -1625,7 +1622,8 @@ class BaseCfgLine:
             if isinstance(mm, re.Match):
                 return result_type(mm.group(group))
 
-            if recurse is False:
+            if not recurse:
+                # Only work on direct children if not recurse
                 for cobj in self.children:
                     if debug is True:
                         logger.debug(
@@ -1634,12 +1632,15 @@ class BaseCfgLine:
                     mm = re.search(regex, cobj.text)
                     if isinstance(mm, re.Match):
                         return result_type(mm.group(group))
+
                 ## Ref Github issue #121
-                if untyped_default is True:
+                if untyped_default:
                     return default
                 else:
                     return result_type(default)
+
             else:
+                # Work on all children if recurse is True
                 for cobj in self.all_children:
                     if debug is True:
                         logger.debug(
@@ -1648,12 +1649,14 @@ class BaseCfgLine:
                     mm = re.search(regex, cobj.text)
                     if isinstance(mm, re.Match):
                         return result_type(mm.group(group))
+
                 ## Ref Github issue #121
                 if untyped_default is True:
                     return default
                 else:
                     return result_type(default)
-        elif isinstance(groupdict, dict) is True:
+
+        elif isinstance(groupdict, dict):
             if debug is True:
                 logger.debug(
                     f"    {self}.re_match_iter_typed() is checking with `groupdict`={groupdict}"
@@ -1669,7 +1672,7 @@ class BaseCfgLine:
                     debug=debug,
                 )
 
-            if recurse is False:
+            if not recurse:
                 for cobj in self.children:
                     mm = re.search(regex, cobj.text)
                     return self.get_regex_typed_dict(
@@ -1684,6 +1687,7 @@ class BaseCfgLine:
                     default=default,
                     debug=debug,
                 )
+
             else:
                 for cobj in self.all_children:
                     mm = re.search(regex, cobj.text)

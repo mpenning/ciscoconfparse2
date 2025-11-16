@@ -45,7 +45,6 @@ cicd:
 	# Run pre-commit on all files... ignore failures, which should be auto-fixed
 	-pre-commit run -a
 	-git commit --all -m "chore: pre-commit changes"
-	# upgrade packaging infra and ciscoconfparse2 dependencies...
 	make dep
 	-git commit --all -m "Version $$VERSION"
 	# tag the repo with $$VERSION, upon git tag push,
@@ -98,7 +97,7 @@ repo-push-tag-force:
 pylama:
 	@echo "$(COL_GREEN)>> running pylama against ciscoconfparse2$(COL_END)"
 	# Good usability info here -> https://pythonspeed.com/articles/pylint/
-	pylama --ignore=E501,E301,E265,E266 ciscoconfparse2/*py | less -XR
+	pylama --ignore=E501,E301,E265,E266,W503 ciscoconfparse2/*py | less -XR
 
 .PHONY: pylint
 pylint:
@@ -146,7 +145,6 @@ test:
 	@echo "$(COL_GREEN)>> running unit tests$(COL_END)"
 	$(shell touch .pip_dependency)
 	make timestamp
-	#make ping
 	make clean
 	# You can also test with verbose output:
 	#     cd tests && pytest -vvs ./test_*py
