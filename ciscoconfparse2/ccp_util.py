@@ -530,27 +530,6 @@ def enforce_valid_types(var, var_types=None, error_str=None):
         raise ValueError(error_str)
 
 
-@logger.catch(reraise=True)
-def fix_repeated_words(cmd="", word=""):
-    """Fix repeated words in the beginning of commands... Example 'no no logging 1.2.3.4' will be returned as 'logging 1.2.3.4' (both 'no' words are removed)."""
-    if not (isinstance(cmd, str) and len(cmd) > 0):
-        raise RequirementFailure()
-    if not (isinstance(word, str) and len(word) > 0):
-        raise RequirementFailure()
-    while True:
-        # look at the command and fix the repeated words in it...
-        rgx = rf"^(?P<indent>\s*){word.strip()}\s+{word.strip()}\s+(?P<remaining_cmd>\S.+)$"
-        mm = re.search(rgx, cmd)
-        if mm is not None:
-            # We found a repeated word in the command...
-            indent = mm.group("indent")
-            remaining_cmd = mm.group("remaining_cmd")
-            cmd = f"{indent}{remaining_cmd}"
-        else:
-            break
-    return cmd
-
-
 # do NOT wrap with @logger.catch(...)
 def _get_ipv4(val="", strict=False, stdlib=False, debug=0):
     """Return the requested IPv4 object to the caller.  This method heavily depends on IPv4Obj()"""
@@ -2833,7 +2812,7 @@ def check_valid_ipaddress(input_addr=None):
         IPv4Obj(input_addr)
         ipaddr_family = 4
     except BaseException:
- f       raise ValueError(input_addr)
+        raise ValueError(input_addr)
 
     if ipaddr_family == 0:
         try:
