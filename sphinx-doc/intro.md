@@ -62,7 +62,7 @@ project.
 
 After many years of updates, [ciscoconfparse] grew too large. [ciscoconfparse2]:
 
-- Is tested against Python3.9+ (limited to Python 3.9+ due to python type annotation dynamics before 3.9)
+- Is tested against Python3.10+
 - Includes a [CLI tool] to grep / search for a variety of things from the CLI
 - Streamlines the API on a simpler user interface.
 - Removes legacy and flawed methods from the original (*this could be a breaking change for old scripts*).
@@ -71,8 +71,7 @@ After many years of updates, [ciscoconfparse] grew too large. [ciscoconfparse2]:
 - Is better at handling multiple-child-level configurations (such as IOS XR and JunOS)
 - Can search for parents and children using an arbitrary-length list of ancestors
 - Adds an `auto_commit` keyword, which defaults `True`; however, many loading thousands of configuration lines could be slow with `auto_commit=True`.
-- Brings vast improvements to Cisco IOS diffs
-- Intentionally requires a *different import statement* to minimize confusion between them
+- Brings vast improvements to Cisco IOS diffs Intentionally requires a *different import statement* to minimize confusion between them
 
 As such, [ciscoconfparse2] API is not the same; it uses different syntax
 than the original [ciscoconfparse]. However, the new syntax is less magical,
