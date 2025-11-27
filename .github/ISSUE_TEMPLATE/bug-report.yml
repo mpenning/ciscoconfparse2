@@ -1,6 +1,6 @@
 ---
 # https://docs.github.com/en/communities/using-templates-to-encourage-useful-issues-and-pull-requests/configuring-issue-templates-for-your-repository
-name: "CiscoConfParse Bug Report"
+name: "ciscoconfparse2 Bug Report"
 description: "File a bug report"
 title: '[Bug]: '
 labels:
@@ -16,7 +16,7 @@ body:
         - Please include sufficient details and context.
         - Describe the expected behavior that should have happened but didn't.
         - If you find multiple bugs, please submit them in separate issues.
-        - CiscoConfParse is maintained by volunteers. Please be courteous and patient.
+        - ciscoconfparse2 is maintained by volunteers. Please be courteous and patient.
         *Issues that do not include all the information requested in this form are subject to closure*.
   - type: "input"
     id: "contact"
@@ -39,7 +39,7 @@ body:
     attributes:
       label: "CiscoConfParse Version"
       description: "What ciscoconfparse2 version had the problem?"
-      placeholder: "Version x.y.z (e.g. Version 1.6.13)"
+      placeholder: "Version x.y.z (e.g. Version 0.8.54)"
     validations:
       required: true
   - type: "dropdown"
@@ -61,6 +61,8 @@ body:
       label: "What Python version(s) have this problem?"
       multiple: true
       options:
+        - "Python 3.15"
+        - "Python 3.14"
         - "Python 3.13"
         - "Python 3.12"
         - "Python 3.11"
