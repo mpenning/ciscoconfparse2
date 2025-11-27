@@ -1293,11 +1293,13 @@ class ConfigList(UserList):
 
         # exist_val MUST be a string
         if isinstance(exist_val, str) is True and exist_val != "":
-            pass
+            # Use re_escaped_text because of ciscoconfparse2 Bug #67
+            exist_val = re.escape(exist_val)
 
         # Matches "IOSCfgLine", "NXOSCfgLine" and "ASACfgLine"... (and others)
         elif isinstance(exist_val, BaseCfgLine):
-            exist_val = exist_val.text
+            # Use re_escaped_text because of ciscoconfparse2 Bug #67
+            exist_val = exist_val.re_escaped_text
 
         else:
             logger.error(error)
@@ -1396,11 +1398,12 @@ class ConfigList(UserList):
 
         # exist_val MUST be a string
         if isinstance(exist_val, str) is True and exist_val != "":
-            pass
+            exist_val = re.escape(exist_val)
 
         # Matches "IOSCfgLine", "NXOSCfgLine" and "ASACfgLine"... (and others)
         elif isinstance(exist_val, BaseCfgLine):
-            exist_val = exist_val.text
+            # Use re_escaped_text because of ciscoconfparse2 Bug #67
+            exist_val = exist_val.re_escaped_text
 
         else:
             logger.error(err_txt)

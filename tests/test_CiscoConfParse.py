@@ -338,6 +338,16 @@ def testParse_syntax_asa_factory_01():
     )
     assert len(parse.objs) == 424
 
+def testParse_ios_re_escaped_text():
+    """
+    Test that we get regex escaped text when requested.
+    """
+
+    config = ["dummy_text *****"]
+    uut = CiscoConfParse(config)
+
+    assert uut.objs[0].text == "dummy_text *****"
+    assert uut.objs[0].re_escaped_text == "dummy_text\\ \\*\\*\\*\\*\\*"
 
 def testParse_ios_is_comment_01():
     """Ensure that a comment is detected"""
@@ -3322,6 +3332,67 @@ def testValues_ConfigList_insert02(parse_c02):
 
     assert test_result == correct_result
 
+def testValues_ConfigList_insert_config_invalid_regex_01():
+    """
+    Test insert after when the configuration has an invalid regex embedded in it.
+    See Vlan100 (multiple * in description is an invalid regex)
+
+    Ref: ciscoconfparse2 Issue #67
+    """
+
+    config = """!
+hostname foo
+!
+interface Vlan100
+ description *** This descr is an invalid regex! ***
+!
+interface Vlan200
+ description Testme200
+!"""
+
+    uut = CiscoConfParse(config)
+    for cfgobj in uut.find_objects(r"description"):
+        cfgobj.insert_after(" mac-address 0000.dead.beef")
+
+    # Get the expected value
+    expected_value_vlan100_str = [" description *** This descr is an invalid regex! ***", " mac-address 0000.dead.beef"]
+
+    # Get the actual value
+    vlan100 = uut.find_objects(["interface Vlan100"])[0]
+    actual_value_vlan100_str = [ii.text for ii in vlan100.all_children]
+
+    assert expected_value_vlan100_str == actual_value_vlan100_str
+
+def testValues_ConfigList_insert_config_invalid_regex_02():
+    """
+    Test insert before when the configuration has an invalid regex embedded in it.
+    See Vlan100 (multiple * in description is an invalid regex)
+
+    Ref: ciscoconfparse2 Issue #67
+    """
+
+    config = """!
+hostname foo
+!
+interface Vlan100
+ description *** This descr is an invalid regex! ***
+!
+interface Vlan200
+ description Testme200
+!"""
+
+    uut = CiscoConfParse(config)
+    for cfgobj in uut.find_objects(r"description"):
+        cfgobj.insert_before(" mac-address 0000.dead.beef")
+
+    # Get the expected value
+    expected_value_vlan100_str = [" mac-address 0000.dead.beef", " description *** This descr is an invalid regex! ***"]
+
+    # Get the actual value
+    vlan100 = uut.find_objects(["interface Vlan100"])[0]
+    actual_value_vlan100_str = [ii.text for ii in vlan100.all_children]
+
+    assert expected_value_vlan100_str == actual_value_vlan100_str
 
 def testValues_ConfigList_delete01():
     """
