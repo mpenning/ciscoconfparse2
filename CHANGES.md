@@ -6,6 +6,14 @@
 - Summary:
     - To be determined
 
+## Version: 0.8.54
+
+- Summary:
+    - Happy Thanksgiving 2025!
+    - Add `BaseCfgLine().re_escaped_text` property
+    - Fix ciscoconfparse2 GitHub Issue #67 (problems inserting a new command if config contains an invalid regex)
+    - Add tests to catch problems similar to ciscoconfparse2 GitHub Issue #67
+
 ## Version: 0.8.53
 
 - Summary:
