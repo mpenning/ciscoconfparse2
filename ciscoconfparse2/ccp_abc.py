@@ -301,6 +301,17 @@ class BaseCfgLine:
     # On BaseCfgLine()
     @property
     @logger.catch(reraise=True)
+    def re_escaped_text(self) -> str:
+        """
+        :return: Configuration text (escaped with re.escape())
+        :rtype: str
+        """
+        _text = getattr(self, "_text", DEFAULT_TEXT)
+        return re.escape(_text)
+
+    # On BaseCfgLine()
+    @property
+    @logger.catch(reraise=True)
     def text(self) -> str:
         """
         :return: Configuration text
