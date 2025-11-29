@@ -1253,69 +1253,15 @@ class ConfigList(UserList):
     # This method is on ConfigList()
     @logger.catch(reraise=True)
     def insert_before(
-        self, exist_val: str | None = None, new_val: str | None = None
+        self, exist_val: BaseCfgLine | None = None, new_val: str | BaseCfgLine | None = None
     ) -> None:
-        """
-        Insert new_val before all occurances of exist_val.
 
-        :param exist_val: An existing text value.  This may match multiple configuration entries.
-        :type exist_val: str
-        :param new_val: A new value to be inserted in the configuration.
-        :type new_val: str
-        :return: None
-        :rtype: None
-
-        .. code-block:: python
-
-           >>> parse = CiscoConfParse(config=["a a", "b b", "c c", "b b"])
-           >>> # Insert 'g' before any occurance of 'b'
-           >>> retval = parse.insert_before("b b", "X X")
-           >>> parse.get_text()
-           ... ["a a", "X X", "b b", "c c", "X X", "b b"]
-           >>>
-        """
-
-        calling_fn_index = 1
-        calling_filename = inspect.stack()[calling_fn_index].filename
-        calling_function = inspect.stack()[calling_fn_index].function
-        calling_lineno = inspect.stack()[calling_fn_index].lineno
-        error = f"FATAL CALL: in {calling_filename} line {calling_lineno} {calling_function}(exist_val='{exist_val}', new_val='{new_val}')"
-
-        if (
-            isinstance(new_val, str)
-            and new_val.strip() == ""
-            and self.ignore_blank_lines is True
-        ):
-            logger.warning(f"`new_val`=`{new_val}`")
-            error = "Cannot insert a blank line if `ignore_blank_lines` is True"
-            logger.error(error)
-            raise InvalidParameters(error)
-
-        ###########################################################################
-        # ciscoconfparse2 Issue #67 - Use exist_val == list_obj.text instead
-        #    of a regex match
-        ###########################################################################
-        if isinstance(exist_val, str) is True and exist_val != "":
-            pass
-
-        # Matches "IOSCfgLine", "NXOSCfgLine" and "ASACfgLine"... (and others)
-        elif isinstance(exist_val, BaseCfgLine):
-            exist_val = exist_val.text
-
-        else:
+        if not isinstance(new_val, (str, BaseCfgLine)):
+            error = f"new_val must be a str or BaseCfgLine(), not {type(new_val)}"
             logger.error(error)
             raise ValueError(error)
 
-        # new_val MUST be a string
-        if isinstance(new_val, str) is True:
-            pass
-
-        elif isinstance(new_val, BaseCfgLine):
-            new_val = new_val.text
-
-        else:
-            logger.error(error)
-            raise ValueError(error)
+        idx  = exist_val.linenum
 
         if self.factory is False:
             new_obj = CFGLINE[self.syntax](
@@ -1331,99 +1277,28 @@ class ConfigList(UserList):
             )
 
         else:
+            error = f"Invalid CiscoConfParse().factory value - {self.factory}"
             logger.error(error)
             raise ValueError(error)
 
+        self.data.insert(idx, new_obj)
 
-        ###########################################################################
-        # Find all config lines which need to be modified... store in all_idx
-        #
-        # ciscoconfparse2 Issue #67 - Use exist_val == list_obj.text instead
-        #    of a regex match
-        ###########################################################################
-        all_idx = [
-            idx
-            for idx, list_obj in enumerate(self.data)
-            if exist_val == list_obj.text
-        ]
-        for idx in sorted(all_idx, reverse=True):
-            # insert at idx - 0 implements 'insert_before()'...
-            self.data.insert(idx, new_obj)
+        # Rebuild / renumber items on the modified ConfigList()...
+        self.rebuild_after_modification(commit=self.auto_commit)
 
-        if bool(self.auto_commit):
-            # The config is not safe unless this is called after the append
-            self.ccp_ref.commit()
 
     # This method is on ConfigList()
     @logger.catch(reraise=True)
     def insert_after(
-        self, exist_val: str | None = None, new_val: str | None = None
+        self, exist_val: BaseCfgLine | None = None, new_val: str | BaseCfgLine | None = None
     ) -> None:
-        """
-        Insert new_val after all occurances of exist_val.
 
-        :param exist_val: An existing text value.  This may match multiple configuration entries.
-        :type exist_val: str
-        :param new_val: A new value to be inserted in the configuration.
-        :type new_val: str
-        :return: None
-        :rtype: None
-
-        .. code-block:: python
-
-           >>> parse = CiscoConfParse(config=["a a", "b b", "c c", "b b"])
-           >>> # Insert 'g' before any occurance of 'b'
-           >>> retval = parse.config_objs.insert_after("b b", "X X")
-           >>> parse.get_text()
-           ... ["a a", "b b", "X X", "c c", "b b", "X X"]
-           >>>
-        """
-
-        #        inserted_object = False
-        #        for obj in self.ccp_ref.find_objects(exist_val):
-        #            logger.debug("Inserting '%s' after '%s'" % (new_val, exist_val))
-        #            print("IDX", obj.index)
-        #            obj.insert_after(new_val)
-        #            inserted_object = True
-        #        return inserted_object
-
-        calling_fn_index = 1
-        calling_filename = inspect.stack()[calling_fn_index].filename
-        calling_function = inspect.stack()[calling_fn_index].function
-        calling_lineno = inspect.stack()[calling_fn_index].lineno
-        err_txt = f"FATAL CALL: in {calling_filename} line {calling_lineno} {calling_function}(exist_val='{exist_val}', new_val='{new_val}')"
-        if (
-            isinstance(new_val, str)
-            and new_val.strip() == ""
-            and self.ignore_blank_lines is True
-        ):
-            logger.warning(f"`new_val`=`{new_val}`")
-            error = "Cannot insert a blank line if `ignore_blank_lines` is True"
+        if not isinstance(new_val, (str, BaseCfgLine)):
+            error = f"new_val must be a str or BaseCfgLine(), not {type(new_val)}"
             logger.error(error)
-            raise InvalidParameters(error)
+            raise ValueError(error)
 
-        # exist_val MUST be a string
-        if isinstance(exist_val, str) is True and exist_val != "":
-            pass
-
-        # Matches "IOSCfgLine", "NXOSCfgLine" and "ASACfgLine"... (and others)
-        elif isinstance(exist_val, BaseCfgLine):
-            exist_val = exist_val.text
-
-        else:
-            logger.error(err_txt)
-            raise ValueError(err_txt)
-
-        # new_val MUST be a string or BaseCfgLine
-        if isinstance(new_val, str) is True:
-            pass
-
-        elif isinstance(new_val, BaseCfgLine):
-            new_val = new_val.text
-
-        else:
-            logger.error(err_txt)
-            raise ValueError(err_txt)
+        idx = exist_val.linenum
 
         if self.factory is False:
             new_obj = CFGLINE[self.syntax](
@@ -1439,80 +1314,51 @@ class ConfigList(UserList):
             )
 
         else:
-            logger.error(err_txt)
-            raise ValueError(err_txt)
+            error = f"Invalid CiscoConfParse().factory value - {self.factory}"
+            logger.error(error)
+            raise ValueError(error)
 
-        ###########################################################################
-        # Find all config lines which need to be modified... store in all_idx
-        #
-        # ciscoconfparse2 Issue #67 - Use exist_val == list_obj.text instead
-        #    of a regex match
-        ###########################################################################
-        all_idx = [
-            idx
-            for idx, list_obj in enumerate(self.data)
-            if exist_val == list_obj._text
-        ]
-        for idx in sorted(all_idx, reverse=True):
-            self.data.insert(idx + 1, new_obj)
+        self.data.insert(idx+1, new_obj)
 
-        if bool(self.auto_commit):
-            # The config is not safe unless this is called after the append
-            self.ccp_ref.commit()
+        # Rebuild / renumber items on the modified ConfigList()...
+        self.rebuild_after_modification(commit=self.auto_commit)
 
     # This method is on ConfigList()
     @logger.catch(reraise=True)
-    def insert(self, index: int, item: BaseCfgLine | str) -> None:
-        """
-        :param index: Index to insert ``item`` at
-        :type index: int
-        :param item: Object to be inserted in the ConfigList()
-        :type item: Union[BaseCfgLine,str]
-        :rtype: None
-        """
-        if not isinstance(index, int):
-            error = f"The ConfigList() index must be an integer, but ConfigList().insert() got {type(index)}"
-            logger.critical(error)
+    def insert(
+        self, idx: int = -1, new_val: str | BaseCfgLine | None = None
+    ) -> None:
+
+        if not isinstance(new_val, (str, BaseCfgLine)):
+            error = f"new_val must be a str or BaseCfgLine(), not {type(new_val)}"
+            logger.error(error)
             raise ValueError(error)
 
-        # Get the configuration line text if item is a BaseCfgLine() instance
-        if isinstance(item, BaseCfgLine):
-            # only work with plain text to ensure that all objects are the
-            # correct object type, below
-            item = item.text
+        if isinstance(new_val, BaseCfgLine):
+            new_obj = new_val
 
-        # Coerce a string into the appropriate object
-        if isinstance(item, str):
-            if self.factory:
-                obj = config_line_factory(
-                    line=item,
-                    syntax=self.syntax,
-                )
+        elif self.factory is False:
+            new_obj = CFGLINE[self.syntax](
+                all_lines=self.data,
+                line=new_val,
+            )
 
-            elif self.factory is False:
-                obj = CFGLINE[self.syntax](
-                    line=item,
-                )
+        elif self.factory is True:
+            new_obj = config_line_factory(
+                all_lines=self.data,
+                line=new_val,
+                syntax=self.syntax,
+            )
 
-            else:
-                error = f"""insert() cannot insert {type(item)} "{item}" with factory={self.factory}"""
-                logger.critical(error)
-                raise ValueError(error)
         else:
-            error = f'''insert() cannot insert {type(item)} "{item}"'''
-            logger.critical(error)
-            raise TypeError(error)
+            error = f"Invalid CiscoConfParse().factory value - {self.factory}"
+            logger.error(error)
+            raise ValueError(error)
 
-        # Insert the object at index index
-        self.data.insert(index, obj)
+        self.data.insert(idx, new_obj)
 
-        # modify the current_checkpoint because this is
-        # a change to the ConfigList()
-        self.current_checkpoint = self.get_checkpoint()
-
-        if bool(self.auto_commit):
-            # The config is not safe unless this is called after the append
-            self.ccp_ref.commit()
+        # Rebuild / renumber items on the modified ConfigList()...
+        self.rebuild_after_modification(commit=self.auto_commit)
 
     # This method is on ConfigList()
     @logger.catch(reraise=True)

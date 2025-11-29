@@ -721,11 +721,11 @@ class BaseCfgLine:
 
         retval = None
         if isinstance(insertstr, str) is True:
-            retval = self.confobj.insert_before(exist_val=self.text, new_val=insertstr)
+            retval = self.confobj.insert_before(exist_val=self, new_val=insertstr)
 
         elif isinstance(insertstr, BaseCfgLine) is True:
             retval = self.confobj.insert_before(
-                exist_val=self.text, new_val=insertstr.text
+                exist_val=self, new_val=insertstr.text
             )
 
         else:
@@ -752,12 +752,12 @@ class BaseCfgLine:
 
         if isinstance(insertstr, str) is True:
             # Handle insertion of a plain-text line
-            retval = self.confobj.insert_after(exist_val=self.text, new_val=insertstr)
+            retval = self.confobj.insert_after(exist_val=self, new_val=insertstr)
 
         elif isinstance(insertstr, BaseCfgLine):
             # Handle insertion of a configuration line obj such as IOSCfgLine()
             retval = self.confobj.insert_after(
-                exist_val=self.text, new_val=insertstr.text
+                exist_val=self, new_val=insertstr.text
             )
 
         else:
