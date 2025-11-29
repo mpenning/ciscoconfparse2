@@ -6,6 +6,11 @@
 - Summary:
     - To be determined
 
+## Version: 0.8.55
+
+- Summary:
+    - Make `ConfigList().insert()`, `ConfigList().insert_before()` and `ConfigList().insert_after()` more resilient
+
 ## Version: 0.8.54
 
 - Summary:
