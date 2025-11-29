@@ -88,6 +88,43 @@ def testValues_pickle_01():
     os.remove(filename)
 
 
+def testValues_find_objects_order_01():
+    """Test CiscoConfParse().find_objects("...")"""
+
+    config = [
+        "interface Vlan100",
+        " ip address 10.0.1.1/24",
+        "interface Vlan200",
+        " ip address 10.0.2.1/24",
+    ]
+    uut = CiscoConfParse(config)
+
+    uut_output = [ii.text for ii in uut.find_objects("^interface")]
+
+    correct_output = ["interface Vlan100", "interface Vlan200"]
+
+    assert uut_output == correct_output
+
+
+def testValues_find_objects_order_02():
+    """Test CiscoConfParse().find_objects("...", reverse=True)"""
+
+    config = [
+        "interface Vlan100",
+        " ip address 10.0.1.1/24",
+        "interface Vlan200",
+        " ip address 10.0.2.1/24",
+    ]
+    uut = CiscoConfParse(config)
+
+    # Find objects in reverse order...
+    uut_output = [ii.text for ii in uut.find_objects("^interface", reverse=True)]
+
+    correct_output = ["interface Vlan200", "interface Vlan100"]
+
+    assert uut_output == correct_output
+
+
 def testValues_find_objects_list_01():
     """Ensure that find_objects() accepts a list input"""
     # Test banner delimiter on the same lines
