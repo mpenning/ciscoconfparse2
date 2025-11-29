@@ -1347,7 +1347,7 @@ end"""
     }
 
     # Insert lines here...
-    for intf_obj in cfg.find_objects(r"^interface\sGigabitEthernet"):
+    for intf_obj in cfg.find_objects(r"^interface\sGigabitEthernet", reverse=True):
         # Configured with an access vlan...
         if " switchport access vlan 100" in {ii.text for ii in intf_obj.children}:
             intf_obj.insert_after(" spanning-tree portfast")
@@ -1497,6 +1497,26 @@ def testValues_list_insert_06():
     assert parse.config_objs[3].parent == parse.config_objs[1]
     assert parse.config_objs[4].parent == parse.config_objs[1]
     assert parse.config_objs[5].parent == parse.config_objs[1]
+
+def testValues_obj_insert_07():
+    """test whether we can insert_before() and find objects after the insert when one of the objects is duplicated"""
+
+    c01 = [
+        "b",
+        "c",
+        "d",
+        "d",
+        "e",
+    ]
+
+    uut = CiscoConfParse(c01, syntax="ios")
+    uut.find_objects("d")[0].insert_before("a")
+    uut.commit()
+
+    actual_result = [ii.text for ii in uut.objs]
+    expected_result = [ "b", "c", "a", "d", "d", "e"]
+
+    assert expected_result == actual_result
 
 
 def testValues_find_object_branches_01():
@@ -3389,7 +3409,7 @@ interface Vlan200
 !"""
 
     uut = CiscoConfParse(config)
-    for cfgobj in uut.find_objects(r"description"):
+    for cfgobj in uut.find_objects(r"description", reverse=True):
         cfgobj.insert_before(" mac-address 0000.dead.beef")
 
     # Get the expected value
