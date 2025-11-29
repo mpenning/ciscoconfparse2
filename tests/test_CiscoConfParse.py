@@ -1498,6 +1498,7 @@ def testValues_list_insert_06():
     assert parse.config_objs[4].parent == parse.config_objs[1]
     assert parse.config_objs[5].parent == parse.config_objs[1]
 
+
 def testValues_obj_insert_07():
     """test whether we can insert_before() and find objects after the insert when one of the objects is duplicated"""
 
@@ -1514,7 +1515,7 @@ def testValues_obj_insert_07():
     uut.commit()
 
     actual_result = [ii.text for ii in uut.objs]
-    expected_result = [ "b", "c", "a", "d", "d", "e"]
+    expected_result = ["b", "c", "a", "d", "d", "e"]
 
     assert expected_result == actual_result
 

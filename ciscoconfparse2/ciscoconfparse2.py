@@ -1253,44 +1253,9 @@ class ConfigList(UserList):
     # This method is on ConfigList()
     @logger.catch(reraise=True)
     def insert_before(
-        self, exist_val: BaseCfgLine | None = None, new_val: str | BaseCfgLine | None = None
-    ) -> None:
-
-        if not isinstance(new_val, (str, BaseCfgLine)):
-            error = f"new_val must be a str or BaseCfgLine(), not {type(new_val)}"
-            logger.error(error)
-            raise ValueError(error)
-
-        idx  = exist_val.linenum
-
-        if self.factory is False:
-            new_obj = CFGLINE[self.syntax](
-                all_lines=self.data,
-                line=new_val,
-            )
-
-        elif self.factory is True:
-            new_obj = config_line_factory(
-                all_lines=self.data,
-                line=new_val,
-                syntax=self.syntax,
-            )
-
-        else:
-            error = f"Invalid CiscoConfParse().factory value - {self.factory}"
-            logger.error(error)
-            raise ValueError(error)
-
-        self.data.insert(idx, new_obj)
-
-        # Rebuild / renumber items on the modified ConfigList()...
-        self.rebuild_after_modification(commit=self.auto_commit)
-
-
-    # This method is on ConfigList()
-    @logger.catch(reraise=True)
-    def insert_after(
-        self, exist_val: BaseCfgLine | None = None, new_val: str | BaseCfgLine | None = None
+        self,
+        exist_val: BaseCfgLine | None = None,
+        new_val: str | BaseCfgLine | None = None,
     ) -> None:
 
         if not isinstance(new_val, (str, BaseCfgLine)):
@@ -1318,16 +1283,52 @@ class ConfigList(UserList):
             logger.error(error)
             raise ValueError(error)
 
-        self.data.insert(idx+1, new_obj)
+        self.data.insert(idx, new_obj)
 
         # Rebuild / renumber items on the modified ConfigList()...
         self.rebuild_after_modification(commit=self.auto_commit)
 
     # This method is on ConfigList()
     @logger.catch(reraise=True)
-    def insert(
-        self, idx: int = -1, new_val: str | BaseCfgLine | None = None
+    def insert_after(
+        self,
+        exist_val: BaseCfgLine | None = None,
+        new_val: str | BaseCfgLine | None = None,
     ) -> None:
+
+        if not isinstance(new_val, (str, BaseCfgLine)):
+            error = f"new_val must be a str or BaseCfgLine(), not {type(new_val)}"
+            logger.error(error)
+            raise ValueError(error)
+
+        idx = exist_val.linenum
+
+        if self.factory is False:
+            new_obj = CFGLINE[self.syntax](
+                all_lines=self.data,
+                line=new_val,
+            )
+
+        elif self.factory is True:
+            new_obj = config_line_factory(
+                all_lines=self.data,
+                line=new_val,
+                syntax=self.syntax,
+            )
+
+        else:
+            error = f"Invalid CiscoConfParse().factory value - {self.factory}"
+            logger.error(error)
+            raise ValueError(error)
+
+        self.data.insert(idx + 1, new_obj)
+
+        # Rebuild / renumber items on the modified ConfigList()...
+        self.rebuild_after_modification(commit=self.auto_commit)
+
+    # This method is on ConfigList()
+    @logger.catch(reraise=True)
+    def insert(self, idx: int = -1, new_val: str | BaseCfgLine | None = None) -> None:
 
         if not isinstance(new_val, (str, BaseCfgLine)):
             error = f"new_val must be a str or BaseCfgLine(), not {type(new_val)}"
