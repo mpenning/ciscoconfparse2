@@ -1291,15 +1291,16 @@ class ConfigList(UserList):
             logger.error(error)
             raise InvalidParameters(error)
 
-        # exist_val MUST be a string
+        ###########################################################################
+        # ciscoconfparse2 Issue #67 - Use exist_val == list_obj.text instead
+        #    of a regex match
+        ###########################################################################
         if isinstance(exist_val, str) is True and exist_val != "":
-            # Use re_escaped_text because of ciscoconfparse2 Bug #67
-            exist_val = re.escape(exist_val)
+            pass
 
         # Matches "IOSCfgLine", "NXOSCfgLine" and "ASACfgLine"... (and others)
         elif isinstance(exist_val, BaseCfgLine):
-            # Use re_escaped_text because of ciscoconfparse2 Bug #67
-            exist_val = exist_val.re_escaped_text
+            exist_val = exist_val.text
 
         else:
             logger.error(error)
@@ -1333,12 +1334,17 @@ class ConfigList(UserList):
             logger.error(error)
             raise ValueError(error)
 
-        # Find all config lines which need to be modified... store in all_idx
 
+        ###########################################################################
+        # Find all config lines which need to be modified... store in all_idx
+        #
+        # ciscoconfparse2 Issue #67 - Use exist_val == list_obj.text instead
+        #    of a regex match
+        ###########################################################################
         all_idx = [
             idx
             for idx, list_obj in enumerate(self.data)
-            if re.search(exist_val, list_obj.text)
+            if exist_val == list_obj.text
         ]
         for idx in sorted(all_idx, reverse=True):
             # insert at idx - 0 implements 'insert_before()'...
@@ -1398,12 +1404,11 @@ class ConfigList(UserList):
 
         # exist_val MUST be a string
         if isinstance(exist_val, str) is True and exist_val != "":
-            exist_val = re.escape(exist_val)
+            pass
 
         # Matches "IOSCfgLine", "NXOSCfgLine" and "ASACfgLine"... (and others)
         elif isinstance(exist_val, BaseCfgLine):
-            # Use re_escaped_text because of ciscoconfparse2 Bug #67
-            exist_val = exist_val.re_escaped_text
+            exist_val = exist_val.text
 
         else:
             logger.error(err_txt)
@@ -1437,12 +1442,16 @@ class ConfigList(UserList):
             logger.error(err_txt)
             raise ValueError(err_txt)
 
+        ###########################################################################
         # Find all config lines which need to be modified... store in all_idx
-
+        #
+        # ciscoconfparse2 Issue #67 - Use exist_val == list_obj.text instead
+        #    of a regex match
+        ###########################################################################
         all_idx = [
             idx
             for idx, list_obj in enumerate(self.data)
-            if re.search(exist_val, list_obj._text)
+            if exist_val == list_obj._text
         ]
         for idx in sorted(all_idx, reverse=True):
             self.data.insert(idx + 1, new_obj)
