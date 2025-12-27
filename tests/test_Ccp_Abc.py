@@ -477,16 +477,19 @@ def testVal_BaseCfgLine_insert_after_03():
 
 def testVal_BaseCfgLine_append_to_family_01():
     """Test BaseCfgLine().append_to_family()"""
+
     parse = CiscoConfParse(
-        # A fake double-indent on 'no ip proxy-arp'
+        # Use a faked double-indent on 'no ip proxy-arp'
         [
             "interface Ethernet0/0",
             " ip address 192.0.2.1 255.255.255.0",
             "  no ip proxy-arp",
         ]
     )
+
     obj = parse.find_objects("interface")[0]
     obj.append_to_family(" description This or that")
+
     assert parse.get_text() == [
         "interface Ethernet0/0",
         " ip address 192.0.2.1 255.255.255.0",
@@ -515,6 +518,7 @@ def testVal_BaseCfgLine_append_to_family_02():
 
 def testVal_BaseCfgLine_append_to_family_03():
     """Test BaseCfgLine().append_to_family(auto_indent=False)"""
+
     parse = CiscoConfParse(
         # A fake double-indent on 'no ip proxy-arp'
         [
@@ -526,13 +530,11 @@ def testVal_BaseCfgLine_append_to_family_03():
     obj = parse.find_objects("interface")[0]
     obj.append_to_family("description This or that", auto_indent=False)
     parse.commit()
-    uut = parse.objs[1]
-    assert uut.text == "description This or that"
+
+    uut = parse.objs[3]
+    assert uut.text == " description This or that"
     # Now the children should be empty; this is a new parent line
-    assert len(uut.children) == 1
-    assert uut.children[0].text == " ip address 192.0.2.1 255.255.255.0"
-    assert len(uut.all_children) == 2
-    assert uut.all_children[1].text == "  no ip proxy-arp"
+    assert len(uut.children) == 0
 
 
 def testVal_BaseCfgLine_append_to_family_04():
@@ -566,9 +568,12 @@ def testVal_BaseCfgLine_append_to_family_05():
             "  no ip proxy-arp",
         ]
     )
-    obj = parse.find_objects("interface")[0]
-    obj.append_to_family("description This or that", auto_indent=True)
 
+    obj = parse.find_objects("interface")[0]
+    obj.append_to_family(" description This or that")
+    parse.commit()
+
+    assert len(obj.children) == 2
     assert obj.children[-1].text == " description This or that"
 
     uut = parse.objs[1]
@@ -607,6 +612,28 @@ def testVal_BaseCfgLine_append_to_family_06():
         == "   a fake great-grandchild of interface Ethernet0/0"
     )
 
+def testVal_BaseCfgLine_append_to_family_07():
+    """Test BaseCfgLine().append_to_family(auto_indent=True) appending a child with indent width of three."""
+
+    parse = CiscoConfParse(
+        [
+            "interface Ethernet0/0",
+            "   ip address 192.0.2.1 255.255.255.0",
+            "   no ip proxy-arp",
+        ],
+        auto_indent_width=3,
+    )
+
+    assert parse.auto_indent_width == 3
+
+    for intf in parse.find_objects("^interface"):
+        intf.append_to_family("description Insert-Something-Here", auto_indent=True)
+    parse.commit()
+
+    uut_intf = parse.objs[-1]
+
+    assert uut_intf.text.strip() == "description Insert-Something-Here"
+    assert uut_intf.indent == 3
 
 def testVal_BaseCfgLine_verbose_01():
     """Test BaseCfgLine().verbose"""
@@ -1341,15 +1368,18 @@ def testVal_append_to_family_01():
 
 def testVal_append_to_family_02():
     """Test basic parent-append operations at the same indent-level and ensure that order is preserved."""
+
     parse = CiscoConfParse()
     parse.config_objs.append("first")
+    parse.commit()
+
     obj = parse.find_objects("first")[0]
     obj.append_to_family("second")
     obj.append_to_family("third")
 
     assert parse.config_objs[0].text == "first"
-    assert parse.config_objs[1].text == "second"
-    assert parse.config_objs[2].text == "third"
+    assert parse.config_objs[1].text == " second"
+    assert parse.config_objs[2].text == " third"
 
 
 def testVal_append_to_family_03():
@@ -1357,9 +1387,9 @@ def testVal_append_to_family_03():
     parse = CiscoConfParse(syntax="ios")
     parse.config_objs.append("first")
     obj = parse.find_objects("first")[0]
-    obj.append_to_family("second")
     # Append a child out-of-order, but still a child of first
     obj.append_to_family(" first-child")
+    obj.append_to_family(" second-child")
 
     assert isinstance(parse.config_objs[0], IOSCfgLine)
     assert parse.config_objs[0].text == "first"
@@ -1370,8 +1400,8 @@ def testVal_append_to_family_03():
     assert parse.config_objs[1].parent == parse.config_objs[0]
 
     assert isinstance(parse.config_objs[2], IOSCfgLine)
-    assert parse.config_objs[2].text == "second"
-    assert parse.config_objs[2].parent == parse.config_objs[2]
+    assert parse.config_objs[2].text == " second-child"
+    assert parse.config_objs[2].parent == parse.config_objs[0]
 
 
 def testVal_append_to_family_04():
@@ -1393,9 +1423,59 @@ def testVal_append_to_family_04():
 
 def testVal_append_to_family_05():
     """Test parent-append operations and ensure that a NotImplementedError() is raised if a direct grandchild is appended with append_to_family()."""
-    parse = CiscoConfParse()
+
+    parse = CiscoConfParse(auto_indent_width=3)
     parse.config_objs.append("first")
     obj01 = parse.find_objects("first")[0]
-    obj01.append_to_family(" first-child")
+    obj01.append_to_family(" second-child", auto_indent=True)
+
+    # Ensure that auto-indent for three spaces is respected...
+    #    see CiscoConfParse().auto_indent_width
+    assert parse.config_objs[1].text == "   second-child"
+
+    # Ensure we get an error if the manual indent is not a multiple of
+    #     CiscoConfParse().auto_indent_width
     with pytest.raises(NotImplementedError):
-        obj01.append_to_family("  first-child-child")
+        obj01.append_to_family(" broken-child-append", indent=1)
+
+    # Ensure we succeed if the manual indent is a multiple of
+    #     CiscoConfParse().auto_indent_width
+    obj01.append_to_family("third-child", indent=3)
+    assert parse.config_objs[2].text == "   third-child"
+
+    # Refuse to append a child if the indent is 0...
+    with pytest.raises(NotImplementedError):
+        obj01.append_to_family("fourth-child", indent=0)
+
+def testVal_BaseCfgLine_indent_01():
+    config = ["!",
+        "interface Ethernet1/1",
+        " switchport",
+        "  some-random-feature",
+    ]
+
+    uut = CiscoConfParse(config)
+
+    uut_parent = uut.find_objects(r"interface")[0]
+    uut_child = uut.find_objects(r"random")[0]
+    assert uut_child not in uut_parent.children
+    assert uut_child in uut_parent.all_children
+    assert uut_child.indent == 2
+    assert len(uut_parent.children) == 1
+    assert len(uut_parent.all_children) == 2
+
+    ###################################################################
+    # Change the parental relationship of some-random-feature command
+    ###################################################################
+    uut_child.indent = 1
+    # uut.config_objs.rebuild_after_modification()
+    uut.commit()
+
+    # Get the parent and child again because we rebuilt the configuration objects
+    # when uut_child.indent was set to 1
+    uut_parent = uut.find_objects(r"interface")[0]
+    uut_child = uut.find_objects(r"random")[0]
+    assert uut_child.indent == 1
+    assert uut_child.text == " some-random-feature"
+    assert len(uut_parent.children) == 2
+    assert len(uut_parent.all_children) == 2

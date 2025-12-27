@@ -3559,6 +3559,202 @@ def testValues_IOSCfgLine_ioscfg01(parse_c02):
     )[0].text
     assert test_result == "interface GigabitEthernet4/1"
 
+def testValues_ConfigList_auto_indent_config_01():
+    """
+    Auto-indent ConfigList configuration does nothing if indent-width is already correct in the configuration.
+    """
+    config = [
+        "interface GigabitEthernet4/1",
+        " switchport",
+        " switchport access vlan 100",
+        "!",
+        "interface GigabitEthernet4/2",
+        " switchport",
+        " switchport access vlan 100",
+        "!",
+    ]
+    correct_value = [
+        "interface GigabitEthernet4/1",
+        " switchport",
+        " switchport access vlan 100",
+        "!",
+        "interface GigabitEthernet4/2",
+        " switchport",
+        " switchport access vlan 100",
+        "!",
+    ]
+    uut = CiscoConfParse(config)
+    uut.config_objs.auto_indent_config(indent_width=1)
+    uut_config = uut.get_text()
+
+    assert uut_config == correct_value
+
+def testValues_ConfigList_auto_indent_config_02():
+    """
+    Auto-indent ConfigList configuration from an indent-width of 1 to indent-width of 2.
+    """
+    config = [
+        "interface GigabitEthernet4/1",
+        " switchport",
+        " switchport access vlan 100",
+        "!",
+        "interface GigabitEthernet4/2",
+        " switchport",
+        " switchport access vlan 100",
+        "!",
+    ]
+    correct_value = [
+        "interface GigabitEthernet4/1",
+        "  switchport",
+        "  switchport access vlan 100",
+        "!",
+        "interface GigabitEthernet4/2",
+        "  switchport",
+        "  switchport access vlan 100",
+        "!",
+    ]
+    uut = CiscoConfParse(config)
+    uut.config_objs.auto_indent_config(indent_width=2)
+    uut_config = uut.get_text()
+
+    assert uut_config == correct_value
+
+def testValues_ConfigList_auto_indent_config_03():
+    """
+    Auto-indent ConfigList multi-level configuration from an indent-width of 2 to indent-width of 1.
+    """
+    config = [
+        "interface GigabitEthernet4/1",
+        "  switchport",
+        "    some strange command",
+        "!",
+        "interface GigabitEthernet4/2",
+        "  switchport",
+        "  switchport access vlan 100",
+        "!",
+    ]
+    correct_value = [
+        "interface GigabitEthernet4/1",
+        " switchport",
+        "  some strange command",
+        "!",
+        "interface GigabitEthernet4/2",
+        " switchport",
+        " switchport access vlan 100",
+        "!",
+    ]
+    uut = CiscoConfParse(config)
+    uut.config_objs.auto_indent_config(indent_width=1)
+    uut_config = uut.get_text()
+
+    assert uut_config == correct_value
+
+    # Ensure that child object associations are correctly-maintained
+    uut_obj = uut.find_objects("^interface")[0]
+    assert len(uut_obj.children) == 1
+    assert len(uut_obj.all_children) == 2
+
+def testValues_ConfigList_auto_indent_config_04():
+    """
+    Auto-indent ConfigList multi-level IOS configuration from an indent-width of 2 to indent-width of -1,
+    raise a ValueError for the indent-width.
+    """
+    config = [
+        "interface GigabitEthernet4/1",
+        "  switchport",
+        "    some strange command",
+        "!",
+        "interface GigabitEthernet4/2",
+        "  switchport",
+        "  switchport access vlan 100",
+        "!",
+    ]
+
+    uut = CiscoConfParse(config)
+    with pytest.raises(ValueError):
+        uut.config_objs.auto_indent_config(indent_width=-1)
+
+def testValues_ConfigList_auto_indent_config_05():
+    """
+    Auto-indent ConfigList multi-level NXOS configuration from an indent-width of 1 to indent-width of -1,
+    raise a ValueError for the indent-width.
+    """
+    config = [
+        "interface GigabitEthernet4/1",
+        " switchport",
+        "   some strange command",
+        "!",
+        "interface GigabitEthernet4/2",
+        " switchport",
+        " switchport access vlan 100",
+        "!",
+    ]
+
+    uut = CiscoConfParse(config, syntax='nxos')
+    with pytest.raises(ValueError):
+        uut.config_objs.auto_indent_config(indent_width=-1)
+
+def testValues_CiscoConfParse_auto_indent_configuration_01():
+    """
+    Auto-indent CiscoConfParse multi-level NXOS configuration from an indent-width of 1 to indent-width of 2
+    because CiscoConfParse().auto_indent_configuration() uses syntax indentation of 2 from NXOS syntax.
+    """
+    config = [
+        "interface GigabitEthernet4/1",
+        " switchport",
+        "   some strange command",
+        "!",
+        "interface GigabitEthernet4/2",
+        " switchport",
+        " switchport access vlan 100",
+        "!",
+    ]
+    correct_value = [
+        "interface GigabitEthernet4/1",
+        "  switchport",
+        "    some strange command",
+        "!",
+        "interface GigabitEthernet4/2",
+        "  switchport",
+        "  switchport access vlan 100",
+        "!",
+    ]
+
+    uut = CiscoConfParse(config, syntax='nxos')
+
+    uut.auto_indent_configuration()
+    assert uut.get_text() == correct_value
+
+def testValues_CiscoConfParse_auto_indent_configuration_02():
+    """
+    Auto-indent CiscoConfParse multi-level configuration from an indent-width of 1 to indent-width of 3
+    because CiscoConfParse().auto_indent_configuration() uses auto_indent_width if it's not -1.
+    """
+    config = [
+        "interface GigabitEthernet4/1",
+        " switchport",
+        "   some strange command",
+        "!",
+        "interface GigabitEthernet4/2",
+        " switchport",
+        " switchport access vlan 100",
+        "!",
+    ]
+    correct_value = [
+        "interface GigabitEthernet4/1",
+        "   switchport",
+        "      some strange command",
+        "!",
+        "interface GigabitEthernet4/2",
+        "   switchport",
+        "   switchport access vlan 100",
+        "!",
+    ]
+
+    uut = CiscoConfParse(config, auto_indent_width=3)
+
+    uut.auto_indent_configuration()
+    assert uut.get_text() == correct_value
 
 def testValues_CiscoPassword_decrypt_7_01():
     """Test that we can decode a type 7 password hash"""

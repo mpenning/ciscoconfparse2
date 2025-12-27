@@ -480,6 +480,9 @@ def testIPv6Obj_attributes_01():
 
         assert getattr(test_object, attribute) == result_correct
 
+def testIPv6Obj_ffff_0_0_0_0_as_hex_tuple():
+    test_object = IPv6Obj('::ffff:0.0.0.0')
+    test_object.as_hex_tuple == ('0000', '0000', '0000', '0000', '0000', 'ffff', '0000')
 
 def testIPv6Obj_network_offset_01():
     test_object = IPv6Obj("2001::dead:beef/64")
@@ -490,6 +493,7 @@ def testIPv6Obj_set_network_offset_01():
     test_object = IPv6Obj("2001::dead:beef/64")
     test_object.network_offset = 200
     assert test_object == IPv6Obj("2001::c8/64")
+
 
 
 def testIPv4Obj_sort_01():
