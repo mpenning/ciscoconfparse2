@@ -18,17 +18,16 @@ mike [~at~] pennington [/dot\] net
 import math
 import re
 from collections.abc import Sequence
+from copy import copy
 from typing import Any, Union
+from warnings import warn
 
 import attrs
 from loguru import logger
 
 from ciscoconfparse2.ccp_util import junos_unsupported
-from ciscoconfparse2.errors import (
-    ConfigListItemDoesNotExist,
-    InvalidParameters,
-    InvalidTypecast,
-)
+from ciscoconfparse2.errors import (ConfigListItemDoesNotExist,
+                                    InvalidParameters, InvalidTypecast)
 
 DEFAULT_TEXT = "__undefined__"
 
@@ -260,6 +259,19 @@ class BaseCfgLine:
         return False
 
     # On BaseCfgLine()
+    @property
+    @logger.catch(reraise=True)
+    def ccp_ref(self) -> Any:
+        """Return the owning CiscoConfParse() instance"""
+
+        if self.confobj is not None:
+            return self.confobj.ccp_ref
+        else:
+            error = f"{self}.confobj is invalid (i.e. None)"
+            logger.error(error)
+            raise ValueError(error)
+
+    # On BaseCfgLine()
     @logger.catch(reraise=True)
     def get_unique_identifier(self) -> int:
         """
@@ -274,11 +286,41 @@ class BaseCfgLine:
     @property
     @logger.catch(reraise=True)
     def indent(self) -> int:
+        return len(self._text) - len(self._text.lstrip())
+
+    # On BaseCfgLine()
+    @indent.setter
+    @logger.catch(reraise=True)
+    def indent(self, value: int) -> int:
         """
+        Manually set the indent for a BaseCfgLine() instance.  The indent must be either zero or an even multiple of CiscoConfParse().auto_indent_width
+
         :return: Padding of the number of left spaces of the ``text`` property
         :rtype: int
         """
-        return len(self._text) - len(self.text.lstrip())
+        text = copy(self._text)
+        if value >= 0:
+            self._text = " " * int(value) + text.lstrip()
+            return value
+
+        else:
+            error = f"BaseCfgLine().indent must be positive integer"
+            logger.error(error)
+            raise ValueError(error)
+
+    # On BaseCfgLine()
+    @logger.catch(reraise=True)
+    def auto_indent(self) -> bool:
+
+        if self.indent == 0:
+            return False
+
+        else:
+            auto_indent_value = self.parent.indent + self.ccp_ref.auto_indent_width
+            if self.indent != auto_indent_value:
+                self.indent = auto_indent_value
+            self.commit()
+            return True
 
     # On BaseCfgLine()
     @property
@@ -674,7 +716,7 @@ class BaseCfgLine:
                 parentobj.children.remove(cobj)
 
         if self.confobj and self.confobj.auto_commit:
-            self.confobj.ccp_ref.commit()
+            self.ccp_ref.commit()
         elif self.confobj is None:
             raise NotImplementedError()
 
@@ -765,9 +807,9 @@ class BaseCfgLine:
     # On BaseCfgLine()
     @logger.catch(reraise=True)
     def append_to_family(
-        self, insertstr: str, indent: int = -1, auto_indent: bool = False
+        self, insertstr: str, indent: int = -1, auto_indent: bool = None
     ) -> None:
-        """Append an :py:class:`~ciscoconfparse2.models_cisco.IOSCfgLine` object with ``insertstr``
+        """Append an :py:class:`~ciscoconfparse2.ccp_abc.BaseCfgLine` object with ``insertstr``
         as a child at the top of the current configuration family.
 
         ``insertstr`` is inserted at the end of the family to ensure there are no
@@ -777,9 +819,9 @@ class BaseCfgLine:
         :type insertstr: str
         :param indent: The text configuration to be appended, default to -1
         :type indent: int
-        :param auto_indent: Automatically indent the child to :py:attr:`~ciscoconfparse2.CiscoConfParse.auto_indent_width`
-        :type auto_indent: bool
-        :return: None
+        :param auto_indent: As of ciscoconfparse2 version 0.9.0, this parameter is no longer supported.
+        :type indent: bool
+
         :rtype: None
 
         This example illustrates how you can use :py:func:`append_to_family` to add a
@@ -801,7 +843,7 @@ class BaseCfgLine:
            >>> parse = CiscoConfParse(config)
            >>>
            >>> for obj in parse.find_objects(r'^interface', reverse=True):
-           ...     obj.append_to_family(' carrier-delay msec 500')
+           ...     obj.append_to_family('carrier-delay msec 500')
            ...
            >>>
            >>> for line in parse.text:
@@ -821,183 +863,66 @@ class BaseCfgLine:
         if isinstance(insertstr, BaseCfgLine):
             insertstr = insertstr.text
 
+        if auto_indent is not None:
+            warning_msg = f"BaseCfgLine().auto_indent is no longer supported; you should remove it."
+            logger.warning(warning_msg)
+            warn(warning_msg)
+
         # Get the value of auto_commit from the ConfigList()
         auto_commit = bool(self.confobj.auto_commit)
-        auto_indent_width = self.confobj.ccp_ref.auto_indent_width
 
-        if auto_indent is True and indent > 0:
-            error = "indent and auto_indent are not supported together."
+        auto_indent_width = self.ccp_ref.auto_indent_width
+
+        if indent == 0:
+            error = "BaseCfgLine().append_to_family() with indent=0 is not supported since all child family members must be indented"
             logger.error(error)
             raise NotImplementedError(error)
 
-        if self.confobj is None:
-            error = "Cannot insert on a None BaseCfgLine().confobj"
-            logger.critical(error)
-            raise NotImplementedError(error)
+        elif auto_indent_width == 0:
+            raise NotImplementedError
 
-        # This object is the parent
-        insertstr_parent_indent = self.indent
+        elif indent > 0 and auto_indent_width >= 1 and indent % auto_indent_width > 0:
+            # Manual indentation must be an even multiple of auto_indent_width if it's defined
+            raise NotImplementedError
 
-        # Build the string to insert with proper indentation...
-        if indent > 0:
-            insertstr = (" " * indent) + insertstr.lstrip()
-        elif bool(auto_indent) is True:
-            insertstr = (
-                " " * (auto_indent_width * insertstr_parent_indent + 1)
-                + insertstr.lstrip()
-            )
-        else:
-            # do not modify insertstr indent, or indentstr leading spaces
+        elif indent > 0:
             pass
 
-        # BaseCfgLine.append_to_family(), insert a single line after this
-        #  object...
-        this_obj = type(self)
-        newobj = this_obj(line=insertstr)
-        newobj_parent = self
+        elif indent == -1 and auto_indent_width >= 1:
+            indent = self.indent + auto_indent_width
 
-        if isinstance(self, BaseCfgLine):
-            try:
-                if len(self.all_children) == 0 and len(self.children) == 0:
-                    ###########################################################
-                    # If all changes have been committed, insert the first
-                    # child or object sibling here
-                    ###########################################################
+        elif indent == -1 and auto_indent_width == -1:
+            indent = self.indent + self.ccp_ref.get_indent_from_syntax()
 
-                    ###########################################################
-                    # Walk all indents and find the last linenumber at that
-                    # indent-level...
-                    ###########################################################
-                    last_parent_linenums = {}
-                    for obj in self.confobj.data:
-                        if self not in obj.lineage:
-                            continue
-                        obj_indent = self.classify_family_indent(obj.text)
-                        if isinstance(last_parent_linenums.get(obj_indent, None), int):
-                            if obj.linenum > last_parent_linenums[obj_indent]:
-                                last_parent_linenums[obj_indent] = obj.linenum
-                        else:
-                            last_parent_linenums[obj_indent] = obj.linenum
-
-                    ###########################################################
-                    # Calculate the index number based on existing family
-                    # structure
-                    ###########################################################
-                    this_indent = self.classify_family_indent(self.text)
-                    new_family_indent = self.classify_family_indent(newobj.text)
-                    if this_indent == new_family_indent:
-                        if len(self.siblings) > 0:
-                            _idx = self.siblings[-1].linenum + 1
-                        else:
-                            _idx = self.last_family_linenum + 1
-                    elif this_indent + 1 == new_family_indent:
-                        _idx = last_parent_linenums[this_indent] + 1
-                        self.children.append(newobj)
-                    else:
-                        raise NotImplementedError()
-
-                    retval = self.confobj.insert(_idx, newobj)
-
-                    ###########################################################
-                    # Append children as required...
-                    ###########################################################
-                    if self.classify_family_indent(insertstr) == 0:
-                        pass
-                    elif self.classify_family_indent(insertstr) == 1:
-                        self.children.append(newobj)
-                    elif self.classify_family_indent(insertstr) > 1:
-                        raise NotImplementedError()
-
-                    if auto_commit is True:
-                        self.confobj.ccp_ref.commit()
-                    return retval
-
-                elif len(self.all_children) > 0 and len(self.children) == 0:
-
-                    _idx = self.linenum + 1
-                    retval = self.confobj.insert(_idx, newobj)
-                    insertstr_family_indent = self.classify_family_indent(insertstr)
-                    self.children.append(newobj)
-                    if auto_commit is True:
-                        self.confobj.ccp_ref.commit()
-                    return retval
-
-                elif len(self.all_children) > 0 and len(self.children) > 0:
-                    ###########################################################
-                    # Potentially append another child to the family
-                    ###########################################################
-
-                    insertstr_family_indent = self.classify_family_indent(insertstr)
-                    if insertstr_family_indent == 0:
-                        #######################################################
-                        # Append a sibling for the children
-                        #######################################################
-                        _idx = self.linenum + len(self.children)
-
-                    elif insertstr_family_indent > self.classify_family_indent(
-                        self.text
-                    ):
-                        #######################################################
-                        # Insert a child... do the children have children?
-                        #######################################################
-                        if len(self.children[-1].children) > 0:
-                            _idx = self.linenum + len(self.all_children) + 1
-                        else:
-                            _idx = self.linenum + len(self.children) + 1
-
-                    elif insertstr_family_indent < self.classify_family_indent(
-                        self.text
-                    ):
-                        # inserstr is indented less than this object
-                        raise NotImplementedError()
-
-                    else:
-                        # something unexpected happened
-                        raise NotImplementedError()
-
-                    classify_family_indent = self.classify_family_indent(insertstr)
-                    if classify_family_indent == 1:
-                        self.children.append(newobj)
-                    elif classify_family_indent > 1:
-                        raise NotImplementedError(
-                            "Cannot append more than one child level"
-                        )
-                    retval = self.confobj.insert(_idx, newobj)
-
-                    if auto_commit is True:
-                        self.confobj.ccp_ref.commit()
-
-                    return retval
-
-                else:
-                    ###########################################################
-                    # If all changes have been committed, insert the first
-                    # child here
-                    ###########################################################
-
-                    # Use newobj_parent.linenum instead of
-                    # self.confobj.index(foo), which is rather fragile with
-                    # this UserList...
-                    _idx = self.linenum + 1
-
-                    retval = self.confobj.insert(_idx, newobj)
-                    retval = self.children.append(newobj)
-
-                    if auto_commit is True:
-                        self.confobj.ccp_ref.commit()
-                    return retval
-
-            except BaseException as eee:
-                raise eee
-        elif newobj_parent is not None:
-            retval = self.confobj.insert(self.linenum + 1, newobj)
-            if auto_commit is True:
-                self.confobj.ccp_ref.commit()
-            return retval
         else:
-            error = f"Cannot find parent for {newobj} under this instance: {self}"
+            error = f"BaseCfgLine().append_to_family(indent={indent}) and CiscoConfParse().auto_indent_width={auto_indent_width}"
             logger.error(error)
             raise ValueError(error)
+
+        ##############################################################
+        # Get the last child linenum for proper append behavior
+        ##############################################################
+        if len(self.all_children) > 0:
+            last_linenum = self.all_children[-1].linenum
+        else:
+            last_linenum = self.linenum
+
+        ##############################################################
+        # Build the new object to be inserted
+        ##############################################################
+        this_class = type(self)
+        new_obj = this_class(line=" " * indent + insertstr.lstrip())
+        new_obj.parent = self
+        new_obj.linenum = last_linenum + 1
+
+        ##############################################################
+        # Add the new object to the ConfigList()
+        ##############################################################
+        self._children.append(new_obj)
+        self.confobj.insert(new_obj.linenum, new_obj)
+
+        # Fix up the configuration after appending to family...
+        self.confobj.rebuild_after_modification(commit=auto_commit)
 
     # On BaseCfgLine()
     @logger.catch(reraise=True)
@@ -1017,7 +942,7 @@ class BaseCfgLine:
             logger.critical(error)
             raise InvalidParameters(error)
 
-        auto_indent_width = self.confobj.ccp_ref.auto_indent_width
+        auto_indent_width = self.ccp_ref.auto_indent_width
         if not isinstance(auto_indent_width, int):
             error = f"CiscoConfParse().auto_indent_width must be an integer, but found {type(auto_indent_width)}"
             logger.critical(error)
@@ -1036,12 +961,12 @@ class BaseCfgLine:
         if self.indent == indent_width:
             return 0
         elif self.indent < indent_width:
-            this_val = indent_width / self.confobj.ccp_ref.auto_indent_width
-            self_val = self.indent / self.confobj.ccp_ref.auto_indent_width
+            this_val = indent_width / self.ccp_ref.auto_indent_width
+            self_val = self.indent / self.ccp_ref.auto_indent_width
             return int(this_val - self_val)
         elif self.indent > indent_width:
-            this_val = indent_width / self.confobj.ccp_ref.auto_indent_width
-            self_val = self.indent / self.confobj.ccp_ref.auto_indent_width
+            this_val = indent_width / self.ccp_ref.auto_indent_width
+            self_val = self.indent / self.ccp_ref.auto_indent_width
             return int(this_val - self_val)
         else:
             error = "unexpected condition"
@@ -1240,19 +1165,19 @@ class BaseCfgLine:
 
         .. note::
 
-           This will replace the config tex string in-place.
+           This will replace the config text string in-place.
 
         :return: The replaced config string
         :rtype: str
         """
         self.text = self._text.replace(before, after, count)
         if self.confobj and self.confobj.auto_commit is True:
-            self.confobj.ccp_ref.commit()
+            self.ccp_ref.commit()
         return self._text
 
     # On BaseCfgLine()
-    def re_sub(self, regex, replacergx, re_flags=0):
-        """Replace all strings matching ``linespec`` with ``replacestr`` in the :class:`~ciscoconfparse2.models_cisco.IOSCfgLine` object; however, if the :class:`~ciscoconfparse2.models_cisco.IOSCfgLine` text matches ``ignore_rgx``, then the text is *not* replaced.
+    def re_sub(self, regex, replacergx, re_flags=0) -> str:
+        """Replace all strings matching ``linespec`` with ``replacestr`` in the :class:`~ciscoconfparse2.ccp_abc.BaseCfgLine` object; however, if the :class:`~ciscoconfparse2.ccp_abc.BaseCfgLine` text matches ``ignore_rgx``, then the text is *not* replaced.
 
         Parameters
         ----------
@@ -1324,13 +1249,13 @@ class BaseCfgLine:
         # Only auto_commit if there was a text change
         if text_before_replace != text_after_replace:
             if self.confobj and self.confobj.auto_commit is True:
-                self.confobj.ccp_ref.commit()
+                self.ccp_ref.commit()
 
         return text_after_replace
 
     # On BaseCfgLine()
-    def re_match(self, regex, group=1, default=""):
-        r"""Use ``regex`` to search the :class:`~ciscoconfparse2.models_cisco.IOSCfgLine` text and return the regular expression group, at the integer index.
+    def re_match(self, regex, group=1, default="") -> str:
+        r"""Use ``regex`` to search the :class:`~ciscoconfparse2.ccp_abc.BaseCfgLine` text and return the regular expression group, at the integer index.
 
         :param regex: A string or python regular expression, which should be
                       matched.  This regular expression should contain
@@ -1384,8 +1309,8 @@ class BaseCfgLine:
         return default
 
     # On BaseCfgLine()
-    def re_search(self, regex, default="", debug=0):
-        """Search :class:`~ciscoconfparse2.models_cisco.IOSCfgLine` with ``regex``
+    def re_search(self, regex, default="", debug=0) -> str:
+        """Search :class:`~ciscoconfparse2.ccp_abc.BaseCfgLine` with ``regex``
 
         Parameters
         ----------
@@ -1399,7 +1324,7 @@ class BaseCfgLine:
         -------
 
         str
-            The :class:`~ciscoconfparse2.models_cisco.IOSCfgLine` text which matched.  If there is no match, ``default`` is returned.
+            The :class:`~ciscoconfparse2.ccp_abc.BaseCfgLine` text which matched.  If there is no match, ``default`` is returned.
         """
         if self.confobj is not None and self.confobj.search_safe is False:
             error = "The configuration has changed since the last commit; a config search is not safe."
@@ -1420,9 +1345,9 @@ class BaseCfgLine:
         return retval
 
     # On BaseCfgLine()
-    def re_search_children(self, regex, recurse=False):
+    def find_child_objects(self, regex, recurse=False, reverse=False) -> list:
         """Use ``regex`` to search the text contained in the children of
-        this :class:`~ciscoconfparse2.models_cisco.IOSCfgLine`.
+        this :class:`~ciscoconfparse2.ccp_abc.BaseCfgLine`.
 
         Parameters
         ----------
@@ -1431,22 +1356,63 @@ class BaseCfgLine:
             A string or python regular expression, which should be matched.
         recurse : bool
             Set True if you want to search all children (children, grand children, great grand children, etc...)
+        reverse : bool
+            Set True if you want to reverse the order of child objects returned.
 
         Returns
         -------
 
         list
-            A list of matching :class:`~ciscoconfparse2.models_cisco.IOSCfgLine` objects which matched.  If there is no match, an empty :py:func:`list` is returned.
+            A list of matching :class:`~ciscoconfparse2.ccp_abc.BaseCfgLine` objects which matched.  If there is no match, an empty :py:func:`list` is returned.
         """
         if self.confobj is not None and self.confobj.search_safe is False:
             error = "The configuration has changed since the last commit; a config search is not safe."
             logger.critical(error)
             raise NotImplementedError(error)
 
+        retval = []
         if recurse is False:
-            return [cobj for cobj in self.children if cobj.re_search(regex)]
+            retval = [cobj for cobj in self.children if cobj.re_search(regex)]
         else:
-            return [cobj for cobj in self.all_children if cobj.re_search(regex)]
+            retval = [cobj for cobj in self.all_children if cobj.re_search(regex)]
+
+        if reverse:
+            retval.reverse()
+
+        return retval
+
+    # On BaseCfgLine()
+    def re_search_children(self, regex, recurse=False, reverse=False) -> list:
+        """
+        DEPRECATION WARNING - This method has been renamed BaseCfgLine().find_child_objects()
+
+        Please migrate to BaseCfgLine()find_child_objects()
+
+        Use ``regex`` to search the text contained in the children of
+        this :class:`~ciscoconfparse2.ccp_abc.BaseCfgLine`.
+
+        Parameters
+        ----------
+
+        regex : str
+            A string or python regular expression, which should be matched.
+        recurse : bool
+            Set True if you want to search all children (children, grand children, great grand children, etc...)
+        reverse : bool
+            Set True if you want to reverse the order of child objects returned.
+
+        Returns
+        -------
+
+        list
+            A list of matching :class:`~ciscoconfparse2.ccp_abc.BaseCfgLine` objects which matched.  If there is no match, an empty :py:func:`list` is returned.
+        """
+
+        warn_msg = "DEPRECATION WARNING - This method has been renamed BaseCfgLine().find_child_objects()"
+        logger.warning(warn_msg)
+        warn(warn_msg)
+
+        return self.find_child_objects(regex, recurse, reverse)
 
     # On BaseCfgLine()
     @logger.catch(reraise=True)
