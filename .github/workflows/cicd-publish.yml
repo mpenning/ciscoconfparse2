@@ -32,7 +32,7 @@ jobs:
       - name: 'Create packages in dist/ with hatch'
         run: 'hatch build'
       - name: 'Upload package artifacts to GitHub'
-        uses: 'actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f'  # v5.0.0
+        uses: "actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f"  # v5.0.0
         with:
           name: 'python-artifacts'
           path: 'dist/*'
@@ -51,9 +51,9 @@ jobs:
       url: 'https://pypi.org/p/ciscoconfparse2'
     steps:
       - name: 'Download artifacts from python-artifacts job'
-        uses: 'actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131'  # v7.0.0
+        uses: "actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131"  # v7.0.0
         with:
           name: 'python-artifacts'
           path: 'dist'
       - name: 'Upload packages to PYPI'
-        uses: 'pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e'  # v1.13.0
+        uses: "pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e"  # v1.13.0
