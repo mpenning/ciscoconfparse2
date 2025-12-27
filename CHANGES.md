@@ -6,6 +6,11 @@
 - Summary:
     - To be determined
 
+## Version: 0.9.2
+
+- Summary:
+    - Attempt to fix GitHub Actions problems
+
 ## Version: 0.9.1
 
 - Summary:
