@@ -31,61 +31,41 @@ import random
 import re
 import time
 from collections import UserList
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from typing import Any, Optional, Union
-from collections.abc import Callable
+from warnings import warn
 
 import attrs
 import hier_config
 import yaml  # import for pyyaml
-from traitlets import HasTraits, Instance, Unicode, Bool, List, CInt
 from loguru import logger
-from pyparsing import Combine, OneOrMore, White, Word, nested_expr, printables
-from pyparsing import ParseException
-from pyparsing import traceParseAction
-from typeguard import typechecked
-
 # NOTE we are using libpass instead of passlib, but libpass imports as passlib
 #     ref: https://github.com/notypecheck/passlib
 from passlib.hash import cisco_type7, md5_crypt
+from pyparsing import (Combine, OneOrMore, ParseException, White, Word,
+                       nested_expr, printables, traceParseAction)
+from traitlets import Bool, CInt, HasTraits, Instance, List, Unicode
+from typeguard import typechecked
 
 from ciscoconfparse2.__about__ import __version__
 from ciscoconfparse2.ccp_abc import BaseCfgLine
 from ciscoconfparse2.ccp_util import configure_loguru, enforce_valid_types
-from ciscoconfparse2.errors import (
-    ConfigListItemDoesNotExist,
-    InvalidParameters,
-    InvalidPassword,
-    RequirementFailure,
-)
-from ciscoconfparse2.models_asa import (
-    ASAAclLine,
-    ASACfgLine,
-    ASAHostnameLine,
-    ASAIntfGlobal,
-    ASAIntfLine,
-    ASAName,
-    ASAObjGroupNetwork,
-    ASAObjGroupService,
-    ASAObjNetwork,
-    ASAObjService,
-)
-from ciscoconfparse2.models_cisco import (
-    IOSAccessLine,
-    IOSCfgLine,
-    IOSIntfGlobal,
-    IOSIntfLine,
-    IOSRouteLine,
-)
+from ciscoconfparse2.errors import (ConfigListItemDoesNotExist,
+                                    InvalidParameters, InvalidPassword,
+                                    RequirementFailure)
+from ciscoconfparse2.models_asa import (ASAAclLine, ASACfgLine,
+                                        ASAHostnameLine, ASAIntfGlobal,
+                                        ASAIntfLine, ASAName,
+                                        ASAObjGroupNetwork, ASAObjGroupService,
+                                        ASAObjNetwork, ASAObjService)
+from ciscoconfparse2.models_cisco import (IOSAccessLine, IOSCfgLine,
+                                          IOSIntfGlobal, IOSIntfLine,
+                                          IOSRouteLine)
 from ciscoconfparse2.models_iosxr import IOSXRCfgLine, IOSXRIntfLine
 from ciscoconfparse2.models_junos import JunosCfgLine, JunosIntfLine
-from ciscoconfparse2.models_nxos import (
-    NXOSAccessLine,
-    NXOSCfgLine,
-    NXOSIntfGlobal,
-    NXOSIntfLine,
-    NXOSvPCLine,
-)
+from ciscoconfparse2.models_nxos import (NXOSAccessLine, NXOSCfgLine,
+                                         NXOSIntfGlobal, NXOSIntfLine,
+                                         NXOSvPCLine)
 
 ALL_IOS_FACTORY_CLASSES = [
     IOSIntfLine,
@@ -778,6 +758,7 @@ class ConfigList(UserList):
     def __repr__(self) -> str:
         return f"""<ConfigList, syntax='{self.syntax}', comment_delimiters={self.comment_delimiters}, conf={self.data}>"""
 
+    # This method is on ConfigList()
     @logger.catch(reraise=True)
     def rebuild_after_modification(self, commit: bool = False) -> list[str]:
         """
@@ -961,6 +942,29 @@ class ConfigList(UserList):
                 logger.critical(error)
                 raise NotImplementedError(error)
         return total
+
+    # This method is on ConfigList()
+    @logger.catch(reraise=True)
+    def auto_indent_config(self, indent_width=-1) -> bool:
+        """
+        Walk all BaseCfgLine() instances and auto-indent them based
+        on the value of CiscoConfParse().auto_indent_width.
+        """
+
+        if indent_width < 1:
+            error = "If auto_indent_width is less than 1, ConfigList().auto_indent_config() cannot auto-indent"
+            logger.error(error)
+            raise ValueError(error)
+
+
+        for obj in self.data:
+
+            if obj.indent != 0:
+                obj.indent = obj.parent.indent + indent_width
+
+        self.commit()
+
+        return True
 
     # This method is on ConfigList()
     @property
@@ -1986,6 +1990,24 @@ class CiscoConfParse:
         self.syntax = syntax
 
         ######################################################################
+        # auto indent width
+        ######################################################################
+        if auto_indent_width == -1:
+            # Indent based on syntax...
+            self.auto_indent_width = int(auto_indent_width)
+
+        elif auto_indent_width > 0:
+            # Force auto-indent to arbitrary value
+            self.auto_indent_width = int(auto_indent_width)
+
+        else:
+            error = (
+                "CiscoConfParse() auto_indent_width = {auto_indent_width} is invalid"
+            )
+            logger.error(error)
+            raise ValueError(error)
+
+        ######################################################################
         # Comment Delimiters
         ######################################################################
         if comment_delimiters is None:
@@ -1997,13 +2019,6 @@ class CiscoConfParse:
             logger.critical(error)
             raise InvalidParameters(error)
         self.comment_delimiters = comment_delimiters
-
-        ######################################################################
-        # Auto-indent width
-        ######################################################################
-        if int(auto_indent_width) <= 0:
-            auto_indent_width = int(self.get_auto_indent_from_syntax(syntax=syntax))
-        self.auto_indent_width = int(auto_indent_width)
 
         ######################################################################
         # Log an error if parsing with `ignore_blank_lines=True` and
@@ -2083,6 +2098,64 @@ class CiscoConfParse:
 
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
+    def auto_indent_configuration(self) -> bool:
+        """
+        Use the auto_indent_width to automatically indent the configuration.
+
+        This action automatically commits the configuration.
+        """
+        if self.auto_indent_width == -1:
+            # Get indentation from the CiscoConfParse() syntax...
+            syntax_indent_width = self.get_indent_from_syntax()
+            self.config_objs.auto_indent_config(indent_width=syntax_indent_width)
+            self.commit()
+            return True
+
+        elif self.auto_indent_width >= 1:
+            # Get indentation from CiscoConfParse().auto_indent_width
+            auto_indent_width = self.auto_indent_width
+            self.config_objs.auto_indent_config(indent_width=auto_indent_width)
+            self.commit()
+            return True
+
+        else:
+            error = f"CiscoConfParse().auto_indent_configuration() cannot auto-indent if auto_indent_width is less than 1"
+            logger.error(error)
+            raise ValueError(error)
+
+    # This method is on CiscoConfParse()
+    @logger.catch(reraise=True)
+    def insert(self, idx: int, line: str | BaseCfgLine = None) -> None:
+
+        last_index = self.config_objs[-1].linenum
+
+        if int(idx) == -1:
+            self.append(line)
+            return None
+
+        elif idx < -1:
+            self.insert(last_index + (idx + 2), line)
+            return None
+
+        else:
+            obj = None
+            for obj in self.objs:
+                if obj.linenum == int(idx):
+                    obj.insert_before(line)
+                    return None
+
+            # Default to inserting after the last object...
+            obj.insert_after(line)
+            return None
+
+    # This method is on CiscoConfParse()
+    @logger.catch(reraise=True)
+    def append(self, line: str | BaseCfgLine = None) -> None:
+        last_obj = self.config_objs[-1]
+        last_obj.insert_after(line)
+
+    # This method is on CiscoConfParse()
+    @logger.catch(reraise=True)
     def check_input_bad(self, config_lines) -> None:
         if self.check_ccp_input_good(config=config_lines, _logger=logger) is False:
             error = f"Cannot parse config=`{config_lines}`"
@@ -2144,7 +2217,7 @@ class CiscoConfParse:
 
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
-    def get_auto_indent_from_syntax(self, syntax: str | None = None) -> int:
+    def get_indent_from_syntax(self) -> int:
         """Return an auto indent for the 'syntax' string in question
 
         :param syntax: Syntax of the configuration lines
@@ -2152,10 +2225,7 @@ class CiscoConfParse:
         :return: Number of spaces for each indent level
         :rtype: int
         """
-        if not isinstance(syntax, str):
-            error = "The 'syntax' parameter must be a string"
-            logger.error(error)
-            raise InvalidParameters(error)
+        syntax = self.syntax
 
         if syntax not in ALL_VALID_SYNTAX:
             error = f"syntax='{syntax}' is not yet supported"
@@ -2174,7 +2244,7 @@ class CiscoConfParse:
         elif syntax == "junos":
             indent_width = 4
         else:
-            error = "Unexpected condition in get_auto_indent_from_syntax()"
+            error = "Unexpected condition in get_indent_from_syntax()"
             logger.critical(error)
             raise NotImplementedError(error)
 
@@ -2472,8 +2542,8 @@ class CiscoConfParse:
         :return: Children matching ``childspec``
         :rtype: List[BaseCfgLine]
         """
-        # I'm not using parent_obj.re_search_children() because
-        # re_search_children() doesn't return None for no match...
+        # I'm not using parent_obj.find_child_objects() because
+        # find_child_objects() doesn't return None for no match...
 
         if debug > 1:
             msg = f"""Calling _find_child_object_branches(
@@ -2994,7 +3064,7 @@ debug={debug},
         # Set escape_chars False to avoid double-escaping characters
         return list(
             filter(
-                lambda x: x.re_search_children(childspec, recurse=recurse),
+                lambda x: x.find_child_objects(childspec, recurse=recurse),
                 self.find_objects(
                     parentspec, ignore_ws=ignore_ws, escape_chars=False, reverse=reverse
                 ),
@@ -3146,7 +3216,7 @@ debug={debug},
             for obj in self.find_objects(
                 parentspec, ignore_ws=ignore_ws, escape_chars=False, reverse=reverse
             )
-            if not obj.re_search_children(childspec, recurse=recurse)
+            if not obj.find_child_objects(childspec, recurse=recurse)
         ]
 
     # This method is on CiscoConfParse()
@@ -3336,8 +3406,13 @@ debug={debug},
 
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
-    def re_search_children(self, regexspec, recurse=False):
-        """Use ``regexspec`` to search for root parents in the config with text matching regex.  If `recurse` is False, only root parent objects are returned.  A list of matching objects is returned.
+    def re_search_children(self, regexspec, recurse=False) -> list:
+        """
+        DEPRECATION WARNING - This method duplicates CiscoConfParse().find_child_objects() and will be removed in future releases.
+
+        Please migrate to CiscoConfParse().find_child_objects()
+
+        Use ``regexspec`` to search for root parents in the config with text matching regex.  If `recurse` is False, only root parent objects are returned.  A list of matching objects is returned.
 
         This method is very similar to :func:`~ciscoconfparse2.CiscoConfParse.find_objects` (when `recurse` is True); however it was written in response to the use-case described in `Github Issue #156 <https://github.com/mpenning/ciscoconfparse/issues/156>`_.
 
@@ -3354,6 +3429,11 @@ debug={debug},
             A list of matching :class:`~ciscoconfparse2.models_cisco.IOSCfgLine` objects which matched.  If there is no match, an empty :py:func:`list` is returned.
 
         """
+
+        warn_msg = "DEPRECATION WARNING - This method will be replaced by CiscoConfParse().find_child_objects()"
+        logger.warning(warn_msg)
+        warn(warn_msg)
+
         ## I implemented this method in response to Github issue #156
         if recurse is False:
             # Only return the matching oldest ancestor objects...
