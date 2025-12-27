@@ -3559,6 +3559,7 @@ def testValues_IOSCfgLine_ioscfg01(parse_c02):
     )[0].text
     assert test_result == "interface GigabitEthernet4/1"
 
+
 def testValues_ConfigList_auto_indent_config_01():
     """
     Auto-indent ConfigList configuration does nothing if indent-width is already correct in the configuration.
@@ -3589,6 +3590,7 @@ def testValues_ConfigList_auto_indent_config_01():
 
     assert uut_config == correct_value
 
+
 def testValues_ConfigList_auto_indent_config_02():
     """
     Auto-indent ConfigList configuration from an indent-width of 1 to indent-width of 2.
@@ -3618,6 +3620,7 @@ def testValues_ConfigList_auto_indent_config_02():
     uut_config = uut.get_text()
 
     assert uut_config == correct_value
+
 
 def testValues_ConfigList_auto_indent_config_03():
     """
@@ -3654,6 +3657,7 @@ def testValues_ConfigList_auto_indent_config_03():
     assert len(uut_obj.children) == 1
     assert len(uut_obj.all_children) == 2
 
+
 def testValues_ConfigList_auto_indent_config_04():
     """
     Auto-indent ConfigList multi-level IOS configuration from an indent-width of 2 to indent-width of -1,
@@ -3674,6 +3678,7 @@ def testValues_ConfigList_auto_indent_config_04():
     with pytest.raises(ValueError):
         uut.config_objs.auto_indent_config(indent_width=-1)
 
+
 def testValues_ConfigList_auto_indent_config_05():
     """
     Auto-indent ConfigList multi-level NXOS configuration from an indent-width of 1 to indent-width of -1,
@@ -3690,9 +3695,10 @@ def testValues_ConfigList_auto_indent_config_05():
         "!",
     ]
 
-    uut = CiscoConfParse(config, syntax='nxos')
+    uut = CiscoConfParse(config, syntax="nxos")
     with pytest.raises(ValueError):
         uut.config_objs.auto_indent_config(indent_width=-1)
+
 
 def testValues_CiscoConfParse_auto_indent_configuration_01():
     """
@@ -3720,10 +3726,11 @@ def testValues_CiscoConfParse_auto_indent_configuration_01():
         "!",
     ]
 
-    uut = CiscoConfParse(config, syntax='nxos')
+    uut = CiscoConfParse(config, syntax="nxos")
 
     uut.auto_indent_configuration()
     assert uut.get_text() == correct_value
+
 
 def testValues_CiscoConfParse_auto_indent_configuration_02():
     """
@@ -3755,6 +3762,7 @@ def testValues_CiscoConfParse_auto_indent_configuration_02():
 
     uut.auto_indent_configuration()
     assert uut.get_text() == correct_value
+
 
 def testValues_CiscoPassword_decrypt_7_01():
     """Test that we can decode a type 7 password hash"""

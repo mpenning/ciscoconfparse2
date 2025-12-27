@@ -612,6 +612,7 @@ def testVal_BaseCfgLine_append_to_family_06():
         == "   a fake great-grandchild of interface Ethernet0/0"
     )
 
+
 def testVal_BaseCfgLine_append_to_family_07():
     """Test BaseCfgLine().append_to_family(auto_indent=True) appending a child with indent width of three."""
 
@@ -634,6 +635,7 @@ def testVal_BaseCfgLine_append_to_family_07():
 
     assert uut_intf.text.strip() == "description Insert-Something-Here"
     assert uut_intf.indent == 3
+
 
 def testVal_BaseCfgLine_verbose_01():
     """Test BaseCfgLine().verbose"""
@@ -1447,8 +1449,10 @@ def testVal_append_to_family_05():
     with pytest.raises(NotImplementedError):
         obj01.append_to_family("fourth-child", indent=0)
 
+
 def testVal_BaseCfgLine_indent_01():
-    config = ["!",
+    config = [
+        "!",
         "interface Ethernet1/1",
         " switchport",
         "  some-random-feature",
