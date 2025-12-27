@@ -6,6 +6,11 @@
 - Summary:
     - To be determined
 
+## Version: 0.9.1
+
+- Summary:
+    - Remove leading zeros from git version hashes in GitHub Actions
+
 ## Version: 0.9.0
 
 - Summary:
