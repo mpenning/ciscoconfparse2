@@ -40,17 +40,11 @@ import socket
 import sys
 import time
 from collections import UserList
-from collections.abc import Sequence
-from ipaddress import (
-    AddressValueError,
-    IPv4Address,
-    IPv4Network,
-    IPv6Address,
-    IPv6Network,
-)
+from collections.abc import Callable, Sequence
+from ipaddress import (AddressValueError, IPv4Address, IPv4Network,
+                       IPv6Address, IPv6Network)
 from ipaddress import collapse_addresses as ipaddr_collapse_addresses
 from typing import Any, Optional, Union
-from collections.abc import Callable
 
 import attrs
 from dns import query, reversename, zone
@@ -60,20 +54,12 @@ from loguru import logger
 from macaddress import EUI48, EUI64, MAC
 
 import ciscoconfparse2
-from ciscoconfparse2.errors import (
-    DuplicateMember,
-    DynamicAddressException,
-    InvalidCiscoInterface,
-    InvalidCiscoRange,
-    InvalidMember,
-    InvalidParameters,
-    ListItemMissingAttribute,
-    MismatchedType,
-    NoRegexMatch,
-    PythonOptimizeException,
-    RequirementFailure,
-    UnexpectedType,
-)
+from ciscoconfparse2.errors import (DuplicateMember, DynamicAddressException,
+                                    InvalidCiscoInterface, InvalidCiscoRange,
+                                    InvalidMember, InvalidParameters,
+                                    ListItemMissingAttribute, MismatchedType,
+                                    NoRegexMatch, PythonOptimizeException,
+                                    RequirementFailure, UnexpectedType)
 from ciscoconfparse2.protocol_values import ASA_TCP_PORTS, ASA_UDP_PORTS
 
 # Maximum ipv4 as an integer
@@ -1396,7 +1382,7 @@ class IPv4Obj:
     # do NOT wrap with @logger.catch(...)
     # On IPv4Obj()
     @property
-    def as_hex_tuple(self):
+    def as_hex_tuple(self) -> tuple:
         """Returns the IP address as a tuple of zero-padded hex strings"""
         return tuple(f"{int(num):02x}" for num in str(self.ip).split("."))
 
@@ -2069,7 +2055,7 @@ class IPv6Obj:
         # in Python 3.13 and higher... Python 3.13 IPv6Address() changed how
         # it represents '::ffff:192.0.2.4' in exploded format
         ########################################################################
-        replacements = list()
+        replacements = []
         for index, part in enumerate(num_strings):
             try:
                 obj = IPv4Obj(part)
@@ -2088,7 +2074,11 @@ class IPv6Obj:
 
         num_strings.reverse()  # reverse the order
 
-        return sum(int(num, 16) * (65536**idx) for idx, num in enumerate(num_strings))
+        return sum(
+            int(num, 16) * (65536**idx)
+            for idx, num in enumerate(num_strings)
+            if num != ""
+        )
 
     # On IPv6Obj()
     def as_int(self):
@@ -2111,8 +2101,29 @@ class IPv6Obj:
     # On IPv6Obj()
     @property
     def as_hex_tuple(self):
-        """Returns the IPv6 address as a tuple of zero-padded 16-bit hex strings"""
+        """Returns the IPv6 address as a tuple of zero-padded 16-bit hex strings
+        """
+
         result_list = str(self.ip.exploded).split(":")
+
+        ##############################################################
+        # handle IPv4 addresses embedded in IPv6
+        ##############################################################
+        ipv4idx = None
+        ipv4obj = None
+        for idx, component in enumerate(result_list):
+            try:
+                # Try to parse as a hex value
+                _ = int(component, 16)  # convert the base 10 integer to hex
+            except ValueError:
+                # Could be an IPv4 address
+                ipv4obj = IPv4Obj(component)
+                ipv4idx = idx
+                break
+
+        if ipv4obj:
+            result_list[ipv4idx] = ipv4obj.as_hex.replace("0x", "").zfill(4)
+
         return tuple(result_list)
 
     # On IPv6Obj()
