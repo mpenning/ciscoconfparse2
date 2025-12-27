@@ -9,8 +9,8 @@ on:
 
 permissions:
     # All other scopes not listed are set to 'none' by default
-    contents: read
-    issues: read    # Grants read permission for issues
+  contents: "read"
+  issues: "read"    # Grants read permission for issues
 
 jobs:
   stale:
