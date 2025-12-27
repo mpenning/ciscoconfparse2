@@ -15,7 +15,8 @@ dependencies = [
   "traitlets==5.14.3",
   "loguru>=0.7.2",
   "hier_config==2.3.1",
-  "pyparsing==3.2.5",
+  "pyparsing==3.3.1",
+  "toml==0.10.2",
   # NOTE changing typeguard versions may require code / test changes
   "typeguard==4.4.4",
   "PyYAML>=6.0.2",
@@ -67,12 +68,12 @@ dev = [
   "pre-commit>=4.3.0",
   "black==25.11.0",
   "pyupgrade==3.21.0",
-  "yamlfix==1.19.0",
+  "yamlfix==1.19.1",
   "pylama==8.4.1",
   "pylint==3.3.9",
   "coverage>=7.3.2",
   "pytest-cov>=4.1.0",
-  "pyroma==5.0",
+  "pyroma==5.0.1",
   "invoke==2.2.1",
   "fabric==3.2.2",
   "commitizen>=2.40.0",
@@ -80,7 +81,7 @@ dev = [
   "tox==4.30.3",
 ]
 doc = [
-  "Sphinx==8.2.3",
+  "Sphinx>=9.0.4",
   "sphinx-rtd-theme>=2.0.0",
   "numpydoc==1.9.0",
   "pydocstyle==6.3.0",
