@@ -23,6 +23,12 @@ on:
       - 'docs/**'
       - '*.md'
       - '*.rst'
+
+permissions:
+    # All other scopes not listed are set to 'none' by default
+    contents: read
+    issues: read    # Grants read permission for issues
+
 jobs:
   pytest:
     name: '${{ matrix.name }}'
@@ -42,14 +48,14 @@ jobs:
           - {name: 'PyPy', python: 'pypy-3.10', os: 'ubuntu-latest', tox: 'pypy310'}
           - {name: 'Minimum Versions', python: '3.11', os: 'ubuntu-latest', tox: 'py311'}
     steps:
-      - uses: 'actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8'  # v5.0.0
-      - uses: 'actions/setup-python@v6'
+      - uses: 'actions/checkout@08e8c483db84b4bee98b60c0593521ed34d9990e8'  # v6.0.0
+      - uses: 'actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548' # v6.1.0
         with:
           python-version: '${{ matrix.python }}'
       - name: 'Display Python version'
         run: 'python -c ''import sys; print(sys.version)'''
       - name: "Install the latest version of uv"
-        uses: "astral-sh/setup-uv@5a7eac68fb9809dea845d802897dc5c723910fa3"  # v7.1.3
+        uses: "astral-sh/setup-uv@681c641aba71e4a1c380be3ab5e12ad51f415867"  # v7.1.6
         with:
           version: "latest"
       - name: 'Install dependencies on Ubuntu Linux / Windows / MacOS'
