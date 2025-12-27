@@ -6,7 +6,7 @@
 - Summary:
     - To be determined
 
-## Version: 0.9.2
+## Version: 0.9.3
 
 - Summary:
     - Attempt to fix GitHub Actions problems
