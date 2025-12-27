@@ -43,7 +43,7 @@ from loguru import logger
 #     ref: https://github.com/notypecheck/passlib
 from passlib.hash import cisco_type7, md5_crypt
 from pyparsing import (Combine, OneOrMore, ParseException, White, Word,
-                       nested_expr, printables, traceParseAction)
+                       nested_expr, printables, trace_parse_action)
 from traitlets import Bool, CInt, HasTraits, Instance, List, Unicode
 from typeguard import typechecked
 
@@ -269,7 +269,7 @@ def initialize_ciscoconfparse2(
 _, ACTIVE_LOGURU_HANDLERS = initialize_ciscoconfparse2()
 
 
-@traceParseAction
+@trace_parse_action
 def debug_pyparsing_action(tokens):
     logger.trace(f"Processing: {tokens}")
     return tokens
@@ -955,7 +955,6 @@ class ConfigList(UserList):
             error = "If auto_indent_width is less than 1, ConfigList().auto_indent_config() cannot auto-indent"
             logger.error(error)
             raise ValueError(error)
-
 
         for obj in self.data:
 
