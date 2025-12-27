@@ -6,6 +6,23 @@
 - Summary:
     - To be determined
 
+## Version: 0.9.0
+
+- Summary:
+    - Add a method on `CiscoConfParse()` to automatically indent the configuration, `CiscoConfParse().auto_indent_configuration()`
+    - Add a method on `ConfigList()` to indent the configuration to arbitrary indent widths, `ConfigList().auto_indent_config()`
+    - Re-write and simplify `BaseCfgLine().append_to_family()`
+    - Deprecate parameter `auto_indent` on `BaseCfgLine().append_to_family()`.  Warnings are thrown if it's used.  In the future, it will be formally removed.
+    - Add `BaseCfgLine().indent()` setter method
+    - Add deprecation warning to`BaseCfgLine().re_search_children()`; `BaseCfgLine().find_child_objects()` should be used instead of `BaseCfgLine().re_search_children()`
+    - Add deprecation warning to`CiscoConfParse().re_search_children()`; `CiscoConfParse().find_child_objects()` should be used instead of `CiscoConfParse().re_search_children()`
+    - Change behavior of `BaseCfgLine().append_to_family()` such that it only adds child lines to the configuration; no siblings can be added with `BaseCfgLine().append_to_family()`
+    - Add `BaseCfgLine().ccp_ref` for simpler access to the `CiscoConfParse()` instance
+    - Modify tests for new `BaseCfgLine().append_to_family()` behavior
+    - Add a property and setter for `BaseCfgLine().indent`
+    - Add a property called `BaseCfgLine().ccp_ref`, which is the owning `CiscoConfParse()` instance
+    - Fix `IPv6Obj()` problem with handling IPv4 embedded in an IPv6 address
+
 ## Version: 0.8.55
 
 - Summary:
