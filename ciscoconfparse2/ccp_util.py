@@ -41,8 +41,13 @@ import sys
 import time
 from collections import UserList
 from collections.abc import Callable, Sequence
-from ipaddress import (AddressValueError, IPv4Address, IPv4Network,
-                       IPv6Address, IPv6Network)
+from ipaddress import (
+    AddressValueError,
+    IPv4Address,
+    IPv4Network,
+    IPv6Address,
+    IPv6Network,
+)
 from ipaddress import collapse_addresses as ipaddr_collapse_addresses
 from typing import Any, Optional, Union
 
@@ -54,12 +59,20 @@ from loguru import logger
 from macaddress import EUI48, EUI64, MAC
 
 import ciscoconfparse2
-from ciscoconfparse2.errors import (DuplicateMember, DynamicAddressException,
-                                    InvalidCiscoInterface, InvalidCiscoRange,
-                                    InvalidMember, InvalidParameters,
-                                    ListItemMissingAttribute, MismatchedType,
-                                    NoRegexMatch, PythonOptimizeException,
-                                    RequirementFailure, UnexpectedType)
+from ciscoconfparse2.errors import (
+    DuplicateMember,
+    DynamicAddressException,
+    InvalidCiscoInterface,
+    InvalidCiscoRange,
+    InvalidMember,
+    InvalidParameters,
+    ListItemMissingAttribute,
+    MismatchedType,
+    NoRegexMatch,
+    PythonOptimizeException,
+    RequirementFailure,
+    UnexpectedType,
+)
 from ciscoconfparse2.protocol_values import ASA_TCP_PORTS, ASA_UDP_PORTS
 
 # Maximum ipv4 as an integer
@@ -2101,8 +2114,7 @@ class IPv6Obj:
     # On IPv6Obj()
     @property
     def as_hex_tuple(self):
-        """Returns the IPv6 address as a tuple of zero-padded 16-bit hex strings
-        """
+        """Returns the IPv6 address as a tuple of zero-padded 16-bit hex strings"""
 
         result_list = str(self.ip.exploded).split(":")
 

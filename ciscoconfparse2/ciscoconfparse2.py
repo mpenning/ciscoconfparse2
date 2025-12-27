@@ -39,33 +39,60 @@ import attrs
 import hier_config
 import yaml  # import for pyyaml
 from loguru import logger
+
 # NOTE we are using libpass instead of passlib, but libpass imports as passlib
 #     ref: https://github.com/notypecheck/passlib
 from passlib.hash import cisco_type7, md5_crypt
-from pyparsing import (Combine, OneOrMore, ParseException, White, Word,
-                       nested_expr, printables, trace_parse_action)
+from pyparsing import (
+    Combine,
+    OneOrMore,
+    ParseException,
+    White,
+    Word,
+    nested_expr,
+    printables,
+    trace_parse_action,
+)
 from traitlets import Bool, CInt, HasTraits, Instance, List, Unicode
 from typeguard import typechecked
 
 from ciscoconfparse2.__about__ import __version__
 from ciscoconfparse2.ccp_abc import BaseCfgLine
 from ciscoconfparse2.ccp_util import configure_loguru, enforce_valid_types
-from ciscoconfparse2.errors import (ConfigListItemDoesNotExist,
-                                    InvalidParameters, InvalidPassword,
-                                    RequirementFailure)
-from ciscoconfparse2.models_asa import (ASAAclLine, ASACfgLine,
-                                        ASAHostnameLine, ASAIntfGlobal,
-                                        ASAIntfLine, ASAName,
-                                        ASAObjGroupNetwork, ASAObjGroupService,
-                                        ASAObjNetwork, ASAObjService)
-from ciscoconfparse2.models_cisco import (IOSAccessLine, IOSCfgLine,
-                                          IOSIntfGlobal, IOSIntfLine,
-                                          IOSRouteLine)
+from ciscoconfparse2.errors import (
+    ConfigListItemDoesNotExist,
+    InvalidParameters,
+    InvalidPassword,
+    RequirementFailure,
+)
+from ciscoconfparse2.models_asa import (
+    ASAAclLine,
+    ASACfgLine,
+    ASAHostnameLine,
+    ASAIntfGlobal,
+    ASAIntfLine,
+    ASAName,
+    ASAObjGroupNetwork,
+    ASAObjGroupService,
+    ASAObjNetwork,
+    ASAObjService,
+)
+from ciscoconfparse2.models_cisco import (
+    IOSAccessLine,
+    IOSCfgLine,
+    IOSIntfGlobal,
+    IOSIntfLine,
+    IOSRouteLine,
+)
 from ciscoconfparse2.models_iosxr import IOSXRCfgLine, IOSXRIntfLine
 from ciscoconfparse2.models_junos import JunosCfgLine, JunosIntfLine
-from ciscoconfparse2.models_nxos import (NXOSAccessLine, NXOSCfgLine,
-                                         NXOSIntfGlobal, NXOSIntfLine,
-                                         NXOSvPCLine)
+from ciscoconfparse2.models_nxos import (
+    NXOSAccessLine,
+    NXOSCfgLine,
+    NXOSIntfGlobal,
+    NXOSIntfLine,
+    NXOSvPCLine,
+)
 
 ALL_IOS_FACTORY_CLASSES = [
     IOSIntfLine,
