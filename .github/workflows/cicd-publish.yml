@@ -45,7 +45,7 @@ jobs:
       url: 'https://pypi.org/p/ciscoconfparse2'
     steps:
       - name: 'Download artifacts from python-artifacts job'
-        uses: 'actions/download-artifact@v5'
+        uses: 'actions/download-artifact@v7.0.0'
         with:
           name: 'python-artifacts'
           path: 'dist'
