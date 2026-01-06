@@ -10,12 +10,12 @@ dynamic = ["version"]
 dependencies = [
   # NOTE changing attrs versions may require code / test changes
   "attrs>24.3.0,<26.0.0",
-  "dnspython==2.7.0",
+  "dnspython==2.8.0",
   "macaddress==2.0.2",
   "traitlets==5.14.3",
   "loguru>=0.7.2",
   "hier_config==2.3.1",
-  "pyparsing==3.2.5",
+  "pyparsing==3.3.1",
   # NOTE changing typeguard versions may require code / test changes
   "typeguard==4.4.4",
   "PyYAML>=6.0.2",
@@ -24,7 +24,7 @@ dependencies = [
   #     https://github.com/notypecheck/passlib
   "libpass==1.9.3",
   # Hypothesis for hard-core ip_address tests
-  "hypothesis==6.141.1",
+  "hypothesis==6.149.1",
 ]
 authors = [
   { name = "Mike Pennington", email = "mike@pennington.net" },
@@ -66,25 +66,25 @@ dev = [
   "hatch>=1.14.2",
   "hatchling>=1.27.0",
   "pytest>=8.3.5",
-  "pre-commit==4.3.0",
-  "black==25.11.0",
-  "pyupgrade==3.21.0",
-  "yamlfix==1.19.0",
+  "pre-commit==4.5.1",
+  "black==25.12.0",
+  "pyupgrade==3.21.2",
+  "yamlfix==1.19.1",
   "pylama==8.4.1",
-  "pylint==3.3.9",
+  "pylint==4.0.4",
   "coverage>=7.3.2",
   "pytest-cov>=4.1.0",
-  "pyroma==5.0",
+  "pyroma==5.0.1",
   "invoke==2.2.1",
   "fabric==3.2.2",
   "commitizen>=2.40.0",
   "python-lsp-server>=1.12.2",
-  "tox==4.30.3",
+  "tox==4.33.0",
 ]
 doc = [
-  "Sphinx==8.2.3",
+  "Sphinx==9.1.0",
   "sphinx-rtd-theme>=2.0.0",
-  "numpydoc==1.9.0",
+  "numpydoc==1.10.0",
   "pydocstyle==6.3.0",
 ]
 
