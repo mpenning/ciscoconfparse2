@@ -2128,13 +2128,11 @@ class IPv6Obj:
                 # Try to parse as a hex value
                 _ = int(component, 16)  # convert the base 10 integer to hex
             except ValueError:
-                # Could be an IPv4 address
+                # component could be an IPv4 address
                 ipv4obj = IPv4Obj(component)
                 ipv4idx = idx
+                result_list[ipv4idx] = ipv4obj.as_hex.replace("0x", "").zfill(4)
                 break
-
-        if ipv4obj:
-            result_list[ipv4idx] = ipv4obj.as_hex.replace("0x", "").zfill(4)
 
         return tuple(result_list)
 
@@ -2207,8 +2205,8 @@ class MACObj(EUI48):
     An object to represent a 48-bit mac-address in various formats.
     """
 
-    value: str = None
-    mac: EUI48 = None
+    value: str | None = None
+    mac: EUI48 | None = None
     _address: Any = None
 
     @logger.catch(reraise=True)
@@ -2288,8 +2286,8 @@ class EUI64Obj(EUI64):
     An object to represent a 64-bit EUI64 address in various formats.
     """
 
-    value: str = None
-    eui64: EUI64 = None
+    value: str | None = None
+    eui64: EUI64 | None = None
     _address: Any = None
 
     @logger.catch(reraise=True)
