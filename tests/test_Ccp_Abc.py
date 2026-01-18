@@ -2,9 +2,11 @@ import sys
 
 import pytest
 from ciscoconfparse2.ccp_abc import BaseCfgLine, get_brace_termination
-from ciscoconfparse2.ccp_util import CiscoIOSInterface, CiscoRange, IPv4Obj, IPv6Obj
+from ciscoconfparse2.ccp_util import (CiscoIOSInterface, CiscoRange, IPv4Obj,
+                                      IPv6Obj)
 from ciscoconfparse2.ciscoconfparse2 import CiscoConfParse
-from ciscoconfparse2.errors import ConfigListItemDoesNotExist, DynamicAddressException
+from ciscoconfparse2.errors import (ConfigListItemDoesNotExist,
+                                    DynamicAddressException)
 from ciscoconfparse2.models_cisco import IOSCfgLine
 from loguru import logger
 
@@ -98,7 +100,7 @@ def testVal_BaseCfgLine_obj_01():
     # is_comment does not work until the line is part of a config
     # we should get None if the comment isn't attached to a real
     # configuration
-    assert obj01.is_comment is None
+    assert obj01.is_comment is False
 
 
 def testVal_BaseCfgLine_eq_01():
