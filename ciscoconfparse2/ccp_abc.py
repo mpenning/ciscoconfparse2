@@ -19,6 +19,7 @@ import math
 import re
 from collections.abc import Sequence
 from copy import copy
+from types import GeneratorType
 from typing import Any, Union
 from warnings import warn
 
@@ -26,11 +27,8 @@ import attrs
 from loguru import logger
 
 from ciscoconfparse2.ccp_util import junos_unsupported
-from ciscoconfparse2.errors import (
-    ConfigListItemDoesNotExist,
-    InvalidParameters,
-    InvalidTypecast,
-)
+from ciscoconfparse2.errors import (ConfigListItemDoesNotExist,
+                                    InvalidParameters, InvalidTypecast)
 
 DEFAULT_TEXT = "__undefined__"
 
@@ -103,7 +101,7 @@ class BaseCfgLine:
     # __implementing __setstate__ for loguru picking problems...
     __setstate__: Any = None
 
-    feature: str = None
+    feature: str | None = None
     _brace_termination: str = ""
 
     @logger.catch(reraise=True)
@@ -143,9 +141,9 @@ class BaseCfgLine:
 
         self._text = line
         self._children = children
-        self.linenum = linenum
+        self.linenum = int(linenum)
         self.parent = self  # by default, assign parent as itself
-        self.child_indent = child_indent
+        self.child_indent = int(child_indent)
         self.confobj = confobj
         self.blank_line_keep = False  # CiscoConfParse() uses blank_line_keep
 
@@ -209,7 +207,7 @@ class BaseCfgLine:
 
     # On BaseCfgLine()
     @logger.catch(reraise=True)
-    def __iter__(self) -> str:
+    def __iter__(self) -> GeneratorType:
         yield from self.text
 
     # On BaseCfgLine()
@@ -322,7 +320,7 @@ class BaseCfgLine:
             auto_indent_value = self.parent.indent + self.ccp_ref.auto_indent_width
             if self.indent != auto_indent_value:
                 self.indent = auto_indent_value
-            self.commit()
+            self.ccp_ref.commit()
             return True
 
     # On BaseCfgLine()
@@ -334,7 +332,7 @@ class BaseCfgLine:
             # Comments are only valid in a real configuration list; otherwise
             # there is no syntax hint to determine whether the line is a
             # comment... just return None in this case...
-            return None
+            return False
 
         if isinstance(self._text, str):
             if len(self._text.lstrip()) > 0:
@@ -755,8 +753,11 @@ class BaseCfgLine:
     # On BaseCfgLine()
     @junos_unsupported
     @logger.catch(reraise=True)
-    def insert_before(self, insertstr: str = None):
-        """Usage: confobj.insert_before('! insert text before this confobj')"""
+    def insert_before(self, insertstr: str | Any = None):
+        """Usage: confobj.insert_before('! insert text before this confobj')
+
+        insertstr can either be a string or BaseCfgLine() instance.
+        """
         # Fail if insertstr is not the correct object type...
         #   only strings and *CfgLine() are allowed...
         error = f"Cannot insert object type - {type(insertstr)}"
@@ -810,7 +811,7 @@ class BaseCfgLine:
     # On BaseCfgLine()
     @logger.catch(reraise=True)
     def append_to_family(
-        self, insertstr: str, indent: int = -1, auto_indent: bool = None
+        self, insertstr: str, indent: int = -1, auto_indent: bool = False
     ) -> None:
         """Append an :py:class:`~ciscoconfparse2.ccp_abc.BaseCfgLine` object with ``insertstr``
         as a child at the top of the current configuration family.
@@ -929,7 +930,7 @@ class BaseCfgLine:
 
     # On BaseCfgLine()
     @logger.catch(reraise=True)
-    def classify_family_indent(self, insertstr: str = None) -> int:
+    def classify_family_indent(self, insertstr: str | None = None) -> int:
         """Look at the indent level of insertstr and return an integer for the auto_indent_width of insertstr relative to this object and auto_indent_width.
 
         - If insertstr is indented at the same level, return 0.
@@ -983,9 +984,9 @@ class BaseCfgLine:
         if start is None and end is None:
             return self.text.count(sub)
         elif start and end is None:
-            return self.text.count(sub, start=start)
+            return self.text.count(sub, start)
         elif start and end:
-            return self.text.count(sub, start=start, end=end)
+            return self.text.count(sub, start, end)
         else:
             error = "unexpected condition"
             logger.critical(error)
@@ -1008,7 +1009,7 @@ class BaseCfgLine:
 
     # On BaseCfgLine()
     @logger.catch(reraise=True)
-    def rstrip(self, chars: str = None) -> str:
+    def rstrip(self, chars: str | None = None) -> str:
         """Implement rstrip() on the BaseCfgLine().text
 
         .. note::
@@ -1020,12 +1021,18 @@ class BaseCfgLine:
         """
         if chars is None:
             return self._text.rstrip()
+
+        elif isinstance(chars, str):
+            return self._text.rstrip(chars)
+
         else:
-            return self._text.rstrip(chars=chars)
+            raise NotImplementedError(
+                "BaseCfgLine().rstrip() got " f"an unexpected type: {type(chars)}"
+            )
 
     # On BaseCfgLine()
     @logger.catch(reraise=True)
-    def lstrip(self, chars: str = None) -> str:
+    def lstrip(self, chars: str | None = None) -> str:
         """Implement lstrip() on the BaseCfgLine().text
 
         .. note::
@@ -1038,11 +1045,11 @@ class BaseCfgLine:
         if chars is None:
             return self._text.lstrip()
         else:
-            return self._text.lstrip(chars=chars)
+            return self._text.lstrip(chars)
 
     # On BaseCfgLine()
     @logger.catch(reraise=True)
-    def strip(self, chars: str = None) -> str:
+    def strip(self, chars: str | None = None) -> str:
         """Implement strip() on the BaseCfgLine().text
 
         .. note::
@@ -1054,12 +1061,16 @@ class BaseCfgLine:
         """
         if chars is None:
             return self._text.strip()
+        elif isinstance(chars, str):
+            return self._text.strip(chars)
         else:
-            return self._text.strip(chars=chars)
+            raise NotImplementedError(
+                "BaseCfgLine().strip() got " f"an unexpected type: {type(chars)}"
+            )
 
     # On BaseCfgLine()
     @logger.catch(reraise=True)
-    def split(self, sep: str = None, maxsplit: int = -1) -> list[str]:
+    def split(self, sep: str | None = None, maxsplit: int = -1) -> list[str]:
         """
         Split ``text`` in-place
 
@@ -1081,7 +1092,7 @@ class BaseCfgLine:
 
     # On BaseCfgLine()
     @logger.catch(reraise=True)
-    def rsplit(self, sep: str = None, maxsplit: int = -1) -> list[str]:
+    def rsplit(self, sep: str | None = None, maxsplit: int = -1) -> list[str]:
         """
         Right split ``text`` in-place
 
@@ -1105,9 +1116,9 @@ class BaseCfgLine:
     @logger.catch(reraise=True)
     def get_regex_typed_dict(
         self,
-        regex: re.Match = None,
-        type_dict: dict = None,
-        default: str = None,
+        regex: re.Match | None = None,
+        type_dict: dict | None = None,
+        default: str | None = None,
         debug: bool = False,
     ) -> dict:
         r"""
@@ -1426,7 +1437,7 @@ class BaseCfgLine:
         result_type: type = str,
         default: Any = "",
         untyped_default: bool = False,
-        groupdict: dict = None,
+        groupdict: dict | None = None,
     ) -> Any:
         r"""Use ``regex`` to search the :class:`~ciscoconfparse2.models_cisco.IOSCfgLine` text
         and return the contents of the regular expression group, at the
@@ -1508,7 +1519,7 @@ class BaseCfgLine:
         result_type: type = str,
         default: Any = "",
         untyped_default: bool = False,
-        groupdict: dict = None,
+        groupdict: dict | None = None,
         recurse: bool = True,
         debug: bool = False,
     ) -> Any:
@@ -1694,7 +1705,7 @@ class BaseCfgLine:
         regex: str | re.Pattern,
         group: int = 1,
         result_type: type = str,
-        groupdict: dict = None,
+        groupdict: dict | None = None,
         recurse: bool = True,
         debug: bool = False,
     ) -> list[Any]:
@@ -1801,7 +1812,7 @@ class BaseCfgLine:
         regex: str | re.Pattern,
         group: int = 1,
         result_type: type = str,
-        groupdict: dict = None,
+        groupdict: dict | None = None,
         recurse: bool = True,
         debug: bool = False,
     ):
@@ -1848,7 +1859,7 @@ class BaseCfgLine:
         regex: str | re.Pattern,
         group: int = 1,
         result_type: type = str,
-        groupdict: dict = None,
+        groupdict: dict | None = None,
         recurse: bool = True,
         debug: bool = False,
     ):
@@ -1862,7 +1873,7 @@ class BaseCfgLine:
                 "re_list_iter_typed_groupdict_dict() must be called with a dict in groupdict"
             )
 
-        retval = None
+        retval = []
 
         # Return the result if the parent line matches the regex...
         mm = re.search(regex, self.text)
