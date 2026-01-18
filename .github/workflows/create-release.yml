@@ -24,7 +24,7 @@ jobs:
           python-version-file: "pyproject.toml"
       - run: "echo \"SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)\" >> $GITHUB_ENV"
       - run: "uv build"
-      - uses: "actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f"  # v5.0.0
+      - uses: "actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f"  # v6.0.0
         with:
           path: "./dist"
   create-release:

@@ -32,7 +32,7 @@ jobs:
       - name: 'Create packages in dist/ with hatch'
         run: 'hatch build'
       - name: 'Upload package artifacts to GitHub'
-        uses: "actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f"  # v5.0.0
+        uses: "actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f"  # v6.0.0
         with:
           name: 'python-artifacts'
           path: 'dist/*'
