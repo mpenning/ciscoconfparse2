@@ -67,6 +67,7 @@ dev = [
   "pytest>=9.0.1",
   "pre-commit>=4.3.0",
   "black==25.11.0",
+  "ty==0.0.12",
   "pyupgrade==3.21.0",
   "yamlfix==1.19.1",
   "pylama==8.4.1",
