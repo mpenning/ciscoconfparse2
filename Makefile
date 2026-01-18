@@ -114,6 +114,10 @@ tutorial:
 flake:
 	flake8 --ignore E501,E226,E225,E221,E303,E302,E265,E128,E125,E124,E41,W291 --max-complexity 10 ciscoconfparse2 | less
 
+.PHONY: ty
+ty:
+	uvx ty check --color always | less -R
+
 .PHONY: coverage-pytest
 coverage-pytest:
 	@echo "[[[ py.test Coverage ]]]"
