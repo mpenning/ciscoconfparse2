@@ -40,6 +40,7 @@ import socket
 import sys
 import time
 from collections import UserList
+from types import GeneratorType
 from collections.abc import Callable, Sequence
 from ipaddress import (
     AddressValueError,
@@ -254,12 +255,12 @@ def ccp_logger_control(
     package_name = "ciscoconfparse2.ccp_util"
 
     # Remove all loggers by default
+    logger.remove()
     #   This is an internal loguru endpoint that may not
     #   always exist...
-    loguru_handlers = logger._core.handlers
-    if debug > 0:
-        logger.info(f"ccp_util Remove loguru handlers: {loguru_handlers}")
-    logger.remove()
+    # loguru_handlers = logger._core.handlers
+    # if debug > 0:
+    #    logger.info(f"ccp_util Remove loguru handlers: {loguru_handlers}")
 
     if read_only is True:
         if debug > 0:
@@ -617,7 +618,7 @@ def collapse_addresses(network_list):
 @attrs.define(repr=False, slots=False)
 class IPv4Obj:
     dna: str = "IPv4Obj"
-    v4input: str | int | None = None
+    v4input: Optional[str | int] = None
     strict: bool = False
     debug: int = 0
 
@@ -629,7 +630,7 @@ class IPv4Obj:
     # This method is on IPv4Obj().  @logger.catch() breaks the __init__() method.
     def __init__(
         self,
-        v4input: str | int | None = None,
+        v4input: Optional[str | int] = None,
         strict: bool = False,
         debug: int = 0,
     ):
@@ -1444,7 +1445,7 @@ class IPv4Obj:
 @attrs.define(repr=False, slots=False)
 class IPv6Obj:
     dna: str = "IPv6Obj"
-    v6input: str | int | None = None
+    v6input: Optional[str | int] = None
     strict: bool = False
     debug: int = 0
 
@@ -1458,7 +1459,7 @@ class IPv6Obj:
     # This method is on IPv6Obj().  @logger.catch() breaks the __init__() method.
     def __init__(
         self,
-        v6input: str | int | None = None,
+        v6input: Optional[str | int] = None,
         strict: bool = False,
         debug: int = 0,
     ):
@@ -2205,8 +2206,8 @@ class MACObj(EUI48):
     An object to represent a 48-bit mac-address in various formats.
     """
 
-    value: str | None = None
-    mac: EUI48 | None = None
+    value: Optional[str] = None
+    mac: Optional[EUI48] = None
     _address: Any = None
 
     @logger.catch(reraise=True)
@@ -2286,8 +2287,8 @@ class EUI64Obj(EUI64):
     An object to represent a 64-bit EUI64 address in various formats.
     """
 
-    value: str | None = None
-    eui64: EUI64 | None = None
+    value: Optional[str] = None
+    eui64: Optional[EUI64] = None
     _address: Any = None
 
     @logger.catch(reraise=True)
@@ -2551,10 +2552,11 @@ def dns_query(input_str="", query_type="A", server="8.8.8.8", timeout=2.0):
     # input = input_str.strip()
     retval = set()
     rr = Resolver()
-    rr.server = [socket.gethostbyname(server)]
+    rr.nameservers = [socket.gethostbyname(server)]
     rr.timeout = float(timeout)
     rr.lifetime = float(timeout)
     start = time.time()
+    inaddr = None
     if (query_type == "A") or (query_type == "AAAA"):
         try:
             answer = rr.query(input_str, query_type)
@@ -2741,27 +2743,27 @@ def dns_query(input_str="", query_type="A", server="8.8.8.8", timeout=2.0):
 
 @attrs.define(repr=False, slots=False)
 class CiscoIOSInterface:
-    interface_name: str = None
-    interface_dict: dict = None
-    debug: bool = None
+    interface_name: Optional[str] = None
+    interface_dict: Optional[dict] = None
+    debug: bool = False
     initialized: bool = False
     _list: list = []
-    _prefix: str = None
-    _digit_separator: str = None
-    _number: str = None
-    _slot: str = None
-    _card: str = None
-    _port: str = None
-    _subinterface: str = None
-    _channel: str = None
-    _interface_class: str = None
+    _prefix: Optional[str] = None
+    _digit_separator: Optional[str] = None
+    _number: Optional[str] = None
+    _slot: Optional[int] = None
+    _card: Optional[int] = None
+    _port: Optional[int] = None
+    _subinterface: Optional[int] = None
+    _channel: Optional[int] = None
+    _interface_class: Optional[str] = None
 
     # This method is on CiscoIOSInterface()
     @logger.catch(reraise=True)
     def __init__(
         self,
-        interface_name: str = None,
-        interface_dict: dict = None,
+        interface_name: Optional[str] = None,
+        interface_dict: Optional[dict] = None,
         debug: bool = False,
     ):
         """
@@ -2779,7 +2781,7 @@ class CiscoIOSInterface:
         """
         self.debug = debug
         self.initialized = False
-        self._list = None
+        self._list = []
         self._prefix = None
         self._digit_separator = None
         self._number = None
@@ -2960,6 +2962,10 @@ class CiscoIOSInterface:
     @logger.catch(reraise=True)
     def update_internal_state(self, intf_dict=None, debug=False):
         "Rewrite the state of this object; call this when any digit changes."
+
+        if intf_dict is None:
+            intf_dict = {}
+
         ######################################################################
         # Always individual pieces
         ######################################################################
@@ -3512,7 +3518,12 @@ class CiscoIOSInterface:
                 # Use sys.exit(1) here to avoid infinite recursion during
                 #     pathological errors such as a dash in an interface range
                 logger.critical(
-                    f"Forced python sys.exit() from `CiscoIOSInterface(interface_name='{self.interface_name}').number`.  Manually calling sys.exit(99) on this failure to avoid infinite recursion during what should be a `raise ValueError()`; the infinite recursion might be a bug in a third-party library."
+                    "Forced python sys.exit() from "
+                    f"`CiscoIOSInterface(interface_name='{self.interface_name}').number`.  "
+                    "Manually calling sys.exit(99) "
+                    "on this failure to avoid infinite "
+                    "recursion during what should be a `raise ValueError()`; "
+                    "the infinite recursion might be a bug in a third-party library."
                 )
                 sys.exit(99)
 
@@ -3808,28 +3819,28 @@ class CiscoIOSXRInterface:
     ### FIXME CiscoIOSXRInterface() is fundamentally broken.
     ###       this is a placeholder until we fix CiscoIOSXRInterface
     ##########################################################################
-    interface_name: str = None
-    interface_dict: dict = None
-    debug: bool = None
+    interface_name: Optional[str] = None
+    interface_dict: Optional[dict] = None
+    debug: bool = False
     initialized: bool = False
     _list: list = []
-    _prefix: str = None
-    _digit_separator: str = None
-    _number: str = None
-    _slot: str = None
-    _card: str = None
-    _processor: str = None
-    _port: str = None
-    _subinterface: str = None
-    _channel: str = None
-    _interface_class: str = None
+    _prefix: Optional[str] = None
+    _digit_separator: Optional[str] = None
+    _number: Optional[str] = None
+    _slot: Optional[int] = None
+    _card: Optional[str] = None
+    _processor: Optional[str] = None
+    _port: Optional[int] = None
+    _subinterface: Optional[int] = None
+    _channel: Optional[int] = None
+    _interface_class: Optional[str] = None
 
     # This method is on CiscoIOSXRInterface()
     @logger.catch(reraise=True)
     def __init__(
         self,
-        interface_name: str = None,
-        interface_dict: dict = None,
+        interface_name: Optional[str] = None,
+        interface_dict: Optional[dict] = None,
         debug: bool = False,
     ):
         """
@@ -3847,7 +3858,7 @@ class CiscoIOSXRInterface:
         """
         self.debug = debug
         self.initialized = False
-        self._list = None
+        self._list = []
         self._prefix = None
         self._digit_separator = None
         self._number = None
@@ -4030,8 +4041,9 @@ class CiscoIOSXRInterface:
 
     # This method is on CiscoIOSXRInterface()
     @logger.catch(reraise=True)
-    def update_internal_state(self, intf_dict=None, debug=False):
+    def update_internal_state(self, intf_dict: dict, debug=False):
         "Rewrite the state of this object; call this when any digit changes."
+
         ######################################################################
         # Always individual pieces
         ######################################################################
@@ -4924,13 +4936,13 @@ class CiscoIOSXRInterface:
 class CiscoRange(UserList):
     # Set up default attributes on the object...
     data: Any = None
-    result_type: Callable = None
-    default_iter_attr: str = None
-    reverse: bool = None
-    begin_obj: CiscoIOSInterface | CiscoIOSXRInterface = None
-    this_obj: CiscoIOSInterface | CiscoIOSXRInterface = None
-    iterate_attribute: int = None
-    range_str: str = None
+    result_type: Optional[Callable] = None
+    default_iter_attr: Optional[str] = None
+    reverse: bool = False
+    begin_obj: Optional[CiscoIOSInterface | CiscoIOSXRInterface] = None
+    this_obj: Optional[CiscoIOSInterface | CiscoIOSXRInterface] = None
+    iterate_attribute: Optional[str] = None
+    range_str: Optional[str] = None
     """Explode Cisco ranges into a list of explicit items... examples below...
 
     Examples
@@ -4958,17 +4970,15 @@ class CiscoRange(UserList):
     @logger.catch(reraise=True)
     def __init__(
         self,
-        text="",
-        result_type=str,
-        empty=False,
-        default_iter_attr="port",
-        reverse=False,
-        debug=False,
+        text: Optional[str]="",
+        result_type: Optional[type]=str,
+        empty: bool=False,
+        default_iter_attr: str="port",
+        reverse: bool=False,
+        debug: bool=False,
     ):
         # Use this with UserList() instead of super()
         UserList.__init__(self)
-
-        self.data = None
 
         # Build an empty CiscoRange() in this case...
         if text == "":
@@ -5029,7 +5039,7 @@ class CiscoRange(UserList):
 
     # This method is on CiscoRange()
     @logger.catch(reraise=True)
-    def parse_integers(self, text, debug=False):
+    def parse_integers(self, text: str, debug: bool=False):
         """Parse text input to CiscoRange(), such as CiscoRange('1-5,7', result_type=int).  '1-5,7 will be parsed.  By default, integers are used when CiscoRange(result_type=int) is parsed.'  An error is raised if the CiscoRange() cannot be parsed"""
         self.result_type = int
         integers = []
@@ -5087,7 +5097,7 @@ class CiscoRange(UserList):
 
     # This method is on CiscoRange()
     @logger.catch(reraise=True)
-    def parse_strings(self, text, debug=False):
+    def parse_strings(self, text: str, debug: bool=False):
         """Parse text input to CiscoRange(), such as CiscoRange('1-5,7', result_type=None).  '1-5,7 will be parsed.  By default, CiscoIOSInterface() instances are used when CiscoRange(result_type=None) is parsed.'  An error is raised if the CiscoRange() cannot be parsed"""
         self.result_type = str
         return self.parse_cisco_interfaces(
@@ -5096,9 +5106,16 @@ class CiscoRange(UserList):
 
     # This method is on CiscoRange()
     @logger.catch(reraise=True)
-    def parse_cisco_interfaces(self, text, result_type, debug=False):
+    def parse_cisco_interfaces(
+        self,
+        text: Optional[str],
+        result_type: Union[CiscoIOSInterface, CiscoIOSXRInterface],
+        debug: bool=False,
+    ):
         """Parse text input to CiscoRange(), such as CiscoRange('Eth1/1-5,7', result_type=None).  'Eth1/1-5,7 will be parsed.  By default, CiscoIOSInterface() objects are used when CiscoRange(result_type=None) is parsed.'  An error is raised if the CiscoRange() cannot be parsed"""
+        # temporarily reset the result_type
         self.result_type = None
+
         expanded_interfaces = []
         csv_parts = text.split(",")
 
@@ -5107,6 +5124,8 @@ class CiscoRange(UserList):
         else:
             # Default to CiscoIOSInterface for **everything else**
             _result_type = CiscoIOSInterface
+
+        self.result_type = _result_type
 
         for idx, _csv_part in enumerate(csv_parts):
 
@@ -5451,7 +5470,7 @@ class CiscoRange(UserList):
 
     # This method is on CiscoRange()
     @logger.catch(reraise=True)
-    def __eq__(self, other):
+    def __eq__(self, other: Any):
         if isinstance(other, CiscoRange):
             return self.data == other.data
         else:
@@ -5480,7 +5499,7 @@ class CiscoRange(UserList):
 
     # This method is on CiscoRange()
     @logger.catch(reraise=True)
-    def __iter__(self):
+    def __iter__(self) -> GeneratorType:
         """Return an iterator for this CiscoRange().  If CiscoRange().__iter__() is not implemented, many CiscoRnage() index errors are generated by other methods accessing an index that is off by one."""
         return iter(self.data)
 
@@ -5595,7 +5614,7 @@ class CiscoRange(UserList):
 
     # This method is on CiscoRange()
     @logger.catch(reraise=True)
-    def append(self, val, sort=True, ignore_errors=False):
+    def append(self, val, sort: bool=True, ignore_errors: bool=False):
         """Append a member which matches the type of CiscoRange()._list[0]."""
 
         arg_type = type(val)
@@ -5613,7 +5632,6 @@ class CiscoRange(UserList):
             logger.error(error)
             raise DuplicateMember(error)
 
-        # WAS DEEPCOPY
         new_list = copy.deepcopy(self.data)
 
         try:
