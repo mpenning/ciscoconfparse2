@@ -1,5 +1,5 @@
 r"""ccp_abc.py - Parse, Query, Build, and Modify IOS-style configurations
-Copyright (C) 2023-2025 David Michael Pennington
+Copyright (C) 2023-2026 David Michael Pennington
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
