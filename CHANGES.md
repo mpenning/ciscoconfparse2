@@ -6,6 +6,14 @@
 - Summary:
     - To be determined
 
+## Version: 0.9.4
+
+- Summary:
+    - Add `make ty` target for type checking
+    - Update ciscoconfparse2 type hints and values
+    - Update some github actions versions
+    - Correct some variable typing issues
+
 ## Version: 0.9.3
 
 - Summary:
