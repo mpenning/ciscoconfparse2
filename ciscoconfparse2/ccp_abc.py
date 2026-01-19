@@ -27,8 +27,11 @@ import attrs
 from loguru import logger
 
 from ciscoconfparse2.ccp_util import junos_unsupported
-from ciscoconfparse2.errors import (ConfigListItemDoesNotExist,
-                                    InvalidParameters, InvalidTypecast)
+from ciscoconfparse2.errors import (
+    ConfigListItemDoesNotExist,
+    InvalidParameters,
+    InvalidTypecast,
+)
 
 DEFAULT_TEXT = "__undefined__"
 
