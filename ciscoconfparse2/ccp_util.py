@@ -618,7 +618,7 @@ def collapse_addresses(network_list):
 @attrs.define(repr=False, slots=False)
 class IPv4Obj:
     dna: str = "IPv4Obj"
-    v4input: Optional[str | int] = None
+    v4input: str | int | None = None
     strict: bool = False
     debug: int = 0
 
@@ -630,7 +630,7 @@ class IPv4Obj:
     # This method is on IPv4Obj().  @logger.catch() breaks the __init__() method.
     def __init__(
         self,
-        v4input: Optional[str | int] = None,
+        v4input: str | int | None = None,
         strict: bool = False,
         debug: int = 0,
     ):
@@ -1445,7 +1445,7 @@ class IPv4Obj:
 @attrs.define(repr=False, slots=False)
 class IPv6Obj:
     dna: str = "IPv6Obj"
-    v6input: Optional[str | int] = None
+    v6input: str | int | None = None
     strict: bool = False
     debug: int = 0
 
@@ -1459,7 +1459,7 @@ class IPv6Obj:
     # This method is on IPv6Obj().  @logger.catch() breaks the __init__() method.
     def __init__(
         self,
-        v6input: Optional[str | int] = None,
+        v6input: str | int | None = None,
         strict: bool = False,
         debug: int = 0,
     ):
@@ -2206,8 +2206,8 @@ class MACObj(EUI48):
     An object to represent a 48-bit mac-address in various formats.
     """
 
-    value: Optional[str] = None
-    mac: Optional[EUI48] = None
+    value: str | None = None
+    mac: EUI48 | None = None
     _address: Any = None
 
     @logger.catch(reraise=True)
@@ -2287,8 +2287,8 @@ class EUI64Obj(EUI64):
     An object to represent a 64-bit EUI64 address in various formats.
     """
 
-    value: Optional[str] = None
-    eui64: Optional[EUI64] = None
+    value: str | None = None
+    eui64: EUI64 | None = None
     _address: Any = None
 
     @logger.catch(reraise=True)
@@ -2743,27 +2743,27 @@ def dns_query(input_str="", query_type="A", server="8.8.8.8", timeout=2.0):
 
 @attrs.define(repr=False, slots=False)
 class CiscoIOSInterface:
-    interface_name: Optional[str] = None
-    interface_dict: Optional[dict] = None
+    interface_name: str | None = None
+    interface_dict: dict | None = None
     debug: bool = False
     initialized: bool = False
     _list: list = []
-    _prefix: Optional[str] = None
-    _digit_separator: Optional[str] = None
-    _number: Optional[str] = None
-    _slot: Optional[int] = None
-    _card: Optional[int] = None
-    _port: Optional[int] = None
-    _subinterface: Optional[int] = None
-    _channel: Optional[int] = None
-    _interface_class: Optional[str] = None
+    _prefix: str | None = None
+    _digit_separator: str | None = None
+    _number: str | None = None
+    _slot: int | None = None
+    _card: int | None = None
+    _port: int | None = None
+    _subinterface: int | None = None
+    _channel: int | None = None
+    _interface_class: str | None = None
 
     # This method is on CiscoIOSInterface()
     @logger.catch(reraise=True)
     def __init__(
         self,
-        interface_name: Optional[str] = None,
-        interface_dict: Optional[dict] = None,
+        interface_name: str | None = None,
+        interface_dict: dict | None = None,
         debug: bool = False,
     ):
         """
@@ -3819,28 +3819,28 @@ class CiscoIOSXRInterface:
     ### FIXME CiscoIOSXRInterface() is fundamentally broken.
     ###       this is a placeholder until we fix CiscoIOSXRInterface
     ##########################################################################
-    interface_name: Optional[str] = None
-    interface_dict: Optional[dict] = None
+    interface_name: str | None = None
+    interface_dict: dict | None = None
     debug: bool = False
     initialized: bool = False
     _list: list = []
-    _prefix: Optional[str] = None
-    _digit_separator: Optional[str] = None
-    _number: Optional[str] = None
-    _slot: Optional[int] = None
-    _card: Optional[str] = None
-    _processor: Optional[str] = None
-    _port: Optional[int] = None
-    _subinterface: Optional[int] = None
-    _channel: Optional[int] = None
-    _interface_class: Optional[str] = None
+    _prefix: str | None = None
+    _digit_separator: str | None = None
+    _number: str | None = None
+    _slot: int | None = None
+    _card: str | None = None
+    _processor: str | None = None
+    _port: int | None = None
+    _subinterface: int | None = None
+    _channel: int | None = None
+    _interface_class: str | None = None
 
     # This method is on CiscoIOSXRInterface()
     @logger.catch(reraise=True)
     def __init__(
         self,
-        interface_name: Optional[str] = None,
-        interface_dict: Optional[dict] = None,
+        interface_name: str | None = None,
+        interface_dict: dict | None = None,
         debug: bool = False,
     ):
         """
@@ -4936,13 +4936,13 @@ class CiscoIOSXRInterface:
 class CiscoRange(UserList):
     # Set up default attributes on the object...
     data: Any = None
-    result_type: Optional[Callable] = None
-    default_iter_attr: Optional[str] = None
+    result_type: Callable | None = None
+    default_iter_attr: str | None = None
     reverse: bool = False
-    begin_obj: Optional[CiscoIOSInterface | CiscoIOSXRInterface] = None
-    this_obj: Optional[CiscoIOSInterface | CiscoIOSXRInterface] = None
-    iterate_attribute: Optional[str] = None
-    range_str: Optional[str] = None
+    begin_obj: CiscoIOSInterface | CiscoIOSXRInterface | None = None
+    this_obj: CiscoIOSInterface | CiscoIOSXRInterface | None = None
+    iterate_attribute: str | None = None
+    range_str: str | None = None
     """Explode Cisco ranges into a list of explicit items... examples below...
 
     Examples
@@ -4970,12 +4970,12 @@ class CiscoRange(UserList):
     @logger.catch(reraise=True)
     def __init__(
         self,
-        text: Optional[str]="",
-        result_type: Optional[type]=str,
-        empty: bool=False,
-        default_iter_attr: str="port",
-        reverse: bool=False,
-        debug: bool=False,
+        text: str | None = "",
+        result_type: type | None = str,
+        empty: bool = False,
+        default_iter_attr: str = "port",
+        reverse: bool = False,
+        debug: bool = False,
     ):
         # Use this with UserList() instead of super()
         UserList.__init__(self)
@@ -5039,7 +5039,7 @@ class CiscoRange(UserList):
 
     # This method is on CiscoRange()
     @logger.catch(reraise=True)
-    def parse_integers(self, text: str, debug: bool=False):
+    def parse_integers(self, text: str, debug: bool = False):
         """Parse text input to CiscoRange(), such as CiscoRange('1-5,7', result_type=int).  '1-5,7 will be parsed.  By default, integers are used when CiscoRange(result_type=int) is parsed.'  An error is raised if the CiscoRange() cannot be parsed"""
         self.result_type = int
         integers = []
@@ -5097,7 +5097,7 @@ class CiscoRange(UserList):
 
     # This method is on CiscoRange()
     @logger.catch(reraise=True)
-    def parse_strings(self, text: str, debug: bool=False):
+    def parse_strings(self, text: str, debug: bool = False):
         """Parse text input to CiscoRange(), such as CiscoRange('1-5,7', result_type=None).  '1-5,7 will be parsed.  By default, CiscoIOSInterface() instances are used when CiscoRange(result_type=None) is parsed.'  An error is raised if the CiscoRange() cannot be parsed"""
         self.result_type = str
         return self.parse_cisco_interfaces(
@@ -5108,9 +5108,9 @@ class CiscoRange(UserList):
     @logger.catch(reraise=True)
     def parse_cisco_interfaces(
         self,
-        text: Optional[str],
-        result_type: Union[CiscoIOSInterface, CiscoIOSXRInterface],
-        debug: bool=False,
+        text: str | None,
+        result_type: CiscoIOSInterface | CiscoIOSXRInterface,
+        debug: bool = False,
     ):
         """Parse text input to CiscoRange(), such as CiscoRange('Eth1/1-5,7', result_type=None).  'Eth1/1-5,7 will be parsed.  By default, CiscoIOSInterface() objects are used when CiscoRange(result_type=None) is parsed.'  An error is raised if the CiscoRange() cannot be parsed"""
         # temporarily reset the result_type
@@ -5614,7 +5614,7 @@ class CiscoRange(UserList):
 
     # This method is on CiscoRange()
     @logger.catch(reraise=True)
-    def append(self, val, sort: bool=True, ignore_errors: bool=False):
+    def append(self, val, sort: bool = True, ignore_errors: bool = False):
         """Append a member which matches the type of CiscoRange()._list[0]."""
 
         arg_type = type(val)
