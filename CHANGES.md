@@ -6,6 +6,19 @@
 - Summary:
     - To be determined
 
+## Version: 0.9.5
+
+- Summary:
+    - Add Python3.15 into the test matrix
+    - Update dependency versions
+    - Add deprecation warning if `CiscoConfParse()` is called with `factory` set True.
+    - Add integer indexing and slicing directly on the `CiscoConfParse()` instance
+    - Iterating over `CiscoConfParse()` directly now works
+    - Add tests for iterating over `CiscoConfParse()`
+    - Add more string methods to `BaseCfgLine()`
+    - Add more type annotations
+    - `pickle` tests started failing for an unknown reason.
+
 ## Version: 0.9.4
 
 - Summary:
