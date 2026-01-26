@@ -20,6 +20,8 @@ If you need to contact the author, you can do so by emailing:
 mike [~at~] pennington [.dot.] net
 """
 
+# Silence pylint warnings about type hints with a pipe
+from __future__ import annotations
 import base64
 import copy
 import hashlib
@@ -33,8 +35,9 @@ import time
 from collections import UserList
 from collections.abc import Callable, Sequence
 from types import GeneratorType
-from typing import Any, Optional, Union
+from typing import Any, Iterator
 from warnings import warn
+
 
 import attrs
 import hier_config
@@ -157,7 +160,7 @@ ALL_BRACE_SYNTAX = {
 }
 
 
-ENCODING = None
+ENCODING = locale.getpreferredencoding()
 ACTIVE_LOGURU_HANDLERS = None
 __author_email__ = r"mike /at\ pennington [dot] net"
 __author__ = f"David Michael Pennington <{__author_email__}>"
@@ -176,8 +179,6 @@ def initialize_globals():
     global __copyright__
     global __license__
     global __status__
-
-    ENCODING = locale.getpreferredencoding()
 
     __author_email__ = r"mike /at\ pennington [dot] net"
     __author__ = f"David Michael Pennington <{__author_email__}>"
@@ -653,7 +654,6 @@ class ConfigList(UserList):
         comment_delimiters: list[str] | None = None,
         factory: bool = False,
         ignore_blank_lines: bool = False,
-        # syntax="__undefined__",
         syntax: str = "ios",
         indent_width: int = 0,
         auto_commit: bool = True,
@@ -809,6 +809,7 @@ class ConfigList(UserList):
 
         return initlist
 
+    # This method is on ConfigList()
     @logger.catch(reraise=True)
     def __iter__(self):
         return iter(self.data)
@@ -850,26 +851,25 @@ class ConfigList(UserList):
 
     # This method is on ConfigList()
     @logger.catch(reraise=True)
-    def __getitem__(self, value):
-        if isinstance(value, slice):
-            return self.__class__(self.data[value])
-        else:
-            return self.data[value]
+    def __getitem__(self, key: int | slice):
+        if isinstance(key, slice):
+            return self.__class__(self.data[key])
+        return self.data[key]
 
     # This method is on ConfigList()
     @logger.catch(reraise=True)
-    def __setitem__(self, idx, value) -> None:
-        self.data[idx] = value
+    def __setitem__(self, key: int, value: Any) -> None:
+        self.data[key] = value
 
         # Rebuild / renumber items on the modified ConfigList()...
         self.rebuild_after_modification(commit=self.auto_commit)
 
     # This method is on ConfigList()
     @logger.catch(reraise=True)
-    def __delitem__(self, idx) -> None:
+    def __delitem__(self, key: int) -> None:
 
         # Delete the requested line...
-        del self.data[idx]
+        del self.data[key]
 
         # Rebuild / renumber items on the modified ConfigList()...
         self.rebuild_after_modification(commit=self.auto_commit)
@@ -879,7 +879,7 @@ class ConfigList(UserList):
     def __add__(self, other) -> list[BaseCfgLine]:
         if isinstance(other, ConfigList):
             return self.__class__(self.data + other._list)
-        elif isinstance(other, type(self.data)):
+        if isinstance(other, type(self.data)):
             return self.__class__(self.data + other)
         return self.__class__(self.data + list(other))
 
@@ -888,7 +888,7 @@ class ConfigList(UserList):
     def __radd__(self, other) -> list[BaseCfgLine]:
         if isinstance(other, ConfigList):
             return self.__class__(other.data + self.data)
-        elif isinstance(other, type(self.data)):
+        if isinstance(other, type(self.data)):
             return self.__class__(other + self.data)
         return self.__class__(list(other) + self.data)
 
@@ -1895,6 +1895,7 @@ class CiscoConfParse:
     # Attributes
     config_objs: Any = None
     finished_config_parse: bool = False
+    _index: int = -1
 
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
@@ -1955,9 +1956,8 @@ class CiscoConfParse:
         :type auto_commit: bool
         :param factory: Control whether CiscoConfParse should enable the
                         beta-quality configuration parameter parser,
-                        default to False.  factory parsing is only useful
-                        on IOS configs.  Do not use factory to parse
-                        NXOS, IOS-XR, or Cisco ASA configurations.
+                        default to False.  The factory parameter is deprecated;
+                        it should always be False.
         :type factory: bool
         :param debug: Control CiscoConfParse debug output, default is 0.
         :type debug: int
@@ -2010,6 +2010,12 @@ class CiscoConfParse:
         self.ignore_blank_lines = False
         self.encoding = encoding or ENCODING
         self.auto_commit = auto_commit
+
+        if factory:
+            msg = ("CiscoConfParse factory parameter is deprecated.  "
+                       "It should always be False.")
+            logger.warning(msg)
+            warn(msg)
 
         if syntax not in ALL_VALID_SYNTAX:
             error = f"{syntax} is not a valid syntax."
@@ -2121,8 +2127,85 @@ class CiscoConfParse:
         ######################################################################
         self.commit()
 
+        # Provide an index when iterating over CiscoConfParse() itself
+        self._index = 0
+
         # IMPORTANT this MUST not be a lie :-)...
         self.finished_config_parse = True
+
+    # This method is on CiscoConfParse()
+    @logger.catch(reraise=True)
+    def __len__(self) -> int:
+        return len(self.config_objs.data)
+
+    # This method is on CiscoConfParse()
+    @logger.catch(reraise=True)
+    def __iter__(self) -> Iterator:
+        """
+        Return an iterator for all the parsed configuration lines.
+
+        .. code-block:: python
+
+           >>> from ciscoconfparse2 import CiscoConfParse
+           >>> config = [
+           ...     'hostname ThisDevice',
+           ...     '!',
+           ...     'no ip proxy-arp',
+           ...     'no cdp run',
+           ...     'no logging console guaranteed',
+           ...     ]
+           >>> parse = CiscoConfParse(config=config)
+           >>>
+           >>> # Iterate over all lines...
+           >>> for obj in parse:
+           ...     print(repr(obj))
+           <IOSCfgLine # 0 'hostname ThisDevice'>
+           <IOSCfgLine # 1 '!'>
+           <IOSCfgLine # 2 'no ip proxy-arp'>
+           <IOSCfgLine # 3 'no cdp run'>
+           <IOSCfgLine # 4 'no logging console guaranteed'>
+           >>>
+        """
+        # Returns the iterator object itself
+        return iter(self.config_objs.data)
+
+    # This method is on CiscoConfParse()
+    @logger.catch(reraise=True)
+    def __next__(self):
+        if self._index >= len(self.config_objs.data):
+            raise StopIteration  # Signal the end of iteration
+        item = self.config_objs.data[self._index]
+        self._index += 1
+        return item
+
+    # This method is on CiscoConfParse()
+    @logger.catch(reraise=True)
+    def __getitem__(self, key: int | slice):
+        """
+        Return the BaseCfgLine() instance(s) at the key integer or slice.
+
+        .. code-block:: python
+
+           >>> from ciscoconfparse2 import CiscoConfParse
+           >>> config = [
+           ...     'hostname ThisDevice',
+           ...     '!',
+           ...     'no ip proxy-arp',
+           ...     'no cdp run',
+           ...     'no logging console guaranteed',
+           ...     ]
+           >>> parse = CiscoConfParse(config=config)
+           >>> parse
+           <CiscoConfParse: 5 lines / syntax: ios / comment delimiter: '!' / factory: False>
+           >>>
+           >>> # Index directly into CiscoConfParse() itself
+           >>> repr(parse[0])
+           <IOSCfgLine # 0 'hostname ThisDevice'>
+           >>>
+        """
+        if isinstance(key, slice):
+            return self.config_objs.data[key]
+        return self.config_objs.data[key]
 
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
@@ -2152,21 +2235,19 @@ class CiscoConfParse:
             self.commit()
             return True
 
-        elif indent_width >= 1:
+        if indent_width >= 1:
             # Get indentation from CiscoConfParse().auto_indent_width
-            auto_indent_width = self.auto_indent_width
             self.config_objs.auto_indent_config(indent_width=indent_width)
             self.commit()
             return True
 
-        else:
-            error = (
-                "CiscoConfParse().auto_indent_configuration() "
-                "cannot auto-indent if auto_indent_width "
-                "is less than 1"
-            )
-            logger.error(error)
-            raise ValueError(error)
+        error = (
+            "CiscoConfParse().auto_indent_configuration() "
+            "cannot auto-indent if auto_indent_width "
+            "is less than 1"
+        )
+        logger.error(error)
+        raise ValueError(error)
 
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
@@ -2178,20 +2259,19 @@ class CiscoConfParse:
             self.append(line)
             return None
 
-        elif idx < -1:
+        if idx < -1:
             self.insert(last_index + (idx + 2), line)
             return None
 
-        else:
-            obj = None
-            for obj in self.objs:
-                if obj.linenum == int(idx):
-                    obj.insert_before(line)
-                    return None
+        obj = None
+        for obj in self.objs:
+            if obj.linenum == int(idx):
+                obj.insert_before(line)
+                return None
 
-            # Default to inserting after the last object...
-            obj.insert_after(line)
-            return None
+        # Default to inserting after the last object...
+        obj.insert_after(line)
+        return None
 
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
@@ -2496,8 +2576,7 @@ class CiscoConfParse:
                 )
             return True
 
-        else:
-            return False
+        return False
 
     @property
     @logger.catch(reraise=True)
@@ -2567,6 +2646,8 @@ class CiscoConfParse:
         self.config_objs.commit()
 
     # This method is on CiscoConfParse()
+    #
+    # Do NOT delete; this method is used
     @logger.catch(reraise=True)
     def _find_child_object_branches(
         self,
@@ -2792,8 +2873,7 @@ debug={debug},
         # If regex_groups is True, assign regexp matches to the return matrix.
         if regex_groups is True:
             return_matrix = []
-            # branchspec = (r"^interfaces", r"\s+(\S+)", r"\s+(unit\s+\d+)", r"family\s+(inet)", r"address\s+(\S+)")
-            # for idx_matrix, row in enumerate(self.find_object_branches(branchspec)):
+
             for _, row in enumerate(branches):
                 if not isinstance(row, Sequence):
                     raise RequirementFailure()
@@ -3127,7 +3207,7 @@ debug={debug},
         recurse: bool = False,
         escape_chars: bool = False,
         reverse: bool = False,
-    ):
+    ) -> list[BaseCfgLine]:
         r"""Return a list of parent :class:`~ciscoconfparse2.models_cisco.IOSCfgLine` objects, which matched the ``parentspec`` and whose children did not match ``childspec``.  Only the parent :class:`~ciscoconfparse2.models_cisco.IOSCfgLine` objects will be returned.  For simplicity, this method only finds oldest_ancestors without immediate children that match.
 
         Parameters
@@ -3274,7 +3354,7 @@ debug={debug},
         recurse=True,
         escape_chars=False,
         reverse=False,
-    ):
+        ):
         r"""Parse through the children of all parents matching parentspec,
         and return a list of child objects, which matched the childspec.
 

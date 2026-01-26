@@ -33,6 +33,9 @@ mike [~at~] pennington !dot! net
 # pragma warning disable S5852
 # pragma warning disable S6395
 
+# Silence pylint warnings about type hints with a pipe
+from __future__ import annotations
+import _io
 import copy
 import os
 import re
@@ -50,7 +53,7 @@ from ipaddress import (
     IPv6Network,
 )
 from ipaddress import collapse_addresses as ipaddr_collapse_addresses
-from typing import Any, Optional, Union
+from typing import Any
 
 import attrs
 from dns import query, reversename, zone
@@ -220,14 +223,14 @@ class PythonOptimizeCheck:
 
 @logger.catch(reraise=True)
 def ccp_logger_control(
-    sink=sys.stderr,
-    action="",
-    enqueue=True,
-    level="DEBUG",
-    read_only=False,
-    colorize=True,
-    active_handlers=None,
-    debug=0,
+    sink: _io.TextIOWrapper = sys.stderr,
+    action: str = "",
+    enqueue: bool = True,
+    level: str = "DEBUG",
+    read_only: bool = False,
+    colorize: bool = True,
+    active_handlers: list | None = None,
+    debug: int = 0,
 ):
     """
     A simple function to handle logging... Enable / Disable all
@@ -3248,7 +3251,8 @@ class CiscoIOSInterface:
             error = "`re_intf_long` must not be None"
             logger.error(error)
             raise ValueError(error)
-        elif isinstance(re_intf_long, re.Match):
+
+        if isinstance(re_intf_long, re.Match):
             groupdict_intf_long = re_intf_long.groupdict()
             if groupdict_intf_long is None:
                 error = "The `re_intf_long` regex matched, but there are no groupdict() contents"
@@ -4935,7 +4939,7 @@ class CiscoIOSXRInterface:
 @attrs.define(repr=False, slots=False)
 class CiscoRange(UserList):
     # Set up default attributes on the object...
-    data: Any = None
+    data: Any = (None,)
     result_type: Callable | None = None
     default_iter_attr: str | None = None
     reverse: bool = False
@@ -5465,16 +5469,14 @@ class CiscoRange(UserList):
         """Return a deterministic identifier for CiscoRange() implementations"""
         if len(self.data) == 0:
             return hash(self.data)
-        else:
-            return hash(str(self.data)) * hash(self.member_type)
+        return hash(str(self.data)) * hash(self.member_type)
 
     # This method is on CiscoRange()
     @logger.catch(reraise=True)
     def __eq__(self, other: Any):
         if isinstance(other, CiscoRange):
             return self.data == other.data
-        else:
-            return False
+        return False
 
     # This method is on CiscoRange()
     @logger.catch(reraise=True)
@@ -5488,8 +5490,7 @@ class CiscoRange(UserList):
         """Return a formal string representation of this CiscoRange() object."""
         if len(self.data) > 0:
             return f"""<CiscoRange {self.as_compressed_str()} members: {self.member_type}>"""
-        else:
-            return f"""<CiscoRange [] result_type: {self.result_type}>"""
+        return f"""<CiscoRange [] result_type: {self.result_type}>"""
 
     # This method is on CiscoRange()
     @logger.catch(reraise=True)
@@ -5505,46 +5506,51 @@ class CiscoRange(UserList):
 
     # This method is on CiscoRange()
     @logger.catch(reraise=True)
-    def __getitem__(self, ii):
+    def __getitem__(self, key: int | slice):
         max_list_index = len(self.data) - 1
-        if ii > max_list_index:
-            error = f"CiscoRange() attempted to access CiscoRange()._list[{ii}], but the max list index is {max_list_index}"
+        if key > max_list_index:
+            error = (
+                f"CiscoRange() attempted to access CiscoRange()._list[{key}], "
+                "but the max list index is {max_list_index}"
+            )
             logger.critical(error)
             raise IndexError(error)
-        else:
-            return self.data[ii]
+        return self.data[key]
 
     # This method is on CiscoRange()
     @logger.catch(reraise=True)
-    def __delitem__(self, ii):
+    def __delitem__(self, key: int):
         max_list_index = len(self.data) - 1
-        if ii > max_list_index:
-            error = f"CiscoRange() attempted to access CiscoRange()._list[{ii}], but the max list index is {max_list_index}"
+        if key > max_list_index:
+            error = (
+                f"CiscoRange() attempted to access CiscoRange()._list[{key}], "
+                "but the max list index is {max_list_index}"
+            )
             logger.critical(error)
             raise IndexError(error)
-        else:
-            del self.data[ii]
+        del self.data[key]
 
     # This method is on CiscoRange()
     @logger.catch(reraise=True)
-    def __setitem__(self, ii, val):
+    def __setitem__(self, key: int, val: Any):
         max_list_index = len(self.data) - 1
-        if ii > max_list_index:
-            error = f"CiscoRange() attempted to access CiscoRange()._list[{ii}], but the max list index is {max_list_index}"
+        if key > max_list_index:
+            error = (
+                f"CiscoRange() attempted to access CiscoRange()._list[{key}], "
+                "but the max list index is {max_list_index}"
+            )
             logger.critical(error)
             raise IndexError(error)
-        else:
-            return self.data[ii]
+        return self.data[key]
 
     def __add__(self, other):
         if isinstance(other, CiscoRange):
             self.data.extend(other.data)
             self.data = sorted(set(self.data))
             return self
-        else:
-            error = f"`{other}` must be a CiscoRange() instance; the received argument was {type(other)} instead of a CiscoRange()"
-            logger.error(error)
-            raise InvalidCiscoRange(error)
+        error = f"`{other}` must be a CiscoRange() instance; the received argument was {type(other)} instead of a CiscoRange()"
+        logger.error(error)
+        raise InvalidCiscoRange(error)
 
     def __sub__(self, other):
         if isinstance(other, CiscoRange):
@@ -5606,11 +5612,9 @@ class CiscoRange(UserList):
     @property
     def member_type(self) -> type:
         """Return the member type of this CiscoRange().  The type is always based off the first member"""
-
         if len(self.data) > 0:
             return type(self.data[0])
-        else:
-            return None
+        return None
 
     # This method is on CiscoRange()
     @logger.catch(reraise=True)
@@ -5666,8 +5670,7 @@ class CiscoRange(UserList):
     def text(self) -> str:
         if len(self.data) > 0:
             return self.as_compressed_str()
-        else:
-            return ""
+        return ""
 
     # This method is on CiscoRange()
     @logger.catch(reraise=True)
@@ -5766,7 +5769,6 @@ class CiscoRange(UserList):
     @logger.catch(reraise=True)
     def as_list(self, result_type="auto"):
         """Return a list of sorted components; an empty string is automatically rejected.  This method is tricky to test due to the requirement for the `.sort_list` attribute on all elements; avoid using the ordered nature of `as_list` and use `as_set`."""
-        # WAS DEEPCOPY
         yy_list = copy.deepcopy(self.data)
         for ii in self.data:
             if isinstance(ii, str) and ii == "":
@@ -5786,18 +5788,14 @@ class CiscoRange(UserList):
                     return [result_type(ii) for ii in retval]
                 else:
                     return set()
-            elif result_type is None:
+            if result_type is None:
                 return [CiscoIOSInterface(ii) for ii in retval]
-            elif isinstance(result_type, (CiscoIOSInterface, CiscoIOSXRInterface)):
+            if result_type in (CiscoIOSInterface, CiscoIOSXRInterface, str, int):
                 return [result_type(ii) for ii in retval]
-            elif result_type is str:
-                return [str(ii) for ii in retval]
-            elif result_type is int:
-                return [int(ii) for ii in retval]
-            else:
-                error = f"CiscoRange().as_list(result_type={result_type}) is not valid.  Choose from {['auto', None, int, str, float, CiscoIOSInterface, CiscoIOSXRInterface]}.  result_type: None will return CiscoIOSInterface() objects."
-                logger.critical(error)
-                raise ValueError(error)
+
+            error = f"CiscoRange().as_list(result_type={result_type}) is not valid.  Choose from {['auto', None, int, str, float, CiscoIOSInterface, CiscoIOSXRInterface]}.  result_type: None will return CiscoIOSInterface() objects."
+            logger.critical(error)
+            raise ValueError(error)
         except AttributeError as eee:
             error = f"`sorted(self.data, reverse={self.reverse})` tried to access an attribute that does not exist on the objects being sorted: {eee}"
             logger.error(error)
@@ -5817,20 +5815,20 @@ class CiscoRange(UserList):
                 return {result_type(ii) for ii in retval}
             else:
                 return []
-        elif result_type is None:
+        if result_type is None:
             return {CiscoIOSInterface(ii) for ii in retval}
-        elif isinstance(result_type, (CiscoIOSInterface, CiscoIOSXRInterface)):
+        if isinstance(result_type, (CiscoIOSInterface, CiscoIOSXRInterface)):
             return {result_type(ii) for ii in retval}
-        elif result_type is str:
+        if result_type is str:
             return {str(ii) for ii in retval}
-        elif result_type is int:
+        if result_type is int:
             return {int(ii) for ii in retval}
-        elif result_type is float:
+        if result_type is float:
             return {float(ii) for ii in retval}
-        else:
-            error = f"CiscoRange().as_list(result_type={result_type}) is not valid.  Choose from {['auto', None, int, str, float]}.  result_type: None will return CiscoIOSInterface() objects."
-            logger.critical(error)
-            raise ValueError(error)
+
+        error = f"CiscoRange().as_list(result_type={result_type}) is not valid.  Choose from {['auto', None, int, str, float]}.  result_type: None will return CiscoIOSInterface() objects."
+        logger.critical(error)
+        raise ValueError(error)
 
     # This method is on CiscoRange()
     ## Github issue #125

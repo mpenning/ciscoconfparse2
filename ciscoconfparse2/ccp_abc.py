@@ -15,12 +15,14 @@ If you need to contact the author, you can do so by emailing:
 mike [~at~] pennington [/dot\] net
 """
 
+# Silence pylint warnings about type hints with a pipe
+from __future__ import annotations
 import math
 import re
 from collections.abc import Sequence
 from copy import copy
 from types import GeneratorType
-from typing import Any, Union
+from typing import Any
 from warnings import warn
 
 import attrs
@@ -128,10 +130,12 @@ class BaseCfgLine:
             children = kwargs.get("children")
         else:
             children = []
+
         if isinstance(kwargs.get("child_indent", None), int):
             child_indent = kwargs.get("child_indent")
         else:
             child_indent = 0
+
         if kwargs.get("confobj", None) is not None:
             confobj = kwargs.get("confobj")
         else:
@@ -142,15 +146,15 @@ class BaseCfgLine:
             logger.critical(error)
             raise InvalidParameters(error)
 
-        self._text = line
-        self._children = children
-        self.linenum = int(linenum)
-        self.parent = self  # by default, assign parent as itself
-        self.child_indent = int(child_indent)
+        self._text: str = line
+        self._children: list[BaseCfgLine] = children
+        self.linenum: int = int(linenum)
+        self.parent: BaseCfgLine = self  # by default, assign parent as itself
+        self.child_indent: int = int(child_indent)
         self.confobj = confobj
-        self.blank_line_keep = False  # CiscoConfParse() uses blank_line_keep
+        self.blank_line_keep: bool = False  # CiscoConfParse() uses blank_line_keep
 
-        self.all_text = all_lines
+        self.all_text: list[str] = all_lines
         self.all_lines = all_lines
         self.line = self._text
 
@@ -181,8 +185,7 @@ class BaseCfgLine:
 
         if not self.is_child:
             return f"<{self.classname} # {this_linenum} '{self.text}'>"
-        else:
-            return f"<{self.classname} # {this_linenum} '{self.text}' (parent is # {parent_linenum})>"
+        return f"<{self.classname} # {this_linenum} '{self.text}' (parent is # {parent_linenum})>"
 
     # On BaseCfgLine()
     @logger.catch(reraise=True)
@@ -204,9 +207,8 @@ class BaseCfgLine:
             #     credit - https://stackoverflow.com/a/34372150/667301
             #     i.e. obj[0:5]
             return self.text[subscript.start : subscript.stop : subscript.step]
-        else:
-            #     i.e. obj[0]
-            return self.text[subscript]
+        #     i.e. obj[0]
+        return self.text[subscript]
 
     # On BaseCfgLine()
     @logger.catch(reraise=True)
@@ -241,7 +243,6 @@ class BaseCfgLine:
             #   try / except is much faster than isinstance();
             #   I added hash_arg() inline below for speed... whenever I change
             #   self.__hash__() I *must* change this
-            # FIXME
             return self.get_unique_identifier() == val.get_unique_identifier()
         except BaseException as eee:
             logger.error(eee)
@@ -270,10 +271,9 @@ class BaseCfgLine:
 
         if self.confobj is not None:
             return self.confobj.ccp_ref
-        else:
-            error = f"{self}.confobj is invalid (i.e. None)"
-            logger.error(error)
-            raise ValueError(error)
+        error = f"{self}.confobj is invalid (i.e. None)"
+        logger.error(error)
+        raise ValueError(error)
 
     # On BaseCfgLine()
     @logger.catch(reraise=True)
@@ -290,6 +290,7 @@ class BaseCfgLine:
     @property
     @logger.catch(reraise=True)
     def indent(self) -> int:
+        """Return an integer indicating how many spaces this line is indented."""
         return len(self._text) - len(self._text.lstrip())
 
     # On BaseCfgLine()
@@ -307,10 +308,9 @@ class BaseCfgLine:
             self._text = " " * int(value) + text.lstrip()
             return value
 
-        else:
-            error = f"BaseCfgLine().indent must be positive integer"
-            logger.error(error)
-            raise ValueError(error)
+        error = "BaseCfgLine().indent must be positive integer"
+        logger.error(error)
+        raise ValueError(error)
 
     # On BaseCfgLine()
     @logger.catch(reraise=True)
@@ -319,12 +319,11 @@ class BaseCfgLine:
         if self.indent == 0:
             return False
 
-        else:
-            auto_indent_value = self.parent.indent + self.ccp_ref.auto_indent_width
-            if self.indent != auto_indent_value:
-                self.indent = auto_indent_value
-            self.ccp_ref.commit()
-            return True
+        auto_indent_value = self.parent.indent + self.ccp_ref.auto_indent_width
+        if self.indent != auto_indent_value:
+            self.indent = auto_indent_value
+        self.ccp_ref.commit()
+        return True
 
     # On BaseCfgLine()
     @property
@@ -425,10 +424,9 @@ class BaseCfgLine:
 
         if isinstance(self._children, list):
             return self._children
-        else:
-            error = f"Fatal: {type(self._children)} found as BaseCfgLine().children; it should be a list."
-            logger.critical(error)
-            raise NotImplementedError(error)
+        error = f"Fatal: {type(self._children)} found as BaseCfgLine().children; it should be a list."
+        logger.critical(error)
+        raise NotImplementedError(error)
 
     @children.setter
     @logger.catch(reraise=True)
@@ -436,10 +434,9 @@ class BaseCfgLine:
         if isinstance(arg, list):
             self._children = arg
             return self._children
-        else:
-            error = f"{type(arg)} cannot be assigned to BaseCfgLine().children"
-            logger.critical(error)
-            raise NotImplementedError(error)
+        error = f"{type(arg)} cannot be assigned to BaseCfgLine().children"
+        logger.critical(error)
+        raise NotImplementedError(error)
 
     # On BaseCfgLine()
     @property
@@ -521,10 +518,11 @@ class BaseCfgLine:
     @property
     def hash_children(self):
         """Return a unique hash of all children (if the number of children > 0)"""
+
         if len(self.all_children) > 0:
             return hash(tuple(self.all_children))
-        else:
-            return hash(())
+
+        return hash(())
 
     # On BaseCfgLine()
     @property
@@ -533,11 +531,13 @@ class BaseCfgLine:
         :return: The line number of the last child (or grandchild, etc)
         :rtype: int
         """
-        assert isinstance(self.all_children, list)
+
+        if not isinstance(self.all_children, list):
+            raise ValueError
+
         if self.all_children == []:
             return self.linenum
-        else:
-            return self.all_children[-1].linenum
+        return self.all_children[-1].linenum
 
     # On BaseCfgLine()
     @property
@@ -549,8 +549,7 @@ class BaseCfgLine:
         if self.has_children:
             return f"<{self.classname} # {self.linenum} '{self.text}' (child_indent: {self.child_indent} / len(children): {len(self.children)} / family_endpoint: {self.family_endpoint})>"
 
-        else:
-            return f"<{self.classname} # {self.linenum} '{self.text}' (no_children / family_endpoint: {self.family_endpoint})>"
+        return f"<{self.classname} # {self.linenum} '{self.text}' (no_children / family_endpoint: {self.family_endpoint})>"
 
     # On BaseCfgLine()
     @property
@@ -871,7 +870,10 @@ class BaseCfgLine:
             insertstr = insertstr.text
 
         if auto_indent is not None:
-            warning_msg = f"BaseCfgLine().auto_indent is no longer supported; you should remove it."
+            warning_msg = (
+                "BaseCfgLine().append_to_family(auto_indent) is "
+                "no longer supported; you should remove it."
+            )
             logger.warning(warning_msg)
             warn(warning_msg)
 
@@ -881,18 +883,22 @@ class BaseCfgLine:
         auto_indent_width = self.ccp_ref.auto_indent_width
 
         if indent == 0:
-            error = "BaseCfgLine().append_to_family() with indent=0 is not supported since all child family members must be indented"
+            error = (
+                "BaseCfgLine().append_to_family() with indent=0 "
+                "is not supported since all child family members "
+                "must be indented"
+            )
             logger.error(error)
             raise NotImplementedError(error)
 
-        elif auto_indent_width == 0:
+        if auto_indent_width == 0:
             raise NotImplementedError
 
-        elif indent > 0 and auto_indent_width >= 1 and indent % auto_indent_width > 0:
+        if indent > 0 and auto_indent_width >= 1 and indent % auto_indent_width > 0:
             # Manual indentation must be an even multiple of auto_indent_width if it's defined
             raise NotImplementedError
 
-        elif indent > 0:
+        if indent > 0:
             pass
 
         elif indent == -1 and auto_indent_width >= 1:
@@ -902,7 +908,10 @@ class BaseCfgLine:
             indent = self.indent + self.ccp_ref.get_indent_from_syntax()
 
         else:
-            error = f"BaseCfgLine().append_to_family(indent={indent}) and CiscoConfParse().auto_indent_width={auto_indent_width}"
+            error = (
+                f"BaseCfgLine().append_to_family(indent={indent}) "
+                "and CiscoConfParse().auto_indent_width={auto_indent_width}"
+            )
             logger.error(error)
             raise ValueError(error)
 
@@ -967,18 +976,22 @@ class BaseCfgLine:
 
         if self.indent == indent_width:
             return 0
-        elif self.indent < indent_width:
+
+        if self.indent < indent_width:
             this_val = indent_width / self.ccp_ref.auto_indent_width
             self_val = self.indent / self.ccp_ref.auto_indent_width
             return int(this_val - self_val)
-        elif self.indent > indent_width:
+
+        if self.indent > indent_width:
             this_val = indent_width / self.ccp_ref.auto_indent_width
             self_val = self.indent / self.ccp_ref.auto_indent_width
             return int(this_val - self_val)
-        else:
-            error = "unexpected condition"
-            logger.critical(error)
-            raise NotImplementedError(error)
+
+        error = "unexpected condition"
+        logger.critical(error)
+        raise NotImplementedError(error)
+
+    ### Begin ciscoconfparse2 string methods
 
     # On BaseCfgLine()
     def count(self, sub: str, start=None, end=None) -> int:
@@ -986,14 +999,16 @@ class BaseCfgLine:
 
         if start is None and end is None:
             return self.text.count(sub)
-        elif start and end is None:
+
+        if start and end is None:
             return self.text.count(sub, start)
-        elif start and end:
+
+        if start and end:
             return self.text.count(sub, start, end)
-        else:
-            error = "unexpected condition"
-            logger.critical(error)
-            raise NotImplementedError(error)
+
+        error = "unexpected condition"
+        logger.critical(error)
+        raise NotImplementedError(error)
 
     # On BaseCfgLine()
     def replace(self, before, after, count=-1) -> str:
@@ -1025,13 +1040,12 @@ class BaseCfgLine:
         if chars is None:
             return self._text.rstrip()
 
-        elif isinstance(chars, str):
+        if isinstance(chars, str):
             return self._text.rstrip(chars)
 
-        else:
-            raise NotImplementedError(
-                "BaseCfgLine().rstrip() got " f"an unexpected type: {type(chars)}"
-            )
+        raise NotImplementedError(
+            f"BaseCfgLine().rstrip() got an unexpected type: {type(chars)}"
+        )
 
     # On BaseCfgLine()
     @logger.catch(reraise=True)
@@ -1047,8 +1061,8 @@ class BaseCfgLine:
         """
         if chars is None:
             return self._text.lstrip()
-        else:
-            return self._text.lstrip(chars)
+
+        return self._text.lstrip(chars)
 
     # On BaseCfgLine()
     @logger.catch(reraise=True)
@@ -1064,12 +1078,12 @@ class BaseCfgLine:
         """
         if chars is None:
             return self._text.strip()
-        elif isinstance(chars, str):
+        if isinstance(chars, str):
             return self._text.strip(chars)
-        else:
-            raise NotImplementedError(
-                "BaseCfgLine().strip() got " f"an unexpected type: {type(chars)}"
-            )
+
+        raise NotImplementedError(
+            f"BaseCfgLine().strip() got an unexpected type: {type(chars)}"
+        )
 
     # On BaseCfgLine()
     @logger.catch(reraise=True)
@@ -1090,8 +1104,7 @@ class BaseCfgLine:
         """
         if sep is None:
             return self._text.split(maxsplit=maxsplit)
-        else:
-            return self._text.split(sep=sep, maxsplit=maxsplit)
+        return self._text.split(sep=sep, maxsplit=maxsplit)
 
     # On BaseCfgLine()
     @logger.catch(reraise=True)
@@ -1112,8 +1125,183 @@ class BaseCfgLine:
         """
         if sep is None:
             return self._text.rsplit(maxsplit=maxsplit)
-        else:
-            return self._text.rsplit(sep=sep, maxsplit=maxsplit)
+        return self._text.rsplit(sep=sep, maxsplit=maxsplit)
+
+    # On BaseCfgLine()
+    @logger.catch(reraise=True)
+    def removeprefix(self, prefix: str) -> str:
+        return self.text.removeprefix(prefix)
+
+    # On BaseCfgLine()
+    @logger.catch(reraise=True)
+    def ljust(self, width: int, fillchar: str = " ") -> str:
+        return self.text.ljust(width, fillchar)
+
+    # On BaseCfgLine()
+    @logger.catch(reraise=True)
+    def rjust(self, width: int, fillchar: str = " ") -> str:
+        return self.text.rjust(width, fillchar)
+
+    # On BaseCfgLine()
+    @logger.catch(reraise=True)
+    def center(self, width: int, fillchar: str = " ") -> str:
+        return self.text.center(width, fillchar)
+
+    # On BaseCfgLine()
+    @logger.catch(reraise=True)
+    def expandtabs(self, tabsize: int = 8) -> str:
+        return self.text.expandtabs(tabsize)
+
+    # On BaseCfgLine()
+    @logger.catch(reraise=True)
+    def endswith(
+        self, suffix, start: int | None = None, end: int | None = None
+    ) -> bool:
+        if start is not None:
+            return self.text.endswith(suffix)
+        if end is not None:
+            return self.text.endswith(suffix, start)
+        return self.text.endswith(suffix, start, end)
+
+    # On BaseCfgLine()
+    @logger.catch(reraise=True)
+    def find(self, sub, start: int | None = None, end: int | None = None) -> int:
+        if start is not None:
+            return self.text.find(sub)
+        if end is not None:
+            return self.text.find(sub, start)
+        return self.text.find(sub, start, end)
+
+    # On BaseCfgLine()
+    @logger.catch(reraise=True)
+    def rindex(self, sub, start: int | None = None, end: int | None = None) -> int:
+        if start is not None:
+            return self.text.rindex(sub)
+        if end is not None:
+            return self.text.rindex(sub, start)
+        return self.text.rindex(sub, start, end)
+
+    # On BaseCfgLine()
+    @logger.catch(reraise=True)
+    def rfind(self, sub, start: int | None = None, end: int | None = None) -> int:
+        if start is not None:
+            return self.text.rfind(sub)
+        if end is not None:
+            return self.text.rfind(sub, start)
+        return self.text.rfind(sub, start, end)
+
+    # On BaseCfgLine()
+    @logger.catch(reraise=True)
+    def startswith(
+        self, prefix: str, start: int | None = None, end: int | None = None
+    ) -> int:
+        if start is not None:
+            return self.text.startswith(prefix)
+        if end is not None:
+            return self.text.startswith(prefix, start)
+        return self.text.startswith(prefix, start, end)
+
+    # On BaseCfgLine()
+    @logger.catch(reraise=True)
+    def rpartition(self, sep: str) -> tuple[str, ...]:
+        return self.text.rpartition(sep)
+
+    # On BaseCfgLine()
+    @logger.catch(reraise=True)
+    def isascii(self) -> bool:
+        return self.text.isascii()
+
+    # On BaseCfgLine()
+    @logger.catch(reraise=True)
+    def isalnum(self) -> bool:
+        return self.text.isalnum()
+
+    # On BaseCfgLine()
+    @logger.catch(reraise=True)
+    def isalpha(self) -> bool:
+        return self.text.isalpha()
+
+    # On BaseCfgLine()
+    @logger.catch(reraise=True)
+    def isdecimal(self) -> bool:
+        return self.text.isdecimal()
+
+    # On BaseCfgLine()
+    @logger.catch(reraise=True)
+    def isdigit(self) -> bool:
+        return self.text.isdigit()
+
+    # On BaseCfgLine()
+    @logger.catch(reraise=True)
+    def isidentifier(self) -> bool:
+        return self.text.isidentifier()
+
+    # On BaseCfgLine()
+    @logger.catch(reraise=True)
+    def islower(self) -> bool:
+        return self.text.islower()
+
+    # On BaseCfgLine()
+    @logger.catch(reraise=True)
+    def isnumeric(self) -> bool:
+        return self.text.isnumeric()
+
+    # On BaseCfgLine()
+    @logger.catch(reraise=True)
+    def isprintable(self) -> bool:
+        return self.text.isprintable()
+
+    # On BaseCfgLine()
+    @logger.catch(reraise=True)
+    def istitle(self) -> bool:
+        return self.text.istitle()
+
+    # On BaseCfgLine()
+    @logger.catch(reraise=True)
+    def isspace(self) -> bool:
+        return self.text.isspace()
+
+    # On BaseCfgLine()
+    @logger.catch(reraise=True)
+    def isupper(self) -> bool:
+        return self.text.isupper()
+
+    # On BaseCfgLine()
+    @logger.catch(reraise=True)
+    def casefold(self) -> str:
+        return self.text.casefold()
+
+    # On BaseCfgLine()
+    @logger.catch(reraise=True)
+    def swapcase(self) -> str:
+        return self.text.swapcase()
+
+    # On BaseCfgLine()
+    @logger.catch(reraise=True)
+    def lower(self) -> str:
+        return self.text.lower()
+
+    # On BaseCfgLine()
+    @logger.catch(reraise=True)
+    def upper(self) -> str:
+        return self.text.upper()
+
+    # On BaseCfgLine()
+    @logger.catch(reraise=True)
+    def title(self) -> str:
+        return self.text.title()
+
+    # On BaseCfgLine()
+    @logger.catch(reraise=True)
+    def capitalize(self) -> str:
+        return self.text.capitalize()
+
+    # On BaseCfgLine()
+    @logger.catch(reraise=True)
+    def zfill(self, width: int) -> str:
+        return self.text.zfill(width)
+
+    ### End ciscoconfparse2 string methods
 
     # On BaseCfgLine()
     @logger.catch(reraise=True)
@@ -1508,10 +1696,11 @@ class BaseCfgLine:
         if mm is not None:
             if mm.group(group) is not None:
                 return result_type(mm.group(group))
+
         if untyped_default:
             return default
-        else:
-            return result_type(default)
+
+        return result_type(default)
 
     # On BaseCfgLine()
     @logger.catch(reraise=True)
@@ -1626,25 +1815,22 @@ class BaseCfgLine:
                 ## Ref Github issue #121
                 if untyped_default:
                     return default
-                else:
-                    return result_type(default)
+                return result_type(default)
 
-            else:
-                # Work on all children if recurse is True
-                for cobj in self.all_children:
-                    if debug is True:
-                        logger.debug(
-                            f"    {self}.re_match_iter_typed() is checking match of r'''{regex}''' on -->{cobj}<--"
-                        )
-                    mm = re.search(regex, cobj.text)
-                    if isinstance(mm, re.Match):
-                        return result_type(mm.group(group))
+            # Work on all children if recurse is True
+            for cobj in self.all_children:
+                if debug is True:
+                    logger.debug(
+                        f"    {self}.re_match_iter_typed() is checking match of r'''{regex}''' on -->{cobj}<--"
+                    )
+                mm = re.search(regex, cobj.text)
+                if isinstance(mm, re.Match):
+                    return result_type(mm.group(group))
 
-                ## Ref Github issue #121
-                if untyped_default is True:
-                    return default
-                else:
-                    return result_type(default)
+            ## Ref Github issue #121
+            if untyped_default is True:
+                return default
+            return result_type(default)
 
         elif isinstance(groupdict, dict):
             if debug is True:
@@ -1678,22 +1864,21 @@ class BaseCfgLine:
                     debug=debug,
                 )
 
-            else:
-                for cobj in self.all_children:
-                    mm = re.search(regex, cobj.text)
-                    if isinstance(mm, re.Match):
-                        return self.get_regex_typed_dict(
-                            regex=mm,
-                            type_dict=groupdict,
-                            default=default,
-                            debug=debug,
-                        )
-                return self.get_regex_typed_dict(
-                    regex=mm,
-                    type_dict=groupdict,
-                    default=default,
-                    debug=debug,
-                )
+            for cobj in self.all_children:
+                mm = re.search(regex, cobj.text)
+                if isinstance(mm, re.Match):
+                    return self.get_regex_typed_dict(
+                        regex=mm,
+                        type_dict=groupdict,
+                        default=default,
+                        debug=debug,
+                    )
+            return self.get_regex_typed_dict(
+                regex=mm,
+                type_dict=groupdict,
+                default=default,
+                debug=debug,
+            )
         else:
             error = (
                 f"`groupdict` must be None or a `dict`, but we got {type(groupdict)}."
@@ -1793,7 +1978,7 @@ class BaseCfgLine:
                 recurse=recurse,
                 debug=debug,
             )
-        elif isinstance(groupdict, dict) is True:
+        if isinstance(groupdict, dict) is True:
             return self.re_list_iter_typed_groupdict_dict(
                 regex=regex,
                 group=group,
@@ -1802,12 +1987,10 @@ class BaseCfgLine:
                 recurse=recurse,
                 debug=debug,
             )
-        else:
-            error = (
-                f"`groupdict` must be None or a `dict`, but we got {type(groupdict)}."
-            )
-            logger.critical(error)
-            raise ValueError(error)
+
+        error = f"`groupdict` must be None or a `dict`, but we got {type(groupdict)}."
+        logger.critical(error)
+        raise ValueError(error)
 
     @logger.catch(reraise=True)
     def re_list_iter_typed_groupdict_none(
@@ -1899,17 +2082,16 @@ class BaseCfgLine:
                 retval.append(tmp)
             return retval
 
-        else:
-            for cobj in self.all_children:
-                mm = re.search(regex, cobj.text)
-                if isinstance(mm, re.Match):
-                    tmp = self.get_regex_typed_dict(
-                        regex=mm,
-                        type_dict=groupdict,
-                        debug=debug,
-                    )
-                    retval.append(tmp)
-            return retval
+        for cobj in self.all_children:
+            mm = re.search(regex, cobj.text)
+            if isinstance(mm, re.Match):
+                tmp = self.get_regex_typed_dict(
+                    regex=mm,
+                    type_dict=groupdict,
+                    debug=debug,
+                )
+                retval.append(tmp)
+        return retval
 
     # On BaseCfgLine()
     @property
@@ -1964,10 +2146,8 @@ class BaseCfgLine:
         if last_sibling is not None:
             if len(last_sibling.all_children) > 0:
                 return last_sibling.all_children[-1].linenum
-            else:
-                return last_sibling.linenum
-        else:
-            return self.linenum
+            return last_sibling.linenum
+        return self.linenum
 
     # On BaseCfgLine()
     @property
@@ -2018,13 +2198,13 @@ class BaseCfgLine:
 
     # On BaseCfgLine()
     @property
-    def is_parent(self):
+    def is_parent(self) -> bool:
         """Return True if this BaseCfgLine() instance has children"""
         return bool(self.has_children)
 
     # On BaseCfgLine()
     @property
-    def is_child(self):
+    def is_child(self) -> bool:
         """Return True if this BaseCfgLine() instance is a child of something"""
         parent = getattr(self, "parent", None)
         return not bool(parent == self)
@@ -2034,10 +2214,10 @@ class BaseCfgLine:
     def siblings(self):
         """Return a list of siblings for this BaseCfgLine() instance"""
         indent = self.indent
-        return [obj for obj in self.parent.children if (obj.indent == indent)]
+        return [obj for obj in self.parent.children if obj.indent == indent]
 
     # On BaseCfgLine()
     @classmethod
-    def is_object_for(cls, line=""):
+    def is_object_for(cls) -> bool:
         """A base method to allow subclassing with an is_object_for() classmethod"""
         return False
