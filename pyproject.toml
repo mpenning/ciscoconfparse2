@@ -10,22 +10,22 @@ dynamic = ["version"]
 dependencies = [
   # NOTE changing attrs versions may require code / test changes
   "attrs>24.3.0,<26.0.0",
-  "dnspython==2.7.0",
+  "dnspython==2.8.0",
   "macaddress==2.0.2",
   "traitlets==5.14.3",
   "loguru>=0.7.2",
   "hier_config==2.3.1",
-  "pyparsing==3.3.1",
+  "pyparsing==3.3.2",
   "toml==0.10.2",
   # NOTE changing typeguard versions may require code / test changes
   "typeguard==4.4.4",
   "PyYAML>=6.0.2",
-  "rich>=13.6.0",
+  "rich>=14.3.0",
   # "passlib==1.7.4",   <-- deprecating passlib (now unmaintained) in favor of libpass
   #     https://github.com/notypecheck/passlib
   "libpass==1.9.3",
   # Hypothesis for hard-core ip_address tests
-  "hypothesis==6.141.1",
+  "hypothesis==6.150.3",
 ]
 authors = [
   { name = "Mike Pennington", email = "mike@pennington.net" },
@@ -62,16 +62,16 @@ classifiers=[
 [project.optional-dependencies]
 # Ensure wheel is upgraded... ref Github Issue #257
 dev = [
-  "hatch>=1.15.1",
-  "hatchling>=1.27.0",
+  "hatch>=1.16.3",
+  "hatchling>=1.28.0",
   "pytest>=9.0.1",
   "pre-commit>=4.3.0",
   "black==25.11.0",
-  "ty==0.0.12",
-  "pyupgrade==3.21.0",
+  "ty==0.0.13",
+  "pyupgrade==3.21.2",
   "yamlfix==1.19.1",
   "pylama==8.4.1",
-  "pylint==3.3.9",
+  "pylint==4.0.4",
   "coverage>=7.3.2",
   "pytest-cov>=4.1.0",
   "pyroma==5.0.1",
@@ -121,6 +121,16 @@ packages = [
 
 [tool.hatch.envs.default.scripts]
 pytest = "cd tests && pytest ."
+
+[tool.pylint]
+# Minimum Python version to use for version dependent checks.
+# Will default to the version used to run pylint.
+py-version = "3.10"
+
+[tool.pylint."messages control"]
+disable = """
+    C0301
+"""
 
 [tool.yamlfix]
 preserve_quotes = true
