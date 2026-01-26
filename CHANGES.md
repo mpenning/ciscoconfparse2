@@ -6,6 +6,11 @@
 - Summary:
     - To be determined
 
+## Version: 0.9.7
+
+- Summary:
+    - Remove Python3.15 test because it's not available on the GitHub test runner
+
 ## Version: 0.9.6
 
 - Summary:
