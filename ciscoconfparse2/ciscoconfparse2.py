@@ -627,7 +627,7 @@ def convert_junos_to_ios(
 
 
 # ConfigList() used to break with slots=False...
-@attrs.define(repr=False, slots=False)
+@attrs.define(repr=False, slots=True)
 class ConfigList(UserList):
     """A custom list to hold :class:`~ciscoconfparse2.ccp_abc.BaseCfgLine` objects.  Most users will never need to use this class directly."""
 
@@ -745,6 +745,7 @@ class ConfigList(UserList):
         self.comment_delimiters = comment_delimiters
         self.factory = factory
         self.ignore_blank_lines = ignore_blank_lines
+        self.indent_width = indent_width
         self.syntax = syntax
         self.auto_commit = auto_commit
         self.debug = debug
