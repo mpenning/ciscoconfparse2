@@ -28,13 +28,15 @@ The library examines a Cisco or JunOS-style configuration and breaks it into a s
 of linked parent / child relationships; each configuration line is stored in a
 different {class}`~ciscoconfparse2.models_cisco.IOSCfgLine` object.
 
-:::{figure} _static/ciscoconfparse_overview.png
+```{image} _static/ciscoconfparse_overview.png
 :align: left
 :alt: ciscoconfparse2 overview
 :width: 600px
+```
 
+```{raw}<br><br>
 Figure 1. An Example of Parent-line / Child-line relationships
-:::
+
 
 ```{raw} html
 <br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
