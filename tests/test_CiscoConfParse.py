@@ -61,7 +61,6 @@ def testValues_save_as_01():
     os.remove(filename)
 
 
-@pytest.mark.skip(reason="somehow pickle broke since version 0.9.4; this is a low-priority problem")
 def testValues_pickle_01():
     """Ensure that pickle() accepts a CiscoConfParse() instance and saves a file"""
 
