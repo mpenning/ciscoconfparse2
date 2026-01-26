@@ -6,6 +6,11 @@
 - Summary:
     - To be determined
 
+## Version: 0.9.6
+
+- Summary:
+    - Fix pickle bug introduced in 0.9.5
+
 ## Version: 0.9.5
 
 - Summary:
