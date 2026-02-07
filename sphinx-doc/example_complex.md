@@ -11,11 +11,20 @@ IP address / switchport parameters assigned to interfaces.
 Save this code in a file named example.py
 
 ```python
+"""
+Walk all interfaces in a Cisco IOS configuration (from the 
+ciscoconfparse2 test fixtures): build a CSV with details about
+the interface.
+
+Save this script as example.py
+"""
+
 from ciscoconfparse2 import CiscoConfParse
 from ciscoconfparse2 import IPv4Obj
+from ciscoconfparse2 import BaseCfgLine
 
 
-def intf_csv(intf_obj) -> str:
+def intf_csv(intf_obj: BaseCfgLine) -> str:
     """
     :return: CSV for each interface object.
     :rtype: str

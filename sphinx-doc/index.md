@@ -6,10 +6,10 @@
 
 intro.md
 installation.md
-cli.md
 examples.md
 tutorial.md
 development.md
+cli.md
 api.md
 ```
 

@@ -16,4 +16,6 @@ Contents:
 
 example_simple
 example_complex
+example_ciscorange
+example_ciscoiosinterface
 ```
