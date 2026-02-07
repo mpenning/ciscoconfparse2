@@ -12,7 +12,7 @@ Save this code in a file named example.py
 
 ```python
 """
-Walk all interfaces in a Cisco IOS configuration (from the 
+Walk all interfaces in a Cisco IOS configuration (from the
 ciscoconfparse2 test fixtures): build a CSV with details about
 the interface.
 

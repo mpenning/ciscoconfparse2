@@ -24,7 +24,7 @@ Ethernet1/20
 
 ## CiscoRange() Contains Example
 
-`CiscoRange()` also supports the common 'foo in bar' syntax; additionally, you can use 
+`CiscoRange()` also supports the common 'foo in bar' syntax; additionally, you can use
 string interface names for the comparision if you want.
 
 ```{code-block} python

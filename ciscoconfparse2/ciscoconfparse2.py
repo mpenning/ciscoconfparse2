@@ -35,7 +35,8 @@ import time
 from collections import UserList
 from collections.abc import Callable, Sequence
 from types import GeneratorType
-from typing import Any, Iterator
+from typing import Any
+from collections.abc import Iterator
 from warnings import warn
 
 
@@ -2013,8 +2014,10 @@ class CiscoConfParse:
         self.auto_commit = auto_commit
 
         if factory:
-            msg = ("CiscoConfParse factory parameter is deprecated.  "
-                       "It should always be False.")
+            msg = (
+                "CiscoConfParse factory parameter is deprecated.  "
+                "It should always be False."
+            )
             logger.warning(msg)
             warn(msg)
 
@@ -3355,7 +3358,7 @@ debug={debug},
         recurse=True,
         escape_chars=False,
         reverse=False,
-        ):
+    ):
         r"""Parse through the children of all parents matching parentspec,
         and return a list of child objects, which matched the childspec.
 

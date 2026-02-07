@@ -24,7 +24,7 @@ from copy import deepcopy
 from itertools import repeat
 from operator import attrgetter
 from unittest.mock import patch
-from typing import Iterator
+from collections.abc import Iterator
 
 import os
 import re
@@ -81,7 +81,7 @@ def testValues_pickle_01():
         pickle.dump(parse, fh)
 
     # Load pickle from disk...
-    with open(filename, 'rb') as fh:
+    with open(filename, "rb") as fh:
         parse = pickle.load(fh)
 
     assert isinstance(parse, CiscoConfParse)
@@ -140,6 +140,7 @@ def testValues_for_loop_01():
     # Ensure that the configuration is unmodified by iteration...
     assert uut_config == correct_config
 
+
 def testValues_for_loop_02():
     """Ensure that enumerating CiscoConfParse() works correctly.
 
@@ -170,8 +171,7 @@ def testValues_for_loop_02():
 
 
 def testValues_for_loop_03():
-    """Ensure that sorted() on CiscoConfParse() works correctly.
-    """
+    """Ensure that sorted() on CiscoConfParse() works correctly."""
     correct_config = [
         "hostname ThisRouter",
         "!",
@@ -192,6 +192,7 @@ def testValues_for_loop_03():
         assert isinstance(idx, int)
         assert isinstance(obj, BaseCfgLine)
         assert uut_parse[idx].text == correct_config[idx]
+
 
 def testValues_int_key_01():
     """Test retrieving a single CiscoConfParse() values by index integer"""
@@ -214,6 +215,7 @@ def testValues_int_key_01():
 
     assert uut_parse[0].text == "hostname ThisRouter"
 
+
 def testValues_slice_key_01():
     """Test retrieving a slice of CiscoConfParse() values"""
     correct_config = [
@@ -234,9 +236,10 @@ def testValues_slice_key_01():
     uut_parse = CiscoConfParse(correct_config)
 
     # Test that a slice of CiscoConfParse() is correct...
-    #   using list(map()) as a crutch to avoid dealing directly 
+    #   using list(map()) as a crutch to avoid dealing directly
     #   with IOSCfgLine() instances
     assert list(map(str, uut_parse[0:2])) == ["hostname ThisRouter", "!"]
+
 
 def testValues_find_objects_order_01():
     """Test CiscoConfParse().find_objects("...")"""
