@@ -5480,6 +5480,38 @@ class CiscoRange(UserList):
 
     # This method is on CiscoRange()
     @logger.catch(reraise=True)
+    def __contains__(
+        self, other: str | CiscoIOSInterface | CiscoIOSXRInterface | CiscoRange
+    ) -> bool:
+
+        if isinstance(other, str):
+            for val in self.data:
+                if str(other) == str(val):
+                    return True
+
+        if isinstance(other, (CiscoIOSInterface, CiscoIOSXRInterface)):
+            for val in self.data:
+                if other == val:
+                    return True
+
+        elif isinstance(other, CiscoRange):
+
+            match_list: list[bool] = []
+
+            for val in other.data:
+
+                if val in self.data:
+                    match_list.append(True)
+
+                else:
+                    match_list.append(False)
+
+            return all(match_list)
+
+        return False
+
+    # This method is on CiscoRange()
+    @logger.catch(reraise=True)
     def __str__(self):
         """Return a formal string representation of this CiscoRange()"""
         return "[" + str(", ".join([str(ii) for ii in self.data])) + "]"
