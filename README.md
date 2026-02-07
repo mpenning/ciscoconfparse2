@@ -79,20 +79,28 @@ branches = parse.find_object_branches(("router bgp", "neighbor", "remote-as"))
 bgp_cmd = branches[0][0]
 local_asn = bgp_cmd.split()[-1]
 
-# Find EBGP neighbors for any number of peers
+# Find EBGP neighbors for any number of peers...
 for branch in branches:
-    neighbor_addr = branch[1].split()[-1]
-    remote_asn = branch[2].split()[-1]
+
+    # Extract individual instances for each BGP neighbor "branch"
+    neighbor_obj = branch[1]
+    remote_asn_obj = branch[2]
+
+    # Use the BaseCfgLine().split() method to get the peer address and ASN
+    neighbor_addr = neighbor_obj.split()[-1]
+    remote_asn = remote_asn_obj.split()[-1]
+
+    # Only grab EBGP neighbors...
     if local_asn != remote_asn:
-        print("EBGP NEIGHBOR", neighbor_addr)
+        print(f"EBGP NEIGHBOR {neighbor_addr}, ASN {remote_asn}")
 ```
 
 When you run that, you'll see:
 
 ```none
 $ python example.py
-EBGP NEIGHBOR 10.0.0.37
-EBGP NEIGHBOR 10.0.0.34
+EBGP NEIGHBOR 10.0.0.37, ASN 64000
+EBGP NEIGHBOR 10.0.0.34, ASN 64000
 $
 ```
 
@@ -231,13 +239,13 @@ I will not. however, if it's truly a problem for your company, there are commerc
 
 [ciscoconfparse2][3] is licensed [GPLv3][21]
 
-- Copyright (C) 2025 David Michael Pennington
+- Copyright (C) 2026 David Michael Pennington
 
 The word \"Cisco\" is a registered trademark of [Cisco Systems][27].
 
 # Author
 
-[ciscoconfparse2][3] was written by [David Michael Pennington][25].
+[ciscoconfparse2][3] was written by [David Michael Pennington][25] and other contributors.
 
 
 
