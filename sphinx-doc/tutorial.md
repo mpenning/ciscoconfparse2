@@ -18,4 +18,5 @@ tutorial_get_config_values.md
 tutorial_parent_child.md
 tutorial_configuration_branches.md
 tutorial_build_diffs.md
+tutorial_cisco_range.md
 ```

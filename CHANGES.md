@@ -6,6 +6,12 @@
 - Summary:
     - To be determined
 
+## Version: 0.9.8
+
+- Summary:
+    - Make `CiscoRange()` work with 'foo in CiscoRange('bar')'"
+    - Add documentation for `CiscoRange()`
+
 ## Version: 0.9.7
 
 - Summary:
