@@ -6,6 +6,12 @@
 - Summary:
     - To be determined
 
+## Version: 0.9.9
+
+- Summary:
+    - Update `README.md` with updated snyk url
+    - Fix GitHub issue #86 - Junos: Curly braces within double-quoted strings interpreted as new lines
+
 ## Version: 0.9.8
 
 - Summary:
