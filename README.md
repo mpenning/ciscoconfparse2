@@ -286,7 +286,7 @@ The word \"Cisco\" is a registered trademark of [Cisco Systems][27].
   [35]: https://www.reddit.com/r/Cisco/
   [36]: https://www.reddit.com/r/networking
   [37]: https://snyk.io/advisor/python/ciscoconfparse2/badge.svg
-  [38]: https://snyk.io/advisor/python/ciscoconfparse2
+  [38]: https://security.snyk.io/vuln/?search=ciscoconfparse2
   [39]: https://www.reddit.com/r/Python/
   [41]: https://img.shields.io/github/commit-activity/m/mpenning/ciscoconfparse2
   [42]: https://img.shields.io/github/commit-activity/m/mpenning/ciscoconfparse2
