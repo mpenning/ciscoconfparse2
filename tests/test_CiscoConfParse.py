@@ -822,6 +822,29 @@ routing-options {
     )
 
 
+def testParse_parse_syntax_junos_as_junos_nofactory_ioscfg_02():
+    """Ensure that we correctly parse junos config with braces inside double-quotes
+
+    See ccp2 GitHub Issue #86
+    """
+    uut_config = """
+interfaces {
+    et-0/0/5 {
+        description "Core: pe01-lab [10Gbit] {X24826}";
+    }
+}
+    """
+    uut_parse = CiscoConfParse(uut_config, syntax="junos")
+
+    correct_text = [
+        "interfaces",
+        "    et-0/0/5",
+        '        description "Core: pe01-lab [10Gbit] {X24826}"',
+    ]
+
+    assert correct_text == uut_parse.get_text()
+
+
 def testParse_invalid_filepath_01():
     """Test that ciscoconfparse2 raises an error if the filepath is invalid"""
 

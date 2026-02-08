@@ -54,6 +54,7 @@ from pyparsing import (
     ParseException,
     White,
     Word,
+    dblQuotedString,
     nested_expr,
     printables,
     trace_parse_action,
@@ -383,8 +384,14 @@ class BraceParse(HasTraits):
         try:
             # Define valid pyparsing characters for the JunOS lines... use all
             # non-brace printable characters, except curly-braces plus whitespace
+            #
+            # Also see ccp2 GitHub Issue #86 for double-quoted string bug
             valid_chars = Combine(
-                OneOrMore(Word(printables, exclude_chars="{}") | White(" "))
+                OneOrMore(
+                    dblQuotedString()
+                    | Word(printables, exclude_chars="{}")
+                    | White(" ")
+                )
             )
             if self.debug:
                 parseobj = nested_expr(
