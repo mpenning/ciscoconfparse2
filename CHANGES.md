@@ -6,6 +6,15 @@
 - Summary:
     - To be determined
 
+## Version: 0.9.10
+
+- Summary:
+    - Update `README.md`
+    - Fix GitHub issue #87 - Cannot append to a blank configuration
+    - Added test for GitHub Issue #87
+    - Update Sphinx doc dependencies
+    - Update docstrings and return values
+
 ## Version: 0.9.9
 
 - Summary:
