@@ -70,7 +70,7 @@ dev = [
   "ty==0.0.17",
   "pyupgrade==3.21.2",
   "yamlfix==1.19.1",
-  "pylama==8.4.1",
+  #"pylama==8.4.1",
   "pylint==4.0.4",
   "coverage>=7.3.2",
   "pytest-cov>=4.1.0",
