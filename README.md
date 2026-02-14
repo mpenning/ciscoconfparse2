@@ -10,13 +10,18 @@
 
 ## Summary
 
-[ciscoconfparse2][17] is similar to an advanced grep and diff that
-handles **multi-vendor network configuration files** (such as those from
-Arista, Cisco, F5, Juniper, Palo Alto, etc); it is the next generation of
-[ciscoconfparse][64], which was the primary development package
+[ciscoconfparse2][17] is the next generation of [ciscoconfparse][64], which was the primary development package
 from 2007 until 2023.
 
-## A ciscoconfparse2 example
+[ciscoconfparse2][17] is similar to an advanced grep and diff that
+handles **multi-vendor network configuration files** (such as those from
+Arista, Cisco, F5, Juniper, Palo Alto, etc).
+
+- Use [ciscoconfparse2][17] to find configuration values without needing to ssh and use show commands.
+- Use [ciscoconfparse2][17] to build new configuration files.
+
+
+## Example - Find shutdown interfaces
 
 Assume you have a bunch of interfaces in a configuration.  How do you find which ones are shutdown?
 
@@ -36,7 +41,7 @@ One way is manually reading the whole Cisco IOS-XE configuration.  Another optio
 ```
 
 
-## Another ciscoconfparse2 example
+## Example - Find EBGP peer addresses and AS Numbers
 
 Assume you have this IOS-XR bgp configuration:
 
@@ -104,7 +109,9 @@ EBGP NEIGHBOR 10.0.0.34, ASN 64000
 $
 ```
 
-There is a lot more possible; see the [tutorial](http://www.pennington.net/py/ciscoconfparse2/tutorial.html).
+## Tutorial
+
+Many things are possible; see the [tutorial](http://www.pennington.net/py/ciscoconfparse2/tutorial.html).
 
 ## CLI Tool
 
@@ -147,22 +154,22 @@ and has some defaults that I wish it didn't have.  I froze
 [ciscoconfparse][64] PYPI releases at [version 1.9.52][65]; there will be no
 more [ciscoconfparse][64] PYPI releases.
 
-What do you do?  Upgrade to [ciscoconfparse2][17]!
+I recommend that you upgrade to [ciscoconfparse2][17].
 
 Here's why, it:
 
-- Includes a handy [CLI command][67] (including greps for mac addresses and IPv4 / IPv6 subnets)
 - Streamlines the API towards a simpler user interface.
 - Removes legacy and flawed methods from the original (this could be a breaking change for old scripts).
+- Can search for parents and children using an *arbitrary list of ancestors*
+- Is better at handling multiple-child-level configurations (such as IOS XR and JunOS)
 - Adds string methods to `BaseCfgLine()` objects
 - Defaults `ignore_blank_lines=False` (this could be a breaking change for old scripts).
-- Is better at handling multiple-child-level configurations (such as IOS XR and JunOS)
-- Can search for parents and children using an *arbitrary list of ancestors*
+- Includes a [CLI command][67] (which can grep for mac addresses and IPv4 / IPv6 subnets in text files)
 - Adds the concept of change commits; this is a config-modification performance feature that [ciscoconfparse][64] lacks
 - Adds an `auto_commit` keyword, which defaults True
 - Documents much more of the API
 - Intentionally requires a different import statement to minimize confusion between the original and [ciscoconfparse2][17]
-- Vasly improves Cisco IOS diffs
+- Vastly improves Cisco IOS diffs
 
 ## Cisco and Other Vendor-Specific factory parsers
 
@@ -202,7 +209,7 @@ I truly apologize for any disappointment.
 - [`traitlets`](https://github.com/ipython/traitlets)
 - [`rich`](https://github.com/Textualize/rich)
 - [`typeguard`](https://github.com/agronholm/typeguard)
-- [loguru](https://github.com/Delgan/loguru)
+- [`loguru`](https://github.com/Delgan/loguru)
 
 
 ## Pre-requisites
@@ -246,7 +253,6 @@ The word \"Cisco\" is a registered trademark of [Cisco Systems][27].
 # Author
 
 [ciscoconfparse2][3] was written by [David Michael Pennington][25] and other contributors.
-
 
 
   [1]: https://github.com/mpenning/ciscoconfparse2/blob/main/.github/workflows/tests.yml
