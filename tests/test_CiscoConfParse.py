@@ -105,6 +105,26 @@ def testValues_return_iterator():
     assert isinstance(parse.__iter__(), Iterator)
     assert isinstance(iter(parse), Iterator)
 
+def testValues_append_empty_01():
+    """Ensure that CiscoConfParse().append() works if the existing configuration is blank"""
+
+    cmd = "hostname FooRouter"
+
+    uut_parse = CiscoConfParse([])
+    uut_parse.append(cmd)
+
+    assert uut_parse[0].text == cmd
+    assert uut_parse[0].linenum == 0
+    assert len(uut_parse) == 1
+
+def testValues_CiscoConfParse_get_index_01():
+    """Ensure we can retrieve a line by directly indexing into CiscoConfParse"""
+
+    uut_cmd = "hostname Foo"
+    uut_parse = CiscoConfParse([uut_cmd, "interface Ethernet1/1"])
+
+    # Test indexing by line number...
+    assert uut_parse[0].text == uut_cmd
 
 def testValues_for_loop_01():
     """Ensure that looping over CiscoConfParse() works correctly.
@@ -3507,7 +3527,6 @@ def testValues_IOSIntfLine_find_objects_factory_02(
             "^C",
             "alias exec showthang show ip route vrf THANG",
         ]
-
 
 def testValues_ConfigList_insert01(parse_c02):
     correct_result = [
