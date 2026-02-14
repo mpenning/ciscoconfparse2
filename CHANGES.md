@@ -6,6 +6,11 @@
 - Summary:
     - To be determined
 
+## Version: 0.9.11
+
+- Summary:
+    - Temporarily remove `pylama` as a dependency to avoid strange pytest failures
+
 ## Version: 0.9.10
 
 - Summary:
