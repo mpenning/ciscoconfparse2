@@ -112,7 +112,9 @@ _IPV6_REGEX_STR = r"""^(?!:::\S+?$)             # Negative Lookahead for 3 colon
 |(?P<opt10>(?:{0}:){{1,7}}:)                   # ipv6 with trailing double colons
 |(?P<opt11>(?:::))                             # ipv6 bare double colons (default route)
 )([/\s](?P<masklen>\d+))*                      # match 'masklen' and end 'addr' group
-""".format(_IPV6_RGX_CLS)
+""".format(
+    _IPV6_RGX_CLS
+)
 
 _IPV6_REGEX_STR_COMPRESSED1 = r"""^(?!:::\S+?$)(?P<addr1>(?P<opt1_1>{0}(?::{0}){{7}})|(?P<opt1_2>(?:{0}:){{1}}(?::{0}){{1,6}})|(?P<opt1_3>(?:{0}:){{2}}(?::{0}){{1,5}})|(?P<opt1_4>(?:{0}:){{3}}(?::{0}){{1,4}})|(?P<opt1_5>(?:{0}:){{4}}(?::{0}){{1,3}})|(?P<opt1_6>(?:{0}:){{5}}(?::{0}){{1,2}})|(?P<opt1_7>(?:{0}:){{6}}(?::{0}){{1,1}})|(?P<opt1_8>:(?::{0}){{1,7}})|(?P<opt1_9>(?:{0}:){{1,7}}:)|(?P<opt1_10>(?:::)))""".format(
     _IPV6_RGX_CLS

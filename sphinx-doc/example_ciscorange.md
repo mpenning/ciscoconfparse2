@@ -5,7 +5,7 @@
 First let's handle the basics; what exactly is a "Cisco Range"?  In
 Cisco IOS, you sometimes see strings like this: "Eth1/5-8,15,18,22,30-33";
 
-Let's break that down; that string encapsulates a list of Cisco IOS 
+Let's break that down; that string encapsulates a list of Cisco IOS
 interface numbers.  In this case expanding the string results
 in this list of `CiscoIOSInterface()` instances:
 
@@ -66,4 +66,3 @@ from ciscoconfparse2 import CiscoRange
 # This is False
 "Eth1/1" in CiscoRange("Eth1/5-8,15,18,22,30-33")
 ```
-

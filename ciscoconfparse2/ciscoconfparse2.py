@@ -1371,7 +1371,9 @@ class ConfigList(UserList):
 
     # This method is on ConfigList()
     @logger.catch(reraise=True)
-    def insert(self, idx: int = -1, new_val: str | BaseCfgLine | None = None) -> BaseCfgLine:
+    def insert(
+        self, idx: int = -1, new_val: str | BaseCfgLine | None = None
+    ) -> BaseCfgLine:
 
         if not isinstance(new_val, (str, BaseCfgLine)):
             error = f"new_val must be a str or BaseCfgLine(), not {type(new_val)}"
