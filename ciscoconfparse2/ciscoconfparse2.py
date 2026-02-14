@@ -1295,7 +1295,7 @@ class ConfigList(UserList):
         self,
         exist_val: BaseCfgLine | None = None,
         new_val: str | BaseCfgLine | None = None,
-    ) -> None:
+    ) -> BaseCfgLine:
 
         if not isinstance(new_val, (str, BaseCfgLine)):
             error = f"new_val must be a str or BaseCfgLine(), not {type(new_val)}"
@@ -1327,13 +1327,15 @@ class ConfigList(UserList):
         # Rebuild / renumber items on the modified ConfigList()...
         self.rebuild_after_modification(commit=self.auto_commit)
 
+        return self.data[idx]
+
     # This method is on ConfigList()
     @logger.catch(reraise=True)
     def insert_after(
         self,
         exist_val: BaseCfgLine | None = None,
         new_val: str | BaseCfgLine | None = None,
-    ) -> None:
+    ) -> BaseCfgLine:
 
         if not isinstance(new_val, (str, BaseCfgLine)):
             error = f"new_val must be a str or BaseCfgLine(), not {type(new_val)}"
@@ -1365,9 +1367,11 @@ class ConfigList(UserList):
         # Rebuild / renumber items on the modified ConfigList()...
         self.rebuild_after_modification(commit=self.auto_commit)
 
+        return self.data[idx]
+
     # This method is on ConfigList()
     @logger.catch(reraise=True)
-    def insert(self, idx: int = -1, new_val: str | BaseCfgLine | None = None) -> None:
+    def insert(self, idx: int = -1, new_val: str | BaseCfgLine | None = None) -> BaseCfgLine:
 
         if not isinstance(new_val, (str, BaseCfgLine)):
             error = f"new_val must be a str or BaseCfgLine(), not {type(new_val)}"
@@ -1399,6 +1403,8 @@ class ConfigList(UserList):
 
         # Rebuild / renumber items on the modified ConfigList()...
         self.rebuild_after_modification(commit=self.auto_commit)
+
+        return self.data[idx]
 
     # This method is on ConfigList()
     @logger.catch(reraise=True)
@@ -2282,13 +2288,31 @@ class CiscoConfParse:
 
         # Default to inserting after the last object...
         obj.insert_after(line)
+
         return None
 
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
     def append(self, line: str | BaseCfgLine = None) -> None:
-        last_obj = self.config_objs[-1]
-        last_obj.insert_after(line)
+        """Unconditionally append `line` to the CiscoConfParse() configuration"""
+
+        if len(self.config_objs) > 0:
+            last_obj = self.config_objs[-1]
+            last_obj.insert_after(line)
+
+        elif isinstance(line, BaseCfgLine):
+            self.config_objs.data = [line]
+            self.config_objs.commit()
+
+        elif isinstance(line, str):
+            obj = CFGLINE[self.syntax](all_lines=[line], line=line)
+            self.config_objs.data = [obj]
+            self.config_objs.commit()
+
+        else:
+            raise NotImplementedError(
+                f"Cannot append(); unknown object: '{repr(line)}'"
+            )
 
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
