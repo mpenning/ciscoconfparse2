@@ -782,7 +782,7 @@ class BaseCfgLine:
     # On BaseCfgLine()
     @junos_unsupported
     @logger.catch(reraise=True)
-    def insert_after(self, insertstr=None):
+    def insert_after(self, insertstr: str | BaseCfgLine | None = None):
         """Usage: confobj.insert_after('! insert text after this confobj')"""
 
         # Fail if insertstr is not the correct object type...
@@ -852,7 +852,7 @@ class BaseCfgLine:
            ...     obj.append_to_family('carrier-delay msec 500')
            ...
            >>>
-           >>> for line in parse.text:
+           >>> for line in parse:
            ...     print(line)
            ...
            !
@@ -872,7 +872,7 @@ class BaseCfgLine:
         if auto_indent is not None:
             warning_msg = (
                 "BaseCfgLine().append_to_family(auto_indent) is "
-                "no longer supported; you should remove it."
+                "no longer supported; instead use BaseCfgLine().insert_after()."
             )
             logger.warning(warning_msg)
             warn(warning_msg)
