@@ -418,8 +418,13 @@ def testValues_find_child_objects_list_02():
 
 
 def testParse_valid_config_blanklines_01(parse_n01_w_blanklines):
-    """Test reading a config with blank lines"""
+    """Test reading a config with blank lines not included"""
     assert len(parse_n01_w_blanklines.get_text()) == 126
+
+def testParse_valid_config_blanklines_02():
+    """Test reading a config with blank lines allowed"""
+    parse = CiscoConfParse(["", "hostname foo", "", "interface Ethernet0"], ignore_blank_lines=True)
+    assert len(parse.get_text()) == 2
 
 
 def testParse_valid_filepath_nofactory_01_ios():
