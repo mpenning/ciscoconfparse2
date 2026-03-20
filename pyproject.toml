@@ -9,7 +9,7 @@ requires-python = ">= 3.9"
 dynamic = ["version"]
 dependencies = [
   # NOTE changing attrs versions may require code / test changes
-  "attrs>24.3.0,<26.0.0",
+  "attrs>24.3.0,<27.0.0",
   "dnspython==2.7.0",
   "macaddress==2.0.2",
   "traitlets==5.14.3",
@@ -17,7 +17,7 @@ dependencies = [
   "hier_config==2.3.1",
   "pyparsing==3.3.2",
   # NOTE changing typeguard versions may require code / test changes
-  "typeguard==4.4.4",
+  "typeguard==4.5.1",
   "PyYAML>=6.0.2",
   "rich>=13.6.0",
   # "passlib==1.7.4",   <-- deprecating passlib (now unmaintained) in favor of libpass
