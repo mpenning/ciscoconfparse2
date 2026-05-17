@@ -9,23 +9,23 @@ requires-python = ">= 3.10"
 dynamic = ["version"]
 dependencies = [
   # NOTE changing attrs versions may require code / test changes
-  "attrs>24.3.0,<26.0.0",
+  "attrs>25.4.0,<27.0.0",
   "dnspython==2.8.0",
   "macaddress==2.0.2",
-  "traitlets==5.14.3",
+  "traitlets==5.15.0",
   "loguru>=0.7.2",
   "hier_config==2.3.1",
   "pyparsing==3.3.2",
   "toml==0.10.2",
   # NOTE changing typeguard versions may require code / test changes
-  "typeguard==4.4.4",
-  "PyYAML>=6.0.2",
-  "rich>=14.3.0",
+  "typeguard==4.5.2",
+  "PyYAML>=6.0.3",
+  "rich>=14.3.3",
   # "passlib==1.7.4",   <-- deprecating passlib (now unmaintained) in favor of libpass
   #     https://github.com/notypecheck/passlib
   "libpass==1.9.3",
   # Hypothesis for hard-core ip_address tests
-  "hypothesis==6.150.3",
+  "hypothesis==6.152.7",
 ]
 authors = [
   { name = "Mike Pennington", email = "mike@pennington.net" },
@@ -62,8 +62,8 @@ classifiers=[
 [project.optional-dependencies]
 # Ensure wheel is upgraded... ref Github Issue #257
 dev = [
-  "hatch>=1.16.3",
-  "hatchling>=1.28.0",
+  "hatch>=1.16.5",
+  "hatchling>=1.29.0",
   "pytest>=9.0.1",
   "pre-commit>=4.5.1",
   "black==26.1.0",
@@ -76,8 +76,6 @@ dev = [
   "coverage>=7.3.2",
   "pytest-cov>=4.1.0",
   "pyroma==5.0.1",
-  "invoke==2.2.1",
-  "fabric==3.2.2",
   "commitizen>=2.40.0",
   "python-lsp-server>=1.12.2",
   "tox==4.30.3",
@@ -173,6 +171,11 @@ exclude = [
 # Same as Black.
 line-length = 320
 indent-width = 4
+# Minimum Python version to use
+target-version = "py310"
+
+# Assume all rules can be fixed by ruff
+fixable = ["ALL"]
 
 
 [tool.ruff.format]
@@ -201,6 +204,7 @@ select = [
     "PYI",      # Linting rules for some type annotations
     "Q",        # Linting rules for quoting
     "RUF",      # Ruff linting rules
+    "S",        # Disallow things like "exec"; also restricts "assert"
     "SIM",      # Common flake8 simplification rules
     "UP",       # Warn if certain things can changed due to newer Python versions
     "W",        # PyCodeStyle warnings
@@ -221,6 +225,7 @@ ignore = [
     "E266",     # Do not modify ###### comments to a single #
     "F401",     # Ignore obnoxious ruff imports (i.e import foo as foo)
     "RET504",   # Ignore variable assignment before return
+    "S101",     # Do not complain about assert (such as in test cases)
     "SIM108",   # Do not recommend python ternary if-then-else oneliners
     "TD001",    # Ignore FIXME complaints
     "TD002",    # Ignore missing TODO author
