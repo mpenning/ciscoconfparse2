@@ -168,7 +168,7 @@ ENCODING = locale.getpreferredencoding()
 ACTIVE_LOGURU_HANDLERS = None
 __author_email__ = r"mike /at\ pennington [dot] net"
 __author__ = f"David Michael Pennington <{__author_email__}>"
-__copyright__ = f'2007-{time.strftime("%Y")}, {__author__}'
+__copyright__ = f"2007-{time.strftime('%Y')}, {__author__}"
 __license__ = "GPLv3"
 __status__ = "Production"
 
@@ -186,7 +186,7 @@ def initialize_globals():
 
     __author_email__ = r"mike /at\ pennington [dot] net"
     __author__ = f"David Michael Pennington <{__author_email__}>"
-    __copyright__ = f'2007-{time.strftime("%Y")}, {__author__}'
+    __copyright__ = f"2007-{time.strftime('%Y')}, {__author__}"
     __license__ = "GPLv3"
     __status__ = "Production"
     # __version__ is imported from __about__.py
@@ -242,7 +242,6 @@ def check_comment_delimiters(comment_delimiters: list) -> list[str]:
     :rtype: List[str]
     """
     for comment_delimiter in comment_delimiters:
-
         if not isinstance(comment_delimiter, str):
             error = f"`{comment_delimiter}` is not a valid string comment_delimiters"
             logger.critical(error)
@@ -393,7 +392,6 @@ class BraceParse(HasTraits):
         """Unpack the nested pyparsing results"""
         indent += 1
         for elem in nested_list:
-
             if isinstance(elem, str):
                 if not self.semicolon_end and elem[-1] == ";":
                     # Delete the trailing semicolon
@@ -972,7 +970,6 @@ class ConfigList(UserList):
             raise ValueError(error)
 
         for obj in self.data:
-
             if obj.indent != 0:
                 obj.indent = obj.parent.indent + indent_width
 
@@ -1173,7 +1170,6 @@ class ConfigList(UserList):
         #######################################################################
         if isinstance(item, BaseCfgLine):
             for idx, obj in enumerate(self.data):
-
                 if obj.get_unique_identifier() == item.get_unique_identifier():
                     return idx
 
@@ -1618,7 +1614,6 @@ class ConfigList(UserList):
         parent = None
         parents_cache = {}
         for idx, txt in enumerate(text_list):
-
             if self.debug >= 1:
                 logger.debug(f"    bootstrap() adding text cmd: '{txt}' at idx {idx}")
 
@@ -2458,7 +2453,6 @@ class CiscoConfParse:
                 Path,
             ),
         ):
-
             try:
                 with open(file=filepath, **self.openargs) as _:
                     pass
@@ -3533,16 +3527,16 @@ debug={debug},
         >>> import re
         >>> from ciscoconfparse2 import CiscoConfParse
         >>> config = [
-        ...     '!',
-        ...     'interface Serial1/0',
-        ...     ' ip address 1.1.1.1 255.255.255.252',
-        ...     '!',
-        ...     'interface Serial2/0',
-        ...     ' ip address 1.1.1.5 255.255.255.252',
-        ...     '!',
-        ...     ]
+        ...     "!",
+        ...     "interface Serial1/0",
+        ...     " ip address 1.1.1.1 255.255.255.252",
+        ...     "!",
+        ...     "interface Serial2/0",
+        ...     " ip address 1.1.1.5 255.255.255.252",
+        ...     "!",
+        ... ]
         >>> parse = CiscoConfParse(config=config)
-        >>> parse.re_match_iter_typed(r'interface\s(\S+)')
+        >>> parse.re_match_iter_typed(r"interface\s(\S+)")
         'Serial1/0'
         >>>
 
@@ -3550,18 +3544,18 @@ debug={debug},
 
         >>> from ciscoconfparse2 import CiscoConfParse
         >>> config = [
-        ...     '!',
-        ...     'hostname DEN-EDGE-01',
-        ...     '!',
-        ...     'interface Serial1/0',
-        ...     ' ip address 1.1.1.1 255.255.255.252',
-        ...     '!',
-        ...     'interface Serial2/0',
-        ...     ' ip address 1.1.1.5 255.255.255.252',
-        ...     '!',
-        ...     ]
+        ...     "!",
+        ...     "hostname DEN-EDGE-01",
+        ...     "!",
+        ...     "interface Serial1/0",
+        ...     " ip address 1.1.1.1 255.255.255.252",
+        ...     "!",
+        ...     "interface Serial2/0",
+        ...     " ip address 1.1.1.5 255.255.255.252",
+        ...     "!",
+        ... ]
         >>> parse = CiscoConfParse(config=config)
-        >>> parse.re_match_iter_typed(r'^hostname\s+(\S+)')
+        >>> parse.re_match_iter_typed(r"^hostname\s+(\S+)")
         'DEN-EDGE-01'
         >>>
 
@@ -4013,7 +4007,6 @@ class CiscoPassword(HasTraits):
                 # SILENTLY bypass the error
                 s, e = (0, "")
             for ii in range(0, len(e), 2):
-
                 # int( blah, 16) assumes blah is base16... cool
                 magic = int(re.search(f".{{{ii}}}(..)", e).group(1), 16)
 
