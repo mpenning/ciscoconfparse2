@@ -6,6 +6,16 @@
 - Summary:
     - To be determined
 
+## Version: 0.9.18
+
+- Summary:
+    - Update test pypy version
+
+## Version: 0.9.17
+
+- Summary:
+    - Update dependencies
+
 ## Version: 0.9.16
 
 - Summary:
